@@ -5,6 +5,19 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Comunicazioni e anniversari
+- Comunicazioni email con modelli e segnaposto, liste dinamiche (persone, categorie, soci attivi o in
+  regola, componenti di un organo), indirizzi liberi, allegati, invio programmato.
+- Bozza con anteprima ed elenco degli esclusi con motivo; finalità istituzionale, associativa o auguri
+  con verifica dell'ultimo consenso; un messaggio per destinatario; coda con tentativi e registro.
+- Protocollazione in uscita facoltativa al termine dell'invio.
+- Invio per email di convocazioni (con lettera PDF), ricevute delle quote ed esiti delle domande.
+- Anniversari: compleanni, onomastici (calendario modificabile di oltre 100 nomi), anniversari di
+  iscrizione, ricorrenze nazionali e della sezione, anniversari di scomparsa; cruscotto aggiornato.
+- Auguri automatici per compleanni, onomastici e anniversari di iscrizione e messaggi automatici per le
+  ricorrenze, senza doppioni; comando `invia_coda` nel pianificatore.
+- Comunicazioni ricevute nella scheda anagrafica; manuale operativo, ruoli, ADR-018.
+
 ### Aggiunto - Organi sociali
 - Organi (assemblea, consiglio direttivo, organo di controllo) con quorum di prima e seconda
   convocazione, deleghe e voto ai soli soci in regola configurabili; cariche con storico.

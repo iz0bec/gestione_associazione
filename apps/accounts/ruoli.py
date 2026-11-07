@@ -87,6 +87,32 @@ ORGANI_SEGRETERIA = [
     "organi.gestisci_cariche",
 ]
 
+COMUNICAZIONI_LETTURA = [
+    "comunicazioni.view_invio",
+    "comunicazioni.view_ricorrenza",
+    "comunicazioni.view_modello",
+    "comunicazioni.view_lista",
+    "comunicazioni.view_onomastico",
+]
+COMUNICAZIONI_INVIO = [
+    *COMUNICAZIONI_LETTURA,
+    "comunicazioni.add_invio",
+    "comunicazioni.conferma_invio",
+]
+COMUNICAZIONI_GESTIONE = [
+    *COMUNICAZIONI_INVIO,
+    "comunicazioni.add_modello",
+    "comunicazioni.change_modello",
+    "comunicazioni.add_lista",
+    "comunicazioni.change_lista",
+    "comunicazioni.add_ricorrenza",
+    "comunicazioni.change_ricorrenza",
+    "comunicazioni.add_onomastico",
+    "comunicazioni.change_onomastico",
+    "comunicazioni.view_automazione",
+    "comunicazioni.change_automazione",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -104,6 +130,7 @@ RUOLI = {
         *PROTOCOLLO_RESPONSABILE,
         *ORGANI_SEGRETERIA,
         "organi.change_organo",
+        *COMUNICAZIONI_GESTIONE,
     ],
     "Presidente": [
         *ANAGRAFICA_SCRITTURA,
@@ -122,6 +149,7 @@ RUOLI = {
         "organi.change_riunione",
         "organi.convoca_riunione",
         "organi.verbalizza",
+        *COMUNICAZIONI_INVIO,
     ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
@@ -133,10 +161,28 @@ RUOLI = {
         "soci.valuta_domanda",
         *PROTOCOLLO_RESPONSABILE,
         *ORGANI_SEGRETERIA,
+        *COMUNICAZIONI_GESTIONE,
     ],
-    "Tesoriere": [*ANAGRAFICA_LETTURA, *SOCI_TESORERIA, *PROTOCOLLO_LETTURA, *ORGANI_LETTURA],
-    "Addetto protocollo": [*ANAGRAFICA_SCRITTURA, *PROTOCOLLO_OPERATIVO, *ORGANI_LETTURA],
-    "Consigliere": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA, *PROTOCOLLO_LETTURA, *ORGANI_LETTURA],
+    "Tesoriere": [
+        *ANAGRAFICA_LETTURA,
+        *SOCI_TESORERIA,
+        *PROTOCOLLO_LETTURA,
+        *ORGANI_LETTURA,
+        *COMUNICAZIONI_INVIO,
+    ],
+    "Addetto protocollo": [
+        *ANAGRAFICA_SCRITTURA,
+        *PROTOCOLLO_OPERATIVO,
+        *ORGANI_LETTURA,
+        *COMUNICAZIONI_LETTURA,
+    ],
+    "Consigliere": [
+        *ANAGRAFICA_LETTURA,
+        *SOCI_LETTURA,
+        *PROTOCOLLO_LETTURA,
+        *ORGANI_LETTURA,
+        "comunicazioni.view_ricorrenza",
+    ],
     "Revisore": [
         *ANAGRAFICA_LETTURA,
         *SOCI_LETTURA,
@@ -145,6 +191,7 @@ RUOLI = {
         "protocollo.esporta_protocollo",
         "protocollo.view_registrogiornaliero",
         *ORGANI_LETTURA,
+        *COMUNICAZIONI_LETTURA,
     ],
 }
 

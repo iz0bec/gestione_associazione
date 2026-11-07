@@ -55,6 +55,10 @@ class DettaglioView(PermessoMixin, DetailView):
         ctx["consensi"] = self.object.consensi.all()
         ctx["form_consenso"] = ConsensoForm()
         ctx["socio"] = getattr(self.object, "socio", None)
+        if self.request.user.has_perm("comunicazioni.view_invio"):
+            ctx["comunicazioni"] = self.object.comunicazioni.select_related("invio").order_by(
+                "-invio__creato_il"
+            )[:10]
         if self.request.user.has_perm("protocollo.view_protocollo"):
             from apps.protocollo.models import Protocollo
 

@@ -161,3 +161,18 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   numero legale non può contenere delibere. Eventuali rettifiche si fanno con una delibera successiva.
 - Le cariche sostituiscono la «gestione utenti per ruolo statutario» dell'app Assemblee: il ruolo nell'app
   (permessi) resta distinto dalla carica sociale (ADR sui ruoli).
+
+## ADR-018 - Comunicazioni: coda, consensi e anniversari
+
+- **Invio**: bozza con anteprima → conferma → coda smaltita a lotti (`COMUNICAZIONI_LOTTO`) dal
+  pianificatore; i primi messaggi partono subito. Un messaggio per destinatario, con stato, tentativi
+  (massimo 3) e motivo; nessuna dipendenza da code esterne (Celery, Redis): basta il database.
+- **Testi**: segnaposto `{{ nome }}` sostituiti con un'espressione regolare e un elenco chiuso di chiavi;
+  i testi scritti dagli utenti non passano mai dal motore dei template (niente accesso ad attributi o
+  codice). La versione HTML usa il testo escapato.
+- **Consensi**: la finalità dell'invio decide il consenso richiesto (nessuno per l'istituzionale); vale
+  l'ultimo consenso registrato per la finalità.
+- **Anniversari** calcolati al momento dai dati esistenti (nascita, nome, ammissione, ricorrenze, decesso);
+  gli auguri automatici registrano chi li ha ricevuti (`DestinatarioRegistrato`) per non duplicarli.
+- **Onomastici**: calendario modificabile con la data più diffusa per nome; ricerca del nome intero e poi
+  del primo nome, senza accenti.

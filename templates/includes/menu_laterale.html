@@ -49,6 +49,16 @@
           <a class="nav-link" href="{% url 'organi:organi' %}"><span class="nav-link-icon"><i class="ti ti-gavel"></i></span><span class="nav-link-title">Organi sociali</span></a>
         </li>
         {% endif %}
+        {% if perms.comunicazioni.view_invio %}
+        <li class="nav-item{% if nome == 'comunicazioni' and 'anniversari' not in request.resolver_match.url_name and request.resolver_match.url_name != 'auguri' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'comunicazioni:invii' %}"><span class="nav-link-icon"><i class="ti ti-mail"></i></span><span class="nav-link-title">Comunicazioni</span></a>
+        </li>
+        {% endif %}
+        {% if perms.comunicazioni.view_ricorrenza %}
+        <li class="nav-item{% if request.resolver_match.url_name == 'anniversari' or request.resolver_match.url_name == 'auguri' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'comunicazioni:anniversari' %}"><span class="nav-link-icon"><i class="ti ti-confetti"></i></span><span class="nav-link-title">Anniversari</span></a>
+        </li>
+        {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
         <li class="nav-item">
           <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titolo %}Modelli{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a></div>{% endblock %}
+{% block titolo_pagina %}Modelli di comunicazione{% endblock %}
+{% block azioni %}{% if perms.comunicazioni.add_modello %}<a class="btn btn-primary" href="{% url 'comunicazioni:modello_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo modello</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% for m in modelli %}
+    <div class="list-group-item d-flex align-items-center{% if not m.attivo %} text-secondary{% endif %}">
+      <div class="flex-fill"><div class="fw-medium">{{ m.nome }}{% if not m.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}</div><div class="small text-secondary">{{ m.get_uso_display }} · {{ m.oggetto }}</div></div>
+      <div class="btn-list">
+        {% if perms.comunicazioni.add_invio and m.attivo %}<a class="btn btn-sm" href="{% url 'comunicazioni:nuovo' %}?modello={{ m.pk }}">Usa</a>{% endif %}
+        {% if perms.comunicazioni.change_modello %}<a class="btn btn-sm" href="{% url 'comunicazioni:modello' m.pk %}">Modifica</a>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

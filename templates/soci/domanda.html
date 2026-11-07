@@ -24,7 +24,8 @@
         {% if domanda.motivazione %}<hr><div class="text-secondary">{{ domanda.motivazione|linebreaksbr }}</div>{% endif %}
       </div>
       {% if domanda.stato != "in_attesa" %}
-      <div class="card-footer">Esito del {{ domanda.esito_il|date:"d/m/Y" }}{% if domanda.esito_da %} ({{ domanda.esito_da }}){% endif %}{% if domanda.esito_note %}: {{ domanda.esito_note }}{% endif %}{% if domanda.socio %} · <a href="{{ domanda.socio.get_absolute_url }}">socio n. {{ domanda.socio.numero }}</a>{% endif %}</div>
+      <div class="card-footer d-flex align-items-center gap-2"><span class="flex-fill">Esito del {{ domanda.esito_il|date:"d/m/Y" }}{% if domanda.esito_da %} ({{ domanda.esito_da }}){% endif %}{% if domanda.esito_note %}: {{ domanda.esito_note }}{% endif %}{% if domanda.socio %} · <a href="{{ domanda.socio.get_absolute_url }}">socio n. {{ domanda.socio.numero }}</a>{% endif %}</span>
+        {% if perms.comunicazioni.add_invio %}<form method="post" action="{% url 'comunicazioni:da_domanda' domanda.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-mail me-1"></i>Comunica l'esito</button></form>{% endif %}</div>
       {% endif %}
     </div>
   </div>

@@ -22,7 +22,7 @@ log = logging.getLogger("pianificatore")
 
 
 class Command(BaseCommand):
-    help = "Lavori periodici: scarica_posta (ogni N minuti) e registro_giornaliero (di notte)."
+    help = "Lavori periodici: invia_coda (ogni minuto), scarica_posta, registro_giornaliero."
 
     def add_arguments(self, parser):
         parser.add_argument("--minuti-posta", type=int, default=15)
@@ -33,11 +33,14 @@ class Command(BaseCommand):
         self.attivo = True
         signal.signal(signal.SIGTERM, self._ferma)
         signal.signal(signal.SIGINT, self._ferma)
-        ultima_posta = 0.0
+        ultima_posta = ultima_coda = 0.0
         ultimo_registro = None
         log.info("Pianificatore avviato")
         while self.attivo:
             adesso = timezone.localtime()
+            if opzioni["una_volta"] or time.monotonic() - ultima_coda >= 60:
+                self._esegui("invia_coda")
+                ultima_coda = time.monotonic()
             intervallo = opzioni["minuti_posta"] * 60
             if opzioni["una_volta"] or time.monotonic() - ultima_posta >= intervallo:
                 self._esegui("scarica_posta")

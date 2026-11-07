@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titolo %}{{ invio.titolo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a> · {{ invio.finalita_breve }}</div>{% endblock %}
+{% block titolo_pagina %}{{ invio.titolo }} {% include "comunicazioni/_stato_invio.html" with i=invio %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.comunicazioni.conferma_invio %}
+    {% if invio.stato == "bozza" or invio.stato == "in_coda" %}<form method="post" action="{% url 'comunicazioni:annulla' invio.pk %}" data-conferma="Annullare l'invio?">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-x me-1"></i>Annulla</button></form>{% endif %}
+    {% if invio.stato == "con_errori" %}<form method="post" action="{% url 'comunicazioni:ritenta' invio.pk %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-refresh me-1"></i>Ritenta gli errori</button></form>{% endif %}
+    {% if invio.stato == "bozza" %}<form method="post" action="{% url 'comunicazioni:conferma' invio.pk %}" data-conferma="Spedire la comunicazione a {{ conteggi.in_attesa }} destinatari?">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-send me-1"></i>Conferma e invia ({{ conteggi.in_attesa }})</button></form>{% endif %}
+  {% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-7">
+    {% if anteprima %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-eye me-2"></i>Anteprima per il primo destinatario</h2></div>
+      <div class="card-body">
+        <div class="small text-secondary">A: {{ anteprima.a }}</div>
+        <div class="fw-bold mb-2">{{ anteprima.oggetto }}</div>
+        <div class="testo-messaggio">{{ anteprima.testo }}</div>
+      </div>
+      {% if invio.allegati.exists %}<div class="card-footer small">{% for a in invio.allegati.all %}<i class="ti ti-paperclip me-1"></i>{{ a.nome }} ({{ a.dimensione|filesizeformat }}) {% endfor %}</div>{% endif %}
+    </div>
+    {% else %}<div class="alert alert-warning">Nessun destinatario raggiungibile.</div>{% endif %}
+    <div class="card">
+      <div class="card-body small text-secondary">
+        Preparata il {{ invio.creato_il|date:"d/m/Y H:i" }}{% if invio.creato_da %} da {{ invio.creato_da }}{% else %} automaticamente{% endif %}{% if invio.confermato_il %} · confermata il {{ invio.confermato_il|date:"d/m/Y H:i" }}{% endif %}{% if invio.programmato_il %} · programmata per il {{ invio.programmato_il|date:"d/m/Y H:i" }}{% endif %}{% if invio.completato_il %} · conclusa il {{ invio.completato_il|date:"d/m/Y H:i" }}{% endif %}{% if invio.protocollo %} · <a href="{{ invio.protocollo.get_absolute_url }}">prot. {{ invio.protocollo.segnatura }}</a>{% elif invio.protocolla %} · sarà protocollata al termine{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-pills card-header-pills">
+          <li class="nav-item"><a class="nav-link{% if not filtro %} active{% endif %}" href="?">Tutti</a></li>
+          {% if conteggi.in_attesa %}<li class="nav-item"><a class="nav-link{% if filtro == 'in_attesa' %} active{% endif %}" href="?stato=in_attesa">In attesa {{ conteggi.in_attesa }}</a></li>{% endif %}
+          {% if conteggi.inviato %}<li class="nav-item"><a class="nav-link{% if filtro == 'inviato' %} active{% endif %}" href="?stato=inviato">Inviati {{ conteggi.inviato }}</a></li>{% endif %}
+          {% if conteggi.escluso %}<li class="nav-item"><a class="nav-link{% if filtro == 'escluso' %} active{% endif %}" href="?stato=escluso">Esclusi {{ conteggi.escluso }}</a></li>{% endif %}
+          {% if conteggi.errore %}<li class="nav-item"><a class="nav-link{% if filtro == 'errore' %} active{% endif %}" href="?stato=errore">Errori {{ conteggi.errore }}</a></li>{% endif %}
+        </ul>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for d in destinatari %}
+        <div class="list-group-item">
+          <div class="d-flex"><span class="flex-fill">{% if d.soggetto %}<a class="text-reset" href="{{ d.soggetto.get_absolute_url }}">{{ d.nome }}</a>{% else %}{{ d.nome }}{% endif %}</span>
+          <span class="badge {% if d.stato == 'inviato' %}bg-green-lt{% elif d.stato == 'errore' %}bg-red-lt{% elif d.stato == 'escluso' %}bg-secondary-lt{% else %}bg-blue-lt{% endif %}">{{ d.get_stato_display|lower }}</span></div>
+          <div class="small text-secondary">{{ d.email|default:"—" }}{% if d.motivo %} · {{ d.motivo }}{% endif %}{% if d.inviato_il %} · {{ d.inviato_il|date:"d/m H:i" }}{% endif %}</div>
+        </div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun destinatario.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

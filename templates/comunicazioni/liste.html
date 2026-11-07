@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titolo %}Liste{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a></div>{% endblock %}
+{% block titolo_pagina %}Liste di destinatari{% endblock %}
+{% block azioni %}{% if perms.comunicazioni.add_lista %}<a class="btn btn-primary" href="{% url 'comunicazioni:lista_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova lista</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% for l in liste %}
+    <a class="list-group-item list-group-item-action d-flex align-items-center" href="{{ l.get_absolute_url }}"><div class="flex-fill"><div class="fw-medium">{{ l.nome }}</div><div class="small text-secondary">{{ l.descrizione }}</div></div><span class="badge bg-blue-lt">{{ l.n_membri }}</span></a>
+    {% empty %}<div class="list-group-item text-secondary">Nessuna lista. Una lista può contenere persone scelte, categorie dell'anagrafica, tutti i soci (o solo quelli in regola) e i componenti di un organo: si aggiorna da sola.</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}

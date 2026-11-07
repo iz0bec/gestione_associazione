@@ -48,7 +48,9 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
             "persone": attivi.filter(tipo=Soggetto.Tipo.PERSONA).count(),
             "enti": attivi.filter(tipo=Soggetto.Tipo.ENTE).count(),
         }
-        ctx["compleanni"] = Soggetto.compleanni_prossimi(giorni=14)[:8]
+        from apps.comunicazioni.anniversari import eventi
+
+        ctx["anniversari"] = [e for e in eventi(giorni=14) if e.tipo != "scomparsa"][:10]
         if self.request.user.has_perm("soci.view_socio"):
             ctx["soci"] = _riepilogo_soci()
         if self.request.user.has_perm("organi.view_riunione"):

@@ -1,0 +1,1 @@
+{% if i.stato == "bozza" %}<span class="badge bg-secondary-lt">bozza</span>{% elif i.stato == "in_coda" %}<span class="badge bg-blue-lt">in invio</span>{% elif i.stato == "inviato" %}<span class="badge bg-green-lt">inviato</span>{% elif i.stato == "con_errori" %}<span class="badge bg-orange-lt">con errori</span>{% else %}<span class="badge bg-red-lt">annullato</span>{% endif %}

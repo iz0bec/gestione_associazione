@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titolo %}Onomastici{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:auguri' %}">Auguri e ricorrenze</a></div>{% endblock %}
+{% block titolo_pagina %}Calendario degli onomastici{% endblock %}
+{% block azioni %}{% if perms.comunicazioni.add_onomastico %}<a class="btn btn-primary" href="{% url 'comunicazioni:onomastico_nuovo' %}"><i class="ti ti-plus me-1"></i>Nome</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header"><form method="get" class="d-flex gap-2 w-100"><input class="form-control" type="search" name="q" value="{{ request.GET.q }}" placeholder="Cerca un nome" aria-label="Cerca un nome"><button class="btn" type="submit">Cerca</button></form></div>
+  <div class="card-body text-secondary small">Per ogni nome è indicata la festa più diffusa; le date si possono cambiare secondo l'uso locale (es. il santo patrono). Per i nomi composti si cerca prima il nome intero, poi il primo nome.</div>
+  <div class="table-responsive">
+    <table class="table table-sm card-table"><thead><tr><th>Nome</th><th>Festa</th><th>Santo</th><th></th></tr></thead>
+      <tbody>{% for o in onomastici %}<tr><td>{{ o.nome|title }}</td><td>{{ o.giorno }}/{{ o.mese }}</td><td>{{ o.santo }}</td><td class="text-end">{% if perms.comunicazioni.change_onomastico %}<a href="{% url 'comunicazioni:onomastico' o.pk %}">Modifica</a>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

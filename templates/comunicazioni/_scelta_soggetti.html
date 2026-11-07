@@ -1,0 +1,5 @@
+<div class="mb-2" id="scelti-soggetti">{% for s in scelti %}{% include "comunicazioni/_soggetto_scelto.html" %}{% endfor %}</div>
+<div class="input-icon mb-1"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+  <input type="search" class="form-control" name="cerca" placeholder="Cerca in anagrafica" autocomplete="off" aria-label="Cerca in anagrafica" data-ricerca-scelta hx-get="{% url 'comunicazioni:cerca' %}" hx-trigger="input changed delay:300ms" hx-target="#risultati-soggetti">
+</div>
+<div class="list-group list-group-flush mb-3" id="risultati-soggetti"></div>

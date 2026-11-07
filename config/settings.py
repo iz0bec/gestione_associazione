@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.soci",
     "apps.protocollo",
     "apps.organi",
+    "apps.comunicazioni",
 ]
 
 MIDDLEWARE = [
@@ -172,6 +173,9 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 20
 
 # Chiavi Fernet (separate da virgola, la prima cifra) per i segreti nel database, es. password IMAP
 CHIAVE_CIFRATURA = env("CHIAVE_CIFRATURA", default="")
+
+# Comunicazioni: messaggi spediti a ogni giro della coda (il pianificatore gira ogni minuto)
+COMUNICAZIONI_LOTTO = env.int("COMUNICAZIONI_LOTTO", default=30)
 
 # Protocollo: dimensione massima di un allegato ed estensioni ammesse
 PROTOCOLLO_ALLEGATO_MAX_MB = env.int("PROTOCOLLO_ALLEGATO_MAX_MB", default=25)

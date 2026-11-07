@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titolo %}Anniversari{% endblock %}
+{% block titolo_pagina %}Anniversari e ricorrenze{% endblock %}
+{% block azioni %}{% if perms.comunicazioni.view_ricorrenza %}<a class="btn" href="{% url 'comunicazioni:auguri' %}"><i class="ti ti-settings-automation me-1"></i>Auguri automatici e ricorrenze</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card mb-3">
+  <form method="get" class="card-body d-flex flex-wrap align-items-center gap-3">
+    {% for t, info in tipi.items %}<label class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" name="tipo" value="{{ t }}"{% if t in tipi_scelti %} checked{% endif %}><span class="form-check-label"><i class="ti ti-{{ info.1 }} text-{{ info.2 }} me-1"></i>{{ info.0 }}</span></label>{% endfor %}
+    <select class="form-select w-auto" name="giorni" aria-label="Periodo"><option value="7"{% if giorni == 7 %} selected{% endif %}>prossimi 7 giorni</option><option value="30"{% if giorni == 30 %} selected{% endif %}>prossimi 30 giorni</option><option value="90"{% if giorni == 90 %} selected{% endif %}>prossimi 3 mesi</option><option value="365"{% if giorni == 365 %} selected{% endif %}>prossimo anno</option></select>
+    <button class="btn" type="submit">Mostra</button>
+  </form>
+</div>
+{% for giorno, eventi in per_giorno %}
+<div class="card mb-2">
+  <div class="card-header py-2"><h2 class="card-title h4">{% if giorno == oggi %}Oggi, {% endif %}{{ giorno|date:"l j F" }}</h2></div>
+  <div class="list-group list-group-flush">
+    {% for e in eventi %}
+    <div class="list-group-item d-flex align-items-center">
+      <span class="avatar avatar-sm bg-{{ e.colore }}-lt me-3"><i class="ti ti-{{ e.icona }}"></i></span>
+      <div class="flex-fill">
+        <div>{% if e.soggetto %}<a class="text-reset fw-medium" href="{{ e.soggetto.get_absolute_url }}">{{ e.titolo }}</a>{% else %}<span class="fw-medium">{{ e.titolo }}</span>{% endif %}
+          {% if e.anni %}<span class="badge {% if e.tondo %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %} ms-1">{{ e.anni }} ann{{ e.anni|pluralize:"o,i" }}</span>{% endif %}</div>
+        <div class="small text-secondary">{{ e.etichetta }}{% if e.dettaglio %} · {{ e.dettaglio|truncatechars:90 }}{% endif %}</div>
+      </div>
+      {% if perms.comunicazioni.add_invio and e.tipo != "scomparsa" %}
+        {% if e.soggetto %}<a class="btn btn-sm" href="{% url 'comunicazioni:nuovo' %}?soggetto={{ e.soggetto.pk }}{% for uso, mod in modelli.items %}{% if uso == e.tipo %}&amp;modello={{ mod.pk }}{% endif %}{% endfor %}"><i class="ti ti-mail me-1"></i>Auguri</a>
+        {% elif e.ricorrenza %}<a class="btn btn-sm" href="{% url 'comunicazioni:nuovo' %}?{% if e.ricorrenza.lista %}lista={{ e.ricorrenza.lista.pk }}&amp;{% endif %}{% for uso, mod in modelli.items %}{% if uso == 'ricorrenza' %}modello={{ mod.pk }}{% endif %}{% endfor %}"><i class="ti ti-mail me-1"></i>Scrivi</a>{% endif %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% empty %}<div class="card"><div class="card-body text-secondary">Nessun anniversario nel periodo.</div></div>{% endfor %}
+{% endblock %}

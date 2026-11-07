@@ -70,6 +70,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.
 - Organi: sequenze `riunione_<id organo>` (annuale), `verbale_<id>` (libro), `delibera_<id>` (annuale);
   verbale chiuso = immutabile (`servizi._controlla_aperto`); aventi diritto da `servizi.aventi_diritto`.
+- Email: solo tramite `apps.comunicazioni.servizi.crea_invio` (bozza → `conferma` → coda `elabora_coda`);
+  testi utente con segnaposto `{{ chiave }}` (`servizi.componi`, chiavi in `SEGNAPOSTO`), mai con il motore
+  dei template. Finalità ≠ istituzionale ⇒ serve l'ultimo consenso prestato.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -81,4 +84,5 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 ## Stato
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
-(`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`). Prossimo: Comunicazioni.
+(`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`), **Comunicazioni e
+anniversari** (`apps/comunicazioni`). Prossimo: Tesoreria.

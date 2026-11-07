@@ -48,8 +48,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    soci, verbali con delibere e votazioni, PDF, protocollazione automatica, libri dei verbali.
    Comprende le **cariche sociali con storico** (previste in fase 2). *Rimandati*: invio delle
    convocazioni per email (con Comunicazioni), firma digitale dei verbali, votazioni elettroniche.
-4. **Comunicazioni** - modelli con segnaposto, invii a persone/categorie/liste, coda di invio in
-   background, registro invii, auguri di compleanno automatici (rispettando consensi e decessi).
+4. ✅ **Comunicazioni e anniversari** - modelli con segnaposto, invii a persone/categorie/liste, coda di
+   invio, registro invii, anniversari (compleanni, onomastici, ricorrenze, anzianità da socio, scomparse)
+   con auguri automatici (rispettando consensi e decessi), invio di convocazioni, ricevute ed esiti.
+   *Rimandati*: invio tramite PEC, SMS/messaggistica, stampa di etichette e lettere per posta.
 5. **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,

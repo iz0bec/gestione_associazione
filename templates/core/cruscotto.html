@@ -53,19 +53,19 @@
   {% endif %}
   <div class="col-sm-8">
     <div class="card">
-      <div class="card-header"><h2 class="card-title"><i class="ti ti-cake me-2"></i>Compleanni nei prossimi 14 giorni</h2></div>
-      {% if compleanni %}
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-confetti me-2"></i>Anniversari nei prossimi 14 giorni</h2>{% if perms.comunicazioni.view_ricorrenza %}<div class="card-actions"><a href="{% url 'comunicazioni:anniversari' %}">Tutti</a></div>{% endif %}</div>
+      {% if anniversari %}
       <div class="list-group list-group-flush">
-        {% for p in compleanni %}
-        <a class="list-group-item list-group-item-action d-flex align-items-center" href="{{ p.get_absolute_url }}">
-          <span class="avatar avatar-sm me-3">{{ p.iniziali }}</span>
-          <span class="flex-fill">{{ p.intestazione }}</span>
-          <span class="text-secondary">{% if p.giorni_mancanti == 0 %}<strong>oggi</strong>{% else %}{{ p.prossimo_compleanno|date:"j F" }}{% endif %} · {{ p.anni_compiuti }} anni</span>
-        </a>
+        {% for e in anniversari %}
+        <div class="list-group-item d-flex align-items-center">
+          <span class="avatar avatar-sm bg-{{ e.colore }}-lt me-3" title="{{ e.etichetta }}"><i class="ti ti-{{ e.icona }}"></i></span>
+          <span class="flex-fill">{% if e.soggetto %}<a class="text-reset" href="{{ e.soggetto.get_absolute_url }}">{{ e.titolo }}</a>{% else %}{{ e.titolo }}{% endif %}<span class="small text-secondary"> · {{ e.etichetta|lower }}{% if e.anni %}, {{ e.anni }} ann{{ e.anni|pluralize:"o,i" }}{% endif %}</span></span>
+          <span class="text-secondary text-nowrap">{% now "Y-m-d" as oggi_iso %}{% if e.data|date:"Y-m-d" == oggi_iso %}<strong>oggi</strong>{% else %}{{ e.data|date:"j F" }}{% endif %}</span>
+        </div>
         {% endfor %}
       </div>
       {% else %}
-      <div class="card-body text-secondary">Nessun compleanno in arrivo.</div>
+      <div class="card-body text-secondary">Nessun anniversario in arrivo.</div>
       {% endif %}
     </div>
   </div>

@@ -5,6 +5,7 @@
 {% block azioni %}
 <div class="btn-list">
   <a class="btn" href="{% url 'organi:convocazione' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Convocazione</a>
+  {% if riunione.stato == "convocata" and perms.comunicazioni.add_invio %}<form method="post" action="{% url 'comunicazioni:da_riunione' riunione.pk %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-mail me-1"></i>Invia per email</button></form>{% endif %}
   {% if riunione.modificabile and perms.organi.change_riunione %}<a class="btn" href="{% url 'organi:riunione_modifica' riunione.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
   {% if riunione.modificabile and perms.organi.convoca_riunione %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
   {% if riunione.stato == "bozza" and perms.organi.convoca_riunione %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#convoca"><i class="ti ti-send me-1"></i>Convoca</button>{% endif %}
@@ -70,7 +71,7 @@
       <div class="modal-body">
         <p>La riunione riceve il numero progressivo dell'anno e la lettera di convocazione diventa definitiva.</p>
         {% if perms.protocollo.add_protocollo %}<label class="form-check"><input class="form-check-input" type="checkbox" name="protocolla" checked><span class="form-check-label">Protocolla la convocazione in uscita (con la lettera in PDF e gli aventi diritto come destinatari)</span></label>{% endif %}
-        <p class="text-secondary small mt-2 mb-0">L'invio per email arriverà con il modulo Comunicazioni; intanto la lettera si scarica in PDF.</p>
+        <p class="text-secondary small mt-2 mb-0">Dopo la convocazione si può inviare la lettera per email agli aventi diritto (pulsante «Invia per email»).</p>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Convoca</button></div>
     </form>

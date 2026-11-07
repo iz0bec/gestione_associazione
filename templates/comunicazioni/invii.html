@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titolo %}Comunicazioni{% endblock %}
+{% block titolo_pagina %}Comunicazioni{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.comunicazioni.view_modello %}<a class="btn" href="{% url 'comunicazioni:modelli' %}"><i class="ti ti-template me-1"></i>Modelli</a>{% endif %}
+  {% if perms.comunicazioni.view_lista %}<a class="btn" href="{% url 'comunicazioni:liste' %}"><i class="ti ti-list me-1"></i>Liste</a>{% endif %}
+  {% if perms.comunicazioni.add_invio %}<a class="btn btn-primary" href="{% url 'comunicazioni:nuovo' %}"><i class="ti ti-mail-plus me-1"></i>Nuova comunicazione</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if oggi %}
+<div class="alert alert-info d-flex align-items-center"><i class="ti ti-confetti me-2"></i><span class="flex-fill">Oggi: {% for e in oggi %}{{ e.titolo }} ({{ e.etichetta|lower }}){% if not forloop.last %}, {% endif %}{% endfor %}.</span><a class="btn btn-sm" href="{% url 'comunicazioni:anniversari' %}">Anniversari</a></div>
+{% endif %}
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-pills card-header-pills">
+      <li class="nav-item"><a class="nav-link{% if not stato %} active{% endif %}" href="?">Tutte</a></li>
+      {% for v, e in stati %}<li class="nav-item"><a class="nav-link{% if stato == v %} active{% endif %}" href="?stato={{ v }}">{{ e }}</a></li>{% endfor %}
+    </ul>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>Data</th><th>Oggetto</th><th class="d-none d-md-table-cell">Destinatari</th><th>Stato</th></tr></thead>
+      <tbody>
+      {% for i in invii %}
+        <tr>
+          <td class="text-nowrap">{{ i.creato_il|date:"d/m/Y H:i" }}</td>
+          <td><a class="text-reset fw-medium" href="{{ i.get_absolute_url }}">{{ i.titolo }}</a><div class="small text-secondary">{{ i.finalita_breve }}{% if i.creato_da %} · {{ i.creato_da }}{% elif i.origine %} · automatico{% endif %}</div></td>
+          <td class="d-none d-md-table-cell">{{ i.n_inviati }} / {{ i.n_totale }}</td>
+          <td>{% include "comunicazioni/_stato_invio.html" %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna comunicazione.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

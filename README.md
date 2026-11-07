@@ -24,7 +24,8 @@ L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/an
 > registro attività, **anagrafica unica**, **soci e tesseramento** (libro soci, quote,
 > ricevute, domande di iscrizione anche online), **protocollo** (registro, documenti,
 > posta e PEC da protocollare, registri giornalieri), **organi sociali** (cariche,
-> riunioni, presenze e deleghe, verbali e delibere). Gli altri moduli sono pianificati nella
+> riunioni, presenze e deleghe, verbali e delibere), **comunicazioni e anniversari**
+> (email con consensi, compleanni, onomastici, ricorrenze, anzianità, auguri automatici). Gli altri moduli sono pianificati nella
 > [roadmap](docs/roadmap.md).
 
 ## Caratteristiche

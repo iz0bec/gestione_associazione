@@ -1,0 +1,7 @@
+{% for s in risultati %}
+<button type="button" class="list-group-item list-group-item-action d-flex align-items-center" hx-get="{% url 'comunicazioni:scelta' %}?id={{ s.pk }}" hx-target="#scelti-soggetti" hx-swap="beforeend">
+  <i class="ti ti-{% if s.is_persona %}user{% else %}building{% endif %} me-2 text-secondary"></i>
+  <span class="flex-fill text-start">{{ s.nome_completo }}</span>
+  <span class="small {% if s.email %}text-secondary{% else %}text-orange{% endif %}">{{ s.email|default:"senza email" }}</span><i class="ti ti-plus ms-2"></i>
+</button>
+{% empty %}{% if request.GET.cerca|length > 1 %}<div class="list-group-item text-secondary small">Nessun risultato.</div>{% endif %}{% endfor %}

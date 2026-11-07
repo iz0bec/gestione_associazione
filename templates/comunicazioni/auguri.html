@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titolo %}Auguri e ricorrenze{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:anniversari' %}">Anniversari</a></div>{% endblock %}
+{% block titolo_pagina %}Auguri automatici e ricorrenze{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  {% for a in automazioni %}
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2"><h3 class="card-title mb-0 flex-fill">{{ a }}</h3><span class="badge {% if a.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if a.attiva %}attivi{% else %}spenti{% endif %}</span></div>
+        <div class="text-secondary small">A: {{ a.get_destinatari_display|lower }}, alle ore {{ a.ora }} del giorno · modello «{{ a.modello|default:"predefinito" }}»{% if a.tipo == "anzianita" %} · anni: {{ a.anni }}{% endif %}{% if a.ultimo_giorno %}<br>ultimo controllo: {{ a.ultimo_giorno|date:"d/m/Y" }}{% endif %}</div>
+      </div>
+      {% if perms.comunicazioni.change_automazione %}<div class="card-footer"><a href="{% url 'comunicazioni:automazione' a.pk %}">Imposta</a></div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  <div class="col-12">
+    <div class="alert alert-info mb-0">Gli auguri automatici partono solo alle persone in vita, con email e con il <strong>consenso «Auguri e ricorrenze»</strong> registrato in anagrafica. Ognuno è registrato tra le comunicazioni e non viene mai inviato due volte nello stesso giorno.</div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-flag me-2"></i>Ricorrenze</h2>
+        <div class="card-actions btn-list">
+          {% if perms.comunicazioni.view_onomastico %}<a class="btn btn-sm" href="{% url 'comunicazioni:onomastici' %}">Calendario degli onomastici ({{ n_onomastici }})</a>{% endif %}
+          {% if perms.comunicazioni.add_ricorrenza %}<a class="btn btn-sm btn-primary" href="{% url 'comunicazioni:ricorrenza_nuova' %}"><i class="ti ti-plus me-1"></i>Ricorrenza</a>{% endif %}
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Data</th><th>Ricorrenza</th><th class="d-none d-md-table-cell">Messaggio automatico</th><th></th></tr></thead>
+          <tbody>
+          {% for r in ricorrenze %}
+            <tr class="{% if not r.attiva %}text-secondary{% endif %}">
+              <td class="text-nowrap">{{ r.giorno }}/{{ r.mese }}</td>
+              <td>{{ r.nome }}{% if r.anno_inizio %} <span class="small text-secondary">dal {{ r.anno_inizio }}</span>{% endif %}</td>
+              <td class="d-none d-md-table-cell">{% if r.invio_automatico %}a «{{ r.lista }}»{% else %}—{% endif %}</td>
+              <td class="text-end">{% if perms.comunicazioni.change_ricorrenza %}<a class="btn btn-sm" href="{% url 'comunicazioni:ricorrenza' r.pk %}">Modifica</a>{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

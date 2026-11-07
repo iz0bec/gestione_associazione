@@ -60,6 +60,15 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Segretario | sì | sì | sì | sì | - |
 | Tesoriere, Addetto protocollo, Consigliere, Revisore | sì | - | - | - | - |
 
-La tabella cresce con i nuovi moduli (comunicazioni, tesoreria, ...).
+### Comunicazioni e anniversari
+
+| Ruolo | Anniversari | Registro comunicazioni | Scrive e invia | Modelli, liste, ricorrenze, auguri automatici |
+|---|---|---|---|---|
+| Amministratore di sistema, Segretario | sì | sì | sì | sì |
+| Presidente, Tesoriere | sì | sì | sì | consulta |
+| Addetto protocollo, Revisore | sì | sì | - | consulta |
+| Consigliere | sì | - | - | - |
+
+La tabella cresce con i nuovi moduli (tesoreria, patrimonio).
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

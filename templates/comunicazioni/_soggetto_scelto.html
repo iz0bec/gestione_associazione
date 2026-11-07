@@ -1,0 +1,1 @@
+<label class="badge bg-blue-lt me-1 mb-1 p-2 fw-normal"><input type="checkbox" class="form-check-input m-0 me-1" name="soggetti" value="{{ s.pk }}" checked> {{ s.nome_completo }}{% if s.email %} <span class="text-secondary">· {{ s.email }}</span>{% else %} <span class="text-orange">· senza email</span>{% endif %}</label>

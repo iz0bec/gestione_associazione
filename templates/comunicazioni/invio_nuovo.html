@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titolo %}Nuova comunicazione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a></div>{% endblock %}
+{% block titolo_pagina %}Nuova comunicazione{% endblock %}
+{% block azioni %}
+<div class="dropdown">
+  <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-template me-1"></i>Parti da un modello</button>
+  <div class="dropdown-menu dropdown-menu-end">{% for m in modelli %}<a class="dropdown-item" href="?modello={{ m.pk }}{% for s in scelti %}&amp;soggetto={{ s.pk }}{% endfor %}">{{ m.nome }}</a>{% endfor %}</div>
+</div>
+{% endblock %}
+{% block contenuto %}
+<form method="post" enctype="multipart/form-data" class="row row-cards" novalidate>{% csrf_token %}
+  {{ form.modello }}
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+        {{ form.oggetto.as_field_group }}
+        {{ form.corpo.as_field_group }}
+        {{ form.allegati.as_field_group }}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title">Destinatari</h2></div>
+      <div class="card-body">
+        {{ form.liste.as_field_group }}
+        <div class="form-label">{{ form.soggetti.label }}</div>
+        {% include "comunicazioni/_scelta_soggetti.html" %}
+        {{ form.indirizzi.as_field_group }}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        {{ form.finalita.as_field_group }}
+        {{ form.programmato_il.as_field_group }}
+        {% if perms.protocollo.add_protocollo %}{{ form.protocolla.as_field_group }}{% endif %}
+        <button class="btn btn-primary w-100" type="submit"><i class="ti ti-eye me-1"></i>Prepara e controlla</button>
+        <p class="small text-secondary mt-2 mb-0">Nulla viene spedito finché non si conferma nella pagina successiva.</p>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

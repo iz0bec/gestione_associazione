@@ -50,6 +50,17 @@
       </div>
     </div>
     {% endif %}
+    {% if comunicazioni is not None %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-mail me-2"></i>Comunicazioni</h2>
+        {% if perms.comunicazioni.add_invio and soggetto.email %}<div class="card-actions"><a class="btn btn-sm" href="{% url 'comunicazioni:nuovo' %}?soggetto={{ soggetto.pk }}">Scrivi</a></div>{% endif %}
+      </div>
+      <div class="list-group list-group-flush">
+        {% for d in comunicazioni %}<a class="list-group-item list-group-item-action d-flex" href="{{ d.invio.get_absolute_url }}"><span class="text-secondary me-3 text-nowrap">{{ d.invio.creato_il|date:"d/m/Y" }}</span><span class="flex-fill text-truncate">{{ d.invio.oggetto }}</span><span class="badge {% if d.stato == 'inviato' %}bg-green-lt{% elif d.stato == 'escluso' %}bg-secondary-lt{% elif d.stato == 'errore' %}bg-red-lt{% else %}bg-blue-lt{% endif %} ms-2">{{ d.get_stato_display|lower }}</span></a>
+        {% empty %}<div class="list-group-item text-secondary">Nessuna comunicazione.</div>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
     {% if storia is not None %}
     <div class="card mt-3">
       <div class="card-header"><h2 class="card-title">Storia delle modifiche</h2></div>

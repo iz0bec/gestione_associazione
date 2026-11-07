@@ -1,0 +1,3 @@
+{% autoescape off %}{{ organizzazione.denominazione }}{% if organizzazione.indirizzo %} - {{ organizzazione.indirizzo }}, {{ organizzazione.cap }} {{ organizzazione.comune }}{% endif %}{% if organizzazione.email %}
+{{ organizzazione.email }}{% endif %}
+{% if finalita == "istituzionale" %}Comunicazione inviata per lo svolgimento della vita associativa.{% else %}Ricevi questo messaggio perché hai prestato il consenso. Per non ricevere più comunicazioni di questo tipo rispondi a questo messaggio.{% endif %}{% endautoescape %}

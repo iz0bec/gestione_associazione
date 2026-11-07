@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titolo %}{{ lista }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:liste' %}">Liste</a></div>{% endblock %}
+{% block titolo_pagina %}{{ lista }}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.comunicazioni.change_lista %}<a class="btn" href="{% url 'comunicazioni:lista_modifica' lista.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+  {% if perms.comunicazioni.add_invio %}<a class="btn btn-primary" href="{% url 'comunicazioni:nuovo' %}?lista={{ lista.pk }}"><i class="ti ti-mail me-1"></i>Scrivi alla lista</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-body text-secondary">{{ lista.descrizione }}
+    <div class="mt-1">{% if lista.soci_in_regola %}Soci in regola con la quota · {% elif lista.soci_attivi %}Tutti i soci attivi · {% endif %}{% for c in lista.categorie.all %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% endfor %}{% if lista.organo %} Componenti di {{ lista.organo }}{% endif %}</div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm card-table"><thead><tr><th>Nome ({{ membri|length }})</th><th>Email</th></tr></thead>
+      <tbody>{% for s in membri %}<tr><td><a class="text-reset" href="{{ s.get_absolute_url }}">{{ s.nome_completo }}</a></td><td>{% if s.email %}{{ s.email }}{% else %}<span class="text-orange">senza email</span>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
