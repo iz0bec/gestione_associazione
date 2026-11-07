@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titolo %}Movimento{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:cruscotto' %}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}{% if movimento %}Movimento {{ movimento.codice }}{% else %}Nuovo movimento{% endif %}{% endblock %}
+{% block contenuto %}
+<form method="post" enctype="multipart/form-data" class="card" novalidate data-mostra-secondo="tipo">{% csrf_token %}
+  <div class="card-body">
+    {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+    <div class="row">
+      <div class="col-12">{{ form.tipo.as_field_group }}</div>
+      <div class="col-md-4">{{ form.data.as_field_group }}</div>
+      <div class="col-md-4">{{ form.importo.as_field_group }}</div>
+      <div class="col-md-4">{{ form.conto.as_field_group }}</div>
+      <div class="col-md-8" data-valori="entrata uscita">{{ form.voce.as_field_group }}</div>
+      <div class="col-md-4" data-valori="giroconto">{{ form.conto_destinazione.as_field_group }}</div>
+      <div class="col-12">{{ form.descrizione.as_field_group }}</div>
+      <div class="col-md-6" data-valori="entrata uscita">{{ form.controparte_testo.as_field_group }}</div>
+      <div class="col-md-6">{{ form.documento.as_field_group }}</div>
+      <div class="col-12">{{ form.file.as_field_group }}{% if movimento.giustificativo %}<div class="small">Attuale: <a href="{% url 'tesoreria:giustificativo' movimento.pk %}">{{ movimento.giustificativo_nome }}</a> (caricandone uno nuovo viene sostituito)</div>{% endif %}</div>
+    </div>
+  </div>
+  <div class="card-footer d-flex gap-2">
+    <a class="btn btn-link" href="{% if movimento %}{{ movimento.get_absolute_url }}{% else %}{% url 'tesoreria:prima_nota' %}{% endif %}">Annulla</a>
+    {% if not movimento %}<button class="btn ms-auto" type="submit" name="altro" value="1">Registra e inserisci un altro</button>{% endif %}
+    <button class="btn btn-primary{% if movimento %} ms-auto{% endif %}" type="submit"><i class="ti ti-device-floppy me-1"></i>Registra</button>
+  </div>
+</form>
+{% endblock %}

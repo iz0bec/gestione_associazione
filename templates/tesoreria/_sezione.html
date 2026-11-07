@@ -1,0 +1,21 @@
+{% comment %}Una sezione del rendiconto: s (Sezione), anno, avanzo (bool){% endcomment %}
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title">{{ s.titolo }}</h2></div>
+  <div class="row g-0">
+    <div class="col-lg-6 border-end">
+      <table class="table table-sm card-table mb-0">
+        <thead><tr><th>Uscite</th><th class="text-end">{{ anno }}</th><th class="text-end">{{ anno|add:-1 }}</th></tr></thead>
+        <tbody>{% for v, cor, prec in s.uscite %}<tr><td class="small">{{ v.numero }}) {{ v.descrizione }}</td><td class="text-end">{{ cor|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ prec|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+        <tfoot><tr class="fw-bold"><td>Totale</td><td class="text-end">{{ s.tot_uscite|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ s.tot_uscite_prec|floatformat:"2g" }}</td></tr></tfoot>
+      </table>
+    </div>
+    <div class="col-lg-6">
+      <table class="table table-sm card-table mb-0">
+        <thead><tr><th>Entrate</th><th class="text-end">{{ anno }}</th><th class="text-end">{{ anno|add:-1 }}</th></tr></thead>
+        <tbody>{% for v, cor, prec in s.entrate %}<tr><td class="small">{{ v.numero }}) {{ v.descrizione }}</td><td class="text-end">{{ cor|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ prec|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+        <tfoot><tr class="fw-bold"><td>Totale</td><td class="text-end">{{ s.tot_entrate|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ s.tot_entrate_prec|floatformat:"2g" }}</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+  {% if s.uscite and s.entrate %}<div class="card-footer d-flex fw-bold"><span class="flex-fill">Avanzo / disavanzo {{ s.titolo|slice:":2" }}</span><span class="me-4">{{ s.avanzo|floatformat:"2g" }}</span><span class="text-secondary">{{ s.avanzo_prec|floatformat:"2g" }}</span></div>{% endif %}
+</div>

@@ -14,7 +14,6 @@ from .models import Organizzazione
 
 # Moduli previsti dalla roadmap, mostrati nel menu come "presto" finché non sono pronti
 MODULI_IN_ARRIVO = [
-    ("Tesoreria", "cash"),
     ("Patrimonio", "building-warehouse"),
 ]
 

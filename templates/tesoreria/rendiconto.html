@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titolo %}Rendiconto {{ esercizio.anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ esercizio.get_absolute_url }}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}Rendiconto per cassa {{ esercizio.anno }}{% if esercizio.aperto %} <span class="badge bg-yellow-lt fs-5 align-middle">provvisorio</span>{% endif %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <a class="btn" href="?formato=csv"><i class="ti ti-file-spreadsheet me-1"></i>CSV</a>
+  <a class="btn btn-primary" href="?formato=pdf" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>
+</div>
+{% endblock %}
+{% block contenuto %}
+<p class="text-secondary">Schema del rendiconto per cassa degli Enti del Terzo Settore (Modello D, D.M. 5 marzo 2020). Le sottovoci confluiscono nella voce del rendiconto; giroconti e movimenti annullati non sono conteggiati.{% if not precedente %} L'esercizio precedente non è registrato: la colonna {{ esercizio.anno|add:-1 }} è vuota.{% endif %}</p>
+{% for s in gestione %}{% include "tesoreria/_sezione.html" with anno=esercizio.anno %}{% endfor %}
+<div class="card mb-3">
+  <div class="table-responsive">
+    <table class="table card-table mb-0">
+      <thead><tr><th></th><th class="text-end">{{ esercizio.anno }}</th><th class="text-end">{{ esercizio.anno|add:-1 }}</th></tr></thead>
+      <tbody>
+        <tr><td>Totale uscite della gestione</td><td class="text-end">{{ tot_uscite|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ tot_uscite_prec|floatformat:"2g" }}</td></tr>
+        <tr><td>Totale entrate della gestione</td><td class="text-end">{{ tot_entrate|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ tot_entrate_prec|floatformat:"2g" }}</td></tr>
+        <tr class="fw-bold"><td>Avanzo / disavanzo d'esercizio prima delle imposte</td><td class="text-end">{{ avanzo|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ avanzo_prec|floatformat:"2g" }}</td></tr>
+        <tr><td>Imposte</td><td class="text-end">{{ imposte.tot_uscite|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ imposte.tot_uscite_prec|floatformat:"2g" }}</td></tr>
+        <tr class="fw-bold"><td>Avanzo / disavanzo d'esercizio prima di investimenti e disinvestimenti</td><td class="text-end">{{ avanzo_dopo_imposte|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ avanzo_dopo_imposte_prec|floatformat:"2g" }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "tesoreria/_sezione.html" with s=investimenti anno=esercizio.anno %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table card-table mb-0">
+      <tbody>
+        <tr class="fw-bold"><td>Avanzo / disavanzo complessivo</td><td class="text-end">{{ avanzo_complessivo|floatformat:"2g" }}</td><td class="text-end text-secondary">{{ avanzo_complessivo_prec|floatformat:"2g" }}</td></tr>
+        <tr><td>Cassa al 31/12/{{ esercizio.anno }}</td><td class="text-end">{{ cassa|floatformat:"2g" }}</td><td></td></tr>
+        <tr><td>Depositi bancari e postali al 31/12/{{ esercizio.anno }}</td><td class="text-end">{{ banca|floatformat:"2g" }}</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

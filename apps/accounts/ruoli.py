@@ -113,6 +113,28 @@ COMUNICAZIONI_GESTIONE = [
     "comunicazioni.change_automazione",
 ]
 
+TESORERIA_LETTURA = [
+    "tesoreria.view_movimento",
+    "tesoreria.view_esercizio",
+    "tesoreria.view_previsione",
+    "tesoreria.view_conto",
+    "tesoreria.view_voce",
+]
+TESORERIA_GESTIONE = [
+    *TESORERIA_LETTURA,
+    "tesoreria.add_movimento",
+    "tesoreria.change_movimento",
+    "tesoreria.annulla_movimento",
+    "tesoreria.add_esercizio",
+    "tesoreria.change_saldoconto",
+    "tesoreria.chiudi_esercizio",
+    "tesoreria.change_previsione",
+    "tesoreria.add_conto",
+    "tesoreria.change_conto",
+    "tesoreria.add_voce",
+    "tesoreria.change_voce",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -131,6 +153,7 @@ RUOLI = {
         *ORGANI_SEGRETERIA,
         "organi.change_organo",
         *COMUNICAZIONI_GESTIONE,
+        *TESORERIA_GESTIONE,
     ],
     "Presidente": [
         *ANAGRAFICA_SCRITTURA,
@@ -150,6 +173,7 @@ RUOLI = {
         "organi.convoca_riunione",
         "organi.verbalizza",
         *COMUNICAZIONI_INVIO,
+        *TESORERIA_LETTURA,
     ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
@@ -162,6 +186,7 @@ RUOLI = {
         *PROTOCOLLO_RESPONSABILE,
         *ORGANI_SEGRETERIA,
         *COMUNICAZIONI_GESTIONE,
+        "tesoreria.view_esercizio",
     ],
     "Tesoriere": [
         *ANAGRAFICA_LETTURA,
@@ -169,6 +194,7 @@ RUOLI = {
         *PROTOCOLLO_LETTURA,
         *ORGANI_LETTURA,
         *COMUNICAZIONI_INVIO,
+        *TESORERIA_GESTIONE,
     ],
     "Addetto protocollo": [
         *ANAGRAFICA_SCRITTURA,
@@ -182,6 +208,7 @@ RUOLI = {
         *PROTOCOLLO_LETTURA,
         *ORGANI_LETTURA,
         "comunicazioni.view_ricorrenza",
+        "tesoreria.view_esercizio",
     ],
     "Revisore": [
         *ANAGRAFICA_LETTURA,
@@ -192,6 +219,7 @@ RUOLI = {
         "protocollo.view_registrogiornaliero",
         *ORGANI_LETTURA,
         *COMUNICAZIONI_LETTURA,
+        *TESORERIA_LETTURA,
     ],
 }
 

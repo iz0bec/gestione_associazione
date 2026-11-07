@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titolo %}Movimento {{ movimento.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:prima_nota' %}?anno={{ movimento.esercizio.anno }}">Prima nota {{ movimento.esercizio.anno }}</a></div>{% endblock %}
+{% block titolo_pagina %}{{ movimento.get_tipo_display }} n. {{ movimento.codice }}{% if movimento.annullato %} <span class="badge bg-red-lt fs-5 align-middle">annullato</span>{% endif %}{% endblock %}
+{% block azioni %}
+{% if movimento.esercizio.aperto and not movimento.annullato %}
+<div class="btn-list">
+  {% if perms.tesoreria.annulla_movimento %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
+  {% if perms.tesoreria.change_movimento %}<a class="btn btn-primary" href="{% url 'tesoreria:movimento_modifica' movimento.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}
+{% block contenuto %}
+{% if movimento.annullato %}<div class="alert alert-danger">Annullato: {{ movimento.motivo_annullamento }}</div>{% endif %}
+<div class="card">
+  <div class="card-body">
+    <div class="h2 {% if movimento.tipo == 'entrata' %}text-green{% elif movimento.tipo == 'uscita' %}text-red{% endif %}">{% if movimento.tipo == 'uscita' %}−{% endif %}{{ movimento.importo|floatformat:"2g" }} €</div>
+    <div class="h3">{{ movimento.descrizione }}</div>
+    <div class="datagrid">
+      <div class="datagrid-item"><div class="datagrid-title">Data</div><div class="datagrid-content">{{ movimento.data|date:"d/m/Y" }}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Conto</div><div class="datagrid-content">{{ movimento.conto }}{% if movimento.conto_destinazione %} → {{ movimento.conto_destinazione }}{% endif %}</div></div>
+      {% if movimento.voce %}<div class="datagrid-item"><div class="datagrid-title">Voce del rendiconto</div><div class="datagrid-content">{{ movimento.voce.get_tipo_display }} · {{ movimento.voce }}</div></div>{% endif %}
+      {% if movimento.controparte_testo %}<div class="datagrid-item"><div class="datagrid-title">Controparte</div><div class="datagrid-content">{% if movimento.controparte %}<a href="{{ movimento.controparte.get_absolute_url }}">{{ movimento.controparte_testo }}</a>{% else %}{{ movimento.controparte_testo }}{% endif %}</div></div>{% endif %}
+      {% if movimento.documento %}<div class="datagrid-item"><div class="datagrid-title">Documento</div><div class="datagrid-content">{{ movimento.documento }}</div></div>{% endif %}
+      {% if movimento.tessera %}<div class="datagrid-item"><div class="datagrid-title">Quota</div><div class="datagrid-content"><a href="{{ movimento.tessera.socio.get_absolute_url }}">tesseramento {{ movimento.tessera.anno }}</a></div></div>{% endif %}
+      {% if movimento.giustificativo %}<div class="datagrid-item"><div class="datagrid-title">Giustificativo</div><div class="datagrid-content"><a href="{% url 'tesoreria:giustificativo' movimento.pk %}">{{ movimento.giustificativo_nome }}</a></div></div>{% endif %}
+    </div>
+  </div>
+  <div class="card-footer small text-secondary">Registrato il {{ movimento.creato_il|date:"d/m/Y H:i" }}{% if movimento.creato_da %} da {{ movimento.creato_da }}{% endif %} · ultima modifica {{ movimento.modificato_il|date:"d/m/Y H:i" }}</div>
+</div>
+{% if perms.tesoreria.annulla_movimento %}
+<div class="modal fade" id="annulla" tabindex="-1" aria-labelledby="titolo-annulla" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'tesoreria:movimento_annulla' movimento.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-annulla">Annulla il movimento {{ movimento.codice }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body"><label class="form-label required" for="motivo">Motivo</label><input class="form-control" id="motivo" name="motivo" maxlength="255" required><p class="small text-secondary mt-2 mb-0">Il movimento resta in prima nota come annullato e non conta nei saldi né nel rendiconto.</p></div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Indietro</button><button class="btn btn-danger" type="submit">Annulla il movimento</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

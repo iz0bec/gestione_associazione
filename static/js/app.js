@@ -49,6 +49,16 @@
     });
   }
 
+  // Sezioni visibili secondo una scelta: <form data-mostra-secondo="tipo"> e <div data-valori="a b">
+  function aggiornaSecondo(modulo) {
+    var nome = modulo.getAttribute("data-mostra-secondo");
+    var scelta = modulo.querySelector("input[name='" + nome + "']:checked");
+    var valore = scelta ? scelta.value : "";
+    modulo.querySelectorAll("[data-valori]").forEach(function (el) {
+      el.classList.toggle("nascosto", el.getAttribute("data-valori").split(" ").indexOf(valore) === -1);
+    });
+  }
+
   // Modulo anagrafica: mostra i campi di persona o di ente secondo il tipo scelto
   function aggiornaTipoSoggetto(modulo) {
     var scelto = modulo.querySelector("input[name=tipo]:checked");
@@ -57,6 +67,12 @@
     modulo.querySelectorAll(".solo-ente").forEach(function (el) { el.classList.toggle("nascosto", tipo !== "ente"); });
   }
   function inizializza(radice) {
+    radice.querySelectorAll("form[data-mostra-secondo]").forEach(function (modulo) {
+      aggiornaSecondo(modulo);
+      modulo.addEventListener("change", function (ev) {
+        if (ev.target.name === modulo.getAttribute("data-mostra-secondo")) aggiornaSecondo(modulo);
+      });
+    });
     radice.querySelectorAll("form[data-modulo-protocollo]").forEach(function (modulo) {
       aggiornaDirezione(modulo);
       modulo.addEventListener("change", function (ev) {

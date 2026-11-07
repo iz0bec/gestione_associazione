@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block titolo %}Tesoreria{% endblock %}
+{% block titolo_pagina %}Tesoreria{% if esercizio %} {{ esercizio.anno }} {% if esercizio.aperto %}<span class="badge bg-green-lt fs-5 align-middle">aperto</span>{% else %}<span class="badge bg-secondary-lt fs-5 align-middle">chiuso</span>{% endif %}{% endif %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if esercizi %}{% include "tesoreria/_scelta_anno.html" %}{% endif %}
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-settings me-1"></i>Impostazioni</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% if perms.tesoreria.view_conto %}<a class="dropdown-item" href="{% url 'tesoreria:conti' %}">Conti</a>{% endif %}
+      {% if perms.tesoreria.view_voce %}<a class="dropdown-item" href="{% url 'tesoreria:voci' %}">Piano dei conti</a>{% endif %}
+    </div>
+  </div>
+  {% if esercizio.aperto and perms.tesoreria.add_movimento %}
+  <a class="btn btn-success" href="{% url 'tesoreria:movimento_nuovo' %}?tipo=entrata"><i class="ti ti-plus me-1"></i>Entrata</a>
+  <a class="btn btn-danger" href="{% url 'tesoreria:movimento_nuovo' %}?tipo=uscita"><i class="ti ti-minus me-1"></i>Uscita</a>
+  {% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if not esercizio or esercizio.anno != anno_corrente %}
+{% if perms.tesoreria.add_esercizio %}
+<div class="alert alert-info d-flex align-items-center">
+  <span class="flex-fill">{% if not esercizio %}Per iniziare apri il primo esercizio: poi indica i saldi iniziali di cassa e banca.{% else %}L'esercizio {{ anno_corrente }} non è ancora aperto.{% endif %}</span>
+  <form method="post" action="{% url 'tesoreria:esercizio_nuovo' %}" class="d-flex gap-2">{% csrf_token %}<input class="form-control form-control-sm w-auto" type="number" name="anno" value="{{ anno_corrente }}" aria-label="Anno"><button class="btn btn-sm btn-primary" type="submit">Apri l'esercizio</button></form>
+</div>
+{% endif %}
+{% endif %}
+{% if esercizio %}
+{% if quote and perms.tesoreria.add_movimento %}
+<div class="alert alert-warning d-flex align-items-center"><span class="flex-fill">{{ quote }} quot{{ quote|pluralize:"a,e" }} associativ{{ quote|pluralize:"a,e" }} incassat{{ quote|pluralize:"a,e" }} non {{ quote|pluralize:"è,sono" }} in prima nota.</span>
+  <form method="post" action="{% url 'tesoreria:quote' %}">{% csrf_token %}<input type="hidden" name="anno" value="{{ esercizio.anno }}"><button class="btn btn-sm" type="submit">Registra le quote</button></form></div>
+{% endif %}
+<div class="row row-cards mb-3">
+  <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader">Entrate</div><div class="h1 mb-0 text-green">{{ riepilogo.entrate|floatformat:"2g" }} €</div></div></div></div>
+  <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader">Uscite</div><div class="h1 mb-0 text-red">{{ riepilogo.uscite|floatformat:"2g" }} €</div></div></div></div>
+  <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader">Avanzo / disavanzo</div><div class="h1 mb-0{% if riepilogo.avanzo < 0 %} text-red{% endif %}">{{ riepilogo.avanzo|floatformat:"2g" }} €</div></div></div></div>
+</div>
+<div class="row row-cards">
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-building-bank me-2"></i>Saldi</h2></div>
+      {% if saldi_modificabili and perms.tesoreria.change_saldoconto %}
+      <form method="post" action="{% url 'tesoreria:saldi' esercizio.anno %}">{% csrf_token %}
+        <div class="card-body pb-0"><p class="small text-secondary">Primo esercizio: indicare i saldi al 1° gennaio {{ esercizio.anno }}. Dagli anni successivi sono riportati alla chiusura.</p></div>
+        <div class="list-group list-group-flush">
+          {% for conto, valore in saldi %}<div class="list-group-item d-flex align-items-center gap-2"><span class="flex-fill">{{ conto }}<div class="small text-secondary">attuale {{ valore|floatformat:"2g" }} €</div></span><label class="small text-secondary" for="saldo-{{ conto.pk }}">iniziale</label><input class="form-control form-control-sm text-end w-auto" type="number" step="0.01" id="saldo-{{ conto.pk }}" name="saldo-{{ conto.pk }}" value="{% for s in esercizio.saldi.all %}{% if s.conto_id == conto.pk %}{{ s.iniziale|stringformat:'.2f' }}{% endif %}{% endfor %}"></div>{% endfor %}
+        </div>
+        <div class="card-footer text-end"><button class="btn btn-sm" type="submit">Salva i saldi iniziali</button></div>
+      </form>
+      {% else %}
+      <div class="list-group list-group-flush">
+        {% for conto, valore in saldi %}<a class="list-group-item list-group-item-action d-flex" href="{% url 'tesoreria:prima_nota' %}?anno={{ esercizio.anno }}&amp;conto={{ conto.pk }}"><span class="flex-fill"><i class="ti ti-{% if conto.e_cassa %}cash{% else %}building-bank{% endif %} me-2 text-secondary"></i>{{ conto }}</span><strong>{{ valore|floatformat:"2g" }} €</strong></a>{% endfor %}
+        <div class="list-group-item d-flex fw-bold"><span class="flex-fill">Totale disponibilità</span>{{ totale|floatformat:"2g" }} €</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-file-analytics me-2"></i>Esercizio {{ esercizio.anno }}</h2></div>
+      <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action" href="{% url 'tesoreria:prima_nota' %}?anno={{ esercizio.anno }}"><i class="ti ti-list-details me-2"></i>Prima nota</a>
+        {% if perms.tesoreria.view_previsione %}<a class="list-group-item list-group-item-action" href="{% url 'tesoreria:preventivo' esercizio.anno %}"><i class="ti ti-target me-2"></i>Preventivo e confronto</a>{% endif %}
+        {% if perms.tesoreria.view_esercizio %}<a class="list-group-item list-group-item-action" href="{% url 'tesoreria:rendiconto' esercizio.anno %}"><i class="ti ti-report-money me-2"></i>Rendiconto per cassa (Modello D)</a>{% endif %}
+      </div>
+      {% if perms.tesoreria.chiudi_esercizio %}
+      <div class="card-footer">
+        {% if esercizio.aperto %}
+        <form method="post" action="{% url 'tesoreria:chiusura' esercizio.anno %}" data-conferma="Chiudere l'esercizio {{ esercizio.anno }}? I movimenti non saranno più modificabili e i saldi saranno riportati nel {{ esercizio.anno|add:1 }}.">{% csrf_token %}
+          <label class="form-label small" for="approvazione">Approvazione del rendiconto (facoltativo)</label>
+          <input class="form-control form-control-sm mb-2" id="approvazione" name="approvazione" placeholder="es. Assemblea del 20/04/{{ esercizio.anno|add:1 }}">
+          <button class="btn btn-sm w-100" type="submit"{% if esercizio.anno >= anno_corrente %} disabled title="Si chiude dopo la fine dell'anno"{% endif %}><i class="ti ti-lock me-1"></i>Chiudi l'esercizio</button>
+        </form>
+        {% else %}
+        <div class="small text-secondary mb-2">Chiuso il {{ esercizio.chiuso_il|date:"d/m/Y" }}{% if esercizio.approvazione %} · {{ esercizio.approvazione }}{% endif %}</div>
+        <form method="post" action="{% url 'tesoreria:chiusura' esercizio.anno %}" class="d-flex gap-2">{% csrf_token %}<input type="hidden" name="azione" value="riapri"><input class="form-control form-control-sm" name="motivo" placeholder="motivo della riapertura" required aria-label="Motivo della riapertura"><button class="btn btn-sm" type="submit">Riapri</button></form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title">Ultimi movimenti</h2><div class="card-actions"><a href="{% url 'tesoreria:prima_nota' %}?anno={{ esercizio.anno }}">Tutti</a></div></div>
+      <div class="list-group list-group-flush">
+        {% for m in ultimi %}{% include "tesoreria/_movimento_riga.html" %}{% empty %}<div class="list-group-item text-secondary">Nessun movimento.</div>{% endfor %}
+      </div>
+    </div>
+    {% if confronto %}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Preventivo e consuntivo</h2></div>
+      <div class="table-responsive"><table class="table table-sm card-table">
+        <thead><tr><th>Voce</th><th class="text-end">Previsto</th><th class="text-end">Effettivo</th></tr></thead>
+        <tbody>{% for r in confronto %}<tr><td class="small">{% if r.voce.tipo == "entrata" %}<span class="text-green">E</span>{% else %}<span class="text-red">U</span>{% endif %} {{ r.voce.etichetta|truncatechars:60 }}</td><td class="text-end">{{ r.previsto|floatformat:"2g" }}</td><td class="text-end{% if r.voce.tipo == 'uscita' and r.effettivo > r.previsto and r.previsto %} text-red{% endif %}">{{ r.effettivo|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

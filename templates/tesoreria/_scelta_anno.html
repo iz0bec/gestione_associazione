@@ -1,0 +1,1 @@
+<form method="get" class="d-inline-block"><select class="form-select" name="anno" aria-label="Esercizio" data-invio-automatico>{% for e in esercizi %}<option value="{{ e.anno }}"{% if e.pk == esercizio.pk %} selected{% endif %}>Esercizio {{ e.anno }}{% if not e.aperto %} (chiuso){% endif %}</option>{% endfor %}</select><noscript><button class="btn">Vai</button></noscript></form>

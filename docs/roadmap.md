@@ -52,7 +52,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    invio, registro invii, anniversari (compleanni, onomastici, ricorrenze, anzianità da socio, scomparse)
    con auguri automatici (rispettando consensi e decessi), invio di convocazioni, ricevute ed esiti.
    *Rimandati*: invio tramite PEC, SMS/messaggistica, stampa di etichette e lettere per posta.
-5. **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
+5. ✅ **Tesoreria** (manuale operativo ancora da scrivere) - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,
    passaggio di consegne con fotografia immutabile, schede QR pubbliche (dati minimi).

@@ -53,7 +53,7 @@
               <td>{{ t.anno }}</td>
               <td>{% if t.attribuita %}<span class="fw-medium">{{ t.codice }}</span>{% elif not t.annullata and perms.soci.add_tessera %}<button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#attribuisci-{{ t.pk }}">Attribuisci tessera</button>{% else %}<span class="badge bg-yellow-lt">da attribuire</span>{% endif %}<div class="small text-secondary">dal {{ t.data_rilascio|date:"d/m/Y" }}</div></td>
               <td>{{ t.importo }} €</td>
-              <td>{% include "soci/_stato_tessera.html" with anno=t.anno %}{% if t.pagata %}<div class="small text-secondary">{{ t.pagata_il|date:"d/m/Y" }} · {{ t.get_metodo_pagamento_display }}</div>{% endif %}{% if t.annullata %}<div class="small">{{ t.motivo_annullamento }}</div>{% endif %}</td>
+              <td>{% include "soci/_stato_tessera.html" with anno=t.anno %}{% if t.pagata %}<div class="small text-secondary">{{ t.pagata_il|date:"d/m/Y" }} · {{ t.get_metodo_pagamento_display }}{% if t.movimento and perms.tesoreria.view_movimento %} · <a href="{{ t.movimento.get_absolute_url }}">prima nota {{ t.movimento.codice }}</a>{% endif %}</div>{% endif %}{% if t.annullata %}<div class="small">{{ t.motivo_annullamento }}</div>{% endif %}</td>
               <td class="text-nowrap">
                 {% if not t.annullata %}
                   {% if t.pagata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta</a>

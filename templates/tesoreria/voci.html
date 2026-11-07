@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titolo %}Piano dei conti{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:cruscotto' %}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}Piano dei conti{% endblock %}
+{% block azioni %}{% if perms.tesoreria.add_voce %}<a class="btn btn-primary" href="{% url 'tesoreria:sottovoce_nuova' %}"><i class="ti ti-plus me-1"></i>Sottovoce</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<p class="text-secondary">Le voci sono quelle del rendiconto per cassa degli ETS e non si modificano. Per avere più dettaglio si aggiungono <strong>sottovoci</strong> (es. «Corone e onoranze» sotto «Servizi»): nel rendiconto confluiscono nella loro voce.</p>
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% regroup voci by get_tipo_display as per_tipo %}
+    {% for gruppo in per_tipo %}
+      <div class="list-group-item bg-light fw-bold">{{ gruppo.grouper }}</div>
+      {% for v in gruppo.list %}
+      <div class="list-group-item py-2">
+        <div class="d-flex align-items-center"><span class="flex-fill">{{ v.etichetta }}</span>{% if perms.tesoreria.add_voce %}<a class="small" href="{% url 'tesoreria:sottovoce_nuova' %}?padre={{ v.pk }}">+ sottovoce</a>{% endif %}</div>
+        {% for sv in v.sottovoci.all %}<div class="ms-4 small d-flex"><span class="flex-fill{% if not sv.attiva %} text-secondary{% endif %}">› {{ sv.descrizione }}</span>{% if perms.tesoreria.change_voce %}<a href="{% url 'tesoreria:sottovoce' sv.pk %}">modifica</a>{% endif %}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

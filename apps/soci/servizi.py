@@ -148,6 +148,18 @@ def cambia_stato(socio, stato, utente, motivo=""):
 # --- tessere e quote ---------------------------------------------------------------------
 
 
+def _in_prima_nota(tessera, utente):
+    """Registra l'incasso in tesoreria; se non si può (es. esercizio chiuso) l'incasso resta valido
+    e la quota compare tra quelle da registrare."""
+    from apps.tesoreria.servizi import registra_quota
+
+    try:
+        with transaction.atomic():
+            registra_quota(tessera, utente)
+    except ValidationError:
+        pass
+
+
 def _assegna_ricevuta(tessera):
     tessera.ricevuta_anno = tessera.pagata_il.year
     tessera.ricevuta_numero = prossimo_numero(SEQ_RICEVUTA, tessera.ricevuta_anno)
@@ -368,6 +380,8 @@ def rilascia_tessera(
         tessera.riferimento_pagamento = riferimento
         _assegna_ricevuta(tessera)
     tessera.save()
+    if tessera.pagata:
+        _in_prima_nota(tessera, utente)
     registra(
         Azione.CREAZIONE,
         tessera,
@@ -402,6 +416,7 @@ def registra_pagamento(tessera, utente, *, pagata_il, metodo, importo=None, rife
     tessera.modificato_da = utente
     _assegna_ricevuta(tessera)
     tessera.save()
+    _in_prima_nota(tessera, utente)
     registra(
         Azione.MODIFICA,
         tessera,

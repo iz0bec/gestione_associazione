@@ -59,6 +59,11 @@
           <a class="nav-link" href="{% url 'comunicazioni:anniversari' %}"><span class="nav-link-icon"><i class="ti ti-confetti"></i></span><span class="nav-link-title">Anniversari</span></a>
         </li>
         {% endif %}
+        {% if perms.tesoreria.view_movimento or perms.tesoreria.view_esercizio %}
+        <li class="nav-item{% if nome == 'tesoreria' %} active{% endif %}">
+          <a class="nav-link" href="{% if perms.tesoreria.view_movimento %}{% url 'tesoreria:cruscotto' %}{% else %}{% url 'tesoreria:rendiconti' %}{% endif %}"><span class="nav-link-icon"><i class="ti ti-cash"></i></span><span class="nav-link-title">Tesoreria</span></a>
+        </li>
+        {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
         <li class="nav-item">
           <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.protocollo",
     "apps.organi",
     "apps.comunicazioni",
+    "apps.tesoreria",
 ]
 
 MIDDLEWARE = [

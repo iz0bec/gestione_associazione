@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titolo %}Preventivo {{ esercizio.anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ esercizio.get_absolute_url }}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}Preventivo {{ esercizio.anno }} e confronto con il consuntivo{% endblock %}
+{% block contenuto %}
+{% with puo=perms.tesoreria.change_previsione %}
+<form method="post">{% csrf_token %}
+{% for etichetta, righe, tot_previsto, tot_effettivo in gruppi %}
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title">{{ etichetta }}</h2></div>
+  <div class="table-responsive">
+    <table class="table table-sm table-vcenter card-table">
+      <thead><tr><th>Voce</th><th class="text-end">{{ esercizio.anno|add:-1 }}</th><th class="text-end w-25">Previsto {{ esercizio.anno }}</th><th class="text-end">Effettivo</th><th class="text-end">Differenza</th></tr></thead>
+      <tbody>
+      {% for r in righe %}
+        <tr>
+          <td class="small">{{ r.voce.etichetta }}</td>
+          <td class="text-end text-secondary">{{ r.precedente|floatformat:"2g" }}</td>
+          <td class="text-end">{% if puo and esercizio.aperto %}<input class="form-control form-control-sm text-end" type="number" step="0.01" min="0" name="voce-{{ r.voce.pk }}" value="{% if r.previsto %}{{ r.previsto|stringformat:'.2f' }}{% endif %}" aria-label="Previsto per {{ r.voce.etichetta }}">{% else %}{{ r.previsto|floatformat:"2g" }}{% endif %}</td>
+          <td class="text-end">{{ r.effettivo|floatformat:"2g" }}</td>
+          <td class="text-end{% if r.differenza < 0 %} text-red{% elif r.differenza > 0 %} text-green{% endif %}">{% if r.previsto or r.effettivo %}{{ r.differenza|floatformat:"2g" }}{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot><tr class="fw-bold"><td>Totale</td><td></td><td class="text-end">{{ tot_previsto|floatformat:"2g" }}</td><td class="text-end">{{ tot_effettivo|floatformat:"2g" }}</td><td></td></tr></tfoot>
+    </table>
+  </div>
+</div>
+{% endfor %}
+{% if puo and esercizio.aperto %}<div class="text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva il preventivo</button></div>{% endif %}
+</form>
+{% endwith %}
+{% endblock %}

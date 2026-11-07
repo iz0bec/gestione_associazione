@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titolo %}Conti{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:cruscotto' %}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}Conti{% endblock %}
+{% block azioni %}{% if perms.tesoreria.add_conto %}<a class="btn btn-primary" href="{% url 'tesoreria:conto_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo conto</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% for c in conti %}
+    <div class="list-group-item d-flex align-items-center{% if not c.attivo %} text-secondary{% endif %}">
+      <i class="ti ti-{% if c.e_cassa %}cash{% else %}building-bank{% endif %} fs-2 me-3 text-secondary"></i>
+      <div class="flex-fill"><div class="fw-medium">{{ c.nome }}{% if not c.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}</div><div class="small text-secondary">{{ c.get_tipo_display }}{% if c.iban %} · {{ c.iban }}{% endif %}{% if c.per_contanti %} · quote in contanti{% endif %}{% if c.per_pagamenti_elettronici %} · quote con bonifico/POS{% endif %}</div></div>
+      {% if perms.tesoreria.change_conto %}<a class="btn btn-sm" href="{% url 'tesoreria:conto' c.pk %}">Modifica</a>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

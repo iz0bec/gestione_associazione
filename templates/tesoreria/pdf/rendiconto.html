@@ -1,0 +1,53 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Rendiconto per cassa {{ esercizio.anno }}{% endblock %}
+{% block stile %}
+  .colonne { display: flex; gap: 8pt; }
+  .colonne > table { width: 50%; }
+  h2 { font-size: 10.5pt; margin: 10pt 0 3pt; color: #1d4e89; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  tfoot td { font-weight: bold; }
+  .totali td { border-bottom: .5pt solid #888; }
+  .avanzo { font-weight: bold; text-align: right; margin: 2pt 0 6pt; }
+  .provvisorio { color: #b00; font-weight: bold; }
+  .firme { margin-top: 28pt; display: flex; justify-content: space-between; }
+{% endblock %}
+{% block contenuto %}
+<h1>Rendiconto per cassa – esercizio {{ esercizio.anno }}{% if esercizio.aperto %} <span class="provvisorio">(provvisorio)</span>{% endif %}</h1>
+<p class="piccolo">Schema D.M. 5 marzo 2020, Modello D. Importi in euro.{% if esercizio.approvazione %} {{ esercizio.approvazione }}.{% endif %}</p>
+{% for s in gestione %}
+<h2>{{ s.titolo }}</h2>
+<div class="colonne">
+  <table><thead><tr><th>Uscite</th><th class="n">{{ esercizio.anno }}</th><th class="n">{{ esercizio.anno|add:-1 }}</th></tr></thead>
+    <tbody>{% for v, cor, prec in s.uscite %}<tr><td>{{ v.numero }}) {{ v.descrizione }}</td><td class="n">{{ cor|floatformat:"2g" }}</td><td class="n">{{ prec|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Totale</td><td class="n">{{ s.tot_uscite|floatformat:"2g" }}</td><td class="n">{{ s.tot_uscite_prec|floatformat:"2g" }}</td></tr></tfoot></table>
+  <table><thead><tr><th>Entrate</th><th class="n">{{ esercizio.anno }}</th><th class="n">{{ esercizio.anno|add:-1 }}</th></tr></thead>
+    <tbody>{% for v, cor, prec in s.entrate %}<tr><td>{{ v.numero }}) {{ v.descrizione }}</td><td class="n">{{ cor|floatformat:"2g" }}</td><td class="n">{{ prec|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Totale</td><td class="n">{{ s.tot_entrate|floatformat:"2g" }}</td><td class="n">{{ s.tot_entrate_prec|floatformat:"2g" }}</td></tr></tfoot></table>
+</div>
+<div class="avanzo">Avanzo/disavanzo {{ s.codice }}: {{ s.avanzo|floatformat:"2g" }} ({{ esercizio.anno|add:-1 }}: {{ s.avanzo_prec|floatformat:"2g" }})</div>
+{% endfor %}
+<table class="totali">
+  <tr><td>Totale uscite della gestione</td><td class="n">{{ tot_uscite|floatformat:"2g" }}</td><td class="n">{{ tot_uscite_prec|floatformat:"2g" }}</td></tr>
+  <tr><td>Totale entrate della gestione</td><td class="n">{{ tot_entrate|floatformat:"2g" }}</td><td class="n">{{ tot_entrate_prec|floatformat:"2g" }}</td></tr>
+  <tr><td><strong>Avanzo/disavanzo d'esercizio prima delle imposte</strong></td><td class="n">{{ avanzo|floatformat:"2g" }}</td><td class="n">{{ avanzo_prec|floatformat:"2g" }}</td></tr>
+  <tr><td>Imposte</td><td class="n">{{ imposte.tot_uscite|floatformat:"2g" }}</td><td class="n">{{ imposte.tot_uscite_prec|floatformat:"2g" }}</td></tr>
+  <tr><td><strong>Avanzo/disavanzo d'esercizio prima di investimenti e disinvestimenti</strong></td><td class="n">{{ avanzo_dopo_imposte|floatformat:"2g" }}</td><td class="n">{{ avanzo_dopo_imposte_prec|floatformat:"2g" }}</td></tr>
+</table>
+{% with s=investimenti %}
+<h2>{{ s.titolo }}</h2>
+<div class="colonne">
+  <table><thead><tr><th>Uscite da investimenti</th><th class="n">{{ esercizio.anno }}</th><th class="n">{{ esercizio.anno|add:-1 }}</th></tr></thead>
+    <tbody>{% for v, cor, prec in s.uscite %}<tr><td>{{ v.numero }}) {{ v.descrizione }}</td><td class="n">{{ cor|floatformat:"2g" }}</td><td class="n">{{ prec|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Totale</td><td class="n">{{ s.tot_uscite|floatformat:"2g" }}</td><td class="n">{{ s.tot_uscite_prec|floatformat:"2g" }}</td></tr></tfoot></table>
+  <table><thead><tr><th>Entrate da disinvestimenti</th><th class="n">{{ esercizio.anno }}</th><th class="n">{{ esercizio.anno|add:-1 }}</th></tr></thead>
+    <tbody>{% for v, cor, prec in s.entrate %}<tr><td>{{ v.numero }}) {{ v.descrizione }}</td><td class="n">{{ cor|floatformat:"2g" }}</td><td class="n">{{ prec|floatformat:"2g" }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Totale</td><td class="n">{{ s.tot_entrate|floatformat:"2g" }}</td><td class="n">{{ s.tot_entrate_prec|floatformat:"2g" }}</td></tr></tfoot></table>
+</div>
+{% endwith %}
+<table class="totali">
+  <tr><td><strong>Avanzo/disavanzo complessivo</strong></td><td class="n">{{ avanzo_complessivo|floatformat:"2g" }}</td><td class="n">{{ avanzo_complessivo_prec|floatformat:"2g" }}</td></tr>
+  <tr><td>Cassa al 31/12/{{ esercizio.anno }}</td><td class="n">{{ cassa|floatformat:"2g" }}</td><td></td></tr>
+  <tr><td>Depositi bancari e postali al 31/12/{{ esercizio.anno }}</td><td class="n">{{ banca|floatformat:"2g" }}</td><td></td></tr>
+</table>
+<div class="firme"><div>Il Tesoriere<br><br>____________________</div><div>Il Presidente<br><br>____________________</div></div>
+{% endblock %}

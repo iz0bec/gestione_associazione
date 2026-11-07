@@ -27,6 +27,7 @@ urlpatterns = [
     path("protocollo/", include("apps.protocollo.urls")),
     path("organi/", include("apps.organi.urls")),
     path("comunicazioni/", include("apps.comunicazioni.urls")),
+    path("tesoreria/", include("apps.tesoreria.urls")),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
     path("", include("apps.core.urls")),

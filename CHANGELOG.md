@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Tesoreria
+- Esercizi con saldi per conto, chiusura con riporto dei saldi e riapertura motivata.
+- Piano dei conti del rendiconto per cassa ETS (Modello D) con sottovoci personalizzabili.
+- Prima nota numerata (entrate, uscite, giroconti) con giustificativi, annullamento motivato, CSV.
+- Quote sociali registrate in prima nota all'incasso (cassa per i contanti, banca per bonifico/POS).
+- Preventivo con confronto sul consuntivo; rendiconto Modello D a video, PDF e CSV.
+
 ### Aggiunto - Comunicazioni e anniversari
 - Comunicazioni email con modelli e segnaposto, liste dinamiche (persone, categorie, soci attivi o in
   regola, componenti di un organo), indirizzi liberi, allegati, invio programmato.

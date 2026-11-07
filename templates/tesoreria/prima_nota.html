@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titolo %}Prima nota {{ esercizio.anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ esercizio.get_absolute_url }}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}Prima nota {{ esercizio.anno }}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% include "tesoreria/_scelta_anno.html" %}
+  <a class="btn" href="{% url 'tesoreria:esporta' %}?{{ request.GET.urlencode }}{% if not request.GET.anno %}&amp;anno={{ esercizio.anno }}{% endif %}"><i class="ti ti-file-spreadsheet me-1"></i>CSV</a>
+  {% if esercizio.aperto and perms.tesoreria.add_movimento %}<a class="btn btn-primary" href="{% url 'tesoreria:movimento_nuovo' %}"><i class="ti ti-plus me-1"></i>Movimento</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100" hx-get="{% url 'tesoreria:prima_nota' %}" hx-target="#tabella-movimenti" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, change from:input[type=date], submit">
+      <input type="hidden" name="anno" value="{{ esercizio.anno }}">
+      <div class="col-lg-4"><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>{{ filter.form.q }}</div></div>
+      <div class="col-6 col-lg-2">{{ filter.form.tipo }}</div>
+      <div class="col-6 col-lg-2">{{ filter.form.conto }}</div>
+      <div class="col-lg-4">{{ filter.form.voce }}</div>
+      <div class="col-6 col-lg-3"><div class="input-group"><span class="input-group-text">dal</span>{{ filter.form.dal }}</div></div>
+      <div class="col-6 col-lg-3"><div class="input-group"><span class="input-group-text">al</span>{{ filter.form.al }}</div></div>
+      <noscript><button class="btn" type="submit">Filtra</button></noscript>
+    </form>
+  </div>
+  {% partialdef tabella inline %}
+  <div id="tabella-movimenti" class="tabella-htmx">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead><tr><th class="w-1">N.</th><th class="w-1">Data</th><th>Descrizione</th><th class="d-none d-lg-table-cell">Voce</th><th class="text-end">Entrate</th><th class="text-end">Uscite</th></tr></thead>
+        <tbody>
+        {% for m in page_obj %}
+          <tr class="{% if m.annullato %}text-secondary{% endif %}">
+            <td class="text-secondary">{{ m.numero }}</td>
+            <td class="text-nowrap">{{ m.data|date:"d/m/Y" }}</td>
+            <td><a class="text-reset{% if m.annullato %} text-decoration-line-through{% endif %}" href="{{ m.get_absolute_url }}">{{ m.descrizione }}</a>{% if m.annullato %} <span class="badge bg-red-lt">annullato</span>{% endif %}{% if m.giustificativo %} <i class="ti ti-paperclip text-secondary" title="Giustificativo"></i>{% endif %}
+              <div class="small text-secondary">{{ m.conto }}{% if m.conto_destinazione %} → {{ m.conto_destinazione }}{% endif %}{% if m.controparte_testo %} · {{ m.controparte_testo }}{% endif %}{% if m.documento %} · {{ m.documento }}{% endif %}</div></td>
+            <td class="d-none d-lg-table-cell small">{% if m.voce %}{{ m.voce.voce_rendiconto.etichetta|truncatechars:45 }}{% if m.voce.padre_id %}<div class="text-secondary">{{ m.voce.descrizione }}</div>{% endif %}{% else %}giroconto{% endif %}</td>
+            <td class="text-end text-green text-nowrap">{% if m.tipo == "entrata" %}{{ m.importo|floatformat:"2g" }}{% elif m.tipo == "giroconto" %}<span class="text-secondary">{{ m.importo|floatformat:"2g" }}</span>{% endif %}</td>
+            <td class="text-end text-red text-nowrap">{% if m.tipo == "uscita" %}{{ m.importo|floatformat:"2g" }}{% endif %}</td>
+          </tr>
+        {% empty %}<tr><td colspan="6" class="text-secondary py-4 text-center">Nessun movimento.</td></tr>{% endfor %}
+        </tbody>
+        <tfoot><tr class="fw-bold"><td colspan="4" class="text-end">Totali dei movimenti filtrati (esclusi annullati e giroconti)</td><td class="text-end text-green">{{ tot_entrate|floatformat:"2g" }}</td><td class="text-end text-red">{{ tot_uscite|floatformat:"2g" }}</td></tr></tfoot>
+      </table>
+    </div>
+    {% include "includes/paginazione.html" %}
+  </div>
+  {% endpartialdef %}
+</div>
+{% endblock %}

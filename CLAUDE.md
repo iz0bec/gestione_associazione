@@ -85,4 +85,5 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
 (`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`), **Comunicazioni e
-anniversari** (`apps/comunicazioni`). Prossimo: Tesoreria.
+anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`, manca `docs/operativo/tesoreria.md`).
+Prossimo: Patrimonio.
