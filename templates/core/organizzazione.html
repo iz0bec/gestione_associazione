@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titolo %}Organizzazione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Sistema</div>{% endblock %}
+{% block titolo_pagina %}Dati dell'organizzazione{% endblock %}
+{% block contenuto %}
+<form method="post" enctype="multipart/form-data" class="card" novalidate>
+  {% csrf_token %}
+  <div class="card-body">
+    <p class="text-secondary">Questi dati compaiono nelle intestazioni dei documenti, nelle comunicazioni e nei moduli.</p>
+    <div class="row">
+      <div class="col-lg-8">{{ form.denominazione.as_field_group }}</div>
+      <div class="col-lg-4">{{ form.denominazione_breve.as_field_group }}</div>
+      <div class="col-md-4">{{ form.codice_fiscale.as_field_group }}</div>
+      <div class="col-md-4">{{ form.partita_iva.as_field_group }}</div>
+      <div class="col-md-4">{{ form.iscrizione_runts.as_field_group }}</div>
+      <div class="col-md-6">{{ form.indirizzo.as_field_group }}</div>
+      <div class="col-md-2">{{ form.cap.as_field_group }}</div>
+      <div class="col-md-3">{{ form.comune.as_field_group }}</div>
+      <div class="col-md-1">{{ form.provincia.as_field_group }}</div>
+      <div class="col-md-4">{{ form.telefono.as_field_group }}</div>
+      <div class="col-md-4">{{ form.email.as_field_group }}</div>
+      <div class="col-md-4">{{ form.pec.as_field_group }}</div>
+      <div class="col-md-6">{{ form.sito_web.as_field_group }}</div>
+      <div class="col-md-6">{{ form.logo.as_field_group }}</div>
+      <div class="col-12">{{ form.informativa_privacy.as_field_group }}</div>
+    </div>
+  </div>
+  <div class="card-footer text-end"><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% if messages %}
+<div class="mb-3" role="status">
+  {% for m in messages %}
+  <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible" role="alert">
+    <div>{{ m }}</div>
+    <a class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

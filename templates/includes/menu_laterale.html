@@ -1,0 +1,49 @@
+{% comment %}Menu laterale: le voci compaiono solo con i permessi necessari.{% endcomment %}
+{% with nome=request.resolver_match.namespace %}
+<aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark" aria-label="Menu principale">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-laterale" aria-controls="menu-laterale" aria-expanded="false" aria-label="Apri il menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a href="{% url 'core:cruscotto' %}" class="navbar-brand navbar-brand-autodark">
+      <span class="marchio"><i class="ti ti-building-community" aria-hidden="true"></i></span>
+      <span class="ms-2 text-truncate">{{ organizzazione.nome_breve }}</span>
+    </a>
+    <div class="collapse navbar-collapse" id="menu-laterale">
+      <ul class="navbar-nav pt-lg-3">
+        <li class="nav-item{% if nome == 'core' and request.resolver_match.url_name == 'cruscotto' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'core:cruscotto' %}"><span class="nav-link-icon"><i class="ti ti-home"></i></span><span class="nav-link-title">Cruscotto</span></a>
+        </li>
+        {% if perms.anagrafica.view_soggetto %}
+        <li class="nav-item{% if nome == 'anagrafica' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'anagrafica:elenco' %}"><span class="nav-link-icon"><i class="ti ti-address-book"></i></span><span class="nav-link-title">Anagrafica</span></a>
+        </li>
+        {% endif %}
+        {% for voce in MODULI_IN_ARRIVO %}
+        <li class="nav-item">
+          <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>
+        </li>
+        {% endfor %}
+        {% if perms.core.gestisci_organizzazione or perms.core.view_eventoaudit or user.is_superuser %}
+        <li class="nav-item mt-3"><span class="nav-link text-uppercase small text-secondary">Sistema</span></li>
+        {% if perms.core.gestisci_organizzazione %}
+        <li class="nav-item{% if request.resolver_match.url_name == 'organizzazione' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'core:organizzazione' %}"><span class="nav-link-icon"><i class="ti ti-building"></i></span><span class="nav-link-title">Organizzazione</span></a>
+        </li>
+        {% endif %}
+        {% if perms.core.view_eventoaudit %}
+        <li class="nav-item{% if request.resolver_match.url_name == 'registro_attivita' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'core:registro_attivita' %}"><span class="nav-link-icon"><i class="ti ti-history"></i></span><span class="nav-link-title">Registro attività</span></a>
+        </li>
+        {% endif %}
+        {% if user.is_superuser %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'admin:index' %}"><span class="nav-link-icon"><i class="ti ti-settings"></i></span><span class="nav-link-title">Amministrazione tecnica</span></a>
+        </li>
+        {% endif %}
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</aside>
+{% endwith %}

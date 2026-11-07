@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titolo %}Registro attività{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Sistema</div>{% endblock %}
+{% block titolo_pagina %}Registro attività{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100">
+      <div class="col-md-4"><select name="azione" class="form-select" aria-label="Azione"><option value="">Tutte le azioni</option>{% for v, l in azioni %}<option value="{{ v }}"{% if request.GET.azione == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-4"><input type="search" name="utente" value="{{ request.GET.utente }}" class="form-control" placeholder="Utente" aria-label="Utente"></div>
+      <div class="col-md-auto"><button class="btn" type="submit"><i class="ti ti-filter me-1"></i>Filtra</button></div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-striped">
+      <thead><tr><th>Quando</th><th>Utente</th><th>Azione</th><th>Oggetto</th><th>IP</th></tr></thead>
+      <tbody>
+      {% for e in object_list %}
+        <tr>
+          <td class="text-nowrap">{{ e.momento|date:"d/m/Y H:i:s" }}</td>
+          <td>{{ e.utente_descrizione|default:"—" }}</td>
+          <td><span class="badge {% if e.azione == 'accesso_fallito' %}bg-red-lt{% elif e.azione == 'esportazione' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %}">{{ e.get_azione_display }}</span></td>
+          <td>{{ e.oggetto_descrizione }}{% if e.dettagli.campi %}<div class="small text-secondary">Campi: {{ e.dettagli.campi|join:", " }}</div>{% endif %}</td>
+          <td class="text-secondary">{{ e.indirizzo_ip|default:"" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-secondary">Nessun evento.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

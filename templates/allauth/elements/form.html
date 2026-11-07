@@ -1,0 +1,5 @@
+{% load allauth %}
+<form {% if attrs.action %}action="{{ attrs.action }}"{% endif %} method="{{ attrs.method|default:'post' }}" {% if attrs.tags and "danger" in attrs.tags %}data-conferma="Confermi l'operazione?"{% endif %}>
+  {% slot body %}{% endslot %}
+  <div class="form-footer d-flex flex-wrap gap-2">{% slot actions %}{% endslot %}</div>
+</form>

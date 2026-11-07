@@ -1,0 +1,62 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Metadati del progetto, dipendenze e configurazione strumenti
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+[project]
+name = "gestione-associazione"
+version = "0.0.1.dev0"
+description = "Gestionale unico per associazioni: soci, protocollo, organi sociali, tesoreria, patrimonio e comunicazioni"
+readme = "README.md"
+license = "CC0-1.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Bartolomeo Santoro aka IZ0BEC", email = "info@iz0bec.info" }]
+requires-python = ">=3.13"
+dependencies = [
+    "django[argon2]>=6.1,<6.2",
+    "django-allauth[mfa]>=65.21",
+    "django-axes>=9.0",
+    "django-environ>=0.14",
+    "django-filter>=26.2",
+    "django-htmx>=1.29",
+    "gunicorn>=26.2",
+    "psycopg[binary]>=3.3",
+    "python-codicefiscale>=0.12",
+    "weasyprint>=70",
+    "whitenoise>=6.12",
+]
+
+[dependency-groups]
+dev = [
+    "factory-boy>=3.3.3",
+    "pytest>=8",
+    "pytest-django>=4.14",
+    "ruff>=0.17",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["apps"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "S", "C4", "SIM"]
+ignore = ["S101"]  # assert nei test
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["S105", "S106", "E501"]  # password fittizie e dati lunghi nei test
+"**/conftest.py" = ["S105", "S106"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

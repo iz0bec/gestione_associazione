@@ -1,0 +1,18 @@
+{% load allauth %}
+<div class="mb-3">
+  {% if attrs.type == "checkbox" %}
+  <label class="form-check">
+    <input class="form-check-input" type="checkbox" {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %} {% if attrs.checked %}checked{% endif %} {% if attrs.disabled %}disabled{% endif %}>
+    <span class="form-check-label">{% slot label %}{% endslot %}</span>
+  </label>
+  {% else %}
+  <label class="form-label" for="{{ attrs.id }}">{% slot label %}{% endslot %}</label>
+  {% if attrs.type == "textarea" %}
+  <textarea class="form-control{% if attrs.errors %} is-invalid{% endif %}" {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %} {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %} {% if attrs.required %}required{% endif %} {% if attrs.readonly %}readonly{% endif %}>{% slot value %}{% endslot %}</textarea>
+  {% else %}
+  <input class="form-control{% if attrs.errors %} is-invalid{% endif %}" type="{{ attrs.type }}" {% if attrs.name %}name="{{ attrs.name }}"{% endif %} {% if attrs.id %}id="{{ attrs.id }}"{% endif %} {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %} {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %} {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %} {% if attrs.required %}required{% endif %} {% if attrs.readonly %}readonly{% endif %} {% if attrs.disabled %}disabled{% endif %}>
+  {% endif %}
+  {% endif %}
+  {% if slots.help_text %}<small class="form-hint">{% slot help_text %}{% endslot %}</small>{% endif %}
+  {% for e in attrs.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+</div>

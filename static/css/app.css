@@ -1,0 +1,44 @@
+/* ******************************************************
+ * Progetto:    Gestione Associazione
+ * Autore:      Bartolomeo Santoro aka IZ0BEC
+ * Email:       info@iz0bec.info
+ * Descrizione: Personalizzazioni grafiche sopra Tabler
+ * Licenza:     CC0 1.0 Universal (pubblico dominio)
+ * SPDX-License-Identifier: CC0-1.0
+ * ****************************************************** */
+
+:root {
+  --ga-colore-marchio: #1d4e89;
+}
+
+.marchio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: .5rem;
+  background: var(--ga-colore-marchio);
+  color: #fff;
+  font-size: 1.25rem;
+}
+.marchio-grande { width: 3.5rem; height: 3.5rem; font-size: 2rem; border-radius: .9rem; }
+
+/* tema: mostra l'icona giusta nel pulsante */
+[data-bs-theme="dark"] .icona-tema-scuro,
+:root:not([data-bs-theme="dark"]) .icona-tema-chiaro { display: none; }
+
+/* sezioni del modulo nascoste in base al tipo (persona/ente) */
+.nascosto { display: none !important; }
+
+fieldset + fieldset { margin-top: .5rem; }
+fieldset legend.h3 { margin-bottom: .75rem; color: var(--tblr-secondary); }
+
+.scelte .form-check-inline { margin-bottom: .25rem; }
+
+/* indicatore di caricamento HTMX */
+.htmx-request #tabella-soggetti, #tabella-soggetti.htmx-request { opacity: .55; transition: opacity .2s; }
+
+@media print {
+  .navbar, .page-header .btn-list, footer { display: none !important; }
+}

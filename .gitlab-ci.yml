@@ -1,0 +1,30 @@
+# Progetto: Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+# Descrizione: Pipeline di verifica (lint, intestazioni, test) - SPDX-License-Identifier: CC0-1.0
+
+stages: [verifica]
+
+variables:
+  UV_CACHE_DIR: .uv-cache
+  POSTGRES_USER: gestione
+  POSTGRES_PASSWORD: ci
+  POSTGRES_DB: gestione_associazione
+  DATABASE_URL: postgres://gestione:ci@postgres:5432/gestione_associazione
+  SECRET_KEY: chiave-solo-per-ci-non-segreta
+
+verifica:
+  stage: verifica
+  image: ghcr.io/astral-sh/uv:0.13-python3.13-bookworm-slim
+  services:
+    - postgres:17-alpine
+  cache:
+    key: uv
+    paths: [.uv-cache]
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git libpango-1.0-0 libpangoft2-1.0-0 >/dev/null
+    - uv sync --frozen
+  script:
+    - uv run ruff check .
+    - uv run ruff format --check .
+    - uv run python scripts/verifica_intestazioni.py
+    - uv run python manage.py makemigrations --check --dry-run
+    - uv run pytest

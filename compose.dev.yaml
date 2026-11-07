@@ -1,0 +1,29 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Solo per sviluppo: PostgreSQL locale (porta 55432)
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+# Uso: docker compose -f compose.dev.yaml up -d
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: gestione-associazione-dev-db
+    environment:
+      POSTGRES_USER: gestione
+      POSTGRES_PASSWORD: sviluppo
+      POSTGRES_DB: gestione_associazione
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - dev_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestione"]
+      interval: 3s
+      retries: 20
+
+volumes:
+  dev_db:

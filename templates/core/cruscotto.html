@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block titolo %}Cruscotto{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">{% now "l j F Y" %}</div>{% endblock %}
+{% block titolo_pagina %}Buongiorno{% if user.first_name %}, {{ user.first_name }}{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="row row-deck row-cards">
+  {% if perms.anagrafica.view_soggetto %}
+  <div class="col-sm-4">
+    <a class="card card-link" href="{% url 'anagrafica:elenco' %}">
+      <div class="card-body">
+        <div class="subheader">Anagrafica</div>
+        <div class="h1 mb-1">{{ statistiche.soggetti }}</div>
+        <div class="text-secondary">{{ statistiche.persone }} persone · {{ statistiche.enti }} enti</div>
+      </div>
+    </a>
+  </div>
+  {% endif %}
+  <div class="col-sm-8">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-cake me-2"></i>Compleanni nei prossimi 14 giorni</h2></div>
+      {% if compleanni %}
+      <div class="list-group list-group-flush">
+        {% for p in compleanni %}
+        <a class="list-group-item list-group-item-action d-flex align-items-center" href="{{ p.get_absolute_url }}">
+          <span class="avatar avatar-sm me-3">{{ p.iniziali }}</span>
+          <span class="flex-fill">{{ p.intestazione }}</span>
+          <span class="text-secondary">{% if p.giorni_mancanti == 0 %}<strong>oggi</strong>{% else %}{{ p.prossimo_compleanno|date:"j F" }}{% endif %} · {{ p.anni_compiuti }} anni</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body text-secondary">Nessun compleanno in arrivo.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-history me-2"></i>Le tue ultime attività</h2></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <tbody>
+          {% for e in ultimi_eventi %}
+            <tr><td class="text-secondary text-nowrap w-1">{{ e.momento|date:"d/m/Y H:i" }}</td><td>{{ e.get_azione_display }}</td><td>{{ e.oggetto_descrizione }}</td></tr>
+          {% empty %}
+            <tr><td class="text-secondary">Nessuna attività registrata.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Layout principale (menu laterale, barra superiore, messaggi)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}{% load static %}<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false}'>
+  <title>{% block titolo %}{% endblock %} · {{ organizzazione.nome_breve|default:APP_NOME }}</title>
+  <script src="{% static 'js/tema.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'vendor/tabler/css/tabler.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/tabler-icons/tabler-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<a class="visually-hidden-focusable" href="#contenuto">Vai al contenuto</a>
+<div class="page">
+  {% block menu %}{% include "includes/menu_laterale.html" %}{% endblock %}
+  <div class="page-wrapper">
+    {% include "includes/barra_superiore.html" %}
+    <main id="contenuto" class="page-body">
+      <div class="container-xl">
+        {% include "includes/messaggi.html" %}
+        {% block intestazione %}
+        <div class="page-header d-print-none mb-3">
+          <div class="row align-items-center g-2">
+            <div class="col">
+              {% block sopratitolo %}{% endblock %}
+              <h1 class="page-title">{% block titolo_pagina %}{% endblock %}</h1>
+            </div>
+            <div class="col-auto ms-auto d-print-none">{% block azioni %}{% endblock %}</div>
+          </div>
+        </div>
+        {% endblock %}
+        {% block contenuto %}{% endblock %}
+      </div>
+    </main>
+    <footer class="footer footer-transparent d-print-none">
+      <div class="container-xl text-secondary small">
+        {{ APP_NOME }} {{ APP_VERSIONE }} · software nel pubblico dominio (CC0 1.0)
+      </div>
+    </footer>
+  </div>
+</div>
+<script src="{% static 'vendor/tabler/js/tabler.min.js' %}"></script>
+<script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

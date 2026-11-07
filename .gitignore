@@ -1,0 +1,18 @@
+# Ambiente
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Dati locali
+var/
+*.sqlite3
+
+# Strumenti
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.DS_Store
+.idea/
+.vscode/

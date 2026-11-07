@@ -1,0 +1,2 @@
+{% for campo in attrs.form %}{% if campo.is_hidden %}{{ campo }}{% else %}{{ campo.as_field_group }}{% endif %}{% endfor %}
+{% for errore in attrs.form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}

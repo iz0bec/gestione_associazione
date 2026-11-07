@@ -1,0 +1,109 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Viste di sistema: cruscotto, dati dell'organizzazione, registro
+# *              attività, controllo di salute per il monitoraggio.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+from django import forms
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db import connection
+from django.http import HttpResponse
+from django.urls import reverse_lazy
+from django.views.decorators.cache import never_cache
+from django.views.generic import ListView, TemplateView, UpdateView
+
+from .audit import Azione, campi_modificati, registra
+from .forms import StileMixin
+from .models import EventoAudit, Organizzazione
+
+
+class PermessoMixin(LoginRequiredMixin, PermissionRequiredMixin):
+    """Accesso solo ad utenti autenticati con il permesso indicato (altrimenti 403)."""
+
+    raise_exception = False
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            self.raise_exception = True
+        return super().handle_no_permission()
+
+
+class CruscottoView(LoginRequiredMixin, TemplateView):
+    template_name = "core/cruscotto.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.anagrafica.models import Soggetto
+
+        ctx = super().get_context_data(**kwargs)
+        attivi = Soggetto.objects.filter(attivo=True)
+        ctx["statistiche"] = {
+            "soggetti": attivi.count(),
+            "persone": attivi.filter(tipo=Soggetto.Tipo.PERSONA).count(),
+            "enti": attivi.filter(tipo=Soggetto.Tipo.ENTE).count(),
+        }
+        ctx["compleanni"] = Soggetto.compleanni_prossimi(giorni=14)[:8]
+        ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(
+            "utente"
+        )[:8]
+        return ctx
+
+
+class OrganizzazioneForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Organizzazione
+        fields = [
+            "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva",
+            "iscrizione_runts", "indirizzo", "cap", "comune", "provincia", "telefono",
+            "email", "pec", "sito_web", "logo", "informativa_privacy",
+        ]  # fmt: skip
+        widgets = {"informativa_privacy": forms.Textarea(attrs={"rows": 6})}
+
+
+class OrganizzazioneView(PermessoMixin, UpdateView):
+    permission_required = "core.gestisci_organizzazione"
+    form_class = OrganizzazioneForm
+    template_name = "core/organizzazione.html"
+    success_url = reverse_lazy("core:organizzazione")
+
+    def get_object(self, queryset=None):
+        return Organizzazione.corrente()
+
+    def form_valid(self, form):
+        dettagli = campi_modificati(form)
+        risposta = super().form_valid(form)
+        if dettagli.get("campi"):
+            registra(Azione.MODIFICA, self.object, **dettagli)
+        messages.success(self.request, "Dati dell'organizzazione salvati.")
+        return risposta
+
+
+class RegistroAttivitaView(PermessoMixin, ListView):
+    permission_required = "core.view_eventoaudit"
+    template_name = "core/registro_attivita.html"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = EventoAudit.objects.select_related("oggetto_tipo")
+        if azione := self.request.GET.get("azione"):
+            qs = qs.filter(azione=azione)
+        if utente := self.request.GET.get("utente"):
+            qs = qs.filter(utente_descrizione__icontains=utente)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["azioni"] = EventoAudit.Azione.choices
+        return ctx
+
+
+@never_cache
+def salute(request):
+    """Controllo per il monitoraggio: 200 se applicazione e database rispondono."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+    return HttpResponse("ok", content_type="text/plain")

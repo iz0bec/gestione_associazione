@@ -1,0 +1,46 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Installazione con Docker (app + PostgreSQL). Parametri nel file .env.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+# Variabili richieste in .env: SECRET_KEY, DB_PASSWORD, ALLOWED_HOSTS
+# Facoltative: APP_PORT (default 8000), le altre di .env.example
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    image: gestione-associazione:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://gestione:${DB_PASSWORD:?Impostare DB_PASSWORD in .env}@db:5432/gestione_associazione
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - media:/data/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gestione
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Impostare DB_PASSWORD in .env}
+      POSTGRES_DB: gestione_associazione
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestione -d gestione_associazione"]
+      interval: 5s
+      retries: 12
+
+volumes:
+  db:
+  media:

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titolo %}Anagrafica{% endblock %}
+{% block titolo_pagina %}Anagrafica{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.anagrafica.esporta_soggetti %}
+  <a class="btn" href="{% url 'anagrafica:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-1"></i>Esporta CSV</a>
+  {% endif %}
+  {% if perms.anagrafica.add_soggetto %}
+  <a class="btn btn-primary" href="{% url 'anagrafica:nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo</a>
+  {% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100" hx-get="{% url 'anagrafica:elenco' %}" hx-target="#tabella-soggetti" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, submit">
+      <div class="col-lg-5">
+        <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>{{ filter.form.q }}</div>
+      </div>
+      <div class="col-sm-4 col-lg-2">{{ filter.form.tipo }}</div>
+      <div class="col-sm-4 col-lg-3">{{ filter.form.categoria }}</div>
+      <div class="col-sm-4 col-lg-2">{{ filter.form.stato }}</div>
+      <noscript><button class="btn" type="submit">Filtra</button></noscript>
+    </form>
+  </div>
+  {% partialdef tabella inline %}
+  <div id="tabella-soggetti">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead><tr><th>Nome</th><th class="d-none d-md-table-cell">Categorie</th><th class="d-none d-lg-table-cell">Recapiti</th><th class="d-none d-md-table-cell">Comune</th></tr></thead>
+        <tbody>
+        {% for s in page_obj %}
+          <tr class="{% if not s.attivo %}text-secondary{% endif %}">
+            <td>
+              <div class="d-flex align-items-center">
+                <span class="avatar avatar-sm me-2 {% if s.is_persona %}bg-blue-lt{% else %}bg-green-lt{% endif %}">{% if s.is_persona %}{{ s.iniziali }}{% else %}<i class="ti ti-building"></i>{% endif %}</span>
+                <div>
+                  <a href="{{ s.get_absolute_url }}" class="text-reset fw-medium">{{ s.nome_completo }}</a>
+                  {% if s.deceduto %}<span class="badge bg-dark-lt ms-1" title="Deceduto">†</span>{% endif %}
+                  {% if not s.attivo %}<span class="badge bg-secondary-lt ms-1">archiviato</span>{% endif %}
+                  {% if s.qualifica %}<div class="small text-secondary">{{ s.qualifica }}</div>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td class="d-none d-md-table-cell">{% for c in s.categorie.all %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% endfor %}</td>
+            <td class="d-none d-lg-table-cell small">{% if s.email %}<div><i class="ti ti-mail me-1"></i>{{ s.email }}</div>{% endif %}{% if s.cellulare or s.telefono %}<div><i class="ti ti-phone me-1"></i>{{ s.cellulare|default:s.telefono }}</div>{% endif %}</td>
+            <td class="d-none d-md-table-cell">{{ s.comune }}{% if s.provincia %} ({{ s.provincia }}){% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-secondary py-4 text-center">Nessun risultato.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/paginazione.html" %}
+  </div>
+  {% endpartialdef %}
+</div>
+{% endblock %}

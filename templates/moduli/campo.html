@@ -1,0 +1,25 @@
+{% load interfaccia %}{% comment %}Un campo: etichetta, controllo, aiuto, errori.{% endcomment %}
+{% with tipo=field|presentazione %}
+<div class="mb-3">
+  {% if tipo == "casella" %}
+  <label class="form-check">
+    {{ field|con_stile }}
+    <span class="form-check-label">{{ field.label }}</span>
+  </label>
+  {% elif tipo == "scelte" %}
+  <div class="form-label{% if field.field.required %} required{% endif %}">{{ field.label }}</div>
+  <div class="scelte">
+    {% for scelta in field %}
+    <label class="form-check form-check-inline">
+      {{ scelta.tag }}<span class="form-check-label">{{ scelta.choice_label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  {% else %}
+  <label class="form-label{% if field.field.required %} required{% endif %}" for="{{ field.auto_id }}">{{ field.label }}</label>
+  {{ field|con_stile }}
+  {% endif %}
+  {% if field.help_text %}<small class="form-hint" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</small>{% endif %}
+  {% for errore in field.errors %}<div class="invalid-feedback d-block">{{ errore }}</div>{% endfor %}
+</div>
+{% endwith %}

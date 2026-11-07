@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titolo %}{{ soggetto }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'anagrafica:elenco' %}">Anagrafica</a> · {{ soggetto.get_tipo_display }}</div>{% endblock %}
+{% block titolo_pagina %}{{ soggetto.intestazione }}{% if soggetto.deceduto %} <span class="badge bg-dark-lt">†</span>{% endif %}{% if not soggetto.attivo %} <span class="badge bg-secondary-lt">archiviato</span>{% endif %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.anagrafica.archivia_soggetto %}
+  <form method="post" action="{% url 'anagrafica:archivia' soggetto.pk %}" data-conferma="{% if soggetto.attivo %}Archiviare questo soggetto? Non comparirà più negli elenchi.{% else %}Ripristinare questo soggetto?{% endif %}">
+    {% csrf_token %}<input type="hidden" name="azione" value="{% if soggetto.attivo %}archivia{% else %}ripristina{% endif %}">
+    <button class="btn" type="submit"><i class="ti ti-{% if soggetto.attivo %}archive{% else %}restore{% endif %} me-1"></i>{% if soggetto.attivo %}Archivia{% else %}Ripristina{% endif %}</button>
+  </form>
+  {% endif %}
+  {% if perms.anagrafica.change_soggetto %}<a class="btn btn-primary" href="{% url 'anagrafica:modifica' soggetto.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="datagrid">
+          {% if soggetto.is_persona %}
+          <div class="datagrid-item"><div class="datagrid-title">Codice fiscale</div><div class="datagrid-content">{{ soggetto.codice_fiscale|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Nascita</div><div class="datagrid-content">{% if soggetto.data_nascita %}{{ soggetto.data_nascita|date:"d/m/Y" }}{% if soggetto.luogo_nascita %}, {{ soggetto.luogo_nascita }}{% endif %} ({{ soggetto.eta }} anni){% else %}—{% endif %}</div></div>
+          {% if soggetto.deceduto %}<div class="datagrid-item"><div class="datagrid-title">Decesso</div><div class="datagrid-content">{{ soggetto.data_decesso|date:"d/m/Y" }}</div></div>{% endif %}
+          {% else %}
+          <div class="datagrid-item"><div class="datagrid-title">Codice fiscale</div><div class="datagrid-content">{{ soggetto.codice_fiscale|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Partita IVA</div><div class="datagrid-content">{{ soggetto.partita_iva|default:"—" }}</div></div>
+          {% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Qualifica</div><div class="datagrid-content">{{ soggetto.qualifica|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Email</div><div class="datagrid-content">{% if soggetto.email %}<a href="mailto:{{ soggetto.email }}">{{ soggetto.email }}</a>{% else %}—{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">PEC</div><div class="datagrid-content">{{ soggetto.pec|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Telefono</div><div class="datagrid-content">{{ soggetto.telefono|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Cellulare</div><div class="datagrid-content">{{ soggetto.cellulare|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Indirizzo</div><div class="datagrid-content">{{ soggetto.indirizzo_completo|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Categorie</div><div class="datagrid-content">{% for c in soggetto.categorie.all %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% empty %}—{% endfor %}</div></div>
+        </div>
+        {% if soggetto.note %}<hr><div class="text-secondary">{{ soggetto.note|linebreaksbr }}</div>{% endif %}
+      </div>
+      <div class="card-footer text-secondary small">Inserito il {{ soggetto.creato_il|date:"d/m/Y H:i" }}{% if soggetto.creato_da %} da {{ soggetto.creato_da }}{% endif %} · ultima modifica {{ soggetto.modificato_il|date:"d/m/Y H:i" }}{% if soggetto.modificato_da %} da {{ soggetto.modificato_da }}{% endif %}</div>
+    </div>
+    {% if storia is not None %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title">Storia delle modifiche</h2></div>
+      <div class="list-group list-group-flush">
+        {% for e in storia %}
+        <div class="list-group-item"><span class="text-secondary">{{ e.momento|date:"d/m/Y H:i" }}</span> · {{ e.utente_descrizione|default:"sistema" }} · {{ e.get_azione_display }}{% if e.dettagli.campi %}: {% for nome, valori in e.dettagli.campi.items %}<span class="badge bg-secondary-lt" title="{{ valori.prima|default:'—' }} → {{ valori.dopo|default:'—' }}">{{ nome }}</span> {% endfor %}{% endif %}</div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun evento.</div>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-shield-check me-2"></i>Consensi privacy</h2></div>
+      <div class="list-group list-group-flush">
+        {% for c in consensi %}
+        <div class="list-group-item"><span class="status-dot {% if c.prestato %}status-dot-animated bg-green{% else %}bg-red{% endif %} me-2"></span>{{ c.get_finalita_display }}<div class="small text-secondary">{% if c.prestato %}prestato{% else %}negato/revocato{% endif %} il {{ c.data|date:"d/m/Y" }}{% if c.modalita %} · {{ c.modalita }}{% endif %}</div></div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun consenso registrato.</div>{% endfor %}
+      </div>
+      {% if perms.anagrafica.add_consenso %}
+      <div class="card-body border-top">
+        <form method="post" action="{% url 'anagrafica:consenso' soggetto.pk %}">{% csrf_token %}
+          {{ form_consenso }}
+          <button class="btn w-100" type="submit"><i class="ti ti-plus me-1"></i>Registra consenso</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% comment %}Paginazione; conserva i filtri. Variabili: page_obj, request. hx-target opzionale.{% endcomment %}
+{% if page_obj.has_other_pages %}
+<div class="card-footer d-flex align-items-center">
+  <p class="m-0 text-secondary">{{ page_obj.start_index }}–{{ page_obj.end_index }} di {{ page_obj.paginator.count }}</p>
+  <ul class="pagination m-0 ms-auto">
+    {% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?{% querystring page=page_obj.previous_page_number %}"><i class="ti ti-chevron-left"></i> precedente</a></li>
+    {% endif %}
+    <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?{% querystring page=page_obj.next_page_number %}">successiva <i class="ti ti-chevron-right"></i></a></li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}

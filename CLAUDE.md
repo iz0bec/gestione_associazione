@@ -1,0 +1,68 @@
+<!--
+******************************************************
+* Progetto:    Gestione Associazione
+* Autore:      Bartolomeo Santoro aka IZ0BEC
+* Email:       info@iz0bec.info
+* Descrizione: Istruzioni per Claude Code su questo repository
+* Licenza:     CC0 1.0 Universal (pubblico dominio)
+* SPDX-License-Identifier: CC0-1.0
+******************************************************
+-->
+
+# CLAUDE.md — Gestione Associazione
+
+Gestionale unico per associazioni (nato per una sezione ANCR) che unifica tre progetti esistenti:
+`~/sviluppo/Protocollo_ANCR` (Node), `~/sviluppo/Gestione_Soci_v0` (Flask), `~/sviluppo/ANCR - Assemblee`
+(Flask, repo `ANCR.git`). Analisi in `docs/analisi/analisi-e-finalita.md`, decisioni in
+`docs/architettura/decisioni.md`, piano in `docs/roadmap.md`.
+
+## Stack e comandi
+
+Python 3.13 · Django 6.1 · PostgreSQL · HTMX · Tabler · uv.
+
+```bash
+uv sync
+uv run python manage.py runserver
+uv run pytest                                   # richiede PostgreSQL (DATABASE_URL in .env)
+uv run ruff check . && uv run ruff format .
+uv run python scripts/verifica_intestazioni.py
+uv run python manage.py makemigrations --check --dry-run
+```
+
+DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster locale in `var/pgdata`
+(PostgreSQL 17 Homebrew): `$(brew --prefix postgresql@17)/bin/pg_ctl -D var/pgdata -o "-p 55432 -k /tmp" -l var/postgres.log start`.
+
+## Regole del progetto
+
+- **Intestazione su ogni file sorgente** (py, sh, css, js, yaml, toml, md e template base):
+  Progetto, Autore «Bartolomeo Santoro aka IZ0BEC», Email «info@iz0bec.info», Descrizione,
+  Licenza «CC0 1.0 Universal (pubblico dominio)», `SPDX-License-Identifier: CC0-1.0`.
+  Nei template che usano `{% extends %}` l'intestazione va DOPO `extends` (deve essere il primo tag).
+- **Licenza CC0 1.0**: non introdurre codice copiato con licenze incompatibili; le librerie in
+  `static/vendor` vanno elencate in `static/vendor/README.md` e `docs/sistema/licenze-terze-parti.md`.
+- Testi, nomi di dominio, documentazione e commit in **italiano** (`Feat:`, `Fix:`, `Docs:`).
+- Logica nei **servizi** (`apps/<modulo>/servizi.py`), viste sottili; operazioni rilevanti → `apps.core.audit.registra`.
+- Ogni vista protetta con `apps.core.views.PermessoMixin` + `permission_required`; i permessi nuovi vanno
+  assegnati ai ruoli in `apps/accounts/ruoli.py` (allineati a ogni `migrate`; un permesso inesistente fa fallire).
+- Numeri progressivi **solo** con `apps.core.numerazione.prossimo_numero` dentro `transaction.atomic()`
+  insieme al salvataggio del documento.
+- Anagrafica unica: i moduli si collegano a `anagrafica.Soggetto`; i documenti ufficiali conservano anche
+  il testo del mittente/destinatario al momento della registrazione.
+- **CSP rigorosa**: niente `<script>` inline, `onclick`, `style=` nei template; comportamenti in
+  `static/js/app.js` con attributi `data-*`; niente CDN. htmx con `allowEval=false`.
+- Allegati in `MEDIA_ROOT` (mai serviti direttamente): download solo da viste con controllo permessi.
+- Moduli: `{{ form }}` / `{{ campo.as_field_group }}` usano `templates/moduli/` e il filtro `con_stile`.
+- Liste con ricerca HTMX: partial nel template (`{% partialdef nome inline %}`, vista che restituisce
+  `"pagina.html#nome"` se `request.htmx`).
+- Email: Django 6.1 usa `MAILERS` (le impostazioni `EMAIL_*` sono deprecate) — vedi `config/settings.py`.
+- Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
+  configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
+
+## Pubblicazione
+
+- Nessun remote finché non c'è la **0.0.1 RC**: allora GitLab personale (`mygitlab.iz0bec.info/sbart64/`).
+- Release stabile (1.0) su **GitHub**.
+
+## Stato
+
+Fase 0 completata (fondamenta + anagrafica). Prossimo modulo previsto: Soci e tesseramento (roadmap, fase 1).

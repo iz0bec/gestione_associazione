@@ -1,0 +1,35 @@
+{% comment %}Barra superiore: ricerca rapida, tema, menu utente.{% endcomment %}
+<header class="navbar navbar-expand-md d-print-none">
+  <div class="container-xl">
+    {% if perms.anagrafica.view_soggetto %}
+    <form action="{% url 'anagrafica:elenco' %}" method="get" role="search" class="d-none d-md-flex">
+      <div class="input-icon">
+        <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+        <input type="search" name="q" class="form-control" placeholder="Cerca in anagrafica…" aria-label="Cerca in anagrafica">
+      </div>
+    </form>
+    {% endif %}
+    <div class="navbar-nav flex-row order-md-last ms-auto">
+      <button type="button" class="nav-link px-2" data-cambia-tema title="Tema chiaro/scuro" aria-label="Cambia tema chiaro o scuro">
+        <i class="ti ti-moon icona-tema-scuro"></i><i class="ti ti-sun icona-tema-chiaro"></i>
+      </button>
+      <div class="nav-item dropdown">
+        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Menu utente">
+          <span class="avatar avatar-sm">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</span>
+          <div class="d-none d-xl-block ps-2">
+            <div>{{ user.get_full_name|default:user.username }}</div>
+            <div class="mt-1 small text-secondary">{{ user.groups.all|join:", "|default:"—" }}</div>
+          </div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+          <a href="{% url 'account_change_password' %}" class="dropdown-item"><i class="ti ti-key me-2"></i>Cambia password</a>
+          <a href="{% url 'mfa_index' %}" class="dropdown-item"><i class="ti ti-shield-lock me-2"></i>Verifica in due passaggi</a>
+          <div class="dropdown-divider"></div>
+          <form method="post" action="{% url 'account_logout' %}">{% csrf_token %}
+            <button type="submit" class="dropdown-item"><i class="ti ti-logout me-2"></i>Esci</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

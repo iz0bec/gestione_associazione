@@ -1,0 +1,7 @@
+{% extends "layouts/accesso.html" %}
+{% block head_title %}Accesso bloccato{% endblock %}
+{% block content %}
+<h1 class="h2">Accesso temporaneamente bloccato</h1>
+<p class="text-secondary">Troppi tentativi di accesso non riusciti. Riprova fra qualche minuto o rivolgiti all'amministratore.</p>
+<a class="btn w-100" href="{% url 'account_login' %}">Torna all'accesso</a>
+{% endblock %}
