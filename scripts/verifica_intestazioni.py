@@ -16,12 +16,12 @@ ESTENSIONI = (".py", ".html", ".css", ".js", ".sh", ".yaml", ".yml", ".toml", ".
 ESCLUSI = ("static/vendor/", "apps/accounts/migrations/0001", "apps/accounts/migrations/0002",
            "apps/core/migrations/0001", "apps/anagrafica/migrations/0001",
            "apps/core/migrations/0002_iscrizioni", "apps/soci/migrations/0001",
-           "apps/protocollo/migrations/0001")  # fmt: skip
+           "apps/protocollo/migrations/0001", "apps/organi/migrations/0001")  # fmt: skip
 # file brevi senza intestazione (frammenti di template e init vuoti)
 SENZA_INTESTAZIONE_OK = ("templates/allauth/elements/", "templates/moduli/", "templates/includes/",
                          "/__init__.py", "templates/errori/", "templates/40", "templates/50",
                          "templates/core/", "templates/anagrafica/", "templates/soci/",
-                         "templates/protocollo/", "templates/allauth/layouts/",
+                         "templates/protocollo/", "templates/organi/", "templates/allauth/layouts/",
                          "CHANGELOG.md", "static/vendor/README.md", ".gitlab-ci.yml")  # fmt: skip
 
 

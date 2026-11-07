@@ -51,6 +51,15 @@ In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 
 L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (segretario).
 
-La tabella cresce con i nuovi moduli (organi sociali, tesoreria, ...).
+### Organi sociali
+
+| Ruolo | Consulta organi, riunioni, verbali, delibere | Prepara e convoca riunioni | Presenze e verbali | Cariche | Regole degli organi |
+|---|---|---|---|---|---|
+| Amministratore di sistema | sì | sì | sì | sì | sì |
+| Presidente | sì | sì | sì | - | - |
+| Segretario | sì | sì | sì | sì | - |
+| Tesoriere, Addetto protocollo, Consigliere, Revisore | sì | - | - | - | - |
+
+La tabella cresce con i nuovi moduli (comunicazioni, tesoreria, ...).
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

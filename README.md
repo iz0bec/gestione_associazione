@@ -23,7 +23,8 @@ L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/an
 > Moduli disponibili: accesso con secondo fattore, ruoli, dati dell'organizzazione,
 > registro attività, **anagrafica unica**, **soci e tesseramento** (libro soci, quote,
 > ricevute, domande di iscrizione anche online), **protocollo** (registro, documenti,
-> posta e PEC da protocollare, registri giornalieri). Gli altri moduli sono pianificati nella
+> posta e PEC da protocollare, registri giornalieri), **organi sociali** (cariche,
+> riunioni, presenze e deleghe, verbali e delibere). Gli altri moduli sono pianificati nella
 > [roadmap](docs/roadmap.md).
 
 ## Caratteristiche

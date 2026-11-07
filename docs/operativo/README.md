@@ -18,7 +18,8 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 3. [Anagrafica](anagrafica.md) - persone ed enti, categorie, consensi privacy, esportazione
 4. [Soci e tesseramento](soci.md) - libro soci, tessere, quote e ricevute, rinnovo, domande di iscrizione
 5. [Protocollo](protocollo.md) - registrazioni, documenti, annullamento, posta e PEC, registri giornalieri
-6. [Organizzazione e registro attività](sistema.md) - dati dell'ente, controllo delle operazioni
+6. [Organi sociali](organi.md) - cariche, riunioni e convocazioni, presenze e deleghe, verbali e delibere
+7. [Organizzazione e registro attività](sistema.md) - dati dell'ente, controllo delle operazioni
 
 I moduli Organi sociali, Comunicazioni, Tesoreria e Patrimonio sono in
 sviluppo: nel menu compaiono con l'etichetta *presto*.

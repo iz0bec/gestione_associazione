@@ -1,0 +1,2 @@
+<div class="delibera"><strong>Delibera{% if d.codice %} {{ d.codice }}{% endif %} – {{ d.oggetto }}</strong><br>{{ d.testo|linebreaksbr }}<br>
+<em>Votazione {{ d.get_votazione_display|lower }}{% if d.unanimita %}: approvata all'unanimità{% elif d.votazione != "acclamazione" %}: favorevoli {{ d.favorevoli }}, contrari {{ d.contrari }}, astenuti {{ d.astenuti }}{% endif %}. Esito: {{ d.get_esito_display|lower }}.</em></div>

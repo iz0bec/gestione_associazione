@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block titolo %}{{ riunione.titolo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a> · <a href="{{ riunione.organo.get_absolute_url }}">{{ riunione.organo }}</a></div>{% endblock %}
+{% block titolo_pagina %}{{ riunione.titolo }} {% include "organi/_stato_riunione.html" with r=riunione %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <a class="btn" href="{% url 'organi:convocazione' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Convocazione</a>
+  {% if riunione.modificabile and perms.organi.change_riunione %}<a class="btn" href="{% url 'organi:riunione_modifica' riunione.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+  {% if riunione.modificabile and perms.organi.convoca_riunione %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
+  {% if riunione.stato == "bozza" and perms.organi.convoca_riunione %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#convoca"><i class="ti ti-send me-1"></i>Convoca</button>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if riunione.stato == "annullata" %}<div class="alert alert-danger">Riunione annullata: {{ riunione.motivo_annullamento }}</div>{% endif %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="datagrid mb-3">
+          <div class="datagrid-item"><div class="datagrid-title">Prima convocazione</div><div class="datagrid-content">{{ riunione.prima_convocazione|date:"l j F Y, H:i" }}<div class="small text-secondary">{{ riunione.luogo }}</div></div></div>
+          {% if riunione.seconda_convocazione %}<div class="datagrid-item"><div class="datagrid-title">Seconda convocazione</div><div class="datagrid-content">{{ riunione.seconda_convocazione|date:"l j F Y, H:i" }}<div class="small text-secondary">{{ riunione.luogo_seconda|default:riunione.luogo }}</div></div></div>{% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Modalità</div><div class="datagrid-content">{{ riunione.get_modalita_display }}{% if riunione.collegamento %}<div class="small text-secondary text-break">{{ riunione.collegamento }}</div>{% endif %}</div></div>
+          {% if riunione.data_convocazione %}<div class="datagrid-item"><div class="datagrid-title">Convocata il</div><div class="datagrid-content">{{ riunione.data_convocazione|date:"d/m/Y" }}{% if riunione.protocollo_convocazione %} · <a href="{{ riunione.protocollo_convocazione.get_absolute_url }}">prot. {{ riunione.protocollo_convocazione.segnatura }}</a>{% endif %}</div></div>{% endif %}
+        </div>
+        <h3>Ordine del giorno</h3>
+        <ol class="mb-0">{% for p in punti %}<li>{{ p.titolo }}</li>{% endfor %}</ol>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    {% if riunione.stato == "bozza" %}
+    <div class="card"><div class="card-body">
+      <h3 class="card-title">Da fare</h3>
+      <p class="text-secondary">Controllare l'ordine del giorno e la lettera, poi <strong>Convoca</strong>: la riunione riceve il numero e si possono registrare presenze e verbale.</p>
+      <p class="mb-0">Aventi diritto oggi: <strong>{{ aventi_diritto }}</strong></p>
+    </div></div>
+    {% elif riunione.stato != "annullata" %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-users me-2"></i>Presenze</h2></div>
+      <div class="card-body">
+        {% if quorum_prima %}
+          {% include "organi/_quorum.html" with q=quorum_prima etichetta="Prima convocazione" %}
+          {% if quorum_seconda %}{% include "organi/_quorum.html" with q=quorum_seconda etichetta="Seconda convocazione" %}{% endif %}
+        {% else %}<p class="text-secondary">Presenze non ancora registrate.</p>{% endif %}
+        <a class="btn w-100 mt-2" href="{% url 'organi:presenze' riunione.pk %}">Foglio presenze</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-file-text me-2"></i>Verbale</h2></div>
+      <div class="card-body">
+        {% if verbale and verbale.chiuso %}
+          <p>Verbale n. <strong>{{ verbale.numero }}</strong>, chiuso il {{ verbale.chiuso_il|date:"d/m/Y" }}.</p>
+          <a class="btn w-100 mb-2" href="{% url 'organi:verbale_pdf' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>
+          <a class="btn btn-link w-100" href="{% url 'organi:verbale' riunione.pk %}">Apri</a>
+        {% elif verbale or perms.organi.verbalizza %}
+          <p class="text-secondary">{% if verbale %}In redazione.{% else %}Non ancora iniziato.{% endif %}</p>
+          <a class="btn btn-primary w-100" href="{% url 'organi:verbale' riunione.pk %}">{% if verbale %}Continua il verbale{% else %}Inizia il verbale{% endif %}</a>
+        {% else %}<p class="text-secondary mb-0">Non ancora redatto.</p>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if riunione.stato == "bozza" and perms.organi.convoca_riunione %}
+<div class="modal fade" id="convoca" tabindex="-1" aria-labelledby="titolo-convoca" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'organi:convoca' riunione.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-convoca">Convoca la riunione</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <p>La riunione riceve il numero progressivo dell'anno e la lettera di convocazione diventa definitiva.</p>
+        {% if perms.protocollo.add_protocollo %}<label class="form-check"><input class="form-check-input" type="checkbox" name="protocolla" checked><span class="form-check-label">Protocolla la convocazione in uscita (con la lettera in PDF e gli aventi diritto come destinatari)</span></label>{% endif %}
+        <p class="text-secondary small mt-2 mb-0">L'invio per email arriverà con il modulo Comunicazioni; intanto la lettera si scarica in PDF.</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Convoca</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% if riunione.modificabile and perms.organi.convoca_riunione %}
+<div class="modal fade" id="annulla" tabindex="-1" aria-labelledby="titolo-annulla" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'organi:annulla' riunione.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-annulla">Annulla la riunione</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body"><label class="form-label required" for="motivo">Motivo</label><input class="form-control" id="motivo" name="motivo" maxlength="255" required></div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Indietro</button><button type="submit" class="btn btn-danger">Annulla la riunione</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

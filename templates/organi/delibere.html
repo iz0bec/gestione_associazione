@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titolo %}Registro delle delibere{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}Registro delle delibere{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100">
+      <div class="col-md-6"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Cerca nell'oggetto o nel testo" aria-label="Cerca"></div>
+      <div class="col-md-4"><select class="form-select" name="organo" aria-label="Organo" data-invio-automatico><option value="">Tutti gli organi</option>{% for o in organi %}<option value="{{ o.pk }}"{% if o.pk|stringformat:"s" == organo_scelto %} selected{% endif %}>{{ o }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button class="btn w-100" type="submit">Cerca</button></div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Delibera</th><th>Data</th><th>Oggetto</th><th>Esito</th></tr></thead>
+      <tbody>
+      {% for d in delibere %}
+        <tr>
+          <td class="text-nowrap fw-medium">{{ d.codice }}</td>
+          <td class="text-nowrap">{{ d.verbale.inizio|default:d.verbale.riunione.prima_convocazione|date:"d/m/Y" }}</td>
+          <td><a class="text-reset" href="{% url 'organi:verbale' d.verbale.riunione_id %}#delibere">{{ d.oggetto }}</a><div class="small text-secondary">{{ d.testo|truncatechars:160 }}</div></td>
+          <td><span class="badge {% if d.esito == 'approvata' %}bg-green-lt{% elif d.esito == 'respinta' %}bg-red-lt{% else %}bg-secondary-lt{% endif %}">{{ d.get_esito_display|lower }}</span></td>
+        </tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna delibera nei verbali chiusi.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

@@ -147,3 +147,17 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   (XSS); mostrare solo testo elimina il problema alla radice. POP3 non è supportato (cancellerebbe o
   non distinguerebbe i messaggi).
 - Le password IMAP sono cifrate con una chiave separata dal database (ADR-007).
+
+## ADR-017 - Organi sociali: dalla convocazione al libro dei verbali
+
+- **Aventi diritto** calcolati, non scritti a mano: per l'assemblea i soci attivi alla data (con il voto ai
+  soli soci in regola, se previsto), per gli altri organi le cariche in corso; all'apertura delle presenze
+  l'elenco viene **fissato** nella riunione (così cambiamenti successivi non alterano il foglio presenze).
+- **Quorum e deleghe** configurabili per organo secondo lo statuto (default: più della metà in prima
+  convocazione; assemblea valida con qualunque numero in seconda; 3 deleghe come art. 24 D.Lgs. 117/2017).
+- **Numerazioni**: riunioni per organo e anno (`riunione_<organo>`), libro dei verbali per organo senza
+  azzeramento (`verbale_<organo>`), delibere per organo e anno (`delibera_<organo>`), assegnate alla chiusura.
+- **Chiusura** irreversibile: PDF conservato con impronta, protocollazione facoltativa. Un verbale senza
+  numero legale non può contenere delibere. Eventuali rettifiche si fanno con una delibera successiva.
+- Le cariche sostituiscono la «gestione utenti per ruolo statutario» dell'app Assemblee: il ruolo nell'app
+  (permessi) resta distinto dalla carica sociale (ADR sui ruoli).

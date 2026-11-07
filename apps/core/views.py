@@ -8,6 +8,8 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+from datetime import date
+
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -49,6 +51,16 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
         ctx["compleanni"] = Soggetto.compleanni_prossimi(giorni=14)[:8]
         if self.request.user.has_perm("soci.view_socio"):
             ctx["soci"] = _riepilogo_soci()
+        if self.request.user.has_perm("organi.view_riunione"):
+            from apps.organi.models import Riunione
+
+            ctx["riunioni"] = (
+                Riunione.objects.filter(
+                    stato=Riunione.Stato.CONVOCATA, prima_convocazione__date__gte=date.today()
+                )
+                .select_related("organo")
+                .order_by("prima_convocazione")[:5]
+            )
         if self.request.user.has_perm("protocollo.view_protocollo"):
             ctx["protocollo"] = _riepilogo_protocollo(self.request.user)
         ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(
@@ -58,8 +70,6 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
 
 
 def _riepilogo_soci():
-    from datetime import date
-
     from apps.soci.models import DomandaIscrizione, Socio
 
     anno = date.today().year

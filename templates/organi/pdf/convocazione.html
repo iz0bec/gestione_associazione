@@ -1,0 +1,25 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Convocazione {{ r.titolo }}{% endblock %}
+{% block stile %}
+  .data { text-align: right; margin-bottom: 14pt; }
+  .oggetto { font-weight: bold; margin: 10pt 0; }
+  ol li { margin-bottom: 4pt; }
+  .firma { margin-top: 28pt; text-align: right; }
+  .destinatari { font-size: 8pt; color: #444; margin-top: 18pt; }
+{% endblock %}
+{% block contenuto %}
+<div class="data">{{ organizzazione.comune }}{% if organizzazione.comune %}, {% endif %}{{ r.data_convocazione|default:r.prima_convocazione|date:"j F Y" }}{% if r.protocollo_convocazione %}<br>Prot. n. {{ r.protocollo_convocazione.segnatura }}{% endif %}</div>
+<p>{% if r.organo.e_assemblea %}Ai soci{% else %}Ai componenti del {{ r.organo }}{% endif %}</p>
+<p class="oggetto">Oggetto: convocazione {{ r.organo|lower }}{% if r.straordinaria %} straordinaria{% endif %}</p>
+{% if r.premessa %}<p>{{ r.premessa|linebreaksbr }}</p>{% endif %}
+<p>È convocata {% if r.organo.e_assemblea %}l'{{ r.organo|lower }}{% else %}la riunione del {{ r.organo }}{% endif %}{% if r.straordinaria %} in seduta straordinaria{% endif %}
+in prima convocazione il giorno <strong>{{ r.prima_convocazione|date:"l j F Y" }} alle ore {{ r.prima_convocazione|date:"H:i" }}</strong> presso {{ r.luogo }}{% if r.seconda_convocazione %}
+e, occorrendo, in seconda convocazione il giorno <strong>{{ r.seconda_convocazione|date:"l j F Y" }} alle ore {{ r.seconda_convocazione|date:"H:i" }}</strong> presso {{ r.luogo_seconda|default:r.luogo }}{% endif %},
+per discutere e deliberare sul seguente</p>
+<p class="oggetto">Ordine del giorno</p>
+<ol>{% for p in r.punti.all %}<li>{{ p.titolo }}</li>{% endfor %}</ol>
+{% if r.modalita != "presenza" %}<p>Modalità: {{ r.get_modalita_display|lower }}. {{ r.collegamento }}</p>{% endif %}
+{% if r.organo.e_assemblea and r.organo.max_deleghe %}<p class="piccolo">Il socio impossibilitato a intervenire può farsi rappresentare da un altro socio con delega scritta; ogni socio può ricevere al massimo {{ r.organo.max_deleghe }} deleg{{ r.organo.max_deleghe|pluralize:"a,he" }}.{% if r.organo.solo_soci_in_regola %} Hanno diritto di voto i soci in regola con la quota associativa.{% endif %}</p>{% endif %}
+<div class="firma">Il Presidente<br><br>______________________</div>
+{% if not r.organo.e_assemblea and destinatari %}<div class="destinatari">Destinatari: {% for s in destinatari %}{{ s.nome_completo }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+{% endblock %}

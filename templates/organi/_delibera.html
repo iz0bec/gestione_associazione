@@ -1,0 +1,12 @@
+<div class="list-group-item">
+  <div class="d-flex align-items-start">
+    <div class="flex-fill">
+      <div class="fw-medium">{% if d.codice %}{{ d.codice }} · {% endif %}{{ d.oggetto }} <span class="badge {% if d.esito == 'approvata' %}bg-green-lt{% elif d.esito == 'respinta' %}bg-red-lt{% else %}bg-secondary-lt{% endif %}">{{ d.get_esito_display|lower }}</span></div>
+      <div class="small text-secondary">{% if d.punto %}punto {{ d.punto.ordine }} · {% endif %}votazione {{ d.get_votazione_display|lower }}{% if d.unanimita %}, all'unanimità{% elif d.votazione != "acclamazione" %}: {{ d.favorevoli }} favorevoli, {{ d.contrari }} contrari, {{ d.astenuti }} astenuti{% endif %}</div>
+      <div class="mt-1">{{ d.testo|linebreaksbr }}</div>
+    </div>
+    {% if not verbale.chiuso and perms.organi.verbalizza %}
+    <form method="post" action="{% url 'organi:delibera' riunione.pk d.pk %}" data-conferma="Eliminare la delibera?">{% csrf_token %}<input type="hidden" name="elimina" value="1"><button class="btn btn-sm btn-ghost-danger" type="submit" aria-label="Elimina la delibera"><i class="ti ti-trash"></i></button></form>
+    {% endif %}
+  </div>
+</div>

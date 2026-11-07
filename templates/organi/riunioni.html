@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titolo %}Riunioni{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}Riunioni{% endblock %}
+{% block azioni %}{% if perms.organi.add_riunione %}<a class="btn btn-primary" href="{% url 'organi:riunione_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova riunione</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="d-flex gap-2"><select class="form-select" name="organo" aria-label="Organo" data-invio-automatico><option value="">Tutti gli organi</option>{% for o in organi %}<option value="{{ o.pk }}"{% if o.pk|stringformat:"s" == organo_scelto %} selected{% endif %}>{{ o }}</option>{% endfor %}</select><noscript><button class="btn">Filtra</button></noscript></form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>Data</th><th>Riunione</th><th class="d-none d-md-table-cell">Luogo</th><th>Stato</th></tr></thead>
+      <tbody>
+      {% for r in riunioni %}<tr><td class="text-nowrap">{{ r.prima_convocazione|date:"d/m/Y H:i" }}</td><td><a class="text-reset fw-medium" href="{{ r.get_absolute_url }}">{{ r.titolo }}</a></td><td class="d-none d-md-table-cell">{{ r.luogo }}</td><td>{% include "organi/_stato_riunione.html" %}</td></tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna riunione.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

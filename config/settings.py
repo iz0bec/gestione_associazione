@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.anagrafica",
     "apps.soci",
     "apps.protocollo",
+    "apps.organi",
 ]
 
 MIDDLEWARE = [

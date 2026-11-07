@@ -68,6 +68,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Download di file: `FileResponse` come allegato con `Content-Security-Policy: default-src 'none'; sandbox`.
 - Segreti nel DB: `apps.core.cifratura.cifra/decifra` (chiave `CHIAVE_CIFRATURA`, mai nel DB).
 - Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.
+- Organi: sequenze `riunione_<id organo>` (annuale), `verbale_<id>` (libro), `delibera_<id>` (annuale);
+  verbale chiuso = immutabile (`servizi._controlla_aperto`); aventi diritto da `servizi.aventi_diritto`.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -79,4 +81,4 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 ## Stato
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
-(`apps/soci`), **Protocollo** completato (`apps/protocollo`). Prossimo: Organi sociali (roadmap).
+(`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`). Prossimo: Comunicazioni.

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block titolo %}Verbale{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ riunione.get_absolute_url }}">{{ riunione.titolo }}</a></div>{% endblock %}
+{% block titolo_pagina %}Verbale{% if verbale.chiuso %} n. {{ verbale.numero }} <span class="badge bg-green-lt fs-5 align-middle">chiuso</span>{% else %} <span class="badge bg-yellow-lt fs-5 align-middle">in redazione</span>{% endif %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <a class="btn" href="{% url 'organi:verbale_pdf' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>{% if verbale.chiuso %}PDF{% else %}Anteprima PDF{% endif %}</a>
+  {% if not verbale.chiuso and perms.organi.verbalizza %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#chiudi"><i class="ti ti-lock me-1"></i>Chiudi il verbale</button>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% with puo=perms.organi.verbalizza %}
+{% if verbale.chiuso %}
+<div class="alert alert-success">Chiuso il {{ verbale.chiuso_il|date:"d/m/Y H:i" }}{% if verbale.chiuso_da %} da {{ verbale.chiuso_da }}{% endif %}. Impronta SHA-256 del PDF: <code class="small">{{ verbale.impronta }}</code>{% if verbale.protocollo %} · <a href="{{ verbale.protocollo.get_absolute_url }}">prot. {{ verbale.protocollo.segnatura }}</a>{% endif %}</div>
+{% endif %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <fieldset {% if verbale.chiuso or not puo %}disabled{% endif %}>
+      <div class="card-header"><h2 class="card-title">Seduta</h2></div>
+      <div class="card-body">
+        {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+        <div class="row">
+          <div class="col-12">{{ form.convocazione.as_field_group }}</div>
+          <div class="col-md-4">{{ form.inizio.as_field_group }}</div>
+          <div class="col-md-4">{{ form.fine.as_field_group }}</div>
+          <div class="col-md-4">{{ form.luogo.as_field_group }}</div>
+          <div class="col-md-6">{{ form.presidente.as_field_group }}</div>
+          <div class="col-md-6">{{ form.segretario.as_field_group }}</div>
+          <div class="col-12">{{ form.apertura.as_field_group }}</div>
+          <div class="col-12">{{ form.altri_presenti.as_field_group }}</div>
+        </div>
+      </div>
+      <div class="card-header border-top"><h2 class="card-title">Discussione dei punti all'ordine del giorno</h2></div>
+      <div class="card-body">
+        {% for p in punti %}
+        <div class="mb-3">
+          <label class="form-label" for="punto-{{ p.pk }}">{{ p.ordine }}. {{ p.titolo }}</label>
+          <textarea class="form-control" id="punto-{{ p.pk }}" name="punto-{{ p.pk }}" rows="4">{{ p.discussione }}</textarea>
+          {% for d in p.delibere.all %}<div class="small mt-1"><i class="ti ti-gavel me-1"></i>{{ d.codice|default:"delibera" }}: {{ d.oggetto }} — <strong>{{ d.get_esito_display|lower }}</strong></div>{% endfor %}
+        </div>
+        {% endfor %}
+        {{ form.varie.as_field_group }}
+      </div>
+      {% if not verbale.chiuso and puo %}<div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>{% endif %}
+      </fieldset>
+    </form>
+
+    <div class="card mt-3" id="delibere">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-gavel me-2"></i>Delibere</h2></div>
+      <div class="list-group list-group-flush">
+        {% for p in punti %}{% for d in p.delibere.all %}{% include "organi/_delibera.html" %}{% endfor %}{% endfor %}
+        {% for d in delibere_senza_punto %}{% include "organi/_delibera.html" %}{% endfor %}
+        {% if not verbale.delibere.exists %}<div class="list-group-item text-secondary">Nessuna delibera.</div>{% endif %}
+      </div>
+      {% if not verbale.chiuso and puo %}
+      <form class="card-body border-top" method="post" action="{% url 'organi:delibera_nuova' riunione.pk %}" novalidate>{% csrf_token %}
+        <h3>Nuova delibera</h3>
+        <div class="row">
+          <div class="col-md-6">{{ form_delibera.punto.as_field_group }}</div>
+          <div class="col-md-6">{{ form_delibera.oggetto.as_field_group }}</div>
+          <div class="col-12">{{ form_delibera.testo.as_field_group }}</div>
+          <div class="col-md-4">{{ form_delibera.votazione.as_field_group }}</div>
+          <div class="col-md-4 pt-md-4">{{ form_delibera.unanimita.as_field_group }}</div>
+          <div class="col-md-4">{{ form_delibera.esito.as_field_group }}</div>
+          <div class="col-4">{{ form_delibera.favorevoli.as_field_group }}</div>
+          <div class="col-4">{{ form_delibera.contrari.as_field_group }}</div>
+          <div class="col-4">{{ form_delibera.astenuti.as_field_group }}</div>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="ti ti-plus me-1"></i>Aggiungi la delibera</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Numero legale</h2></div>
+      <div class="card-body">
+        {% if ha_presenze %}{% include "organi/_quorum.html" with q=quorum etichetta=verbale.get_convocazione_display %}{% else %}<p class="text-secondary">Registrare le presenze prima di chiudere il verbale.</p>{% endif %}
+        <a class="btn w-100" href="{% url 'organi:presenze' riunione.pk %}">Foglio presenze</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not verbale.chiuso and puo %}
+<div class="modal fade" id="chiudi" tabindex="-1" aria-labelledby="titolo-chiudi" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'organi:chiudi' riunione.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-chiudi">Chiudi il verbale</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <p>Il verbale riceve il numero del libro dei verbali di {{ riunione.organo }}, le delibere vengono numerate e il PDF viene conservato con la sua impronta. <strong>Dopo la chiusura non si potrà più modificare.</strong></p>
+        <p class="text-secondary small">Salvare prima le ultime modifiche. Controllare l'anteprima PDF.</p>
+        {% if perms.protocollo.add_protocollo %}<label class="form-check mb-0"><input class="form-check-input" type="checkbox" name="protocolla" checked><span class="form-check-label">Protocolla il verbale (protocollo interno con il PDF)</span></label>{% endif %}
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Chiudi il verbale</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endwith %}
+{% endblock %}

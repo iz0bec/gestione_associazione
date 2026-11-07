@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titolo %}Riunione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}{% if object %}{{ object.titolo }}{% else %}Nuova riunione{% endif %}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-body">
+    {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+    <div class="row">
+      <div class="col-md-8">{{ form.organo.as_field_group }}</div>
+      <div class="col-md-4 pt-md-4">{{ form.straordinaria.as_field_group }}</div>
+      <div class="col-md-4">{{ form.prima_convocazione.as_field_group }}</div>
+      <div class="col-md-8">{{ form.luogo.as_field_group }}</div>
+      <div class="col-md-4">{{ form.seconda_convocazione.as_field_group }}</div>
+      <div class="col-md-8">{{ form.luogo_seconda.as_field_group }}</div>
+      <div class="col-md-4">{{ form.modalita.as_field_group }}</div>
+      <div class="col-md-8">{{ form.collegamento.as_field_group }}</div>
+      <div class="col-12">{{ form.punti.as_field_group }}</div>
+      <div class="col-md-4">{{ form.data_convocazione.as_field_group }}</div>
+      <div class="col-md-8">{{ form.premessa.as_field_group }}</div>
+    </div>
+  </div>
+  <div class="card-footer d-flex"><a class="btn btn-link" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'organi:organi' %}{% endif %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+</form>
+{% endblock %}

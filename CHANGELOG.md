@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Organi sociali
+- Organi (assemblea, consiglio direttivo, organo di controllo) con quorum di prima e seconda
+  convocazione, deleghe e voto ai soli soci in regola configurabili; cariche con storico.
+- Riunioni con prima e seconda convocazione, modalità in presenza o a distanza, ordine del giorno,
+  numerazione per organo e anno, lettera di convocazione in PDF, protocollazione in uscita.
+- Foglio presenze con aventi diritto calcolati (soci o componenti in carica), deleghe con limite e
+  decadenza, numero legale sempre aggiornato (HTMX).
+- Verbale con seduta, discussione per punto e delibere (votazione, voti, esito); chiusura con numero
+  nel libro dei verbali, delibere numerate, PDF con impronta e protocollo interno; registro delle delibere.
+- Prossime riunioni sul cruscotto; manuale operativo, ruoli, ADR-017.
+
 ### Modificato - Tessere dalla sede centrale
 - Le tessere non sono più numerate dall'applicazione: si caricano i **lotti di tessere prestampate**
   ricevuti dalla sede centrale (anno, serie, intervallo di numeri, cifre, data, riferimento, costo per

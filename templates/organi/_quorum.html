@@ -1,0 +1,6 @@
+{% comment %}Riquadro del numero legale. Variabili: q (Quorum), etichetta.{% endcomment %}
+<div class="d-flex align-items-center mb-2">
+  <span class="status-dot {% if q.valido %}bg-green{% else %}bg-red{% endif %} me-2"></span>
+  <div class="flex-fill"><strong>{{ etichetta }}</strong>: {{ q.totale }} su {{ q.aventi_diritto }} aventi diritto al voto{% if q.rappresentati %} (di cui {{ q.rappresentati }} per delega){% endif %}</div>
+  <span class="badge {% if q.valido %}bg-green-lt{% else %}bg-red-lt{% endif %}">{% if q.valido %}valida{% else %}ne servono {{ q.richiesto }}{% endif %}</span>
+</div>

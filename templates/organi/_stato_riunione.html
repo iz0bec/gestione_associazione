@@ -1,0 +1,1 @@
+{% if r.stato == "bozza" %}<span class="badge bg-secondary-lt">in preparazione</span>{% elif r.stato == "convocata" %}<span class="badge bg-blue-lt">convocata</span>{% elif r.stato == "verbalizzata" %}<span class="badge bg-green-lt">verbale chiuso</span>{% else %}<span class="badge bg-red-lt">annullata</span>{% endif %}

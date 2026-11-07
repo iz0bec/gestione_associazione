@@ -44,8 +44,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    annullamento motivato, registro giornaliero PDF, ricezione email/PEC da protocollare.
    *Rimandati*: invio dei protocolli in uscita per email/PEC (con Comunicazioni), liste di
    distribuzione (con Comunicazioni), API REST (fase 2), import dal Protocollo ANCR (punto 8).
-3. **Organi sociali** - organi, riunioni con 1ª/2ª convocazione e ordine del giorno, presenze dai
+3. ✅ **Organi sociali** - organi, riunioni con 1ª/2ª convocazione e ordine del giorno, presenze dai
    soci, verbali con delibere e votazioni, PDF, protocollazione automatica, libri dei verbali.
+   Comprende le **cariche sociali con storico** (previste in fase 2). *Rimandati*: invio delle
+   convocazioni per email (con Comunicazioni), firma digitale dei verbali, votazioni elettroniche.
 4. **Comunicazioni** - modelli con segnaposto, invii a persone/categorie/liste, coda di invio in
    background, registro invii, auguri di compleanno automatici (rispettando consensi e decessi).
 5. **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),

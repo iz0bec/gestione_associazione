@@ -1,0 +1,85 @@
+<!--
+******************************************************
+* Progetto:    Gestione Associazione
+* Autore:      Bartolomeo Santoro aka IZ0BEC
+* Email:       info@iz0bec.info
+* Descrizione: Manuale operativo del modulo Organi sociali
+* Licenza:     CC0 1.0 Universal (pubblico dominio)
+* SPDX-License-Identifier: CC0-1.0
+******************************************************
+-->
+
+# Organi sociali
+
+Il modulo gestisce gli **organi** dell'associazione (assemblea dei soci, consiglio direttivo, organo di
+controllo), le **cariche** con il loro storico, le **riunioni** dalla convocazione al **verbale**, le
+**delibere** e i **libri dei verbali**.
+
+## Organi e regole
+
+**Organi sociali** mostra gli organi, le prossime riunioni e quelle in preparazione. Alla prima
+installazione ci sono *Assemblea dei soci*, *Consiglio direttivo* e *Collegio dei revisori*.
+
+Le **regole** di ogni organo (pulsante *Regole*, solo amministratore) vanno allineate allo **statuto**:
+
+| Regola | Significato | Predefinito |
+|---|---|---|
+| Quorum in prima convocazione | la seduta è valida se i presenti (più i rappresentati per delega) superano questa percentuale degli aventi diritto al voto | 50% = più della metà |
+| Quorum in seconda convocazione | come sopra; 0 = valida con qualunque numero di presenti | assemblea 0%, consiglio 50% |
+| Deleghe per persona | deleghe che un presente può ricevere; 0 = non ammesse | assemblea 3 (art. 24 CTS), altri 0 |
+| Votano solo i soci in regola | per l'assemblea: votano i soci con la quota dell'anno pagata | sì |
+
+## Cariche
+
+Nella pagina di un organo (non dell'assemblea, che è formata da tutti i soci): **Nomina** con persona,
+ruolo (presidente, vicepresidente, segretario, tesoriere, consigliere, componente, supplente), data di
+inizio e atto di nomina. **Fine carica** registra la data di cessazione e il motivo. Lo storico resta
+consultabile: chi ha avuto quale carica e quando. I **supplenti** non contano tra gli aventi diritto al voto.
+
+## Riunioni
+
+1. **Nuova riunione**: organo, ordinaria o straordinaria, data, ora e luogo della **prima** e (facoltativa)
+   della **seconda convocazione**, modalità (in presenza, mista, videoconferenza con le istruzioni di
+   collegamento), **ordine del giorno** (un punto per riga) ed eventuale testo introduttivo della lettera.
+2. **Convocazione**: il PDF della lettera è sempre disponibile per controllo. **Convoca** assegna il numero
+   della riunione (es. *Consiglio direttivo n. 3/2026*) e, se scelto, **protocolla** la convocazione in
+   uscita con la lettera e gli aventi diritto come destinatari. L'invio per email arriverà con il modulo
+   Comunicazioni.
+3. Fino alla chiusura del verbale si possono modificare data, luogo e ordine del giorno, o **annullare** la
+   riunione con il motivo.
+
+## Presenze
+
+**Foglio presenze** → *Prepara l'elenco degli aventi diritto*: per l'assemblea i soci attivi alla data della
+riunione (con l'indicazione di chi vota), per gli altri organi i componenti in carica. L'elenco si può
+aggiornare (aggiunge solo chi manca).
+
+Per ognuno si sceglie: presente, in collegamento, rappresentato per delega, assente giustificato, assente.
+Per una **delega** si sceglie il delegato tra i presenti: il programma controlla il numero massimo di deleghe
+e, se il delegato viene poi segnato assente, le sue deleghe decadono. In alto è sempre aggiornato il
+**numero legale** per la prima e la seconda convocazione.
+
+## Verbale
+
+Dalla riunione, **Inizia il verbale**:
+
+- **Seduta**: convocazione in cui si è svolta, apertura e chiusura, luogo, presidente e segretario (proposti
+  dalle cariche in corso), constatazioni iniziali, altri intervenuti;
+- **Discussione** di ogni punto all'ordine del giorno e varie ed eventuali;
+- **Delibere**: punto, oggetto, dispositivo, votazione (palese, segreta, per acclamazione), unanimità o voti
+  favorevoli/contrari/astenuti, esito. Il programma segnala un'approvazione con più contrari che favorevoli.
+
+**Anteprima PDF** mostra il verbale come sarà stampato (con la scritta BOZZA), comprensivo del foglio presenze.
+
+**Chiudi il verbale**:
+- assegna il numero nel **libro dei verbali** dell'organo e numera le **delibere** (es. *CD 4/2026*);
+- conserva il PDF definitivo con la sua **impronta SHA-256** e, se scelto, lo **protocolla** (protocollo interno);
+- da quel momento il verbale **non si modifica più**.
+
+Un verbale **senza numero legale** si può chiudere (seduta deserta) ma non può contenere delibere.
+
+## Libri e registri
+
+- **Libro dei verbali**: nella pagina di ogni organo, l'elenco dei verbali chiusi con il PDF.
+- **Registro delle delibere** (*Organi sociali → Registro delibere*): tutte le delibere dei verbali chiusi,
+  con ricerca nel testo e filtro per organo.

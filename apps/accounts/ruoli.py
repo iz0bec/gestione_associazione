@@ -71,6 +71,22 @@ PROTOCOLLO_RESPONSABILE = [
     "protocollo.change_casellaposta",
 ]
 
+ORGANI_LETTURA = [
+    "organi.view_organo",
+    "organi.view_carica",
+    "organi.view_riunione",
+    "organi.view_verbale",
+    "organi.view_delibera",
+]
+ORGANI_SEGRETERIA = [
+    *ORGANI_LETTURA,
+    "organi.add_riunione",
+    "organi.change_riunione",
+    "organi.convoca_riunione",
+    "organi.verbalizza",
+    "organi.gestisci_cariche",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -86,6 +102,8 @@ RUOLI = {
         *SOCI_TESORERIA,
         "soci.valuta_domanda",
         *PROTOCOLLO_RESPONSABILE,
+        *ORGANI_SEGRETERIA,
+        "organi.change_organo",
     ],
     "Presidente": [
         *ANAGRAFICA_SCRITTURA,
@@ -99,6 +117,11 @@ RUOLI = {
         "protocollo.esporta_protocollo",
         "protocollo.view_registrogiornaliero",
         "protocollo.view_messaggioricevuto",
+        *ORGANI_LETTURA,
+        "organi.add_riunione",
+        "organi.change_riunione",
+        "organi.convoca_riunione",
+        "organi.verbalizza",
     ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
@@ -109,10 +132,11 @@ RUOLI = {
         *SOCI_SEGRETERIA,
         "soci.valuta_domanda",
         *PROTOCOLLO_RESPONSABILE,
+        *ORGANI_SEGRETERIA,
     ],
-    "Tesoriere": [*ANAGRAFICA_LETTURA, *SOCI_TESORERIA, *PROTOCOLLO_LETTURA],
-    "Addetto protocollo": [*ANAGRAFICA_SCRITTURA, *PROTOCOLLO_OPERATIVO],
-    "Consigliere": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA, *PROTOCOLLO_LETTURA],
+    "Tesoriere": [*ANAGRAFICA_LETTURA, *SOCI_TESORERIA, *PROTOCOLLO_LETTURA, *ORGANI_LETTURA],
+    "Addetto protocollo": [*ANAGRAFICA_SCRITTURA, *PROTOCOLLO_OPERATIVO, *ORGANI_LETTURA],
+    "Consigliere": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA, *PROTOCOLLO_LETTURA, *ORGANI_LETTURA],
     "Revisore": [
         *ANAGRAFICA_LETTURA,
         *SOCI_LETTURA,
@@ -120,6 +144,7 @@ RUOLI = {
         *PROTOCOLLO_LETTURA,
         "protocollo.esporta_protocollo",
         "protocollo.view_registrogiornaliero",
+        *ORGANI_LETTURA,
     ],
 }
 

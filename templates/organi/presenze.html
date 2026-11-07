@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titolo %}Presenze{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ riunione.get_absolute_url }}">{{ riunione.titolo }}</a></div>{% endblock %}
+{% block titolo_pagina %}Foglio presenze{% endblock %}
+{% block azioni %}
+{% if modificabile and perms.organi.verbalizza %}<form method="post">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-refresh me-1"></i>{% if presenze %}Aggiorna l'elenco degli aventi diritto{% else %}Prepara l'elenco degli aventi diritto{% endif %}</button></form>{% endif %}
+{% endblock %}
+{% block contenuto %}
+{% partialdef elenco inline %}
+<div id="elenco-presenze">
+  {% include "includes/messaggi.html" %}
+  <div class="card mb-3"><div class="card-body">
+    {% include "organi/_quorum.html" with q=quorum_prima etichetta="Prima convocazione" %}
+    {% if quorum_seconda %}{% include "organi/_quorum.html" with q=quorum_seconda etichetta="Seconda convocazione" %}{% endif %}
+  </div></div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table">
+        <thead><tr><th>Avente diritto</th><th>Presenza</th><th>Delega a</th></tr></thead>
+        <tbody>
+        {% for p in presenze %}
+          <tr>
+            <td><span class="fw-medium">{{ p.descrizione }}</span>{% if p.n_deleghe %} <span class="badge bg-blue-lt" title="Deleghe ricevute">+{{ p.n_deleghe }}</span>{% endif %}<div class="small text-secondary">{{ p.qualifica }}{% if not p.vota %} · senza diritto di voto{% endif %}</div></td>
+            {% if modificabile and perms.organi.verbalizza %}
+            <td colspan="2">
+              <form class="d-flex flex-wrap gap-2" method="post" action="{% url 'organi:presenza' p.pk %}" hx-post="{% url 'organi:presenza' p.pk %}" hx-target="#elenco-presenze" hx-swap="outerHTML" hx-trigger="change">{% csrf_token %}
+                <select class="form-select form-select-sm w-auto" name="stato" aria-label="Presenza di {{ p.descrizione }}">{% for v, e in stati %}{% if v != "delega" or riunione.organo.max_deleghe %}<option value="{{ v }}"{% if v == p.stato %} selected{% endif %}>{{ e }}</option>{% endif %}{% endfor %}</select>
+                {% if riunione.organo.max_deleghe and p.vota %}
+                <select class="form-select form-select-sm w-auto" name="delegato" aria-label="Delegato di {{ p.descrizione }}"><option value="">— delegato —</option>{% for d in intervenuti %}{% if d.pk != p.pk %}<option value="{{ d.pk }}"{% if d.pk == p.delegato_id %} selected{% endif %}>{{ d.descrizione }}</option>{% endif %}{% endfor %}</select>
+                {% endif %}
+                <noscript><button class="btn btn-sm" type="submit">Salva</button></noscript>
+              </form>
+            </td>
+            {% else %}
+            <td>{{ p.get_stato_display }}</td><td>{{ p.delegato|default:"" }}</td>
+            {% endif %}
+          </tr>
+        {% empty %}<tr><td colspan="3" class="text-secondary py-4 text-center">Elenco non ancora preparato.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if riunione.organo.max_deleghe %}<div class="card-footer text-secondary small">Per una delega scegliere «Rappresentato per delega» e il delegato tra i presenti (massimo {{ riunione.organo.max_deleghe }} deleghe a testa).</div>{% endif %}
+  </div>
+</div>
+{% endpartialdef %}
+{% endblock %}

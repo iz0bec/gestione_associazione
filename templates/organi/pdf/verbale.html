@@ -1,0 +1,35 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Verbale {{ r.titolo }}{% endblock %}
+{% block stile %}
+  h2 { font-size: 11pt; margin: 12pt 0 4pt; }
+  .delibera { border-left: 2pt solid #1d4e89; padding: 3pt 8pt; margin: 6pt 0; }
+  .firme { margin-top: 30pt; display: flex; justify-content: space-between; }
+  .firme div { width: 45%; text-align: center; }
+  .bozza { color: #b00; font-weight: bold; text-align: center; border: 1pt solid #b00; padding: 4pt; margin-bottom: 8pt; }
+  .presenze td, .presenze th { font-size: 8pt; padding: 1pt 3pt; }
+{% endblock %}
+{% block contenuto %}
+{% if not v.chiuso %}<div class="bozza">BOZZA – verbale non ancora chiuso</div>{% endif %}
+<h1>Verbale{% if v.numero %} n. {{ v.numero }}{% endif %} – {{ r.organo }}{% if r.straordinaria %} (seduta straordinaria){% endif %}</h1>
+<p>Il giorno {{ v.inizio|default:r.prima_convocazione|date:"l j F Y" }}, alle ore {{ v.inizio|default:r.prima_convocazione|date:"H:i" }}, presso {{ v.luogo|default:r.luogo }}{% if r.modalita != "presenza" %} ({{ r.get_modalita_display|lower }}){% endif %},
+si è riunito in {{ v.get_convocazione_display|lower }} {% if r.organo.e_assemblea %}l'{{ r.organo|lower }}{% else %}il {{ r.organo }}{% endif %}{% if r.numero %}, riunione n. {{ r.numero }}/{{ r.anno }},{% endif %}
+convocato il {{ r.data_convocazione|date:"d/m/Y"|default:"—" }}{% if r.protocollo_convocazione %} (prot. {{ r.protocollo_convocazione.segnatura }}){% endif %}.</p>
+<p>Presiede {{ v.presidente|default:"—" }}; funge da segretario verbalizzante {{ v.segretario|default:"—" }}.</p>
+<p>Sono presenti {{ q.intervenuti }} aventi diritto al voto{% if q.rappresentati %} e {{ q.rappresentati }} rappresentati per delega{% endif %}, su {{ q.aventi_diritto }}:
+la seduta {% if q.valido %}è <strong>validamente costituita</strong>{% else %}<strong>non raggiunge il numero legale</strong> (ne servono {{ q.richiesto }}){% endif %}.</p>
+{% if v.apertura %}<p>{{ v.apertura|linebreaksbr }}</p>{% endif %}
+{% if v.altri_presenti %}<p>Sono inoltre presenti: {{ v.altri_presenti|linebreaksbr }}</p>{% endif %}
+<p>Si passa alla trattazione dell'ordine del giorno.</p>
+{% for p in punti %}
+<h2>{{ p.ordine }}. {{ p.titolo }}</h2>
+{% if p.discussione %}<p>{{ p.discussione|linebreaksbr }}</p>{% endif %}
+{% for d in p.delibere.all %}{% include "organi/pdf/_delibera.html" %}{% endfor %}
+{% endfor %}
+{% if v.varie or delibere_senza_punto %}<h2>Varie ed eventuali</h2>{% if v.varie %}<p>{{ v.varie|linebreaksbr }}</p>{% endif %}{% for d in delibere_senza_punto %}{% include "organi/pdf/_delibera.html" %}{% endfor %}{% endif %}
+<p>Esaurita la trattazione, la seduta è chiusa alle ore {{ v.fine|date:"H:i"|default:"____" }}.</p>
+<div class="firme"><div>Il Presidente<br><br>{{ v.presidente }}<br>______________________</div><div>Il Segretario<br><br>{{ v.segretario }}<br>______________________</div></div>
+<h2>Foglio presenze</h2>
+<table class="presenze"><thead><tr><th>Avente diritto</th><th>Qualifica</th><th>Presenza</th></tr></thead><tbody>
+{% for p in presenze %}<tr><td>{{ p.descrizione }}</td><td>{{ p.qualifica }}{% if not p.vota %} (senza voto){% endif %}</td><td>{{ p.get_stato_display }}{% if p.delegato %} a {{ p.delegato.descrizione }}{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}
