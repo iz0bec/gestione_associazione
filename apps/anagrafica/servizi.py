@@ -51,7 +51,7 @@ def imposta_archiviato(soggetto, archiviato, utente):
     )
 
 
-def _cella_sicura(valore):
+def cella_sicura(valore):
     """Evita che un foglio di calcolo interpreti il valore come formula (CSV injection)."""
     testo = "" if valore is None else str(valore)
     if testo[:1] in ("=", "+", "-", "@", "\t", "\r"):
@@ -65,8 +65,8 @@ def esporta_csv(queryset, destinazione, utente):
     writer.writerow([*CAMPI_ESPORTAZIONE, "categorie"])
     n = 0
     for s in queryset.prefetch_related("categorie"):
-        riga = [_cella_sicura(getattr(s, c)) for c in CAMPI_ESPORTAZIONE]
-        riga.append(_cella_sicura(", ".join(c.nome for c in s.categorie.all())))
+        riga = [cella_sicura(getattr(s, c)) for c in CAMPI_ESPORTAZIONE]
+        riga.append(cella_sicura(", ".join(c.nome for c in s.categorie.all())))
         writer.writerow(riga)
         n += 1
     registra(Azione.ESPORTAZIONE, utente=utente, descrizione=f"Anagrafica CSV ({n} righe)", righe=n)

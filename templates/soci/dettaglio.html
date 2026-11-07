@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block titolo %}{{ socio.soggetto.nome_completo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · socio n. {{ socio.numero }}</div>{% endblock %}
+{% block titolo_pagina %}{{ socio.soggetto.intestazione }}
+  <span class="badge fs-5 align-middle {% if socio.stato == 'attivo' %}bg-green-lt{% elif socio.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %}">{{ socio.get_stato_display|lower }}</span>{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.soci.change_socio %}
+    {% if socio.stato == "attivo" %}
+    <form method="post" action="{% url 'soci:stato' socio.pk %}" data-conferma="Sospendere il socio?">{% csrf_token %}<input type="hidden" name="stato" value="sospeso"><button class="btn" type="submit"><i class="ti ti-player-pause me-1"></i>Sospendi</button></form>
+    {% else %}
+    <form method="post" action="{% url 'soci:stato' socio.pk %}" data-conferma="{% if socio.stato == 'cessato' %}Riammettere il socio con lo stesso numero?{% else %}Riattivare il socio?{% endif %}">{% csrf_token %}<input type="hidden" name="stato" value="attivo"><button class="btn" type="submit"><i class="ti ti-player-play me-1"></i>{% if socio.stato == 'cessato' %}Riammetti{% else %}Riattiva{% endif %}</button></form>
+    {% endif %}
+  {% endif %}
+  {% if perms.soci.cessa_socio and socio.stato != "cessato" %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#cessazione"><i class="ti ti-user-off me-1"></i>Cessazione</button>{% endif %}
+  {% if perms.soci.change_socio %}<a class="btn btn-primary" href="{% url 'soci:modifica' socio.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Numero di iscrizione</div><div class="datagrid-content fw-bold">{{ socio.numero }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Tipologia</div><div class="datagrid-content">{{ socio.tipologia }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Ammissione</div><div class="datagrid-content">{{ socio.data_ammissione|date:"d/m/Y" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Delibera</div><div class="datagrid-content">{{ socio.delibera_ammissione|default:"—" }}</div></div>
+          {% if socio.stato == "cessato" %}
+          <div class="datagrid-item"><div class="datagrid-title">Cessazione</div><div class="datagrid-content">{{ socio.data_cessazione|date:"d/m/Y" }} · {{ socio.get_causa_cessazione_display }}</div></div>
+          {% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Codice fiscale</div><div class="datagrid-content">{{ socio.soggetto.codice_fiscale|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Email</div><div class="datagrid-content">{% if socio.soggetto.email %}<a href="mailto:{{ socio.soggetto.email }}">{{ socio.soggetto.email }}</a>{% else %}—{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Telefono</div><div class="datagrid-content">{{ socio.soggetto.cellulare|default:socio.soggetto.telefono|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Indirizzo</div><div class="datagrid-content">{{ socio.soggetto.indirizzo_completo|default:"—" }}</div></div>
+        </div>
+        {% if socio.note %}<hr><div class="text-secondary">{{ socio.note|linebreaksbr }}</div>{% endif %}
+      </div>
+      <div class="card-footer"><a href="{{ socio.soggetto.get_absolute_url }}"><i class="ti ti-address-book me-1"></i>Scheda anagrafica completa</a></div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h2 class="card-title"><i class="ti ti-id-badge-2 me-2"></i>Tessere e quote</h2>
+        {% if perms.soci.add_tessera and socio.stato == "attivo" %}<div class="card-actions"><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#nuova-tessera"><i class="ti ti-plus me-1"></i>Tessera</button></div>{% endif %}
+      </div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Anno</th><th>Tessera</th><th>Quota</th><th>Stato</th><th class="w-1"></th></tr></thead>
+          <tbody>
+          {% for t in tessere %}
+            <tr class="{% if t.annullata %}text-secondary text-decoration-line-through{% endif %}">
+              <td>{{ t.anno }}</td>
+              <td>{{ t.codice }}<div class="small text-secondary">rilasciata il {{ t.data_rilascio|date:"d/m/Y" }}</div></td>
+              <td>{{ t.importo }} €</td>
+              <td>{% include "soci/_stato_tessera.html" with anno=t.anno %}{% if t.pagata %}<div class="small text-secondary">{{ t.pagata_il|date:"d/m/Y" }} · {{ t.get_metodo_pagamento_display }}</div>{% endif %}{% if t.annullata %}<div class="small">{{ t.motivo_annullamento }}</div>{% endif %}</td>
+              <td class="text-nowrap">
+                {% if not t.annullata %}
+                  {% if t.pagata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta</a>
+                  {% elif perms.soci.incassa_quota and t.importo > 0 %}<button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ t.pk }}"><i class="ti ti-cash me-1"></i>Incassa</button>{% endif %}
+                  {% if perms.soci.annulla_tessera %}<button class="btn btn-sm btn-ghost-danger" type="button" data-bs-toggle="modal" data-bs-target="#annulla-{{ t.pk }}" title="Annulla tessera" aria-label="Annulla tessera {{ t.codice }}"><i class="ti ti-x"></i></button>{% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-secondary">Nessuna tessera rilasciata.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if storia is not None %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title">Storia</h2></div>
+      <div class="list-group list-group-flush">
+        {% for e in storia %}<div class="list-group-item"><span class="text-secondary">{{ e.momento|date:"d/m/Y H:i" }}</span> · {{ e.utente_descrizione|default:"sistema" }} · {{ e.get_azione_display }} · {{ e.oggetto_descrizione }}</div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun evento.</div>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="subheader">Quota {{ anno }}</div>
+        <div class="my-2">{% include "soci/_stato_tessera.html" with t=tessera_corrente %}</div>
+        {% if tessera_corrente and not tessera_corrente.pagata and not tessera_corrente.annullata and tessera_corrente.importo > 0 and perms.soci.incassa_quota %}
+        <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ tessera_corrente.pk }}"><i class="ti ti-cash me-1"></i>Incassa {{ tessera_corrente.importo }} €</button>
+        {% elif not tessera_corrente and socio.stato == "attivo" and perms.soci.add_tessera %}
+        <button class="btn btn-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#nuova-tessera"><i class="ti ti-id-badge-2 me-1"></i>Rilascia tessera {{ anno }}</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% for t in tessere %}{% if not t.annullata %}
+  {% if not t.pagata %}{% include "soci/_modale_pagamento.html" %}{% endif %}
+  <div class="modal fade" id="annulla-{{ t.pk }}" tabindex="-1" aria-labelledby="titolo-annulla-{{ t.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" method="post" action="{% url 'soci:annulla_tessera' t.pk %}">{% csrf_token %}
+        <div class="modal-header"><h2 class="modal-title h3" id="titolo-annulla-{{ t.pk }}">Annulla la tessera {{ t.codice }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+        <div class="modal-body">
+          <label class="form-label required" for="mo-{{ t.pk }}">Motivo</label>
+          <input class="form-control" id="mo-{{ t.pk }}" name="annulla-motivo" maxlength="255" required>
+          <p class="text-secondary small mt-2 mb-0">La tessera resta visibile come annullata{% if t.pagata %}, così come la ricevuta {{ t.codice_ricevuta }}{% endif %}; i numeri non vengono riutilizzati.</p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Indietro</button><button type="submit" class="btn btn-danger">Annulla tessera</button></div>
+      </form>
+    </div>
+  </div>
+{% endif %}{% endfor %}
+
+{% if perms.soci.add_tessera %}
+<div class="modal fade" id="nuova-tessera" tabindex="-1" aria-labelledby="titolo-nuova-tessera" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'soci:tessera_nuova' socio.pk %}" novalidate>{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-nuova-tessera">Nuova tessera</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-6">{{ form_tessera.anno.as_field_group }}</div>
+          <div class="col-6">{{ form_tessera.importo.as_field_group }}</div>
+          <div class="col-12">{{ form_tessera.data_rilascio.as_field_group }}</div>
+          {% if perms.soci.incassa_quota %}
+          <div class="col-12">{{ form_tessera.pagata.as_field_group }}</div>
+          <div class="col-6">{{ form_tessera.metodo.as_field_group }}</div>
+          <div class="col-6">{{ form_tessera.riferimento.as_field_group }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Rilascia</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% if perms.soci.cessa_socio %}
+<div class="modal fade" id="cessazione" tabindex="-1" aria-labelledby="titolo-cessazione" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'soci:cessazione' socio.pk %}" novalidate>{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-cessazione">Cessazione del socio n. {{ socio.numero }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        {{ form_cessazione }}
+        <p class="text-secondary small mb-0">Il socio resta nel libro soci con il suo numero. Per il decesso viene aggiornata anche la scheda anagrafica.</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-danger">Registra cessazione</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -36,8 +36,10 @@
 
 Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistema):
 
-1. **Soci e tesseramento** - libro soci, numero socio, domande di iscrizione (anche pubbliche
+1. ✅ **Soci e tesseramento** - libro soci, numero socio, domande di iscrizione (anche pubbliche
    con anti-spam), tessere annuali con numerazione, quote, ricevute PDF, rinnovi massivi, morosi.
+   *Rimandati*: invio delle ricevute e dell'esito delle domande per email (con Comunicazioni),
+   collegamento degli incassi alla prima nota (con Tesoreria), foto del socio.
 2. **Protocollo** - registro in entrata/uscita/interno (numerazione annuale), allegati privati,
    annullamento motivato, registro giornaliero PDF, ricezione email/PEC da protocollare.
 3. **Organi sociali** - organi, riunioni con 1ª/2ª convocazione e ordine del giorno, presenze dai
@@ -60,6 +62,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.
 - Area personale del socio: tessera digitale con QR verificabile, dati e quote.
+- Tessera stampabile (formato card) con QR di verifica.
+- Promemoria automatici di rinnovo ai soci non in regola.
 - GDPR: esportazione dati di una persona, anonimizzazione, termini di conservazione automatici.
 - Backup automatici cifrati con verifica del ripristino.
 - Ricerca globale (persone, protocolli, verbali, beni) con ricerca testuale PostgreSQL.

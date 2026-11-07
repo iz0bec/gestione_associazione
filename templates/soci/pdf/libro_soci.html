@@ -1,0 +1,24 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Libro soci{% endblock %}
+{% block formato %}A4 landscape{% endblock %}
+{% block contenuto %}
+<h1>Libro soci <span class="piccolo">aggiornato al {{ oggi|date:"d/m/Y" }}</span></h1>
+<table>
+  <thead><tr><th>N.</th><th>Cognome e nome</th><th>Codice fiscale</th><th>Nascita</th><th>Residenza</th><th>Tipologia</th><th>Ammissione</th><th>Cessazione</th></tr></thead>
+  <tbody>
+  {% for s in soci %}
+  <tr>
+    <td>{{ s.numero }}</td>
+    <td>{{ s.soggetto.cognome }} {{ s.soggetto.nome }}</td>
+    <td>{{ s.soggetto.codice_fiscale|default:"" }}</td>
+    <td>{{ s.soggetto.data_nascita|date:"d/m/Y" }}<br><span class="piccolo">{{ s.soggetto.luogo_nascita }}</span></td>
+    <td>{{ s.soggetto.indirizzo }}<br><span class="piccolo">{{ s.soggetto.cap }} {{ s.soggetto.comune }} {% if s.soggetto.provincia %}({{ s.soggetto.provincia }}){% endif %}</span></td>
+    <td>{{ s.tipologia }}</td>
+    <td>{{ s.data_ammissione|date:"d/m/Y" }}{% if s.delibera_ammissione %}<br><span class="piccolo">{{ s.delibera_ammissione }}</span>{% endif %}</td>
+    <td>{% if s.data_cessazione %}{{ s.data_cessazione|date:"d/m/Y" }}<br><span class="piccolo">{{ s.get_causa_cessazione_display }}</span>{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="8">Nessun iscritto.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<p class="piccolo">Libro degli associati tenuto ai sensi dell'art. 15 del D.Lgs. 117/2017. Totale iscrizioni: {{ soci|length }}.</p>
+{% endblock %}

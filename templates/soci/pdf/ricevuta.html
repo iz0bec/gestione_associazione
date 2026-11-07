@@ -1,0 +1,20 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Ricevuta {{ tessera.codice_ricevuta }}{% endblock %}
+{% block formato %}A5 landscape{% endblock %}
+{% block stile %}
+  .riquadro { border: 1pt solid #1d4e89; padding: 10pt 14pt; margin-top: 6pt; }
+  .importo { font-size: 16pt; font-weight: bold; }
+  .firma { margin-top: 24pt; text-align: right; }
+{% endblock %}
+{% block contenuto %}
+<h1>Ricevuta n. {{ tessera.codice_ricevuta }}</h1>
+<div class="riquadro">
+  <p>Si dichiara di aver ricevuto da <strong>{{ tessera.socio.soggetto.nome_completo }}</strong>{% if tessera.socio.soggetto.codice_fiscale %} (C.F. {{ tessera.socio.soggetto.codice_fiscale }}){% endif %},
+  socio n. {{ tessera.socio.numero }}, la somma di</p>
+  <p class="importo">€ {{ tessera.importo }}</p>
+  <p>a titolo di quota associativa per l'anno <strong>{{ tessera.anno }}</strong> (tessera {{ tessera.codice }}, {{ tessera.socio.tipologia|lower }}),
+  versata il {{ tessera.pagata_il|date:"d/m/Y" }} tramite {{ tessera.get_metodo_pagamento_display|lower }}{% if tessera.riferimento_pagamento %} (rif. {{ tessera.riferimento_pagamento }}){% endif %}.</p>
+</div>
+<p class="piccolo">Quota associativa non soggetta a IVA. {% if tessera.annullata %}<strong>Tessera annullata: {{ tessera.motivo_annullamento }}</strong>{% endif %}</p>
+<div class="firma">{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ tessera.pagata_il|date:"d/m/Y" }}<br><br>Il Tesoriere<br><br>______________________</div>
+{% endblock %}

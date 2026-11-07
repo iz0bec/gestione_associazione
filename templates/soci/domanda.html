@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titolo %}Domanda di {{ domanda.cognome }} {{ domanda.nome }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:domande' %}">Domande di iscrizione</a> · {{ domanda.get_origine_display|lower }}</div>{% endblock %}
+{% block titolo_pagina %}{{ domanda.cognome }} {{ domanda.nome }} <span class="badge fs-5 align-middle {% if domanda.stato == 'accolta' %}bg-green-lt{% elif domanda.stato == 'respinta' %}bg-red-lt{% else %}bg-yellow-lt{% endif %}">{{ domanda.get_stato_display|lower }}</span>{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Codice fiscale</div><div class="datagrid-content">{{ domanda.codice_fiscale }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Nascita</div><div class="datagrid-content">{{ domanda.data_nascita|date:"d/m/Y" }}, {{ domanda.luogo_nascita }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Email</div><div class="datagrid-content">{{ domanda.email }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Telefono</div><div class="datagrid-content">{{ domanda.telefono|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Indirizzo</div><div class="datagrid-content">{{ domanda.indirizzo }}, {{ domanda.cap }} {{ domanda.comune }} ({{ domanda.provincia }})</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Tipologia richiesta</div><div class="datagrid-content">{{ domanda.tipologia|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Ricevuta il</div><div class="datagrid-content">{{ domanda.ricevuta_il|date:"d/m/Y H:i" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Dichiarazioni</div><div class="datagrid-content">
+            <div>{% if domanda.accetta_statuto %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} accetta lo statuto</div>
+            <div>{% if domanda.consenso_comunicazioni %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} comunicazioni associative</div>
+            <div>{% if domanda.consenso_immagini %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} foto e video</div>
+          </div></div>
+        </div>
+        {% if domanda.motivazione %}<hr><div class="text-secondary">{{ domanda.motivazione|linebreaksbr }}</div>{% endif %}
+      </div>
+      {% if domanda.stato != "in_attesa" %}
+      <div class="card-footer">Esito del {{ domanda.esito_il|date:"d/m/Y" }}{% if domanda.esito_da %} ({{ domanda.esito_da }}){% endif %}{% if domanda.esito_note %}: {{ domanda.esito_note }}{% endif %}{% if domanda.socio %} · <a href="{{ domanda.socio.get_absolute_url }}">socio n. {{ domanda.socio.numero }}</a>{% endif %}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% if domanda.stato == "in_attesa" and perms.soci.valuta_domanda %}
+  <div class="col-lg-5">
+    {% if esistente %}<div class="alert alert-info">In anagrafica esiste già <a href="{{ esistente.get_absolute_url }}">{{ esistente }}</a> con lo stesso codice fiscale: l'accoglimento userà quella scheda{% if esistente.socio %}, <strong>che è già iscritta al libro soci</strong>{% endif %}.</div>{% endif %}
+    <form class="card" method="post" action="{% url 'soci:accogli' domanda.pk %}" novalidate>{% csrf_token %}
+      <div class="card-header"><h2 class="card-title text-green"><i class="ti ti-circle-check me-2"></i>Accogli</h2></div>
+      <div class="card-body">{{ form_accoglimento }}</div>
+      <div class="card-footer text-end"><button class="btn btn-success" type="submit">Accogli e iscrivi</button></div>
+    </form>
+    <form class="card mt-3" method="post" action="{% url 'soci:respingi' domanda.pk %}" data-conferma="Respingere la domanda?">{% csrf_token %}
+      <div class="card-header"><h2 class="card-title text-red"><i class="ti ti-circle-x me-2"></i>Respingi</h2></div>
+      <div class="card-body">{{ form_rigetto }}</div>
+      <div class="card-footer text-end"><button class="btn btn-outline-danger" type="submit">Respingi</button></div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

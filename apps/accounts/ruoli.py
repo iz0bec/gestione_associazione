@@ -22,6 +22,25 @@ ANAGRAFICA_SCRITTURA = [
     "anagrafica.view_consenso",
 ]
 
+SOCI_LETTURA = [
+    "soci.view_socio",
+    "soci.view_tessera",
+    "soci.view_tipologiasocio",
+    "soci.view_domandaiscrizione",
+]
+SOCI_SEGRETERIA = [
+    *SOCI_LETTURA,
+    "soci.add_socio",
+    "soci.change_socio",
+    "soci.cessa_socio",
+    "soci.add_tessera",
+    "soci.add_domandaiscrizione",
+    "soci.esporta_libro_soci",
+    "soci.add_tipologiasocio",
+    "soci.change_tipologiasocio",
+]
+SOCI_TESORERIA = [*SOCI_LETTURA, "soci.add_tessera", "soci.incassa_quota", "soci.annulla_tessera"]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -33,19 +52,31 @@ RUOLI = {
         "accounts.view_utente",
         "accounts.add_utente",
         "accounts.change_utente",
+        *SOCI_SEGRETERIA,
+        *SOCI_TESORERIA,
+        "soci.valuta_domanda",
     ],
-    "Presidente": [*ANAGRAFICA_SCRITTURA, "anagrafica.esporta_soggetti", "core.view_eventoaudit"],
+    "Presidente": [
+        *ANAGRAFICA_SCRITTURA,
+        "anagrafica.esporta_soggetti",
+        "core.view_eventoaudit",
+        *SOCI_LETTURA,
+        "soci.esporta_libro_soci",
+        "soci.valuta_domanda",
+    ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
         "anagrafica.add_categoria",
         "anagrafica.change_categoria",
         "core.gestisci_organizzazione",
+        *SOCI_SEGRETERIA,
+        "soci.valuta_domanda",
     ],
-    "Tesoriere": [*ANAGRAFICA_LETTURA],
+    "Tesoriere": [*ANAGRAFICA_LETTURA, *SOCI_TESORERIA],
     "Addetto protocollo": [*ANAGRAFICA_SCRITTURA],
-    "Consigliere": [*ANAGRAFICA_LETTURA],
-    "Revisore": [*ANAGRAFICA_LETTURA, "core.view_eventoaudit"],
+    "Consigliere": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA],
+    "Revisore": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA, "core.view_eventoaudit"],
 }
 
 

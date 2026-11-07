@@ -12,6 +12,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.core.views import salute
+from apps.soci.pubblico import DomandaInviataView, DomandaPubblicaView
 
 admin.site.site_header = settings.APP_NOME
 admin.site.site_title = settings.APP_NOME
@@ -22,6 +23,9 @@ urlpatterns = [
     path("account/", include("allauth.urls")),
     path("amministrazione-tecnica/", admin.site.urls),
     path("anagrafica/", include("apps.anagrafica.urls")),
+    path("soci/", include("apps.soci.urls")),
+    path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
+    path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
     path("", include("apps.core.urls")),
 ]
 

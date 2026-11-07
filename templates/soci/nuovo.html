@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titolo %}Nuovo socio{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a></div>{% endblock %}
+{% block titolo_pagina %}Nuovo socio{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">1. Cerca la persona in anagrafica</h2></div>
+      <div class="card-body">
+        <form method="get" hx-get="{% url 'soci:nuovo' %}" hx-target="#risultati" hx-swap="outerHTML" hx-trigger="input changed delay:300ms from:input[name=q], submit">
+          <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+            <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Cognome, nome o codice fiscale" autofocus autocomplete="off" aria-label="Cerca in anagrafica">
+          </div>
+        </form>
+      </div>
+      {% partialdef risultati inline %}
+      <div id="risultati" class="list-group list-group-flush">
+        {% for p in risultati %}
+        <div class="list-group-item d-flex align-items-center">
+          <span class="avatar avatar-sm bg-blue-lt me-3">{{ p.iniziali }}</span>
+          <div class="flex-fill"><div class="fw-medium">{{ p.nome_completo }}</div><div class="small text-secondary">{{ p.codice_fiscale|default:"senza codice fiscale" }}{% if p.comune %} · {{ p.comune }}{% endif %}</div></div>
+          <a class="btn btn-primary btn-sm" href="{% url 'soci:ammissione' p.pk %}">Iscrivi</a>
+        </div>
+        {% empty %}
+        {% if q %}<div class="list-group-item text-secondary">Nessuna persona trovata (sono escluse quelle già iscritte, archiviate o decedute).</div>{% endif %}
+        {% endfor %}
+      </div>
+      {% endpartialdef %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">La persona non è in anagrafica?</h3>
+        <p class="text-secondary">Inserisci prima la scheda anagrafica, poi dalla scheda usa «Iscrivi al libro soci».</p>
+        {% if perms.anagrafica.add_soggetto %}<a class="btn w-100" href="{% url 'anagrafica:nuovo' %}?tipo=persona"><i class="ti ti-plus me-1"></i>Nuova scheda anagrafica</a>{% endif %}
+        <hr>
+        <p class="text-secondary mb-2">Hai ricevuto una domanda di iscrizione su carta?</p>
+        {% if perms.soci.add_domandaiscrizione %}<a class="btn w-100" href="{% url 'soci:domanda_nuova' %}"><i class="ti ti-file-plus me-1"></i>Registra la domanda</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

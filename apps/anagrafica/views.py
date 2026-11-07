@@ -54,6 +54,7 @@ class DettaglioView(PermessoMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         ctx["consensi"] = self.object.consensi.all()
         ctx["form_consenso"] = ConsensoForm()
+        ctx["socio"] = getattr(self.object, "socio", None)
         if self.request.user.has_perm("core.view_eventoaudit"):
             ctx["storia"] = EventoAudit.objects.filter(
                 oggetto_tipo=ContentType.objects.get_for_model(Soggetto),

@@ -33,6 +33,9 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 | Dati | Numerazioni atomiche nel database (niente duplicati) | `apps/core/numerazione.py` |
 | Dati | Allegati fuori dalla cartella pubblica, scaricabili solo con permesso | `MEDIA_ROOT` |
 | Dati | Esportazione CSV protetta dall'iniezione di formule e sempre registrata | `apps/anagrafica/servizi.py` |
+| Web | **Modulo pubblico di iscrizione** (disattivato di default): campo trappola, tempo minimo di compilazione (4 s) con token firmato valido 2 ore, massimo 3 domande/ora per IP e 30/ora in totale, `noindex`; nessun CAPTCHA esterno | `apps/soci/forms.py` |
+| Dati | **PDF** generati solo con risorse locali: il generatore rifiuta URL esterni, `file:` e percorsi fuori da static/media (niente SSRF né lettura di file) | `apps/core/pdf.py` |
+| Dati | Libro soci, tessere e ricevute: numeri mai riutilizzati, annullamenti motivati, nessuna cancellazione dall'interfaccia | `apps/soci/servizi.py` |
 | Privacy | Consensi per finalità con data e modalità; persone decedute escluse da auguri e comunicazioni | anagrafica |
 | Codice | Test automatici sui controlli di sicurezza (permessi, blocco, CSP, CSV); lint con regole di sicurezza (`ruff` S) | `apps/*/tests` |
 
@@ -51,6 +54,8 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 8. Controllare periodicamente il **registro attività**, in particolare gli accessi falliti e le esportazioni.
 9. Nominare per iscritto le persone autorizzate al trattamento (GDPR art. 29) e mantenere il registro
    dei trattamenti (art. 30) se richiesto.
+10. Se si attiva il **modulo pubblico di iscrizione**, configurare `PROXY_COUNT` correttamente
+    dietro reverse proxy: il limite per IP usa l'indirizzo del client ricavato dalle intestazioni del proxy.
 
 ## Segnalare una vulnerabilità
 

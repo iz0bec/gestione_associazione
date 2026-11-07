@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titolo %}Tesseramento {{ anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Soci</div>{% endblock %}
+{% block titolo_pagina %}Tesseramento {{ anno }}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <form method="get" class="d-flex gap-2">
+    <select class="form-select" name="anno" aria-label="Anno" data-invio-automatico>{% for a in anni %}<option value="{{ a }}"{% if a == anno %} selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+    {% if stato %}<input type="hidden" name="stato" value="{{ stato }}">{% endif %}
+    <noscript><button class="btn" type="submit">Vai</button></noscript>
+  </form>
+  {% if perms.soci.view_tipologiasocio %}<a class="btn" href="{% url 'soci:tipologie' %}"><i class="ti ti-tags me-1"></i>Tipologie e quote</a>{% endif %}
+  {% if perms.soci.add_tessera %}<a class="btn btn-primary" href="{% url 'soci:rinnovo' %}?anno={{ anno }}"><i class="ti ti-refresh me-1"></i>Rinnovo annuale</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards mb-3">
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Tessere rilasciate</div><div class="h1 mb-0">{{ riepilogo.rilasciate }}</div><div class="text-secondary small">{{ riepilogo.pagate }} pagate</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Incassato</div><div class="h1 mb-0 text-green">{{ riepilogo.incassato|floatformat:2 }} €</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Da incassare</div><div class="h1 mb-0 text-orange">{{ riepilogo.da_incassare|floatformat:2 }} €</div><a class="small" href="{% url 'soci:elenco' %}?quota=morosi&amp;anno={{ anno }}">{{ morosi }} soci non in regola</a></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Soci senza tessera</div><div class="h1 mb-0">{{ da_rinnovare }}</div>{% if da_rinnovare and perms.soci.add_tessera %}<a class="small" href="{% url 'soci:rinnovo' %}?anno={{ anno }}">rilascia le tessere</a>{% endif %}</div></div></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-pills card-header-pills">
+      <li class="nav-item"><a class="nav-link{% if not stato %} active{% endif %}" href="?anno={{ anno }}">Tutte</a></li>
+      <li class="nav-item"><a class="nav-link{% if stato == 'da_pagare' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=da_pagare">Da pagare</a></li>
+      <li class="nav-item"><a class="nav-link{% if stato == 'pagate' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=pagate">Pagate</a></li>
+      <li class="nav-item"><a class="nav-link{% if stato == 'annullate' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=annullate">Annullate</a></li>
+    </ul>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>Tessera</th><th>Socio</th><th>Quota</th><th>Stato</th><th class="d-none d-md-table-cell">Ricevuta</th><th class="w-1"></th></tr></thead>
+      <tbody>
+      {% for t in tessere %}
+        <tr>
+          <td>{{ t.codice }}</td>
+          <td><a class="text-reset" href="{{ t.socio.get_absolute_url }}">{{ t.socio.soggetto.nome_completo }}</a> <span class="text-secondary small">n. {{ t.socio.numero }}</span></td>
+          <td>{{ t.importo }} €</td>
+          <td>{% include "soci/_stato_tessera.html" %}</td>
+          <td class="d-none d-md-table-cell">{% if t.pagata %}{{ t.codice_ricevuta }} <span class="text-secondary small">{{ t.pagata_il|date:"d/m/Y" }}</span>{% endif %}</td>
+          <td class="text-nowrap">
+            {% if t.pagata and not t.annullata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" rel="noopener" aria-label="Ricevuta {{ t.codice_ricevuta }}"><i class="ti ti-receipt"></i></a>
+            {% elif not t.annullata and t.importo > 0 and perms.soci.incassa_quota %}<button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ t.pk }}"><i class="ti ti-cash me-1"></i>Incassa</button>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-secondary py-4 text-center">Nessuna tessera.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% for t in tessere %}{% if not t.pagata and not t.annullata and t.importo > 0 %}{% include "soci/_modale_pagamento.html" with ritorno="tessere" %}{% endif %}{% endfor %}
+{% endblock %}

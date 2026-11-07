@@ -47,10 +47,30 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
             "enti": attivi.filter(tipo=Soggetto.Tipo.ENTE).count(),
         }
         ctx["compleanni"] = Soggetto.compleanni_prossimi(giorni=14)[:8]
+        if self.request.user.has_perm("soci.view_socio"):
+            ctx["soci"] = _riepilogo_soci()
         ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(
             "utente"
         )[:8]
         return ctx
+
+
+def _riepilogo_soci():
+    from datetime import date
+
+    from apps.soci.models import DomandaIscrizione, Socio
+
+    anno = date.today().year
+    attivi = Socio.objects.attivi()
+    return {
+        "anno": anno,
+        "attivi": attivi.count(),
+        "in_regola": attivi.in_regola(anno).count(),
+        "morosi": Socio.objects.morosi(anno).count(),
+        "domande": DomandaIscrizione.objects.filter(
+            stato=DomandaIscrizione.Stato.IN_ATTESA
+        ).count(),
+    }
 
 
 class OrganizzazioneForm(StileMixin, forms.ModelForm):
@@ -59,7 +79,7 @@ class OrganizzazioneForm(StileMixin, forms.ModelForm):
         fields = [
             "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva",
             "iscrizione_runts", "indirizzo", "cap", "comune", "provincia", "telefono",
-            "email", "pec", "sito_web", "logo", "informativa_privacy",
+            "email", "pec", "sito_web", "logo", "informativa_privacy", "iscrizioni_online",
         ]  # fmt: skip
         widgets = {"informativa_privacy": forms.Textarea(attrs={"rows": 6})}
 

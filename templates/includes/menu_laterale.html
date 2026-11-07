@@ -19,6 +19,21 @@
           <a class="nav-link" href="{% url 'anagrafica:elenco' %}"><span class="nav-link-icon"><i class="ti ti-address-book"></i></span><span class="nav-link-title">Anagrafica</span></a>
         </li>
         {% endif %}
+        {% if perms.soci.view_socio %}
+        <li class="nav-item{% if nome == 'soci' and request.resolver_match.url_name != 'tessere' and request.resolver_match.url_name != 'rinnovo' and 'domand' not in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link" href="{% url 'soci:elenco' %}"><span class="nav-link-icon"><i class="ti ti-users-group"></i></span><span class="nav-link-title">Soci</span></a>
+        </li>
+        {% endif %}
+        {% if perms.soci.view_tessera %}
+        <li class="nav-item{% if request.resolver_match.url_name == 'tessere' or request.resolver_match.url_name == 'rinnovo' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'soci:tessere' %}"><span class="nav-link-icon"><i class="ti ti-id-badge-2"></i></span><span class="nav-link-title">Tesseramento</span></a>
+        </li>
+        {% endif %}
+        {% if perms.soci.view_domandaiscrizione %}
+        <li class="nav-item{% if nome == 'soci' and 'domand' in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link" href="{% url 'soci:domande' %}"><span class="nav-link-icon"><i class="ti ti-file-plus"></i></span><span class="nav-link-title">Domande di iscrizione</span></a>
+        </li>
+        {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
         <li class="nav-item">
           <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>

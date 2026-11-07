@@ -21,7 +21,8 @@ L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/an
 
 > **Stato**: in sviluppo, versione `0.0.1.dev0`. Non ancora pronto per la produzione.
 > Moduli disponibili: accesso con secondo fattore, ruoli, dati dell'organizzazione,
-> registro attività, **anagrafica unica**. Gli altri moduli sono pianificati nella
+> registro attività, **anagrafica unica**, **soci e tesseramento** (libro soci, quote,
+> ricevute, domande di iscrizione anche online). Gli altri moduli sono pianificati nella
 > [roadmap](docs/roadmap.md).
 
 ## Caratteristiche

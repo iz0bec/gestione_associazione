@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.anagrafica",
+    "apps.soci",
 ]
 
 MIDDLEWARE = [
@@ -228,5 +229,9 @@ LOGGING = {
     "formatters": {"semplice": {"format": "{asctime} {levelname} {name}: {message}", "style": "{"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "semplice"}},
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
-    "loggers": {"axes": {"level": "WARNING"}},
+    "loggers": {
+        "axes": {"level": "WARNING"},
+        "weasyprint": {"level": "WARNING"},
+        "fontTools": {"level": "WARNING"},
+    },
 }

@@ -15,6 +15,31 @@
     </a>
   </div>
   {% endif %}
+  {% if soci %}
+  <div class="col-sm-4">
+    <a class="card card-link" href="{% url 'soci:elenco' %}">
+      <div class="card-body">
+        <div class="subheader">Soci attivi</div>
+        <div class="h1 mb-1">{{ soci.attivi }}</div>
+        <div class="text-secondary">{{ soci.in_regola }} in regola con la quota {{ soci.anno }}</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-sm-4">
+    <a class="card card-link" href="{% url 'soci:elenco' %}?quota=morosi&amp;anno={{ soci.anno }}">
+      <div class="card-body">
+        <div class="subheader">Quote {{ soci.anno }} da incassare</div>
+        <div class="h1 mb-1{% if soci.morosi %} text-orange{% endif %}">{{ soci.morosi }}</div>
+        <div class="text-secondary">soci non in regola</div>
+      </div>
+    </a>
+  </div>
+  {% if soci.domande and perms.soci.view_domandaiscrizione %}
+  <div class="col-12">
+    <a class="alert alert-info d-flex align-items-center mb-0" href="{% url 'soci:domande' %}"><i class="ti ti-file-plus me-2"></i>{{ soci.domande }} domand{{ soci.domande|pluralize:"a,e" }} di iscrizione in attesa di valutazione</a>
+  </div>
+  {% endif %}
+  {% endif %}
   <div class="col-sm-8">
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-cake me-2"></i>Compleanni nei prossimi 14 giorni</h2></div>

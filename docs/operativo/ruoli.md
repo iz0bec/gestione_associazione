@@ -24,7 +24,20 @@ I ruoli li assegna l'amministratore.
 | Consigliere | consulta | - | - | - |
 | Revisore | consulta | - | - | consulta |
 
-La tabella cresce con i nuovi moduli (soci, protocollo, tesoreria, ...): per esempio il
-tesoriere avrà la piena gestione della tesoreria, il revisore la sola consultazione.
+### Soci e tesseramento
+
+| Ruolo | Libro soci | Tessere | Incassi e annullamenti | Domande | Stampa libro soci | Tipologie |
+|---|---|---|---|---|---|---|
+| Amministratore di sistema | consulta, iscrive, modifica, cessa | rilascia, rinnovo | sì | registra, accoglie/respinge | sì | modifica |
+| Presidente | consulta | consulta | - | accoglie/respinge | sì | consulta |
+| Segretario | consulta, iscrive, modifica, cessa | rilascia, rinnovo | - | registra, accoglie/respinge | sì | modifica |
+| Tesoriere | consulta | rilascia, rinnovo | **sì** | consulta | - | consulta |
+| Consigliere, Revisore | consulta | consulta | - | consulta | - | consulta |
+| Addetto protocollo | - | - | - | - | - | - |
+
+Incassi e segreteria sono separati di proposito: chi iscrive i soci non registra i pagamenti.
+In un'associazione piccola la stessa persona può avere entrambi i ruoli.
+
+La tabella cresce con i nuovi moduli (protocollo, tesoreria, ...).
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

@@ -55,6 +55,11 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Liste con ricerca HTMX: partial nel template (`{% partialdef nome inline %}`, vista che restituisce
   `"pagina.html#nome"` se `request.htmx`).
 - Email: Django 6.1 usa `MAILERS` (le impostazioni `EMAIL_*` sono deprecate) — vedi `config/settings.py`.
+- PDF: `apps.core.pdf.risposta_pdf(template, contesto, nome)`; i modelli estendono `pdf/base.html`
+  e referenziano risorse solo come `risorsa:static/...` / `risorsa:media/...` (il fetcher rifiuta il resto).
+- Soci: sequenze `libro_soci` (unica), `tessera` e `ricevuta_quota` (annuali) — chiavi in `apps/soci/models.py`;
+  operazioni solo da `apps/soci/servizi.py` (sollevano `OperazioneNonValida` con messaggio per l'utente).
+- Modulo pubblico `/iscrizione/`: anti-spam in `DomandaPubblicaForm` (orologio in `_adesso()`, patchabile nei test).
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -65,4 +70,5 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 
 ## Stato
 
-Fase 0 completata (fondamenta + anagrafica). Prossimo modulo previsto: Soci e tesseramento (roadmap, fase 1).
+Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
+(`apps/soci`). Prossimo modulo previsto: Protocollo (roadmap).

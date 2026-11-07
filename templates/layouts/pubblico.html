@@ -1,0 +1,35 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Layout delle pagine pubbliche (senza accesso), es. domanda di iscrizione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}{% load static %}<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block titolo %}{% endblock %} · {{ organizzazione.denominazione }}</title>
+  <script src="{% static 'js/tema.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'vendor/tabler/css/tabler.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/tabler-icons/tabler-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+</head>
+<body>
+<div class="page">
+  <main class="container container-narrow py-4">
+    <header class="text-center mb-4">
+      <span class="marchio marchio-grande"><i class="ti ti-building-community" aria-hidden="true"></i></span>
+      <div class="h2 mt-2 mb-0">{{ organizzazione.denominazione }}</div>
+      {% if organizzazione.comune %}<div class="text-secondary">{{ organizzazione.comune }}</div>{% endif %}
+    </header>
+    {% block contenuto %}{% endblock %}
+    <footer class="text-center text-secondary small mt-4">
+      {% if organizzazione.email %}<a href="mailto:{{ organizzazione.email }}">{{ organizzazione.email }}</a>{% endif %}
+      {% if organizzazione.sito_web %} · <a href="{{ organizzazione.sito_web }}" rel="noopener">{{ organizzazione.sito_web }}</a>{% endif %}
+    </footer>
+  </main>
+</div>
+<script src="{% static 'vendor/tabler/js/tabler.min.js' %}"></script>
+</body>
+</html>

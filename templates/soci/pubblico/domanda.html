@@ -1,0 +1,18 @@
+{% extends "layouts/pubblico.html" %}
+{% block titolo %}Domanda di iscrizione{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-header"><h1 class="card-title h2">Domanda di iscrizione</h1></div>
+  <div class="card-body">
+    <p class="text-secondary">Compila il modulo per chiedere di diventare socio. La domanda sarà esaminata dal consiglio direttivo; riceverai una risposta all'indirizzo email indicato.</p>
+    {% include "soci/_campi_domanda.html" %}
+    {% if organizzazione.informativa_privacy %}
+    <details class="mt-2">
+      <summary class="text-primary">Informativa sul trattamento dei dati personali</summary>
+      <div class="text-secondary small mt-2">{{ organizzazione.informativa_privacy|linebreaks }}</div>
+    </details>
+    {% endif %}
+  </div>
+  <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-send me-1"></i>Invia la domanda</button></div>
+</form>
+{% endblock %}

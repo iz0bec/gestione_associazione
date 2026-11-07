@@ -18,6 +18,9 @@ eventuale iscrizione al RUNTS, sede, recapiti, PEC, logo e testo dell'**informat
 Sono usati nelle intestazioni dei documenti, nelle comunicazioni e nei moduli; la denominazione
 breve compare in alto nel menu. Ogni modifica è registrata.
 
+La casella **Domande di iscrizione online** pubblica il modulo di iscrizione all'indirizzo
+`/iscrizione/` (vedi [Soci e tesseramento](soci.md#domande-di-iscrizione)).
+
 ## Registro attività
 
 **Sistema → Registro attività** (amministratore, presidente, revisore). Elenca, dal più recente:

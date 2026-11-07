@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titolo %}Tipologie di socio{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere' %}">Tesseramento</a></div>{% endblock %}
+{% block titolo_pagina %}Tipologie di socio e quote{% endblock %}
+{% block azioni %}{% if perms.soci.add_tipologiasocio %}<a class="btn btn-primary" href="{% url 'soci:tipologia_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova tipologia</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Tipologia</th><th class="text-end">Quota annua</th><th class="text-end">Soci attivi</th><th></th></tr></thead>
+      <tbody>
+      {% for t in tipologie %}
+        <tr class="{% if not t.attiva %}text-secondary{% endif %}">
+          <td><span class="fw-medium">{{ t.nome }}</span>{% if not t.attiva %} <span class="badge bg-secondary-lt">non attiva</span>{% endif %}<div class="small text-secondary">{{ t.descrizione }}</div></td>
+          <td class="text-end">{% if t.quota_annua %}{{ t.quota_annua }} €{% else %}<span class="text-secondary">esente</span>{% endif %}</td>
+          <td class="text-end">{{ t.n_soci }}</td>
+          <td class="text-end">{% if perms.soci.change_tipologiasocio %}<a class="btn btn-sm" href="{% url 'soci:tipologia_modifica' t.pk %}">Modifica</a>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer text-secondary small">La quota è proposta al rilascio delle nuove tessere; cambiarla non modifica le tessere già rilasciate.</div>
+</div>
+{% endblock %}

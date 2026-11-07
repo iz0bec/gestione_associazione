@@ -1,0 +1,6 @@
+{% comment %}Badge dello stato di una tessera. Variabile: t (Tessera o None), anno.{% endcomment %}
+{% if not t %}<span class="badge bg-secondary-lt">nessuna tessera {{ anno }}</span>
+{% elif t.annullata %}<span class="badge bg-dark-lt">annullata</span>
+{% elif t.pagata %}<span class="badge bg-green-lt" title="Ricevuta {{ t.codice_ricevuta }}"><i class="ti ti-check me-1"></i>pagata</span>
+{% elif t.importo == 0 %}<span class="badge bg-blue-lt">esente</span>
+{% else %}<span class="badge bg-orange-lt">da pagare {{ t.importo }} €</span>{% endif %}

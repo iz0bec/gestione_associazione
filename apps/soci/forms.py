@@ -1,0 +1,252 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Moduli del libro soci e della domanda di iscrizione pubblica
+# *              (con protezioni anti-spam: campo trappola, tempo minimo, limite per IP).
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+import time
+from datetime import date, timedelta
+from decimal import Decimal
+
+from django import forms
+from django.core import signing
+from django.utils import timezone
+
+from apps.anagrafica.forms import CampoData
+from apps.anagrafica.validatori import dati_da_codice_fiscale
+from apps.core.forms import StileMixin
+
+from .models import DomandaIscrizione, Socio, Tessera, TipologiaSocio
+
+
+def _anni_proposti():
+    oggi = date.today().year
+    return [(a, str(a)) for a in range(oggi + 1, oggi - 6, -1)]
+
+
+def _non_futura(valore, campo="La data"):
+    if valore and valore > date.today():
+        raise forms.ValidationError(f"{campo} non può essere futura.")
+    return valore
+
+
+class TipologiaField(forms.ModelChoiceField):
+    def __init__(self, **kwargs):
+        super().__init__(queryset=TipologiaSocio.objects.filter(attiva=True), **kwargs)
+
+    def label_from_instance(self, obj):
+        if not obj.quota_annua:
+            return f"{obj.nome} (esente)"
+        return f"{obj.nome} (quota {obj.quota_annua:.2f} €)".replace(".", ",")
+
+
+class AmmissioneForm(StileMixin, forms.Form):
+    tipologia = TipologiaField(label="Tipologia di socio")
+    data_ammissione = forms.DateField(
+        label="Data di ammissione", widget=CampoData, initial=date.today
+    )
+    delibera = forms.CharField(
+        label="Delibera di ammissione",
+        required=False,
+        max_length=200,
+        help_text="Es. «Consiglio direttivo del 12/01/2026, verbale n. 3».",
+    )
+    note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
+    tessera = forms.BooleanField(
+        label="Rilascia subito la tessera dell'anno in corso", required=False, initial=True
+    )
+
+    def clean_data_ammissione(self):
+        return _non_futura(self.cleaned_data["data_ammissione"], "La data di ammissione")
+
+
+class SocioForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Socio
+        fields = ["tipologia", "data_ammissione", "delibera_ammissione", "note"]
+        widgets = {"data_ammissione": CampoData, "note": forms.Textarea(attrs={"rows": 3})}
+
+    def clean_data_ammissione(self):
+        return _non_futura(self.cleaned_data["data_ammissione"], "La data di ammissione")
+
+
+class CessazioneForm(StileMixin, forms.Form):
+    data_cessazione = forms.DateField(
+        label="Data di cessazione", widget=CampoData, initial=date.today
+    )
+    causa = forms.ChoiceField(label="Causa", choices=Socio.Cessazione.choices)
+    note = forms.CharField(
+        label="Note (es. estremi della delibera)", required=False, max_length=255
+    )
+
+    def clean_data_cessazione(self):
+        return _non_futura(self.cleaned_data["data_cessazione"], "La data di cessazione")
+
+
+class TesseraForm(StileMixin, forms.Form):
+    anno = forms.TypedChoiceField(
+        coerce=int, choices=_anni_proposti, initial=lambda: date.today().year
+    )
+    importo = forms.DecimalField(
+        label="Quota (€)", max_digits=8, decimal_places=2, min_value=0, required=False,
+        help_text="Vuoto = quota della tipologia del socio.",
+    )  # fmt: skip
+    data_rilascio = forms.DateField(label="Data di rilascio", widget=CampoData, initial=date.today)
+    pagata = forms.BooleanField(label="Quota incassata ora", required=False)
+    metodo = forms.ChoiceField(
+        label="Metodo di pagamento", choices=Tessera.Metodo.choices, required=False
+    )
+    riferimento = forms.CharField(label="Riferimento pagamento", required=False, max_length=100)
+
+
+class PagamentoForm(StileMixin, forms.Form):
+    pagata_il = forms.DateField(label="Data dell'incasso", widget=CampoData, initial=date.today)
+    metodo = forms.ChoiceField(label="Metodo", choices=Tessera.Metodo.choices)
+    importo = forms.DecimalField(
+        label="Importo (€)", max_digits=8, decimal_places=2, min_value=Decimal("0.01")
+    )
+    riferimento = forms.CharField(label="Riferimento", required=False, max_length=100)
+
+    def clean_pagata_il(self):
+        return _non_futura(self.cleaned_data["pagata_il"], "La data dell'incasso")
+
+
+class MotivoForm(StileMixin, forms.Form):
+    motivo = forms.CharField(label="Motivo", max_length=255)
+
+
+class RinnovoForm(StileMixin, forms.Form):
+    anno = forms.TypedChoiceField(
+        coerce=int, choices=_anni_proposti, initial=lambda: date.today().year
+    )
+
+
+class AccoglimentoForm(AmmissioneForm):
+    pass
+
+
+class TipologiaForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = TipologiaSocio
+        fields = ["nome", "descrizione", "quota_annua", "attiva", "ordine"]
+
+
+# --- domanda di iscrizione ---------------------------------------------------------------
+
+CAMPI_DOMANDA = [
+    "nome", "cognome", "codice_fiscale", "data_nascita", "luogo_nascita", "email", "telefono",
+    "indirizzo", "cap", "comune", "provincia", "tipologia", "motivazione", "accetta_statuto",
+    "consenso_comunicazioni", "consenso_immagini",
+]  # fmt: skip
+
+
+class DomandaForm(StileMixin, forms.ModelForm):
+    """Domanda inserita dalla segreteria (es. da modulo cartaceo)."""
+
+    class Meta:
+        model = DomandaIscrizione
+        fields = CAMPI_DOMANDA
+        labels = {
+            "consenso_comunicazioni": "Acconsente a ricevere comunicazioni associative",
+            "consenso_immagini": "Acconsente alla pubblicazione di foto e video",
+        }
+        widgets = {
+            "data_nascita": CampoData,
+            "motivazione": forms.Textarea(attrs={"rows": 3}),
+            "codice_fiscale": forms.TextInput(
+                attrs={"class": "text-uppercase", "autocomplete": "off"}
+            ),
+            "provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tipologia"].queryset = TipologiaSocio.objects.filter(attiva=True)
+        self.fields["tipologia"].empty_label = "— da stabilire —"
+        self.fields["accetta_statuto"].required = True
+
+    def clean_codice_fiscale(self):
+        cf = self.cleaned_data["codice_fiscale"].strip().upper()
+        if len(cf) != 16:
+            raise forms.ValidationError("Indicare il codice fiscale di 16 caratteri.")
+        return cf
+
+    def clean_provincia(self):
+        return self.cleaned_data["provincia"].strip().upper()
+
+    def clean(self):
+        dati = super().clean()
+        da_cf = dati_da_codice_fiscale(dati.get("codice_fiscale"))
+        nascita = dati.get("data_nascita")
+        if da_cf and nascita and nascita != da_cf["data_nascita"]:
+            self.add_error("data_nascita", "Non corrisponde al codice fiscale.")
+        if nascita and nascita > date.today() - timedelta(days=365 * 14):
+            self.add_error("data_nascita", "Data di nascita non plausibile.")
+        return dati
+
+
+SALE_MODULO = "soci.domanda-pubblica"
+TEMPO_MINIMO = 4  # secondi: un umano non compila il modulo più in fretta
+TEMPO_MASSIMO = 2 * 60 * 60
+LIMITE_PER_IP = 3  # domande per ora dallo stesso indirizzo
+LIMITE_GLOBALE = 30  # domande per ora in totale (protezione da invii massivi)
+
+
+def _adesso():
+    return time.time()
+
+
+class DomandaPubblicaForm(DomandaForm):
+    """Modulo pubblico: aggiunge consenso al trattamento e controlli anti-spam."""
+
+    privacy = forms.BooleanField(
+        label="Ho letto l'informativa sul trattamento dei dati personali", required=True
+    )
+    # campo trappola: invisibile alle persone, compilato dai programmi automatici
+    sito = forms.CharField(required=False, label="Lasciare vuoto")
+    token = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, *args, ip=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ip = ip
+        # nel modulo pubblico scrive il richiedente: prima persona
+        self.fields["tipologia"].empty_label = "— scegliere —"
+        etichette = {
+            "accetta_statuto": "Dichiaro di accettare lo statuto dell'associazione",
+            "consenso_comunicazioni": "Acconsento a ricevere comunicazioni associative",
+            "consenso_immagini": "Acconsento alla pubblicazione di foto e video",
+        }
+        for nome, etichetta in etichette.items():
+            self.fields[nome].label = etichetta
+        self.fields["sito"].widget.attrs.update({"tabindex": "-1", "autocomplete": "off"})
+        if not self.is_bound:
+            self.initial["token"] = signing.dumps(_adesso(), salt=SALE_MODULO)
+
+    def clean(self):
+        if self.cleaned_data.get("sito"):
+            raise forms.ValidationError("Invio non accettato.", code="spam")
+        try:
+            emesso = float(
+                signing.loads(self.data.get("token", ""), salt=SALE_MODULO, max_age=TEMPO_MASSIMO)
+            )
+        except (signing.BadSignature, TypeError, ValueError):
+            raise forms.ValidationError(
+                "Il modulo è scaduto: ricaricare la pagina e riprovare.", code="token"
+            ) from None
+        if _adesso() - emesso < TEMPO_MINIMO:
+            raise forms.ValidationError("Invio troppo rapido: riprovare.", code="spam")
+        un_ora_fa = timezone.now() - timedelta(hours=1)
+        recenti = DomandaIscrizione.objects.filter(
+            origine=DomandaIscrizione.Origine.PUBBLICA, ricevuta_il__gte=un_ora_fa
+        )
+        if recenti.count() >= LIMITE_GLOBALE or (
+            self.ip and recenti.filter(indirizzo_ip=self.ip).count() >= LIMITE_PER_IP
+        ):
+            raise forms.ValidationError(
+                "Troppe domande inviate di recente: riprovare più tardi.", code="limite"
+            )
+        return super().clean()

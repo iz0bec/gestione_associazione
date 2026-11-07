@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block titolo %}Soci{% endblock %}
+{% block titolo_pagina %}Libro soci{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.soci.esporta_libro_soci %}
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-download me-1"></i>Stampa ed esporta</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      <a class="dropdown-item" href="{% url 'soci:libro_pdf' %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Libro soci (PDF)</a>
+      <a class="dropdown-item" href="{% url 'soci:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-2"></i>Elenco filtrato (CSV)</a>
+    </div>
+  </div>
+  {% endif %}
+  {% if perms.soci.add_socio %}<a class="btn btn-primary" href="{% url 'soci:nuovo' %}"><i class="ti ti-user-plus me-1"></i>Nuovo socio</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100" hx-get="{% url 'soci:elenco' %}" hx-target="#tabella-soci" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, change from:input[name=anno], submit">
+      <div class="col-lg-4"><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>{{ filter.form.q }}</div></div>
+      <div class="col-sm-6 col-lg-2">{{ filter.form.stato }}</div>
+      <div class="col-sm-6 col-lg-2">{{ filter.form.tipologia }}</div>
+      <div class="col-sm-8 col-lg-3">{{ filter.form.quota }}</div>
+      <div class="col-sm-4 col-lg-1">{{ filter.form.anno }}</div>
+      <noscript><button class="btn" type="submit">Filtra</button></noscript>
+    </form>
+  </div>
+  {% partialdef tabella inline %}
+  <div id="tabella-soci" class="tabella-htmx">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead><tr><th class="w-1">N.</th><th>Socio</th><th class="d-none d-md-table-cell">Tipologia</th><th class="d-none d-lg-table-cell">Ammissione</th><th>Quota {{ anno }}</th></tr></thead>
+        <tbody>
+        {% for s, t in righe %}
+          <tr>
+            <td class="text-secondary">{{ s.numero }}</td>
+            <td>
+              <a href="{{ s.get_absolute_url }}" class="text-reset fw-medium">{{ s.soggetto.nome_completo }}</a>
+              {% if s.stato != "attivo" %}<span class="badge {% if s.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %} ms-1">{{ s.get_stato_display|lower }}</span>{% endif %}
+              <div class="small text-secondary">{{ s.soggetto.comune }}</div>
+            </td>
+            <td class="d-none d-md-table-cell">{{ s.tipologia }}</td>
+            <td class="d-none d-lg-table-cell">{{ s.data_ammissione|date:"d/m/Y" }}</td>
+            <td>{% include "soci/_stato_tessera.html" %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-secondary py-4 text-center">Nessun socio trovato.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/paginazione.html" %}
+  </div>
+  {% endpartialdef %}
+</div>
+{% endblock %}

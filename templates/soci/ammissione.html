@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titolo %}Ammissione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · ammissione</div>{% endblock %}
+{% block titolo_pagina %}Iscrizione di {{ soggetto.nome_completo }}{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">
+        {{ form }}
+        <p class="text-secondary small mb-0">Il numero di iscrizione è assegnato automaticamente (primo numero libero del libro soci) e non è più modificabile.</p>
+      </div>
+      <div class="card-footer d-flex">
+        <a class="btn btn-link" href="{{ soggetto.get_absolute_url }}">Annulla</a>
+        <button type="submit" class="btn btn-primary ms-auto"><i class="ti ti-user-check me-1"></i>Iscrivi al libro soci</button>
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <div class="datagrid">
+        <div class="datagrid-item"><div class="datagrid-title">Codice fiscale</div><div class="datagrid-content">{{ soggetto.codice_fiscale|default:"—" }}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Nascita</div><div class="datagrid-content">{{ soggetto.data_nascita|date:"d/m/Y"|default:"—" }} {{ soggetto.luogo_nascita }}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Indirizzo</div><div class="datagrid-content">{{ soggetto.indirizzo_completo|default:"—" }}</div></div>
+      </div>
+      {% if not soggetto.codice_fiscale or not soggetto.data_nascita or not soggetto.indirizzo %}<div class="alert alert-warning mt-3 mb-0">Il libro soci richiede dati anagrafici completi: <a href="{% url 'anagrafica:modifica' soggetto.pk %}">completa la scheda</a>.</div>{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

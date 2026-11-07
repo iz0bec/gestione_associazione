@@ -73,6 +73,10 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 - **Scelta**: WeasyPrint stampa in PDF template HTML/CSS con intestazione unica dell'ente.
 - **Conseguenze**: i modelli di stampa si modificano come pagine web; niente coordinate a mano.
 
+- **Sicurezza**: il generatore usa un recuperatore di risorse proprio (`apps/core/pdf.py`) che accetta solo
+  `risorsa:static/...` e `risorsa:media/...` verificati: nessun accesso in rete né a file arbitrari, anche
+  se un testo inserito dagli utenti finisse nel modello.
+
 ## ADR-009 - Registro delle attività
 
 - **Scelta**: tabella `EventoAudit` scritta dai servizi applicativi (non da trigger) per le operazioni
@@ -97,3 +101,22 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   CC0 prevede una licenza di ripiego (fallback) amplissima dove la rinuncia non è valida,
   mentre la Unlicense no. Le librerie di terze parti mantengono le proprie licenze (vedi
   `docs/sistema/licenze-terze-parti.md`).
+
+## ADR-013 - Libro soci: numerazioni e immutabilità
+
+- **Scelta**: numero di iscrizione progressivo unico (sequenza `libro_soci`, mai riavviata), tessere
+  numerate per anno (`tessera`), ricevute numerate per anno di incasso (`ricevuta_quota`). Le cessazioni e
+  gli annullamenti cambiano lo stato, non cancellano: i numeri non si riusano.
+- **Motivo**: il libro soci e le ricevute sono documenti con valore verso soci, revisori e controlli
+  (CTS art. 15); i buchi di numerazione devono essere spiegati da un annullamento motivato e registrato.
+- La quota è sulla tessera (non su un pagamento separato): una quota per socio e anno, incassata in
+  un'unica soluzione. Pagamenti rateali e collegamento con la prima nota arriveranno con la Tesoreria.
+
+## ADR-014 - Anti-spam senza servizi esterni
+
+- **Scelta**: per il modulo pubblico di iscrizione campo trappola, token firmato con tempo minimo e
+  massimo di compilazione e limite di invii per IP calcolato sul database (vale con più processi).
+- **Motivo**: i CAPTCHA esterni (reCAPTCHA, hCaptcha) richiedono script di terzi (contrari alla CSP e
+  alla scelta di non caricare risorse da Internet) e trasferiscono dati dei visitatori a terzi.
+- **Conseguenze**: protezione adeguata contro invii automatici generici, non contro attacchi mirati;
+  le domande restano comunque da valutare a mano e il modulo è disattivato di default.

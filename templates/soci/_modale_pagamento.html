@@ -1,0 +1,21 @@
+{% comment %}Finestra per registrare l'incasso della quota. Variabili: t (Tessera), ritorno (opzionale).{% endcomment %}
+{% now "Y-m-d" as oggi %}
+<div class="modal fade" id="pagamento-{{ t.pk }}" tabindex="-1" aria-labelledby="titolo-pagamento-{{ t.pk }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'soci:pagamento' t.pk %}">{% csrf_token %}
+      {% if ritorno %}<input type="hidden" name="ritorno" value="{{ ritorno }}">{% endif %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-pagamento-{{ t.pk }}">Incasso quota {{ t.anno }} · {{ t.socio.soggetto.nome_completo }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-6 mb-3"><label class="form-label required" for="pi-{{ t.pk }}">Data dell'incasso</label><input class="form-control" type="date" id="pi-{{ t.pk }}" name="pagamento-pagata_il" value="{{ oggi }}" max="{{ oggi }}" required></div>
+          <div class="col-6 mb-3"><label class="form-label required" for="im-{{ t.pk }}">Importo (€)</label><input class="form-control" type="number" step="0.01" min="0.01" id="im-{{ t.pk }}" name="pagamento-importo" value="{{ t.importo|stringformat:'.2f' }}" required></div>
+          <div class="col-6 mb-3"><label class="form-label required" for="me-{{ t.pk }}">Metodo</label>
+            <select class="form-select" id="me-{{ t.pk }}" name="pagamento-metodo">{% for valore, etichetta in form_pagamento.fields.metodo.choices %}<option value="{{ valore }}">{{ etichetta }}</option>{% endfor %}</select></div>
+          <div class="col-6 mb-3"><label class="form-label" for="ri-{{ t.pk }}">Riferimento</label><input class="form-control" id="ri-{{ t.pk }}" name="pagamento-riferimento" maxlength="100" placeholder="es. CRO"></div>
+        </div>
+        <p class="text-secondary small mb-0">Alla conferma viene assegnato il numero di ricevuta, che non potrà essere riutilizzato.</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-success"><i class="ti ti-cash me-1"></i>Registra incasso</button></div>
+    </form>
+  </div>
+</div>

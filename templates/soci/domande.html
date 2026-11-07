@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titolo %}Domande di iscrizione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Soci</div>{% endblock %}
+{% block titolo_pagina %}Domande di iscrizione{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if organizzazione.iscrizioni_online %}<a class="btn" href="{% url 'iscrizione' %}" target="_blank" rel="noopener"><i class="ti ti-world me-1"></i>Modulo online</a>{% endif %}
+  {% if perms.soci.add_domandaiscrizione %}<a class="btn btn-primary" href="{% url 'soci:domanda_nuova' %}"><i class="ti ti-plus me-1"></i>Registra domanda</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if not organizzazione.iscrizioni_online %}<div class="alert alert-info">Il modulo di iscrizione online è disattivato{% if perms.core.gestisci_organizzazione %}: si attiva dai <a href="{% url 'core:organizzazione' %}">dati dell'organizzazione</a>{% endif %}.</div>{% endif %}
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-pills card-header-pills">
+      {% for valore, etichetta in stati %}<li class="nav-item"><a class="nav-link{% if stato == valore %} active{% endif %}" href="?stato={{ valore }}">{{ etichetta }}</a></li>{% endfor %}
+    </ul>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>Richiedente</th><th>Ricevuta</th><th class="d-none d-md-table-cell">Origine</th><th>Stato</th></tr></thead>
+      <tbody>
+      {% for d in domande %}
+        <tr>
+          <td><a class="text-reset fw-medium" href="{{ d.get_absolute_url }}">{{ d.cognome }} {{ d.nome }}</a><div class="small text-secondary">{{ d.comune }} ({{ d.provincia }})</div></td>
+          <td>{{ d.ricevuta_il|date:"d/m/Y H:i" }}</td>
+          <td class="d-none d-md-table-cell">{{ d.get_origine_display }}</td>
+          <td><span class="badge {% if d.stato == 'accolta' %}bg-green-lt{% elif d.stato == 'respinta' %}bg-red-lt{% else %}bg-yellow-lt{% endif %}">{{ d.get_stato_display|lower }}</span></td>
+        </tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna domanda.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

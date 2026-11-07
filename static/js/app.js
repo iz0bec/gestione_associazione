@@ -27,6 +27,13 @@
     }
   });
 
+  // Select che inviano il modulo al cambio (es. scelta dell'anno)
+  document.addEventListener("change", function (ev) {
+    if (ev.target.matches("select[data-invio-automatico]") && ev.target.form) {
+      ev.target.form.requestSubmit();
+    }
+  });
+
   // Modulo anagrafica: mostra i campi di persona o di ente secondo il tipo scelto
   function aggiornaTipoSoggetto(modulo) {
     var scelto = modulo.querySelector("input[name=tipo]:checked");

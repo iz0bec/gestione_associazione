@@ -1,0 +1,46 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Base dei documenti PDF (WeasyPrint): intestazione dell'ente e piè di pagina.
+               Le risorse si indicano con "risorsa:static/..." o "risorsa:media/...".
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>{% block titolo %}{% endblock %}</title>
+<style>
+  @page { size: {% block formato %}A4{% endblock %}; margin: 18mm 15mm 20mm 15mm;
+    @bottom-left { content: element(piede); }
+    @bottom-right { content: "pagina " counter(page) " di " counter(pages); font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 8pt; color: #666; } }
+  body { font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 10pt; color: #111; }
+  .intestazione { display: flex; align-items: center; border-bottom: 1.5pt solid #1d4e89; padding-bottom: 6pt; margin-bottom: 14pt; }
+  .intestazione img { height: 16mm; margin-right: 10pt; }
+  .intestazione .nome { font-size: 14pt; font-weight: bold; color: #1d4e89; }
+  .intestazione .dati { font-size: 8pt; color: #444; }
+  h1 { font-size: 15pt; margin: 0 0 10pt; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 3pt 4pt; border-bottom: .5pt solid #bbb; vertical-align: top; }
+  th { background: #eef2f7; font-size: 8.5pt; }
+  .piede { position: running(piede); font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 8pt; color: #666; }
+  .destra { text-align: right; }
+  .piccolo { font-size: 8pt; color: #555; }
+  {% block stile %}{% endblock %}
+</style>
+</head>
+<body>
+<div class="piede">{{ organizzazione.denominazione }}</div>
+<div class="intestazione">
+  {% if organizzazione.logo %}<img src="risorsa:media/{{ organizzazione.logo.name }}" alt="">{% endif %}
+  <div>
+    <div class="nome">{{ organizzazione.denominazione }}</div>
+    <div class="dati">
+      {% if organizzazione.indirizzo %}{{ organizzazione.indirizzo }}, {{ organizzazione.cap }} {{ organizzazione.comune }}{% if organizzazione.provincia %} ({{ organizzazione.provincia }}){% endif %}{% endif %}
+      {% if organizzazione.codice_fiscale %} · C.F. {{ organizzazione.codice_fiscale }}{% endif %}
+      {% if organizzazione.iscrizione_runts %} · RUNTS {{ organizzazione.iscrizione_runts }}{% endif %}
+      {% if organizzazione.email %}<br>{{ organizzazione.email }}{% endif %}{% if organizzazione.pec %} · PEC {{ organizzazione.pec }}{% endif %}
+    </div>
+  </div>
+</div>
+{% block contenuto %}{% endblock %}
+</body>
+</html>

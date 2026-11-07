@@ -74,6 +74,11 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Testo riportato nei moduli e nelle comunicazioni.",
     )
+    iscrizioni_online = models.BooleanField(
+        "domande di iscrizione online",
+        default=False,
+        help_text="Pubblica il modulo di domanda di iscrizione all'indirizzo /iscrizione/.",
+    )
     modificato_il = models.DateTimeField(auto_now=True)
 
     class Meta:
