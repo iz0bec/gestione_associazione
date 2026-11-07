@@ -1,0 +1,1 @@
+<label class="badge bg-blue-lt me-1 mb-1 p-2 fw-normal"><input type="checkbox" class="form-check-input m-0 me-1" name="{{ campo }}" value="{{ s.pk }}" checked> {{ s.nome_completo }}{% if s.pec or s.email %} <span class="text-secondary">· {{ s.pec|default:s.email }}</span>{% endif %}</label>

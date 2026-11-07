@@ -38,6 +38,12 @@ runuser -u postgres -- pg_dump gestione_associazione | gzip > /root/backups/gest
 tar czf /root/backups/media_$(date +%F).tgz -C /var/lib/gestione-associazione media
 ```
 
+## Cosa contiene `media`
+
+Logo dell'ente, **documenti protocollati**, messaggi di posta scaricati e **registri giornalieri**
+del protocollo (PDF con impronta SHA-256 nel database). È importante quanto il database: i due backup
+vanno fatti insieme. Conservare a parte anche il file `.env` (in particolare `CHIAVE_CIFRATURA`).
+
 ## Raccomandazioni
 
 - Automatizzare con un timer systemd o cron, una copia al giorno, con rotazione (es. 30 giorni).

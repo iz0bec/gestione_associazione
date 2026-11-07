@@ -34,6 +34,21 @@
     }
   });
 
+  // Ricerche dentro un modulo (es. scelta dei corrispondenti): Invio non invia il modulo
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter" && ev.target.matches("input[data-ricerca-scelta]")) ev.preventDefault();
+  });
+
+  // Modulo protocollo: sezioni visibili secondo la direzione (data-direzioni="entrata interno")
+  function aggiornaDirezione(modulo) {
+    var scelta = modulo.querySelector("input[name=direzione]:checked");
+    var direzione = scelta ? scelta.value : "entrata";
+    modulo.querySelectorAll("[data-direzioni]").forEach(function (el) {
+      var ammesse = el.getAttribute("data-direzioni").split(" ");
+      el.classList.toggle("nascosto", ammesse.indexOf(direzione) === -1);
+    });
+  }
+
   // Modulo anagrafica: mostra i campi di persona o di ente secondo il tipo scelto
   function aggiornaTipoSoggetto(modulo) {
     var scelto = modulo.querySelector("input[name=tipo]:checked");
@@ -42,6 +57,12 @@
     modulo.querySelectorAll(".solo-ente").forEach(function (el) { el.classList.toggle("nascosto", tipo !== "ente"); });
   }
   function inizializza(radice) {
+    radice.querySelectorAll("form[data-modulo-protocollo]").forEach(function (modulo) {
+      aggiornaDirezione(modulo);
+      modulo.addEventListener("change", function (ev) {
+        if (ev.target.name === "direzione") aggiornaDirezione(modulo);
+      });
+    });
     radice.querySelectorAll("form[data-modulo-soggetto]").forEach(function (modulo) {
       aggiornaTipoSoggetto(modulo);
       modulo.addEventListener("change", function (ev) {

@@ -1,0 +1,26 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Registro di protocollo del {{ giorno|date:"d/m/Y" }}{% endblock %}
+{% block formato %}A4 landscape{% endblock %}
+{% block contenuto %}
+<h1>Registro giornaliero di protocollo · {{ giorno|date:"l j F Y" }}</h1>
+<table>
+  <thead><tr><th>Numero</th><th>Ora</th><th>Dir.</th><th>Mezzo</th><th>Oggetto</th><th>Mittenti / destinatari</th><th>Class.</th><th>Doc.</th><th>Stato</th></tr></thead>
+  <tbody>
+  {% for p in protocolli %}
+  <tr>
+    <td>{{ p.segnatura }}</td>
+    <td>{{ p.registrato_il|date:"H:i:s" }}</td>
+    <td>{{ p.get_direzione_display }}</td>
+    <td>{{ p.get_mezzo_display }}</td>
+    <td>{% if p.riservato %}[riservato]{% else %}{{ p.oggetto }}{% endif %}</td>
+    <td>{% for c in p.corrispondenti.all %}{% if c.ruolo == "mittente" %}da{% else %}a{% endif %} {{ c.descrizione }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+    <td>{{ p.classificazione.codice|default:"" }}</td>
+    <td>{{ p.allegati.count }}</td>
+    <td>{% if p.annullato %}annullato{% else %}valido{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="9">Nessuna registrazione in questo giorno.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<p class="piccolo">Registrazioni: {{ protocolli|length }}. Documento generato automaticamente il {{ generato_il|date:"d/m/Y H:i" }}; l'impronta SHA-256 del file è conservata nell'applicazione.
+Lo stato di annullamento si riferisce al momento della generazione. Per i protocolli riservati l'oggetto non è riportato.</p>
+{% endblock %}

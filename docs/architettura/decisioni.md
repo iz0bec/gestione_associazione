@@ -120,3 +120,26 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   alla scelta di non caricare risorse da Internet) e trasferiscono dati dei visitatori a terzi.
 - **Conseguenze**: protezione adeguata contro invii automatici generici, non contro attacchi mirati;
   le domande restano comunque da valutare a mano e il modulo è disattivato di default.
+
+## ADR-015 - Protocollo: immutabilità e prove di integrità
+
+- **Scelta**: dopo la registrazione restano fissi numero, data/ora, direzione, oggetto e corrispondenti
+  (DPR 445/2000, art. 53-54 come riferimento di buona pratica); gli errori si correggono con
+  l'annullamento motivato. I documenti si aggiungono soltanto e si conservano con impronta SHA-256; il
+  registro giornaliero è un PDF generato una volta e conservato con impronta.
+- **Corrispondenti**: collegati all'anagrafica ma con descrizione e indirizzo copiati al momento della
+  registrazione, così una modifica successiva della scheda non altera il registro.
+- **Numerazione**: sequenza annuale `protocollo`; l'ora di registrazione si legge dopo aver ottenuto il
+  numero (riga di sequenza bloccata), quindi l'ordine dei numeri coincide con quello degli orari.
+- **Non è** conservazione a norma (AgID): per obblighi di conservazione sostitutiva i registri e i
+  documenti vanno versati a un conservatore accreditato.
+
+## ADR-016 - Posta in ingresso: IMAP in sola lettura, solo testo
+
+- **Scelta**: lettura IMAP con `readonly` e `BODY.PEEK` (nessuna modifica alla casella, compatibile con
+  l'uso del client di posta); deduplica per Message-ID; per la PEC si estrae il messaggio originale da
+  `postacert.eml`. Il testo HTML viene ridotto a testo e mai reso nel browser.
+- **Motivo**: nel Protocollo ANCR originale il corpo HTML delle email ha richiesto correzioni di sicurezza
+  (XSS); mostrare solo testo elimina il problema alla radice. POP3 non è supportato (cancellerebbe o
+  non distinguerebbe i messaggi).
+- Le password IMAP sono cifrate con una chiave separata dal database (ADR-007).

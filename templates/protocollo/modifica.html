@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titolo %}Modifica {{ protocollo.segnatura }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a> · {{ protocollo.segnatura }}</div>{% endblock %}
+{% block titolo_pagina %}{{ protocollo.oggetto|truncatechars:80 }}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-body">
+    <div class="alert alert-info">Si modificano solo i dati accessori. Numero, data, oggetto e corrispondenti sono fissati alla registrazione: per correggerli si annulla la registrazione e se ne fa una nuova.</div>
+    {{ form }}
+  </div>
+  <div class="card-footer d-flex"><a class="btn btn-link" href="{{ protocollo.get_absolute_url }}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+</form>
+{% endblock %}

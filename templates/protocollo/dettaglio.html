@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block titolo %}Prot. {{ protocollo.segnatura }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a> · {{ protocollo.get_direzione_display|lower }}</div>{% endblock %}
+{% block titolo_pagina %}Prot. n. {{ protocollo.segnatura }}
+  {% if protocollo.annullato %}<span class="badge bg-red-lt fs-5 align-middle">annullato</span>{% endif %}
+  {% if protocollo.riservato %}<span class="badge bg-dark-lt fs-5 align-middle"><i class="ti ti-lock me-1"></i>riservato</span>{% endif %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <a class="btn" href="{% url 'protocollo:ricevuta' protocollo.pk %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
+  {% if not protocollo.annullato %}
+    {% if perms.protocollo.add_protocollo and protocollo.direzione == "entrata" %}<a class="btn" href="{% url 'protocollo:nuovo' %}?risposta={{ protocollo.pk }}"><i class="ti ti-arrow-back-up me-1"></i>Rispondi</a>{% endif %}
+    {% if perms.protocollo.annulla_protocollo %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
+    {% if perms.protocollo.change_protocollo %}<a class="btn btn-primary" href="{% url 'protocollo:modifica' protocollo.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+  {% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if protocollo.annullato %}<div class="alert alert-danger">Annullato il {{ protocollo.annullato_il|date:"d/m/Y H:i" }}{% if protocollo.annullato_da %} da {{ protocollo.annullato_da }}{% endif %}: {{ protocollo.motivo_annullamento }}</div>{% endif %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="h3 mb-3">{{ protocollo.oggetto }}</div>
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Registrato il</div><div class="datagrid-content">{{ protocollo.registrato_il|date:"d/m/Y H:i:s" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Direzione</div><div class="datagrid-content">{% include "protocollo/_badge_direzione.html" with p=protocollo %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Mezzo</div><div class="datagrid-content">{{ protocollo.get_mezzo_display }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Classificazione</div><div class="datagrid-content">{{ protocollo.classificazione|default:"—" }}</div></div>
+          {% if protocollo.data_documento %}<div class="datagrid-item"><div class="datagrid-title">Data del documento</div><div class="datagrid-content">{{ protocollo.data_documento|date:"d/m/Y" }}</div></div>{% endif %}
+          {% if protocollo.riferimento_mittente %}<div class="datagrid-item"><div class="datagrid-title">Protocollo del mittente</div><div class="datagrid-content">{{ protocollo.riferimento_mittente }}</div></div>{% endif %}
+          {% if protocollo.data_ricezione %}<div class="datagrid-item"><div class="datagrid-title">Ricevuto il</div><div class="datagrid-content">{{ protocollo.data_ricezione|date:"d/m/Y" }}</div></div>{% endif %}
+          {% if protocollo.risposta_a %}<div class="datagrid-item"><div class="datagrid-title">In risposta a</div><div class="datagrid-content"><a href="{{ protocollo.risposta_a.get_absolute_url }}">{{ protocollo.risposta_a.segnatura }}</a></div></div>{% endif %}
+          {% for r in risposte %}<div class="datagrid-item"><div class="datagrid-title">Risposta</div><div class="datagrid-content"><a href="{{ r.get_absolute_url }}">{{ r.segnatura }}</a></div></div>{% endfor %}
+        </div>
+        {% if protocollo.note %}<hr><div class="text-secondary">{{ protocollo.note|linebreaksbr }}</div>{% endif %}
+      </div>
+      <div class="card-footer text-secondary small">Registrato da {{ protocollo.creato_da|default:"sistema" }}</div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-paperclip me-2"></i>Documenti</h2></div>
+      <div class="list-group list-group-flush">
+        {% for a in protocollo.allegati.all %}
+        <div class="list-group-item d-flex align-items-center">
+          <i class="ti ti-file{% if a.tipo == 'application/pdf' %}-type-pdf{% endif %} me-2 fs-2 text-secondary"></i>
+          <div class="flex-fill text-truncate">
+            <a href="{% url 'protocollo:allegato' a.pk %}">{{ a.nome }}</a>{% if a.principale %} <span class="badge bg-blue-lt">principale</span>{% endif %}
+            <div class="small text-secondary">{{ a.dimensione|filesizeformat }} · {{ a.caricato_il|date:"d/m/Y H:i" }} · <span title="Impronta SHA-256: {{ a.impronta }}">SHA-256 {{ a.impronta|slice:":12" }}…</span></div>
+          </div>
+          {% if a.tipo == "application/pdf" %}<a class="btn btn-sm" href="{% url 'protocollo:allegato' a.pk %}?vedi=1" target="_blank" rel="noopener">Apri</a>{% endif %}
+        </div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun documento allegato.</div>{% endfor %}
+      </div>
+      {% if perms.protocollo.change_protocollo and not protocollo.annullato %}
+      <form class="card-body border-top d-flex gap-2" method="post" action="{% url 'protocollo:allegati' protocollo.pk %}" enctype="multipart/form-data">{% csrf_token %}
+        <input class="form-control" type="file" name="allegati" multiple required aria-label="Documenti da aggiungere">
+        <button class="btn" type="submit"><i class="ti ti-upload me-1"></i>Aggiungi</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if storia is not None %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title">Storia</h2></div>
+      <div class="list-group list-group-flush">
+        {% for e in storia %}<div class="list-group-item"><span class="text-secondary">{{ e.momento|date:"d/m/Y H:i" }}</span> · {{ e.utente_descrizione|default:"sistema" }} · {{ e.get_azione_display }}{% if e.dettagli.campi %}: {% for nome in e.dettagli.campi %}<span class="badge bg-secondary-lt">{{ nome }}</span> {% endfor %}{% endif %}{% if e.dettagli.allegati_aggiunti %}: {{ e.dettagli.allegati_aggiunti|join:", " }}{% endif %}</div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun evento.</div>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    {% if protocollo.mittenti %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title">Mittenti</h2></div>
+      <div class="list-group list-group-flush">{% for c in protocollo.mittenti %}{% include "protocollo/_corrispondente.html" %}{% endfor %}</div>
+    </div>
+    {% endif %}
+    {% if protocollo.destinatari %}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Destinatari</h2></div>
+      <div class="list-group list-group-flush">{% for c in protocollo.destinatari %}{% include "protocollo/_corrispondente.html" %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if perms.protocollo.annulla_protocollo and not protocollo.annullato %}
+<div class="modal fade" id="annulla" tabindex="-1" aria-labelledby="titolo-annulla" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'protocollo:annulla' protocollo.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-annulla">Annulla il protocollo {{ protocollo.segnatura }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <label class="form-label required" for="motivo">Motivo dell'annullamento</label>
+        <textarea class="form-control" id="motivo" name="motivo" rows="3" minlength="5" maxlength="500" required></textarea>
+        <p class="text-secondary small mt-2 mb-0">La registrazione resta nel registro con l'indicazione «annullato», il motivo, la data e chi l'ha annullata. Il numero non viene riutilizzato.</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Indietro</button><button type="submit" class="btn btn-danger">Annulla la registrazione</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

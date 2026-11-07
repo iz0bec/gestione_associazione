@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titolo %}Nuova registrazione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
+{% block titolo_pagina %}Nuova registrazione di protocollo{% endblock %}
+{% block contenuto %}
+<form method="post" enctype="multipart/form-data" class="card" novalidate data-modulo-protocollo>{% csrf_token %}
+  <div class="card-body">
+    {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+    <div class="row">
+      <div class="col-lg-6">{{ form.direzione.as_field_group }}</div>
+      <div class="col-lg-3">{{ form.mezzo.as_field_group }}</div>
+      <div class="col-lg-3">{{ form.classificazione.as_field_group }}</div>
+      <div class="col-12">{{ form.oggetto.as_field_group }}</div>
+    </div>
+    <div class="row">
+      <fieldset class="col-lg-6" data-direzioni="entrata interno">
+        <legend class="h3">Mittenti</legend>
+        {% include "protocollo/_scelta_corrispondenti.html" with campo="mittenti" scelti=scelti_mittenti campo_altri=form.mittenti_altri %}
+        {% for e in form.mittenti.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      </fieldset>
+      <fieldset class="col-lg-6" data-direzioni="uscita interno">
+        <legend class="h3">Destinatari</legend>
+        {% include "protocollo/_scelta_corrispondenti.html" with campo="destinatari" scelti=scelti_destinatari campo_altri=form.destinatari_altri %}
+        {% for e in form.destinatari.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      </fieldset>
+    </div>
+    <fieldset>
+      <legend class="h3">Documento</legend>
+      <div class="row">
+        <div class="col-md-4">{{ form.data_documento.as_field_group }}</div>
+        <div class="col-md-4" data-direzioni="entrata">{{ form.riferimento_mittente.as_field_group }}</div>
+        <div class="col-md-4" data-direzioni="entrata">{{ form.data_ricezione.as_field_group }}</div>
+        <div class="col-md-4">{{ form.in_risposta_a.as_field_group }}</div>
+        <div class="col-md-8">{{ form.allegati.as_field_group }}<small class="form-hint">Tipi ammessi: {{ estensioni }} · massimo {{ max_mb }} MB per file.</small></div>
+        <div class="col-12">{{ form.note.as_field_group }}</div>
+        <div class="col-12">{{ form.riservato.as_field_group }}</div>
+      </div>
+    </fieldset>
+  </div>
+  <div class="card-footer d-flex align-items-center">
+    <a class="btn btn-link" href="{% url 'protocollo:elenco' %}">Annulla</a>
+    <span class="text-secondary small ms-auto me-3 d-none d-md-inline">Numero e data sono assegnati alla registrazione; oggetto e corrispondenti non saranno più modificabili.</span>
+    <button type="submit" class="btn btn-primary"><i class="ti ti-stamp me-1"></i>Registra</button>
+  </div>
+</form>
+{% endblock %}

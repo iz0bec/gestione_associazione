@@ -40,6 +40,17 @@
   </div>
   {% endif %}
   {% endif %}
+  {% if protocollo %}
+  <div class="col-sm-4">
+    <a class="card card-link" href="{% url 'protocollo:elenco' %}">
+      <div class="card-body">
+        <div class="subheader">Protocolli {% now "Y" %}</div>
+        <div class="h1 mb-1">{{ protocollo.anno }}</div>
+        <div class="text-secondary">{% if protocollo.posta %}<span class="text-orange">{{ protocollo.posta }} messaggi da protocollare</span>{% else %}nessun messaggio in attesa{% endif %}</div>
+      </div>
+    </a>
+  </div>
+  {% endif %}
   <div class="col-sm-8">
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-cake me-2"></i>Compleanni nei prossimi 14 giorni</h2></div>
@@ -58,6 +69,18 @@
       {% endif %}
     </div>
   </div>
+  {% if protocollo.ultimi %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-file-certificate me-2"></i>Ultimi protocolli</h2></div>
+      <div class="list-group list-group-flush">
+        {% for p in protocollo.ultimi %}
+        <a class="list-group-item list-group-item-action d-flex" href="{{ p.get_absolute_url }}"><span class="text-secondary me-3 text-nowrap">{{ p.segnatura }}</span><span class="flex-fill text-truncate{% if p.annullato %} text-decoration-line-through{% endif %}">{{ p.oggetto }}</span><span class="text-secondary ms-3 text-nowrap d-none d-md-inline">{{ p.registrato_il|date:"d/m H:i" }}</span></a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
   <div class="col-12">
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-history me-2"></i>Le tue ultime attività</h2></div>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block titolo %}Registri giornalieri{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
+{% block titolo_pagina %}Registri giornalieri{% endblock %}
+{% block azioni %}{% if perms.protocollo.esporta_protocollo %}<form method="post">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-refresh me-1"></i>Genera i mancanti</button></form>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-body text-secondary">Ogni notte l'applicazione genera il PDF del registro del giorno precedente e ne calcola l'impronta SHA-256; il file non viene più modificato. Conservare periodicamente una copia dei registri (manuale di sistema, <em>Backup</em>).</div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Giorno</th><th>Registrazioni</th><th class="d-none d-md-table-cell">Numeri</th><th class="d-none d-lg-table-cell">Impronta SHA-256</th><th></th></tr></thead>
+      <tbody>
+      {% for r in registri %}
+        <tr>
+          <td>{{ r.data|date:"l j F Y" }}</td>
+          <td>{{ r.registrazioni }}</td>
+          <td class="d-none d-md-table-cell">{% if r.registrazioni %}{{ r.primo_numero }} – {{ r.ultimo_numero }}{% else %}—{% endif %}</td>
+          <td class="d-none d-lg-table-cell"><code class="small">{{ r.impronta|slice:":32" }}…</code></td>
+          <td class="text-end"><a class="btn btn-sm" href="{% url 'protocollo:registro' r.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="5" class="text-secondary py-4 text-center">Nessun registro generato.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

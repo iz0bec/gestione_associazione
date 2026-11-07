@@ -34,6 +34,16 @@
           <a class="nav-link" href="{% url 'soci:domande' %}"><span class="nav-link-icon"><i class="ti ti-file-plus"></i></span><span class="nav-link-title">Domande di iscrizione</span></a>
         </li>
         {% endif %}
+        {% if perms.protocollo.view_protocollo %}
+        <li class="nav-item{% if nome == 'protocollo' and request.resolver_match.url_name != 'posta' and request.resolver_match.url_name != 'messaggio' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'protocollo:elenco' %}"><span class="nav-link-icon"><i class="ti ti-file-certificate"></i></span><span class="nav-link-title">Protocollo</span></a>
+        </li>
+        {% endif %}
+        {% if perms.protocollo.view_messaggioricevuto %}
+        <li class="nav-item{% if request.resolver_match.url_name == 'posta' or request.resolver_match.url_name == 'messaggio' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'protocollo:posta' %}"><span class="nav-link-icon"><i class="ti ti-inbox"></i></span><span class="nav-link-title">Posta da protocollare</span></a>
+        </li>
+        {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
         <li class="nav-item">
           <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>

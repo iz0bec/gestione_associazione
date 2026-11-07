@@ -1,0 +1,4 @@
+<div class="list-group-item">
+  {% if c.soggetto %}<a href="{{ c.soggetto.get_absolute_url }}">{{ c.descrizione }}</a>{% else %}{{ c.descrizione }}{% endif %}
+  {% if c.indirizzo %}<div class="small text-secondary text-break">{{ c.indirizzo }}</div>{% endif %}
+</div>

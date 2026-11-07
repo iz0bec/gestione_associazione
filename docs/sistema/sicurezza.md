@@ -36,6 +36,11 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 | Web | **Modulo pubblico di iscrizione** (disattivato di default): campo trappola, tempo minimo di compilazione (4 s) con token firmato valido 2 ore, massimo 3 domande/ora per IP e 30/ora in totale, `noindex`; nessun CAPTCHA esterno | `apps/soci/forms.py` |
 | Dati | **PDF** generati solo con risorse locali: il generatore rifiuta URL esterni, `file:` e percorsi fuori da static/media (niente SSRF né lettura di file) | `apps/core/pdf.py` |
 | Dati | Libro soci, tessere e ricevute: numeri mai riutilizzati, annullamenti motivati, nessuna cancellazione dall'interfaccia | `apps/soci/servizi.py` |
+| Dati | **Protocollo**: numero, data, oggetto e corrispondenti immodificabili; annullamento motivato; documenti solo aggiunti, con impronta SHA-256; registro giornaliero PDF con impronta | `apps/protocollo/servizi.py` |
+| Dati | Documenti salvati con nome = impronta (mai il nome scelto da chi carica), estensioni ammesse e dimensione massima configurabili, tipo dedotto dal server; download come allegato con `CSP: sandbox` | `apps/protocollo` |
+| Dati | **Protocolli riservati** visibili solo con permesso specifico (404 per gli altri), consultazioni registrate | `ProtocolloQuerySet.visibili_a` |
+| Dati | Posta: caselle IMAP in **sola lettura**, TLS con verifica del certificato, messaggi mostrati **solo come testo** (l'HTML non viene mai reso), limite di 50 MB per messaggio | `apps/protocollo/posta.py` |
+| Dati | Password delle caselle **cifrate** (Fernet, chiave `CHIAVE_CIFRATURA` fuori dal database, rotazione possibile); mai mostrate nell'interfaccia | `apps/core/cifratura.py` |
 | Privacy | Consensi per finalità con data e modalità; persone decedute escluse da auguri e comunicazioni | anagrafica |
 | Codice | Test automatici sui controlli di sicurezza (permessi, blocco, CSP, CSV); lint con regole di sicurezza (`ruff` S) | `apps/*/tests` |
 

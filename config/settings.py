@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.anagrafica",
     "apps.soci",
+    "apps.protocollo",
 ]
 
 MIDDLEWARE = [
@@ -165,6 +166,21 @@ STORAGES = {
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 FILE_UPLOAD_PERMISSIONS = 0o640
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o750
+DATA_UPLOAD_MAX_NUMBER_FILES = 20
+
+# Chiavi Fernet (separate da virgola, la prima cifra) per i segreti nel database, es. password IMAP
+CHIAVE_CIFRATURA = env("CHIAVE_CIFRATURA", default="")
+
+# Protocollo: dimensione massima di un allegato ed estensioni ammesse
+PROTOCOLLO_ALLEGATO_MAX_MB = env.int("PROTOCOLLO_ALLEGATO_MAX_MB", default=25)
+PROTOCOLLO_ESTENSIONI = env.list(
+    "PROTOCOLLO_ESTENSIONI",
+    default=[
+        "pdf", "p7m", "xml", "eml", "txt", "rtf", "odt", "ods", "odp", "doc", "docx", "xls",
+        "xlsx", "ppt", "pptx", "csv", "jpg", "jpeg", "png", "gif", "webp", "tif", "tiff", "zip",
+    ],
+)  # fmt: skip
 
 # ------------------------------------------------------------------ email
 # Django 6.1: configurazione con MAILERS (le vecchie EMAIL_* sono deprecate)

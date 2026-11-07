@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titolo %}Caselle di posta{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:posta' %}">Posta da protocollare</a></div>{% endblock %}
+{% block titolo_pagina %}Caselle di posta{% endblock %}
+{% block azioni %}{% if perms.protocollo.add_casellaposta and cifratura %}<a class="btn btn-primary" href="{% url 'protocollo:casella_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova casella</a>{% endif %}{% endblock %}
+{% block contenuto %}
+{% if not cifratura %}<div class="alert alert-warning">Per salvare le password delle caselle serve la chiave di cifratura <code>CHIAVE_CIFRATURA</code> nel file di configurazione: vedi il manuale di sistema, <em>Configurazione</em>.</div>{% endif %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Casella</th><th>Server</th><th>Ultimo controllo</th><th></th></tr></thead>
+      <tbody>
+      {% for c in caselle %}
+        <tr>
+          <td><span class="fw-medium">{{ c.nome }}</span>{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}{% if not c.attiva %} <span class="badge bg-secondary-lt">disattivata</span>{% endif %}<div class="small text-secondary">{{ c.utente }}</div></td>
+          <td>{{ c.server }}:{{ c.porta }} <span class="small text-secondary">{{ c.cartella }}</span></td>
+          <td>{{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %}<div class="small text-red">{{ c.ultimo_errore|truncatechars:120 }}</div>{% endif %}</td>
+          <td class="text-end">{% if perms.protocollo.change_casellaposta %}<a class="btn btn-sm" href="{% url 'protocollo:casella_modifica' c.pk %}">Modifica</a>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna casella.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer text-secondary small">Le caselle sono lette in sola lettura (IMAP): i messaggi non vengono cancellati né segnati come letti. Lo scaricamento automatico va pianificato sul server (manuale di sistema).</div>
+</div>
+{% endblock %}

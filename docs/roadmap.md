@@ -40,8 +40,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    con anti-spam), tessere annuali con numerazione, quote, ricevute PDF, rinnovi massivi, morosi.
    *Rimandati*: invio delle ricevute e dell'esito delle domande per email (con Comunicazioni),
    collegamento degli incassi alla prima nota (con Tesoreria), foto del socio.
-2. **Protocollo** - registro in entrata/uscita/interno (numerazione annuale), allegati privati,
+2. ✅ **Protocollo** - registro in entrata/uscita/interno (numerazione annuale), allegati privati,
    annullamento motivato, registro giornaliero PDF, ricezione email/PEC da protocollare.
+   *Rimandati*: invio dei protocolli in uscita per email/PEC (con Comunicazioni), liste di
+   distribuzione (con Comunicazioni), API REST (fase 2), import dal Protocollo ANCR (punto 8).
 3. **Organi sociali** - organi, riunioni con 1ª/2ª convocazione e ordine del giorno, presenze dai
    soci, verbali con delibere e votazioni, PDF, protocollazione automatica, libri dei verbali.
 4. **Comunicazioni** - modelli con segnaposto, invii a persone/categorie/liste, coda di invio in

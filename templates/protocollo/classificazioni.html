@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titolo %}Titolario{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
+{% block titolo_pagina %}Titolario di classificazione{% endblock %}
+{% block azioni %}{% if perms.protocollo.add_classificazione %}<a class="btn btn-primary" href="{% url 'protocollo:classificazione_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova voce</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% for v in voci %}
+    <div class="list-group-item d-flex align-items-center{% if not v.attiva %} text-secondary{% endif %}">
+      <code class="me-3">{{ v.codice }}</code><span class="flex-fill">{{ v.descrizione }}{% if not v.attiva %} <span class="badge bg-secondary-lt">non attiva</span>{% endif %}</span>
+      {% if perms.protocollo.change_classificazione %}<a class="btn btn-sm" href="{% url 'protocollo:classificazione_modifica' v.pk %}">Modifica</a>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

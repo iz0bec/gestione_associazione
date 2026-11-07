@@ -5,6 +5,21 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Protocollo
+- Registro di protocollo in entrata, uscita e interno con numerazione annuale `AAAA-NNNNN`, mezzo,
+  classificazione (titolario di base modificabile), data e protocollo del mittente, collegamento
+  «in risposta a», protocolli riservati, ricerca istantanea, esportazione CSV.
+- Corrispondenti scelti dall'anagrafica con ricerca o scritti liberamente; testo fissato alla registrazione.
+- Documenti multipli con impronta SHA-256, nomi su disco non controllabili dall'utente, estensioni e
+  dimensione configurabili, download protetto; si aggiungono e non si tolgono.
+- Annullamento motivato; modifica dei soli dati accessori; ricevuta di protocollazione in PDF.
+- Registro giornaliero in PDF generato ogni notte e conservato con impronta.
+- Posta da protocollare: caselle IMAP email/PEC in sola lettura, password cifrate (`CHIAVE_CIFRATURA`),
+  estrazione del messaggio originale delle PEC, testo sempre in chiaro senza HTML, protocollazione con
+  riconoscimento del mittente e scarto motivato.
+- Comando `pianificatore` (servizio systemd o container) per posta e registri; `genera_chiave_cifratura`.
+- Protocolli nella scheda anagrafica e sul cruscotto; manuale operativo, ruoli, ADR-015 e ADR-016.
+
 ### Aggiunto - Soci e tesseramento
 - Libro soci con numero di iscrizione progressivo mai riutilizzato, tipologie con quota annua,
   ammissione dalla scheda anagrafica (categoria «Socio» automatica), sospensione, cessazione con causa

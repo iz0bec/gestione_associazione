@@ -10,18 +10,9 @@
 
 from django.contrib import admin
 
+from apps.core.admin import SolaLettura
+
 from .models import DomandaIscrizione, Socio, Tessera, TipologiaSocio
-
-
-class SolaLettura(admin.ModelAdmin):
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(TipologiaSocio)

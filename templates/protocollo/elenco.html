@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titolo %}Protocollo{% endblock %}
+{% block titolo_pagina %}Registro di protocollo{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-dots me-1"></i>Altro</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% if perms.protocollo.esporta_protocollo %}<a class="dropdown-item" href="{% url 'protocollo:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-2"></i>Esporta CSV</a>{% endif %}
+      {% if perms.protocollo.view_registrogiornaliero %}<a class="dropdown-item" href="{% url 'protocollo:registri' %}"><i class="ti ti-calendar-stats me-2"></i>Registri giornalieri</a>{% endif %}
+      <a class="dropdown-item" href="{% url 'protocollo:classificazioni' %}"><i class="ti ti-list-tree me-2"></i>Titolario</a>
+    </div>
+  </div>
+  {% if perms.protocollo.add_protocollo %}
+  <div class="btn-group">
+    <a class="btn btn-primary" href="{% url 'protocollo:nuovo' %}?direzione=entrata"><i class="ti ti-arrow-down-left me-1"></i>Entrata</a>
+    <a class="btn btn-primary" href="{% url 'protocollo:nuovo' %}?direzione=uscita"><i class="ti ti-arrow-up-right me-1"></i>Uscita</a>
+    <a class="btn btn-primary" href="{% url 'protocollo:nuovo' %}?direzione=interno" title="Interno" aria-label="Protocollo interno"><i class="ti ti-arrows-exchange"></i></a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100" hx-get="{% url 'protocollo:elenco' %}" hx-target="#tabella-protocollo" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, change from:input[type=date], change from:input[name=anno], submit">
+      <div class="col-lg-5"><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>{{ filter.form.q }}</div></div>
+      <div class="col-6 col-lg-2">{{ filter.form.direzione }}</div>
+      <div class="col-6 col-lg-3">{{ filter.form.classificazione }}</div>
+      <div class="col-6 col-lg-2">{{ filter.form.stato }}</div>
+      <div class="col-6 col-lg-2">{{ filter.form.anno }}</div>
+      <div class="col-6 col-lg-3"><div class="input-group"><span class="input-group-text">dal</span>{{ filter.form.dal }}</div></div>
+      <div class="col-6 col-lg-3"><div class="input-group"><span class="input-group-text">al</span>{{ filter.form.al }}</div></div>
+      <noscript><button class="btn" type="submit">Filtra</button></noscript>
+    </form>
+  </div>
+  {% partialdef tabella inline %}
+  <div id="tabella-protocollo" class="tabella-htmx">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead><tr><th class="w-1">Numero</th><th class="w-1">Data</th><th>Oggetto</th><th class="d-none d-md-table-cell">Corrispondenti</th><th class="w-1 d-none d-lg-table-cell"></th></tr></thead>
+        <tbody>
+        {% for p in page_obj %}
+          <tr class="{% if p.annullato %}text-secondary{% endif %}">
+            <td class="text-nowrap"><a class="fw-medium text-reset" href="{{ p.get_absolute_url }}">{{ p.segnatura }}</a><div>{% include "protocollo/_badge_direzione.html" %}</div></td>
+            <td class="text-nowrap">{{ p.registrato_il|date:"d/m/Y" }}<div class="small text-secondary">{{ p.registrato_il|date:"H:i" }}</div></td>
+            <td>
+              <a class="text-reset{% if p.annullato %} text-decoration-line-through{% endif %}" href="{{ p.get_absolute_url }}">{{ p.oggetto|truncatechars:140 }}</a>
+              {% if p.annullato %}<span class="badge bg-red-lt ms-1">annullato</span>{% endif %}
+              {% if p.riservato %}<span class="badge bg-dark-lt ms-1"><i class="ti ti-lock me-1"></i>riservato</span>{% endif %}
+              {% if p.classificazione %}<div class="small text-secondary">{{ p.classificazione }}</div>{% endif %}
+            </td>
+            <td class="d-none d-md-table-cell small">{% for c in p.corrispondenti.all|slice:":3" %}<div>{% if c.ruolo == "mittente" %}<span class="text-secondary">da</span>{% else %}<span class="text-secondary">a</span>{% endif %} {{ c.descrizione }}</div>{% endfor %}{% if p.corrispondenti.all|length > 3 %}<div class="text-secondary">e altri {{ p.corrispondenti.all|length|add:"-3" }}</div>{% endif %}</td>
+            <td class="d-none d-lg-table-cell text-secondary text-nowrap">{% with n=p.allegati.all|length %}{% if n %}<i class="ti ti-paperclip"></i> {{ n }}{% endif %}{% endwith %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-secondary py-4 text-center">Nessuna registrazione.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/paginazione.html" %}
+  </div>
+  {% endpartialdef %}
+</div>
+{% endblock %}

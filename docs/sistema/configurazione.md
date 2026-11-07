@@ -40,4 +40,20 @@ permessi `600`, mai nel repository.
 | `LOG_LEVEL` | | `INFO` | livello dei log su console |
 | `DB_CONN_MAX_AGE` | | `60` | riuso delle connessioni al database (secondi) |
 
+| `CHIAVE_CIFRATURA` | per le caselle di posta | - | chiave Fernet per le password salvate nel database; generarla con `manage.py genera_chiave_cifratura`. Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
+| `PROTOCOLLO_ALLEGATO_MAX_MB` | | `25` | dimensione massima di un documento protocollato |
+| `PROTOCOLLO_ESTENSIONI` | | pdf, p7m, xml, eml, office, immagini, zip | estensioni ammesse per i documenti (separate da virgola) |
+
 Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (default 8000).
+
+## Lavori periodici
+
+| Comando | Quando | Cosa fa |
+|---|---|---|
+| `manage.py pianificatore` | sempre attivo (servizio) | esegue i due comandi seguenti alle scadenze |
+| `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo (sola lettura) |
+| `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
+| `manage.py genera_chiave_cifratura` | una volta | stampa una chiave per `CHIAVE_CIFRATURA` |
+
+Con Docker il pianificatore è il servizio `pianificatore` di `compose.yaml`; senza Docker vedi
+[Installazione](installazione.md).

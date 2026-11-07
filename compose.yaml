@@ -27,6 +27,21 @@ services:
       db:
         condition: service_healthy
 
+  # lavori periodici: posta del protocollo ogni 15 minuti, registro giornaliero di notte
+  pianificatore:
+    image: gestione-associazione:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://gestione:${DB_PASSWORD:?Impostare DB_PASSWORD in .env}@db:5432/gestione_associazione
+      SALTA_MIGRAZIONI: "1"
+    command: ["python", "manage.py", "pianificatore"]
+    volumes:
+      - media:/data/media
+    depends_on:
+      app:
+        condition: service_healthy
+
   db:
     image: postgres:17-alpine
     restart: unless-stopped

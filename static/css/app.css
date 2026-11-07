@@ -43,6 +43,9 @@ fieldset legend.h3 { margin-bottom: .75rem; color: var(--tblr-secondary); }
   .navbar, .page-header .btn-list, footer { display: none !important; }
 }
 
+/* testo dei messaggi ricevuti: solo testo, a capo conservati */
+.testo-messaggio { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; max-height: 60vh; overflow-y: auto; }
+
 /* campo trappola anti-spam del modulo pubblico: fuori schermo, non display:none */
 .campo-trappola { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .tabella-htmx.htmx-request, .htmx-request .tabella-htmx { opacity: .55; transition: opacity .2s; }

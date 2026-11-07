@@ -60,6 +60,12 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Soci: sequenze `libro_soci` (unica), `tessera` e `ricevuta_quota` (annuali) — chiavi in `apps/soci/models.py`;
   operazioni solo da `apps/soci/servizi.py` (sollevano `OperazioneNonValida` con messaggio per l'utente).
 - Modulo pubblico `/iscrizione/`: anti-spam in `DomandaPubblicaForm` (orologio in `_adesso()`, patchabile nei test).
+- Protocollo: sequenza `protocollo` (annuale); registrazione solo con `servizi.registra_protocollo`;
+  campi immutabili dopo la registrazione (si annulla); documenti solo aggiunti con `aggiungi_allegato`
+  (nome su disco = impronta). Riservati: filtrare sempre con `Protocollo.objects.visibili_a(user)`.
+- Download di file: `FileResponse` come allegato con `Content-Security-Policy: default-src 'none'; sandbox`.
+- Segreti nel DB: `apps.core.cifratura.cifra/decifra` (chiave `CHIAVE_CIFRATURA`, mai nel DB).
+- Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -71,4 +77,4 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 ## Stato
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
-(`apps/soci`). Prossimo modulo previsto: Protocollo (roadmap).
+(`apps/soci`), **Protocollo** completato (`apps/protocollo`). Prossimo: Organi sociali (roadmap).

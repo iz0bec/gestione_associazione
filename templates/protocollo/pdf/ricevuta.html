@@ -1,0 +1,19 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Protocollo {{ p.segnatura }}{% endblock %}
+{% block formato %}A5 landscape{% endblock %}
+{% block stile %}
+  .segnatura { border: 1.5pt solid #1d4e89; padding: 8pt 12pt; font-size: 13pt; margin-bottom: 10pt; }
+  .segnatura strong { font-size: 16pt; }
+  dt { font-size: 8pt; color: #555; margin-top: 5pt; } dd { margin: 0; }
+{% endblock %}
+{% block contenuto %}
+<div class="segnatura">Prot. n. <strong>{{ p.segnatura }}</strong> del {{ p.registrato_il|date:"d/m/Y" }} ore {{ p.registrato_il|date:"H:i" }} · {{ p.get_direzione_display|lower }}{% if p.annullato %} · <strong>ANNULLATO</strong>{% endif %}</div>
+<dl>
+  <dt>Oggetto</dt><dd>{{ p.oggetto }}</dd>
+  {% if p.mittenti %}<dt>Mittente</dt><dd>{% for c in p.mittenti %}{{ c.descrizione }}{% if not forloop.last %}; {% endif %}{% endfor %}</dd>{% endif %}
+  {% if p.destinatari %}<dt>Destinatario</dt><dd>{% for c in p.destinatari %}{{ c.descrizione }}{% if not forloop.last %}; {% endif %}{% endfor %}</dd>{% endif %}
+  {% if p.classificazione %}<dt>Classificazione</dt><dd>{{ p.classificazione }}</dd>{% endif %}
+  {% with n=p.allegati.count %}{% if n %}<dt>Documenti</dt><dd>{{ n }} file registrati</dd>{% endif %}{% endwith %}
+</dl>
+{% if p.annullato %}<p class="piccolo">Annullato il {{ p.annullato_il|date:"d/m/Y" }}: {{ p.motivo_annullamento }}</p>{% endif %}
+{% endblock %}

@@ -41,6 +41,27 @@ SOCI_SEGRETERIA = [
 ]
 SOCI_TESORERIA = [*SOCI_LETTURA, "soci.add_tessera", "soci.incassa_quota", "soci.annulla_tessera"]
 
+PROTOCOLLO_LETTURA = ["protocollo.view_protocollo", "protocollo.view_classificazione"]
+PROTOCOLLO_OPERATIVO = [
+    *PROTOCOLLO_LETTURA,
+    "protocollo.add_protocollo",
+    "protocollo.change_protocollo",
+    "protocollo.esporta_protocollo",
+    "protocollo.view_registrogiornaliero",
+    "protocollo.view_messaggioricevuto",
+    "protocollo.gestisci_posta",
+]
+PROTOCOLLO_RESPONSABILE = [
+    *PROTOCOLLO_OPERATIVO,
+    "protocollo.annulla_protocollo",
+    "protocollo.vedi_riservati",
+    "protocollo.add_classificazione",
+    "protocollo.change_classificazione",
+    "protocollo.view_casellaposta",
+    "protocollo.add_casellaposta",
+    "protocollo.change_casellaposta",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -55,6 +76,7 @@ RUOLI = {
         *SOCI_SEGRETERIA,
         *SOCI_TESORERIA,
         "soci.valuta_domanda",
+        *PROTOCOLLO_RESPONSABILE,
     ],
     "Presidente": [
         *ANAGRAFICA_SCRITTURA,
@@ -63,6 +85,11 @@ RUOLI = {
         *SOCI_LETTURA,
         "soci.esporta_libro_soci",
         "soci.valuta_domanda",
+        *PROTOCOLLO_LETTURA,
+        "protocollo.vedi_riservati",
+        "protocollo.esporta_protocollo",
+        "protocollo.view_registrogiornaliero",
+        "protocollo.view_messaggioricevuto",
     ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
@@ -72,11 +99,19 @@ RUOLI = {
         "core.gestisci_organizzazione",
         *SOCI_SEGRETERIA,
         "soci.valuta_domanda",
+        *PROTOCOLLO_RESPONSABILE,
     ],
-    "Tesoriere": [*ANAGRAFICA_LETTURA, *SOCI_TESORERIA],
-    "Addetto protocollo": [*ANAGRAFICA_SCRITTURA],
-    "Consigliere": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA],
-    "Revisore": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA, "core.view_eventoaudit"],
+    "Tesoriere": [*ANAGRAFICA_LETTURA, *SOCI_TESORERIA, *PROTOCOLLO_LETTURA],
+    "Addetto protocollo": [*ANAGRAFICA_SCRITTURA, *PROTOCOLLO_OPERATIVO],
+    "Consigliere": [*ANAGRAFICA_LETTURA, *SOCI_LETTURA, *PROTOCOLLO_LETTURA],
+    "Revisore": [
+        *ANAGRAFICA_LETTURA,
+        *SOCI_LETTURA,
+        "core.view_eventoaudit",
+        *PROTOCOLLO_LETTURA,
+        "protocollo.esporta_protocollo",
+        "protocollo.view_registrogiornaliero",
+    ],
 }
 
 

@@ -24,6 +24,7 @@ urlpatterns = [
     path("amministrazione-tecnica/", admin.site.urls),
     path("anagrafica/", include("apps.anagrafica.urls")),
     path("soci/", include("apps.soci.urls")),
+    path("protocollo/", include("apps.protocollo.urls")),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
     path("", include("apps.core.urls")),

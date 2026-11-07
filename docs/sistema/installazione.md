@@ -93,9 +93,37 @@ ProtectHome=true
 WantedBy=multi-user.target
 ```
 
-```bash
-systemctl daemon-reload && systemctl enable --now gestione-associazione
+Servizio dei lavori periodici `/etc/systemd/system/gestione-associazione-pianificatore.service`
+(scarica la posta del protocollo ogni 15 minuti e genera il registro giornaliero di notte):
+
+```ini
+[Unit]
+Description=Gestione Associazione - lavori periodici
+After=gestione-associazione.service
+
+[Service]
+User=gestione
+Group=gestione
+WorkingDirectory=/opt/gestione-associazione
+ExecStart=/opt/gestione-associazione/.venv/bin/python manage.py pianificatore
+Restart=on-failure
+RestartSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
 ```
+
+```bash
+systemctl daemon-reload && systemctl enable --now gestione-associazione gestione-associazione-pianificatore
+```
+
+In alternativa al pianificatore si possono usare cron o timer systemd con i singoli comandi
+`manage.py scarica_posta` (ogni 15 minuti) e `manage.py registro_giornaliero` (ogni notte):
+entrambi sono rieseguibili senza effetti doppi.
 
 ## HTTPS e reverse proxy
 

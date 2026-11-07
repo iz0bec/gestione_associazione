@@ -55,6 +55,14 @@ class DettaglioView(PermessoMixin, DetailView):
         ctx["consensi"] = self.object.consensi.all()
         ctx["form_consenso"] = ConsensoForm()
         ctx["socio"] = getattr(self.object, "socio", None)
+        if self.request.user.has_perm("protocollo.view_protocollo"):
+            from apps.protocollo.models import Protocollo
+
+            ctx["protocolli"] = (
+                Protocollo.objects.visibili_a(self.request.user)
+                .filter(corrispondenti__soggetto=self.object)
+                .distinct()[:10]
+            )
         if self.request.user.has_perm("core.view_eventoaudit"):
             ctx["storia"] = EventoAudit.objects.filter(
                 oggetto_tipo=ContentType.objects.get_for_model(Soggetto),

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block titolo %}{{ messaggio }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:posta' %}">Posta da protocollare</a> · {{ messaggio.casella }}</div>{% endblock %}
+{% block titolo_pagina %}{{ messaggio.oggetto|default:"(senza oggetto)" }}{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="datagrid mb-3">
+          <div class="datagrid-item"><div class="datagrid-title">Da</div><div class="datagrid-content text-break">{{ messaggio.mittente }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Data</div><div class="datagrid-content">{{ messaggio.data|date:"d/m/Y H:i"|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">A</div><div class="datagrid-content text-break small">{{ messaggio.destinatari|default:"—" }}</div></div>
+        </div>
+        <div class="testo-messaggio">{{ messaggio.testo|default:"(messaggio senza testo)" }}</div>
+      </div>
+      <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action" href="{% url 'protocollo:messaggio_eml' messaggio.pk %}"><i class="ti ti-mail me-2"></i>Messaggio originale (.eml)</a>
+        {% for a in messaggio.allegati %}<a class="list-group-item list-group-item-action" href="{% url 'protocollo:messaggio_allegato' messaggio.pk forloop.counter0 %}"><i class="ti ti-paperclip me-2"></i>{{ a.nome }} <span class="text-secondary small">{{ a.dimensione|filesizeformat }}</span></a>{% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    {% if messaggio.stato == "nuovo" and perms.protocollo.gestisci_posta %}
+      {% if perms.protocollo.add_protocollo %}
+      <form class="card" method="post" action="{% url 'protocollo:protocolla' messaggio.pk %}" novalidate>{% csrf_token %}
+        <div class="card-header"><h2 class="card-title"><i class="ti ti-stamp me-2"></i>Protocolla in entrata</h2></div>
+        <div class="card-body">
+          <p class="small text-secondary">Mittente: {% if mittente_noto %}<a href="{{ mittente_noto.get_absolute_url }}">{{ mittente_noto }}</a> (in anagrafica){% else %}{{ messaggio.mittente }} (non in anagrafica){% endif %}. Il messaggio originale e gli allegati diventano i documenti del protocollo.</p>
+          {{ form }}
+        </div>
+        <div class="card-footer text-end"><button class="btn btn-primary" type="submit">Protocolla</button></div>
+      </form>
+      {% endif %}
+      <form class="card mt-3" method="post" action="{% url 'protocollo:scarta' messaggio.pk %}">{% csrf_token %}
+        <div class="card-body">
+          <label class="form-label required" for="motivo-scarto">Non va protocollato</label>
+          <input class="form-control mb-2" id="motivo-scarto" name="motivo" maxlength="255" required placeholder="Motivo, es. pubblicità">
+          <button class="btn btn-outline-secondary w-100" type="submit">Scarta</button>
+        </div>
+      </form>
+    {% else %}
+      <div class="card"><div class="card-body">
+        {% if messaggio.stato == "protocollato" %}Protocollato con il n. <a href="{{ messaggio.protocollo.get_absolute_url }}">{{ messaggio.protocollo.segnatura }}</a>{% elif messaggio.stato == "scartato" %}Scartato: {{ messaggio.motivo_scarto }}{% else %}Da esaminare{% endif %}
+        {% if messaggio.gestito_da %}<div class="small text-secondary">{{ messaggio.gestito_da }}, {{ messaggio.gestito_il|date:"d/m/Y H:i" }}</div>{% endif %}
+      </div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

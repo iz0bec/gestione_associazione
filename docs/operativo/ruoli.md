@@ -38,6 +38,19 @@ I ruoli li assegna l'amministratore.
 Incassi e segreteria sono separati di proposito: chi iscrive i soci non registra i pagamenti.
 In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 
-La tabella cresce con i nuovi moduli (protocollo, tesoreria, ...).
+### Protocollo
+
+| Ruolo | Registro | Registra, aggiunge documenti, posta | Annulla | Riservati | Esporta e registri | Titolario e caselle |
+|---|---|---|---|---|---|---|
+| Amministratore di sistema | consulta | sì | sì | sì | sì | modifica |
+| Presidente | consulta | - (vede la posta) | - | sì | sì | consulta il titolario |
+| Segretario | consulta | sì | sì | sì | sì | modifica |
+| Addetto protocollo | consulta | sì | - | - | sì | consulta il titolario |
+| Tesoriere, Consigliere | consulta | - | - | - | - | consulta il titolario |
+| Revisore | consulta | - | - | - | sì | consulta il titolario |
+
+L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (segretario).
+
+La tabella cresce con i nuovi moduli (organi sociali, tesoreria, ...).
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

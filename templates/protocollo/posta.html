@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titolo %}Posta da protocollare{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
+{% block titolo_pagina %}Posta da protocollare{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.protocollo.view_casellaposta %}<a class="btn" href="{% url 'protocollo:caselle' %}"><i class="ti ti-settings me-1"></i>Caselle</a>{% endif %}
+  {% if perms.protocollo.gestisci_posta and caselle %}<form method="post">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-mail-down me-1"></i>Scarica ora</button></form>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if not caselle %}<div class="alert alert-info">Nessuna casella di posta configurata{% if perms.protocollo.add_casellaposta %}: <a href="{% url 'protocollo:casella_nuova' %}">aggiungine una</a>{% endif %}.</div>{% endif %}
+{% for c in caselle %}{% if c.ultimo_errore %}<div class="alert alert-warning">Casella «{{ c.nome }}»: {{ c.ultimo_errore }}</div>{% endif %}{% endfor %}
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-pills card-header-pills">
+      {% for valore, etichetta in stati %}<li class="nav-item"><a class="nav-link{% if stato == valore %} active{% endif %}" href="?stato={{ valore }}">{{ etichetta }}</a></li>{% endfor %}
+    </ul>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>Data</th><th>Mittente</th><th>Oggetto</th><th class="d-none d-md-table-cell">Casella</th><th>Stato</th></tr></thead>
+      <tbody>
+      {% for m in messaggi %}
+        <tr>
+          <td class="text-nowrap">{{ m.data|date:"d/m/Y H:i"|default:"—" }}</td>
+          <td class="text-truncate">{{ m.mittente|truncatechars:50 }}</td>
+          <td><a class="text-reset fw-medium" href="{{ m.get_absolute_url }}">{{ m.oggetto|default:"(senza oggetto)"|truncatechars:90 }}</a>{% if m.allegati %} <i class="ti ti-paperclip text-secondary" title="{{ m.allegati|length }} allegati"></i>{% endif %}</td>
+          <td class="d-none d-md-table-cell">{{ m.casella }}{% if m.casella.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}</td>
+          <td>{% if m.stato == "protocollato" %}<a class="badge bg-green-lt" href="{{ m.protocollo.get_absolute_url }}">{{ m.protocollo.segnatura }}</a>{% elif m.stato == "scartato" %}<span class="badge bg-secondary-lt" title="{{ m.motivo_scarto }}">scartato</span>{% else %}<span class="badge bg-yellow-lt">da esaminare</span>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="5" class="text-secondary py-4 text-center">Nessun messaggio.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

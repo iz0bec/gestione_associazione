@@ -49,6 +49,8 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
         ctx["compleanni"] = Soggetto.compleanni_prossimi(giorni=14)[:8]
         if self.request.user.has_perm("soci.view_socio"):
             ctx["soci"] = _riepilogo_soci()
+        if self.request.user.has_perm("protocollo.view_protocollo"):
+            ctx["protocollo"] = _riepilogo_protocollo(self.request.user)
         ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(
             "utente"
         )[:8]
@@ -70,6 +72,21 @@ def _riepilogo_soci():
         "domande": DomandaIscrizione.objects.filter(
             stato=DomandaIscrizione.Stato.IN_ATTESA
         ).count(),
+    }
+
+
+def _riepilogo_protocollo(utente):
+    from django.utils import timezone
+
+    from apps.protocollo.models import MessaggioRicevuto, Protocollo
+
+    visibili = Protocollo.objects.visibili_a(utente)
+    return {
+        "anno": visibili.filter(anno=timezone.localdate().year).count(),
+        "ultimi": visibili.prefetch_related("corrispondenti")[:5],
+        "posta": MessaggioRicevuto.objects.da_esaminare().count()
+        if utente.has_perm("protocollo.view_messaggioricevuto")
+        else 0,
     }
 
 

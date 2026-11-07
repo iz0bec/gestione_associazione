@@ -28,6 +28,7 @@ dependencies = [
     "python-codicefiscale>=0.12",
     "weasyprint>=70",
     "whitenoise>=6.12",
+    "cryptography>=44",
 ]
 
 [dependency-groups]

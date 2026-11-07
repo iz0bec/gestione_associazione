@@ -1,0 +1,8 @@
+{% comment %}Scelta dei corrispondenti: campo, scelti, campo_altri (BoundField){% endcomment %}
+<div class="mb-2" id="scelti-{{ campo }}">{% for s in scelti %}{% include "protocollo/_soggetto_scelto.html" %}{% endfor %}</div>
+<div class="input-icon mb-1"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+  <input type="search" class="form-control" name="cerca_{{ campo }}" placeholder="Cerca in anagrafica (nome, ente, email...)" autocomplete="off" aria-label="Cerca {{ campo }} in anagrafica" data-ricerca-scelta
+         hx-get="{% url 'protocollo:cerca_soggetti' %}?campo={{ campo }}" hx-trigger="input changed delay:300ms" hx-target="#risultati-{{ campo }}">
+</div>
+<div class="list-group list-group-flush mb-3" id="risultati-{{ campo }}"></div>
+{{ campo_altri.as_field_group }}
