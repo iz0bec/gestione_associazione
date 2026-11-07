@@ -69,6 +69,15 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Addetto protocollo, Revisore | sì | sì | - | consulta |
 | Consigliere | sì | - | - | - |
 
-La tabella cresce con i nuovi moduli (tesoreria, patrimonio).
+### Tesoreria
+
+| Ruolo | Rendiconti | Prima nota, saldi, preventivo | Registra e annulla movimenti, chiude gli esercizi, conti e piano dei conti |
+|---|---|---|---|
+| Amministratore di sistema, Tesoriere | sì | sì | sì |
+| Presidente, Revisore | sì | consulta | - |
+| Segretario, Consigliere | sì | - | - |
+| Addetto protocollo | - | - | - |
+
+La tabella cresce con i nuovi moduli (patrimonio).
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

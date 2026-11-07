@@ -73,6 +73,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Email: solo tramite `apps.comunicazioni.servizi.crea_invio` (bozza → `conferma` → coda `elabora_coda`);
   testi utente con segnaposto `{{ chiave }}` (`servizi.componi`, chiavi in `SEGNAPOSTO`), mai con il motore
   dei template. Finalità ≠ istituzionale ⇒ serve l'ultimo consenso prestato.
+- Tesoreria: movimenti solo con `servizi.registra_movimento` (sequenza `prima_nota` annuale), esercizio
+  chiuso = immutabile; le quote entrano con `servizi.registra_quota` (chiamata da `soci.servizi`).
+- Traduzioni mancanti in Django: `locale/it/LC_MESSAGES/django.po` (ricompilare il `.mo` con `msgfmt`).
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -85,5 +88,5 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
 (`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`), **Comunicazioni e
-anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`, manca `docs/operativo/tesoreria.md`).
+anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`).
 Prossimo: Patrimonio.

@@ -20,7 +20,8 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 5. [Protocollo](protocollo.md) - registrazioni, documenti, annullamento, posta e PEC, registri giornalieri
 6. [Organi sociali](organi.md) - cariche, riunioni e convocazioni, presenze e deleghe, verbali e delibere
 7. [Comunicazioni e anniversari](comunicazioni.md) - email con modelli e liste, consensi, compleanni, onomastici, ricorrenze, anzianità, auguri automatici
-8. [Organizzazione e registro attività](sistema.md) - dati dell'ente, controllo delle operazioni
+8. [Tesoreria](tesoreria.md) - prima nota, quote, preventivo, rendiconto per cassa (Modello D), chiusura
+9. [Organizzazione e registro attività](sistema.md) - dati dell'ente, controllo delle operazioni
 
 I moduli Organi sociali, Comunicazioni, Tesoreria e Patrimonio sono in
 sviluppo: nel menu compaiono con l'etichetta *presto*.

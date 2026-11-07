@@ -1,0 +1,15 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Traduzioni italiane mancanti in Django (testi predefiniti dei moduli)
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: it\n"
+
+msgid "- Select an option -"
+msgstr "— scegliere —"

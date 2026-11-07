@@ -43,6 +43,7 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 | Dati | Password delle caselle **cifrate** (Fernet, chiave `CHIAVE_CIFRATURA` fuori dal database, rotazione possibile); mai mostrate nell'interfaccia | `apps/core/cifratura.py` |
 | Privacy | **Comunicazioni**: finalità per ogni invio; per comunicazioni associative e auguri vale l'ultimo consenso registrato; deceduti e archiviati sempre esclusi; un messaggio per destinatario (nessun indirizzo esposto); registro per destinatario | `apps/comunicazioni/servizi.py` |
 | Web | Segnaposto dei testi con sostituzione semplice (nessun linguaggio di template eseguito sui testi scritti dagli utenti); email HTML con testo sempre escapato | `servizi.componi` |
+| Dati | **Tesoreria**: prima nota numerata, movimenti annullati e non cancellati, esercizi chiusi immutabili (riapertura motivata e registrata), giustificativi con impronta, quote collegate una sola volta alla prima nota | `apps/tesoreria/servizi.py` |
 | Privacy | Consensi per finalità con data e modalità; persone decedute escluse da auguri e comunicazioni | anagrafica |
 | Codice | Test automatici sui controlli di sicurezza (permessi, blocco, CSP, CSV); lint con regole di sicurezza (`ruff` S) | `apps/*/tests` |
 

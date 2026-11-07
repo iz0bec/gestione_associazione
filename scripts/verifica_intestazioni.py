@@ -12,7 +12,7 @@
 import subprocess  # noqa: S404
 import sys
 
-ESTENSIONI = (".py", ".html", ".css", ".js", ".sh", ".yaml", ".yml", ".toml", ".md")
+ESTENSIONI = (".py", ".html", ".css", ".js", ".sh", ".yaml", ".yml", ".toml", ".md", ".po")
 ESCLUSI = ("static/vendor/", "apps/accounts/migrations/0001", "apps/accounts/migrations/0002",
            "apps/core/migrations/0001", "apps/anagrafica/migrations/0001",
            "apps/core/migrations/0002_iscrizioni", "apps/soci/migrations/0001",

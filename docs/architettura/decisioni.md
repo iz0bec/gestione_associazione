@@ -176,3 +176,17 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   gli auguri automatici registrano chi li ha ricevuti (`DestinatarioRegistrato`) per non duplicarli.
 - **Onomastici**: calendario modificabile con la data più diffusa per nome; ricerca del nome intero e poi
   del primo nome, senza accenti.
+
+## ADR-019 - Tesoreria per cassa e Modello D
+
+- **Scelta**: contabilità per cassa a partita semplice, adatta agli ETS non commerciali con entrate sotto
+  220.000 euro; piano dei conti = voci del rendiconto per cassa (Modello D, D.M. 5 marzo 2020), non
+  modificabili, con **sottovoci** dell'associazione che confluiscono nella voce. Niente partita doppia né
+  stato patrimoniale (fuori portata per le piccole sezioni).
+- **Movimenti**: numerati per esercizio; i **giroconti** spostano fondi tra conti senza toccare il
+  rendiconto; annullamento al posto della cancellazione.
+- **Saldi**: calcolati dai movimenti; alla chiusura si fissano i finali e si riportano come iniziali
+  dell'anno seguente (creato se manca). La riapertura è consentita solo se l'anno successivo è aperto.
+- **Quote**: l'incasso registrato nel modulo Soci crea il movimento (OneToOne con la tessera) dentro la
+  stessa transazione, in un punto di salvataggio: se la tesoreria non può registrarlo l'incasso resta
+  valido e la quota compare tra quelle da registrare.

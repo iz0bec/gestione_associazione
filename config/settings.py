@@ -144,6 +144,7 @@ AXES_IPWARE_PROXY_COUNT = env.int("PROXY_COUNT", default=0)
 
 # ------------------------------------------------------------------ lingua e orari
 LANGUAGE_CODE = "it"
+LOCALE_PATHS = [BASE_DIR / "locale"]  # traduzioni mancanti in Django (es. scelta vuota)
 LANGUAGES = [("it", "Italiano")]
 TIME_ZONE = "Europe/Rome"
 USE_I18N = True
