@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titolo %}Passaggio di consegne{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'patrimonio:passaggi' %}">Passaggi di consegne</a></div>{% endblock %}
+{% block titolo_pagina %}Nuovo passaggio di consegne{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-5">
+    <form method="post" class="card" novalidate data-conferma="Registrare il passaggio di consegne? Il documento non sarà più modificabile.">{% csrf_token %}
+      <div class="card-body">
+        {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+        {{ form.data.as_field_group }}
+        <div class="row"><div class="col-7">{{ form.consegnante.as_field_group }}</div><div class="col-5">{{ form.consegnante_ruolo.as_field_group }}</div>
+        <div class="col-7">{{ form.ricevente.as_field_group }}</div><div class="col-5">{{ form.ricevente_ruolo.as_field_group }}</div></div>
+        {{ form.note.as_field_group }}
+        {% if perms.protocollo.add_protocollo %}{{ form.protocolla.as_field_group }}{% endif %}
+      </div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-file-certificate me-1"></i>Registra e genera il verbale</button></div>
+    </form>
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Beni che vengono consegnati ({{ totali.beni }}, {{ totali.valore|floatformat:"2g" }} €)</h2></div>
+      <div class="table-responsive"><table class="table table-sm card-table">
+        <thead><tr><th>N.</th><th>Bene</th><th>Ubicazione</th><th>Stato</th></tr></thead>
+        <tbody>{% for b in beni %}<tr><td class="text-nowrap">{{ b.codice }}</td><td>{{ b.nome }}{% if b.quantita > 1 %} × {{ b.quantita }}{% endif %}<div class="small text-secondary">{{ b.categoria }}</div></td><td class="small">{{ b.ubicazione }}</td><td class="small">{{ b.stato }} · {{ b.conservazione|lower }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <div class="card-footer small text-secondary">Controllare l'inventario prima della consegna: beni mancanti o danneggiati vanno annotati nelle osservazioni.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

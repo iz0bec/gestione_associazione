@@ -29,6 +29,7 @@ dependencies = [
     "weasyprint>=70",
     "whitenoise>=6.12",
     "cryptography>=44",
+    "segno>=1.6",
 ]
 
 [dependency-groups]

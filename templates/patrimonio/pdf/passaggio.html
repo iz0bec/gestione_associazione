@@ -1,0 +1,13 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Passaggio di consegne{% endblock %}
+{% block stile %}td.n { text-align: right; white-space: nowrap; } .firme { margin-top: 30pt; display: flex; justify-content: space-between; } .firme div { width: 45%; text-align: center; }{% endblock %}
+{% block contenuto %}
+<h1>Verbale di passaggio di consegne del patrimonio</h1>
+<p>In data {{ p.data|date:"j F Y" }} <strong>{{ p.consegnante }}</strong> ({{ p.consegnante_ruolo }}) consegna a <strong>{{ p.ricevente }}</strong> ({{ p.ricevente_ruolo }}) i beni del patrimonio di {{ organizzazione.denominazione }} elencati di seguito: {{ p.numero_beni }} beni per un valore stimato di {{ p.valore_totale|floatformat:"2g" }} euro.</p>
+<table>
+  <thead><tr><th>N.</th><th>Bene</th><th>Categoria</th><th>Q.tà</th><th>Ubicazione</th><th>Conservazione</th><th>Stato</th><th class="destra">Valore</th></tr></thead>
+  <tbody>{% for b in p.beni %}<tr><td>{{ b.codice }}</td><td>{{ b.nome }}</td><td>{{ b.categoria }}</td><td>{{ b.quantita }}</td><td>{{ b.ubicazione }}</td><td>{{ b.conservazione }}</td><td>{{ b.stato }}</td><td class="n">{{ b.valore }}</td></tr>{% endfor %}</tbody>
+</table>
+{% if p.note %}<h2>Osservazioni</h2><p>{{ p.note|linebreaksbr }}</p>{% endif %}
+<div class="firme"><div>Chi consegna<br><br>{{ p.consegnante }}<br>______________________</div><div>Chi riceve<br><br>{{ p.ricevente }}<br>______________________</div></div>
+{% endblock %}

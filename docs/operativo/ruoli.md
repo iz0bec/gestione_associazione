@@ -78,6 +78,13 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Segretario, Consigliere | sì | - | - |
 | Addetto protocollo | - | - | - |
 
-La tabella cresce con i nuovi moduli (patrimonio).
+### Patrimonio
+
+| Ruolo | Consulta inventario e passaggi | Inserisce, modifica, valuta, presta e registra uscite | Passaggio di consegne |
+|---|---|---|---|
+| Amministratore di sistema, Segretario, Tesoriere | sì | sì | sì |
+| Presidente | sì | - | sì |
+| Consigliere, Revisore | sì | - | - |
+| Addetto protocollo | - | - | - |
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

@@ -13,9 +13,7 @@ from django.utils.functional import SimpleLazyObject
 from .models import Organizzazione
 
 # Moduli previsti dalla roadmap, mostrati nel menu come "presto" finché non sono pronti
-MODULI_IN_ARRIVO = [
-    ("Patrimonio", "building-warehouse"),
-]
+MODULI_IN_ARRIVO = []
 
 
 def applicazione(request):

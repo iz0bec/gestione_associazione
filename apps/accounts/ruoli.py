@@ -135,6 +135,22 @@ TESORERIA_GESTIONE = [
     "tesoreria.change_voce",
 ]
 
+PATRIMONIO_LETTURA = [
+    "patrimonio.view_bene",
+    "patrimonio.view_categoriabene",
+    "patrimonio.view_passaggioconsegne",
+]
+PATRIMONIO_GESTIONE = [
+    *PATRIMONIO_LETTURA,
+    "patrimonio.add_bene",
+    "patrimonio.change_bene",
+    "patrimonio.movimenta_bene",
+    "patrimonio.valuta_bene",
+    "patrimonio.add_categoriabene",
+    "patrimonio.change_categoriabene",
+    "patrimonio.add_passaggioconsegne",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -154,6 +170,7 @@ RUOLI = {
         "organi.change_organo",
         *COMUNICAZIONI_GESTIONE,
         *TESORERIA_GESTIONE,
+        *PATRIMONIO_GESTIONE,
     ],
     "Presidente": [
         *ANAGRAFICA_SCRITTURA,
@@ -174,6 +191,8 @@ RUOLI = {
         "organi.verbalizza",
         *COMUNICAZIONI_INVIO,
         *TESORERIA_LETTURA,
+        *PATRIMONIO_LETTURA,
+        "patrimonio.add_passaggioconsegne",
     ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
@@ -187,6 +206,7 @@ RUOLI = {
         *ORGANI_SEGRETERIA,
         *COMUNICAZIONI_GESTIONE,
         "tesoreria.view_esercizio",
+        *PATRIMONIO_GESTIONE,
     ],
     "Tesoriere": [
         *ANAGRAFICA_LETTURA,
@@ -195,6 +215,7 @@ RUOLI = {
         *ORGANI_LETTURA,
         *COMUNICAZIONI_INVIO,
         *TESORERIA_GESTIONE,
+        *PATRIMONIO_GESTIONE,
     ],
     "Addetto protocollo": [
         *ANAGRAFICA_SCRITTURA,
@@ -209,6 +230,7 @@ RUOLI = {
         *ORGANI_LETTURA,
         "comunicazioni.view_ricorrenza",
         "tesoreria.view_esercizio",
+        *PATRIMONIO_LETTURA,
     ],
     "Revisore": [
         *ANAGRAFICA_LETTURA,
@@ -220,6 +242,7 @@ RUOLI = {
         *ORGANI_LETTURA,
         *COMUNICAZIONI_LETTURA,
         *TESORERIA_LETTURA,
+        *PATRIMONIO_LETTURA,
     ],
 }
 

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titolo %}Categorie{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'patrimonio:inventario' %}">Patrimonio</a></div>{% endblock %}
+{% block titolo_pagina %}Categorie di beni{% endblock %}
+{% block azioni %}{% if perms.patrimonio.add_categoriabene %}<a class="btn btn-primary" href="{% url 'patrimonio:categoria_nuova' %}"><i class="ti ti-plus me-1"></i>Categoria</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card"><div class="list-group list-group-flush">
+  {% for c in categorie %}<div class="list-group-item d-flex"><span class="flex-fill">{{ c.nome }}</span>{% if perms.patrimonio.change_categoriabene %}<a href="{% url 'patrimonio:categoria' c.pk %}">Modifica</a>{% endif %}</div>{% endfor %}
+</div></div>
+{% endblock %}

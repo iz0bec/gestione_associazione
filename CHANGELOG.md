@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Patrimonio
+- Inventario numerato con categorie, quantità, ubicazione, conservazione, provenienza, valore e foto
+  (ridimensionata e senza metadati); valutazioni con storico.
+- Prestiti con restituzione e scadenze segnalate; uscite definitive (donazione, vendita, comodato
+  restituito, dismissione, smarrimento) senza cancellazioni.
+- Schede pubbliche dei cimeli con QR (solo dati scelti), etichette da stampare, inventario in PDF e CSV.
+- Passaggio di consegne con fotografia immutabile, verbale PDF con impronta e protocollazione facoltativa.
+- Traduzione italiana della scelta vuota nei menu a tendina; impostazione `URL_PUBBLICO`.
+
 ### Aggiunto - Tesoreria
 - Esercizi con saldi per conto, chiusura con riporto dei saldi e riapertura motivata.
 - Piano dei conti del rendiconto per cassa ETS (Modello D) con sottovoci personalizzabili.

@@ -1,0 +1,19 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Etichette{% endblock %}
+{% block stile %}
+  @page { margin: 10mm; }
+  .intestazione, .piede { display: none; }
+  .griglia { display: flex; flex-wrap: wrap; gap: 4mm; }
+  .etichetta { width: 60mm; height: 32mm; border: .5pt dashed #999; padding: 2mm; display: flex; align-items: center; gap: 2mm; overflow: hidden; }
+  .etichetta svg { width: 26mm; height: 26mm; }
+  .numero { font-size: 12pt; font-weight: bold; }
+  .nome { font-size: 8pt; }
+  .ente { font-size: 6pt; color: #555; }
+{% endblock %}
+{% block contenuto %}
+<div class="griglia">
+  {% for e in etichette %}
+  <div class="etichetta">{% if e.qr %}{{ e.qr }}{% endif %}<div><div class="ente">{{ organizzazione.nome_breve }}</div><div class="numero">{{ e.bene.codice }}</div><div class="nome">{{ e.bene.nome|truncatechars:60 }}</div></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -54,7 +54,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    *Rimandati*: invio tramite PEC, SMS/messaggistica, stampa di etichette e lettere per posta.
 5. ✅ **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
-6. **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,
+6. ✅ **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,
    passaggio di consegne con fotografia immutabile, schede QR pubbliche (dati minimi).
 7. **Documenti PDF** - modelli di stampa HTML con intestazione dell'ente (WeasyPrint).
 8. **Import** - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione

@@ -190,3 +190,16 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 - **Quote**: l'incasso registrato nel modulo Soci crea il movimento (OneToOne con la tessera) dentro la
   stessa transazione, in un punto di salvataggio: se la tesoreria non può registrarlo l'incasso resta
   valido e la quota compare tra quelle da registrare.
+
+## ADR-020 - Patrimonio: inventario, uscite e passaggio di consegne
+
+- **Inventario** con numero progressivo unico (`inventario`), mai riutilizzato; il numero dei registri
+  cartacei si conserva come «numero precedente». Le uscite (prestiti e definitive) sono righe storiche:
+  il bene cambia stato e non si cancella.
+- **Valore**: valore di acquisizione + valutazioni datate; vale la più recente per data.
+- **Passaggio di consegne**: fotografia JSON dei beni (in dotazione e in prestito) salvata nel record e nel
+  PDF con impronta; il modello rifiuta le modifiche dopo il primo salvataggio.
+- **Scheda pubblica**: raggiungibile con un token casuale (`secrets.token_urlsafe(12)`) solo se attivata;
+  mostra i soli campi pubblici. QR generato con `segno` (BSD) in SVG, senza servizi esterni; l'indirizzo
+  usa `URL_PUBBLICO` se impostato, per le etichette stampate.
+- **Foto**: ricodificate in JPEG con Pillow (massimo 1600 px), che elimina i metadati.

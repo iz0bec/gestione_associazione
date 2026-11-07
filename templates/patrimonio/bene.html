@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block titolo %}{{ bene }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'patrimonio:inventario' %}">Patrimonio</a> · {{ bene.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ bene.nome }} {% include "patrimonio/_stato_bene.html" with b=bene %}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if bene.in_patrimonio and perms.patrimonio.movimenta_bene %}
+    {% if prestito %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#restituzione"><i class="ti ti-arrow-back me-1"></i>Restituzione</button>
+    {% else %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#uscita"><i class="ti ti-arrow-forward me-1"></i>Prestito o uscita</button>{% endif %}
+  {% endif %}
+  {% if bene.in_patrimonio and perms.patrimonio.valuta_bene %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#valutazione"><i class="ti ti-scale me-1"></i>Valutazione</button>{% endif %}
+  {% if perms.patrimonio.change_bene %}<a class="btn btn-primary" href="{% url 'patrimonio:modifica' bene.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if prestito %}<div class="alert alert-warning">In prestito a <strong>{{ prestito.controparte_testo }}</strong> dal {{ prestito.data|date:"d/m/Y" }}{% if prestito.restituzione_prevista %}, restituzione prevista il {{ prestito.restituzione_prevista|date:"d/m/Y" }}{% endif %}: {{ prestito.motivo }}</div>{% endif %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        {% if bene.descrizione %}<p>{{ bene.descrizione|linebreaksbr }}</p>{% endif %}
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Numero di inventario</div><div class="datagrid-content fw-bold">{{ bene.codice }}{% if bene.codice_precedente %} <span class="text-secondary fw-normal">(prec. {{ bene.codice_precedente }})</span>{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Categoria</div><div class="datagrid-content">{{ bene.categoria }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Quantità</div><div class="datagrid-content">{{ bene.quantita }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Ubicazione</div><div class="datagrid-content">{{ bene.ubicazione|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Conservazione</div><div class="datagrid-content">{{ bene.get_conservazione_display }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Acquisizione</div><div class="datagrid-content">{{ bene.get_acquisizione_display }}{% if bene.data_acquisizione %} del {{ bene.data_acquisizione|date:"d/m/Y" }}{% endif %}{% if bene.provenienza_testo %}<div class="small text-secondary">{{ bene.provenienza_testo }}</div>{% endif %}</div></div>
+          {% if bene.documento %}<div class="datagrid-item"><div class="datagrid-title">Documento</div><div class="datagrid-content">{{ bene.documento }}</div></div>{% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Valore</div><div class="datagrid-content">{{ bene.valore|floatformat:"2g" }} €{% if bene.quantita > 1 %} cad., totale {{ bene.valore_totale|floatformat:"2g" }} €{% endif %}<div class="small text-secondary">acquisizione {{ bene.valore_acquisizione|floatformat:"2g" }} €</div></div></div>
+        </div>
+        {% if bene.note %}<hr><div class="text-secondary">{{ bene.note|linebreaksbr }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-history me-2"></i>Valutazioni, prestiti e uscite</h2></div>
+      <div class="list-group list-group-flush">
+        {% for v in bene.valutazioni.all %}<div class="list-group-item"><i class="ti ti-scale me-2 text-secondary"></i>{{ v.data|date:"d/m/Y" }} · {{ v.get_metodo_display }}: <strong>{{ v.valore|floatformat:"2g" }} €</strong>{% if v.note %} · {{ v.note }}{% endif %}</div>{% endfor %}
+        {% for u in uscite %}<div class="list-group-item"><i class="ti ti-arrow-forward me-2 text-secondary"></i>{{ u.data|date:"d/m/Y" }} · <strong>{{ u.get_tipo_display }}</strong>{% if u.controparte_testo %} a {{ u.controparte_testo }}{% endif %}: {{ u.motivo }}{% if u.importo %} ({{ u.importo|floatformat:"2g" }} €){% endif %}{% if u.restituito_il %}<div class="small text-secondary">restituito il {{ u.restituito_il|date:"d/m/Y" }} · {{ u.get_rientro_display|lower }}{% if u.note_rientro %} · {{ u.note_rientro }}{% endif %}</div>{% endif %}</div>{% endfor %}
+        {% if not uscite and not bene.valutazioni.exists %}<div class="list-group-item text-secondary">Nessuna valutazione o uscita.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    {% if bene.foto %}<div class="card mb-3"><img class="card-img-top" src="{% url 'patrimonio:foto' bene.pk %}" alt="Foto di {{ bene.nome }}"></div>{% endif %}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-qrcode me-2"></i>Scheda pubblica</h2></div>
+      <div class="card-body">
+        {% if bene.pubblico %}
+          <div class="qr-anteprima mb-2">{{ qr }}</div>
+          <a class="small text-break" href="{{ url_pubblico }}" target="_blank" rel="noopener">{{ url_pubblico }}</a>
+          <p class="small text-secondary mt-2 mb-0">Mostra nome, categoria, testo pubblico{% if bene.foto_pubblica %} e foto{% endif %}: mai valore né ubicazione.</p>
+        {% else %}<p class="text-secondary mb-0">Non pubblicata. Per un cimelio esposto, attivare la scheda pubblica nella modifica e stampare l'etichetta con il QR.</p>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if perms.patrimonio.valuta_bene %}
+<div class="modal fade" id="valutazione" tabindex="-1" aria-labelledby="titolo-valutazione" aria-hidden="true"><div class="modal-dialog modal-dialog-centered">
+  <form class="modal-content" method="post" action="{% url 'patrimonio:valutazione' bene.pk %}" novalidate>{% csrf_token %}
+    <div class="modal-header"><h2 class="modal-title h3" id="titolo-valutazione">Nuova valutazione</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+    <div class="modal-body">{{ form_valutazione }}<p class="small text-secondary mb-0">Il valore {% if bene.quantita > 1 %}è per singolo pezzo e {% endif %}diventa il valore attuale del bene.</p></div>
+    <div class="modal-footer"><button type="submit" class="btn btn-primary">Registra</button></div>
+  </form></div></div>
+{% endif %}
+{% if perms.patrimonio.movimenta_bene %}
+<div class="modal fade" id="uscita" tabindex="-1" aria-labelledby="titolo-uscita" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg">
+  <form class="modal-content" method="post" action="{% url 'patrimonio:uscita' bene.pk %}" novalidate data-mostra-secondo="usc-tipo">{% csrf_token %}
+    <div class="modal-header"><h2 class="modal-title h3" id="titolo-uscita">Prestito o uscita di {{ bene.codice }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+    <div class="modal-body">
+      {{ form_uscita.tipo.as_field_group }}
+      <div class="row">
+        <div class="col-md-4">{{ form_uscita.data.as_field_group }}</div>
+        <div class="col-md-8">{{ form_uscita.controparte_testo.as_field_group }}</div>
+        <div class="col-12">{{ form_uscita.motivo.as_field_group }}</div>
+        <div class="col-md-8" data-valori="prestito">{{ form_uscita.condizioni.as_field_group }}</div>
+        <div class="col-md-4" data-valori="prestito">{{ form_uscita.restituzione_prevista.as_field_group }}</div>
+        <div class="col-md-4" data-valori="vendita">{{ form_uscita.importo.as_field_group }}</div>
+      </div>
+      <p class="small text-secondary mb-0">Le uscite diverse dal prestito sono definitive: il bene resta nell'inventario come «uscito». Una vendita va registrata anche in tesoreria.</p>
+    </div>
+    <div class="modal-footer"><button type="submit" class="btn btn-primary">Registra</button></div>
+  </form></div></div>
+{% if prestito %}
+<div class="modal fade" id="restituzione" tabindex="-1" aria-labelledby="titolo-restituzione" aria-hidden="true"><div class="modal-dialog modal-dialog-centered">
+  <form class="modal-content" method="post" action="{% url 'patrimonio:restituzione' bene.pk %}" novalidate>{% csrf_token %}
+    <div class="modal-header"><h2 class="modal-title h3" id="titolo-restituzione">Restituzione da {{ prestito.controparte_testo }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+    <div class="modal-body">{{ form_restituzione }}</div>
+    <div class="modal-footer"><button type="submit" class="btn btn-primary">Registra</button></div>
+  </form></div></div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "layouts/pubblico.html" %}
+{% block titolo %}{{ bene.nome }}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  {% if bene.foto and bene.foto_pubblica %}<img class="card-img-top" src="{% url 'bene_pubblico_foto' bene.token %}" alt="{{ bene.nome }}">{% endif %}
+  <div class="card-body">
+    <div class="text-secondary small">{{ bene.categoria }} · inventario n. {{ bene.numero }}</div>
+    <h1 class="h2 mt-1">{{ bene.nome }}</h1>
+    {% if bene.descrizione_pubblica %}<div>{{ bene.descrizione_pubblica|linebreaks }}</div>{% endif %}
+  </div>
+  <div class="card-footer small text-secondary">Patrimonio di {{ organizzazione.denominazione }}</div>
+</div>
+{% endblock %}

@@ -44,6 +44,9 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 | Privacy | **Comunicazioni**: finalità per ogni invio; per comunicazioni associative e auguri vale l'ultimo consenso registrato; deceduti e archiviati sempre esclusi; un messaggio per destinatario (nessun indirizzo esposto); registro per destinatario | `apps/comunicazioni/servizi.py` |
 | Web | Segnaposto dei testi con sostituzione semplice (nessun linguaggio di template eseguito sui testi scritti dagli utenti); email HTML con testo sempre escapato | `servizi.componi` |
 | Dati | **Tesoreria**: prima nota numerata, movimenti annullati e non cancellati, esercizi chiusi immutabili (riapertura motivata e registrata), giustificativi con impronta, quote collegate una sola volta alla prima nota | `apps/tesoreria/servizi.py` |
+| Dati | **Patrimonio**: inventario numerato, beni usciti mai cancellati, passaggi di consegne immutabili con PDF e impronta | `apps/patrimonio/servizi.py` |
+| Privacy | **Foto dei beni** ridimensionate e senza metadati EXIF (posizione GPS, dispositivo); servite solo con permesso | `servizi.foto_ripulita` |
+| Web | **Schede pubbliche dei beni**: indirizzo con codice casuale (96 bit), solo dati scelti per la pubblicazione, disattivabili; QR generato in SVG senza servizi esterni | `apps/patrimonio` |
 | Privacy | Consensi per finalità con data e modalità; persone decedute escluse da auguri e comunicazioni | anagrafica |
 | Codice | Test automatici sui controlli di sicurezza (permessi, blocco, CSP, CSV); lint con regole di sicurezza (`ruff` S) | `apps/*/tests` |
 

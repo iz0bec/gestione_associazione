@@ -76,6 +76,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Tesoreria: movimenti solo con `servizi.registra_movimento` (sequenza `prima_nota` annuale), esercizio
   chiuso = immutabile; le quote entrano con `servizi.registra_quota` (chiamata da `soci.servizi`).
 - Traduzioni mancanti in Django: `locale/it/LC_MESSAGES/django.po` (ricompilare il `.mo` con `msgfmt`).
+- Patrimonio: inventario con sequenza `inventario`; beni mai cancellati (stato «uscito»); foto solo via
+  `servizi.foto_ripulita`; schede pubbliche solo per token + `pubblico=True`, mai valori o ubicazioni.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -88,5 +90,5 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
 (`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`), **Comunicazioni e
-anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`).
-Prossimo: Patrimonio.
+anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`), **Patrimonio** (`apps/patrimonio`). Prossimo (roadmap punto 7-10):
+modelli di stampa, import dai tre gestionali, installer su host, gestione utenti dall'interfaccia.

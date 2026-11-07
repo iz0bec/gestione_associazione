@@ -21,7 +21,8 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 6. [Organi sociali](organi.md) - cariche, riunioni e convocazioni, presenze e deleghe, verbali e delibere
 7. [Comunicazioni e anniversari](comunicazioni.md) - email con modelli e liste, consensi, compleanni, onomastici, ricorrenze, anzianità, auguri automatici
 8. [Tesoreria](tesoreria.md) - prima nota, quote, preventivo, rendiconto per cassa (Modello D), chiusura
-9. [Organizzazione e registro attività](sistema.md) - dati dell'ente, controllo delle operazioni
+9. [Patrimonio](patrimonio.md) - inventario, valutazioni, prestiti e uscite, schede pubbliche con QR, passaggio di consegne
+10. [Organizzazione e registro attività](sistema.md) - dati dell'ente, controllo delle operazioni
 
-I moduli Organi sociali, Comunicazioni, Tesoreria e Patrimonio sono in
+Sono pronti tutti i moduli previsti per la 0.0.1. I moduli Organi sociali, Comunicazioni, Tesoreria e Patrimonio sono in
 sviluppo: nel menu compaiono con l'etichetta *presto*.

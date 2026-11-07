@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titolo %}Patrimonio{% endblock %}
+{% block titolo_pagina %}Inventario del patrimonio{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-dots me-1"></i>Altro</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      <a class="dropdown-item" href="{% url 'patrimonio:stampa' %}?{{ request.GET.urlencode }}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Stampa l'inventario</a>
+      <a class="dropdown-item" href="{% url 'patrimonio:stampa' %}?{{ request.GET.urlencode }}&amp;formato=csv"><i class="ti ti-file-spreadsheet me-2"></i>Esporta CSV</a>
+      <a class="dropdown-item" href="{% url 'patrimonio:etichette' %}?{{ request.GET.urlencode }}" target="_blank" rel="noopener"><i class="ti ti-qrcode me-2"></i>Etichette con QR</a>
+      {% if perms.patrimonio.view_passaggioconsegne %}<a class="dropdown-item" href="{% url 'patrimonio:passaggi' %}"><i class="ti ti-arrows-exchange me-2"></i>Passaggi di consegne</a>{% endif %}
+      {% if perms.patrimonio.view_categoriabene %}<a class="dropdown-item" href="{% url 'patrimonio:categorie' %}"><i class="ti ti-tags me-2"></i>Categorie</a>{% endif %}
+    </div>
+  </div>
+  {% if perms.patrimonio.add_bene %}<a class="btn btn-primary" href="{% url 'patrimonio:nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo bene</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% for u in scaduti %}<div class="alert alert-warning">Prestito scaduto: <a href="{{ u.bene.get_absolute_url }}">{{ u.bene }}</a> a {{ u.controparte_testo }}, restituzione prevista il {{ u.restituzione_prevista|date:"d/m/Y" }}.</div>{% endfor %}
+<div class="row row-cards mb-3">
+  <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader">Beni nel patrimonio</div><div class="h1 mb-0">{{ totali.beni }}</div></div></div></div>
+  <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader">Valore stimato</div><div class="h1 mb-0">{{ totali.valore|floatformat:"2g" }} €</div></div></div></div>
+  <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader">In prestito</div><div class="h1 mb-0">{{ totali.in_prestito }}</div></div></div></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100" hx-get="{% url 'patrimonio:inventario' %}" hx-target="#tabella-beni" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, submit">
+      <div class="col-lg-6"><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>{{ filter.form.q }}</div></div>
+      <div class="col-6 col-lg-3">{{ filter.form.categoria }}</div>
+      <div class="col-6 col-lg-3">{{ filter.form.stato }}</div>
+      <noscript><button class="btn" type="submit">Filtra</button></noscript>
+    </form>
+  </div>
+  {% partialdef tabella inline %}
+  <div id="tabella-beni" class="tabella-htmx">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead><tr><th class="w-1">N.</th><th>Bene</th><th class="d-none d-md-table-cell">Ubicazione</th><th class="text-end d-none d-md-table-cell">Valore</th><th>Stato</th></tr></thead>
+        <tbody>
+        {% for b in page_obj %}
+          <tr>
+            <td class="text-secondary text-nowrap">{{ b.numero }}</td>
+            <td><a class="text-reset fw-medium" href="{{ b.get_absolute_url }}">{{ b.nome }}</a>{% if b.quantita > 1 %} <span class="text-secondary">× {{ b.quantita }}</span>{% endif %}{% if b.pubblico %} <i class="ti ti-qrcode text-secondary" title="Scheda pubblica"></i>{% endif %}<div class="small text-secondary">{{ b.categoria }} · {{ b.get_conservazione_display|lower }}</div></td>
+            <td class="d-none d-md-table-cell">{{ b.ubicazione }}</td>
+            <td class="text-end d-none d-md-table-cell text-nowrap">{{ b.valore_totale|floatformat:"2g" }}</td>
+            <td>{% include "patrimonio/_stato_bene.html" %}</td>
+          </tr>
+        {% empty %}<tr><td colspan="5" class="text-secondary py-4 text-center">Nessun bene.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/paginazione.html" %}
+  </div>
+  {% endpartialdef %}
+</div>
+{% endblock %}

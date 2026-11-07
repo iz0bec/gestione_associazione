@@ -30,6 +30,9 @@ soggette alle proprie licenze, tutte compatibili con l'uso e la ridistribuzione.
 | WeasyPrint | 70.0 | BSD |
 | WhiteNoise | 6.12.0 | MIT |
 | argon2-cffi | 25.1.0 | MIT |
+| cryptography | 50.0.2 13.0.0 | Apache-2.0 / BSD |
+| Pillow |  | MIT-CMU (HPND) |
+| segno | 1.6.6 | BSD |
 
 Versioni esatte di tutte le dipendenze (anche indirette) in `uv.lock`.
 

@@ -40,6 +40,7 @@ permessi `600`, mai nel repository.
 | `LOG_LEVEL` | | `INFO` | livello dei log su console |
 | `DB_CONN_MAX_AGE` | | `60` | riuso delle connessioni al database (secondi) |
 
+| `URL_PUBBLICO` | | - | indirizzo pubblico dell'app, usato nei QR stampati delle schede dei beni (altrimenti quello della richiesta) |
 | `COMUNICAZIONI_LOTTO` | | `30` | email spedite a ogni giro della coda (ogni minuto): adattarlo ai limiti del proprio server SMTP |
 | `CHIAVE_CIFRATURA` | per le caselle di posta | - | chiave Fernet per le password salvate nel database; generarla con `manage.py genera_chiave_cifratura`. Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
 | `PROTOCOLLO_ALLEGATO_MAX_MB` | | `25` | dimensione massima di un documento protocollato |

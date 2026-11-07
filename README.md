@@ -25,7 +25,9 @@ L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/an
 > ricevute, domande di iscrizione anche online), **protocollo** (registro, documenti,
 > posta e PEC da protocollare, registri giornalieri), **organi sociali** (cariche,
 > riunioni, presenze e deleghe, verbali e delibere), **comunicazioni e anniversari**
-> (email con consensi, compleanni, onomastici, ricorrenze, anzianità, auguri automatici). Gli altri moduli sono pianificati nella
+> (email con consensi, compleanni, onomastici, ricorrenze, anzianità, auguri automatici),
+> **tesoreria** (prima nota, quote, rendiconto per cassa Modello D) e **patrimonio**
+> (inventario, prestiti, schede pubbliche con QR, passaggio di consegne). Gli altri moduli sono pianificati nella
 > [roadmap](docs/roadmap.md).
 
 ## Caratteristiche

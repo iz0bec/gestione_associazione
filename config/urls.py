@@ -12,6 +12,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.core.views import salute
+from apps.patrimonio.views import BenePubblicoView, FotoPubblicaView
 from apps.soci.pubblico import DomandaInviataView, DomandaPubblicaView
 
 admin.site.site_header = settings.APP_NOME
@@ -28,6 +29,9 @@ urlpatterns = [
     path("organi/", include("apps.organi.urls")),
     path("comunicazioni/", include("apps.comunicazioni.urls")),
     path("tesoreria/", include("apps.tesoreria.urls")),
+    path("patrimonio/", include("apps.patrimonio.urls")),
+    path("beni/<str:token>/", BenePubblicoView.as_view(), name="bene_pubblico"),
+    path("beni/<str:token>/foto/", FotoPubblicaView.as_view(), name="bene_pubblico_foto"),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
     path("", include("apps.core.urls")),

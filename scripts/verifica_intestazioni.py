@@ -17,13 +17,14 @@ ESCLUSI = ("static/vendor/", "apps/accounts/migrations/0001", "apps/accounts/mig
            "apps/core/migrations/0001", "apps/anagrafica/migrations/0001",
            "apps/core/migrations/0002_iscrizioni", "apps/soci/migrations/0001",
            "apps/protocollo/migrations/0001", "apps/organi/migrations/0001",
-           "apps/comunicazioni/migrations/0001", "apps/tesoreria/migrations/0001")  # fmt: skip
+           "apps/comunicazioni/migrations/0001", "apps/tesoreria/migrations/0001",
+           "apps/patrimonio/migrations/0001")  # fmt: skip
 # file brevi senza intestazione (frammenti di template e init vuoti)
 SENZA_INTESTAZIONE_OK = ("templates/allauth/elements/", "templates/moduli/", "templates/includes/",
                          "/__init__.py", "templates/errori/", "templates/40", "templates/50",
                          "templates/core/", "templates/anagrafica/", "templates/soci/",
                          "templates/protocollo/", "templates/organi/", "templates/comunicazioni/",
-                         "templates/tesoreria/",
+                         "templates/tesoreria/", "templates/patrimonio/",
                          "templates/allauth/layouts/",
                          "CHANGELOG.md", "static/vendor/README.md", ".gitlab-ci.yml")  # fmt: skip
 

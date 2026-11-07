@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block titolo %}Passaggi di consegne{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'patrimonio:inventario' %}">Patrimonio</a></div>{% endblock %}
+{% block titolo_pagina %}Passaggi di consegne{% endblock %}
+{% block azioni %}{% if perms.patrimonio.add_passaggioconsegne %}<a class="btn btn-primary" href="{% url 'patrimonio:passaggio_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo passaggio</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Data</th><th>Consegna</th><th>Riceve</th><th class="text-end">Beni</th><th class="text-end">Valore</th><th></th></tr></thead>
+      <tbody>
+      {% for p in passaggi %}
+        <tr>
+          <td>{{ p.data|date:"d/m/Y" }}</td>
+          <td>{{ p.consegnante }}<div class="small text-secondary">{{ p.consegnante_ruolo }}</div></td>
+          <td>{{ p.ricevente }}<div class="small text-secondary">{{ p.ricevente_ruolo }}</div></td>
+          <td class="text-end">{{ p.numero_beni }}</td>
+          <td class="text-end">{{ p.valore_totale|floatformat:"2g" }} €</td>
+          <td class="text-end text-nowrap"><a class="btn btn-sm" href="{% url 'patrimonio:passaggio_pdf' p.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>{% if p.protocollo %} <a class="small" href="{{ p.protocollo.get_absolute_url }}">prot. {{ p.protocollo.segnatura }}</a>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="6" class="text-secondary py-4 text-center">Nessun passaggio di consegne.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer small text-secondary">Ogni passaggio conserva l'elenco dei beni com'era quel giorno, in un PDF con impronta SHA-256: non si modifica né si cancella.</div>
+</div>
+{% endblock %}

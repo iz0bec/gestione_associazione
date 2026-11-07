@@ -1,0 +1,18 @@
+{% extends "pdf/base.html" %}
+{% block titolo %}Inventario{% endblock %}
+{% block formato %}A4 landscape{% endblock %}
+{% block stile %}td.n { text-align: right; white-space: nowrap; } .cat { background: #eef2f7; font-weight: bold; }{% endblock %}
+{% block contenuto %}
+<h1>Inventario del patrimonio <span class="piccolo">al {{ oggi|date:"d/m/Y" }}</span></h1>
+<table>
+  <thead><tr><th>N.</th><th>Bene</th><th>Q.tà</th><th>Ubicazione</th><th>Conservazione</th><th>Acquisizione</th><th>Stato</th><th class="destra">Valore</th></tr></thead>
+  <tbody>
+  {% regroup beni by categoria as per_categoria %}
+  {% for gruppo in per_categoria %}
+    <tr><td colspan="8" class="cat">{{ gruppo.grouper }}</td></tr>
+    {% for b in gruppo.list %}<tr><td>{{ b.numero }}</td><td>{{ b.nome }}{% if b.codice_precedente %} <span class="piccolo">(prec. {{ b.codice_precedente }})</span>{% endif %}</td><td>{{ b.quantita }}</td><td>{{ b.ubicazione }}</td><td>{{ b.get_conservazione_display }}</td><td>{{ b.get_acquisizione_display }}{% if b.data_acquisizione %} {{ b.data_acquisizione|date:"Y" }}{% endif %}</td><td>{{ b.get_stato_display }}</td><td class="n">{{ b.valore_totale|floatformat:"2g" }}</td></tr>{% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+<p>Beni nel patrimonio: {{ totali.beni }} · valore stimato complessivo: <strong>{{ totali.valore|floatformat:"2g" }} €</strong></p>
+{% endblock %}
