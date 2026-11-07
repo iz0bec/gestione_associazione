@@ -104,8 +104,12 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 
 ## ADR-013 - Libro soci: numerazioni e immutabilità
 
-- **Scelta**: numero di iscrizione progressivo unico (sequenza `libro_soci`, mai riavviata), tessere
-  numerate per anno (`tessera`), ricevute numerate per anno di incasso (`ricevuta_quota`). Le cessazioni e
+- **Scelta**: numero di iscrizione progressivo unico (sequenza `libro_soci`, mai riavviata), ricevute
+  numerate per anno di incasso (`ricevuta_quota`). Le **tessere non sono numerate dall'applicazione**:
+  sono prestampate dalla sede centrale e si caricano a lotti (`LottoTessere`, una riga `CartaTessera` per
+  tessera, unica per anno e codice); il tesseramento annuale (`Tessera`) riceve una tessera fisica
+  disponibile (OneToOne), subito o in seguito. Le tessere fisiche hanno uno stato (disponibile, attribuita,
+  annullata, smarrita, restituita) per rendere conto alla sede centrale di ogni numero ricevuto. Le cessazioni e
   gli annullamenti cambiano lo stato, non cancellano: i numeri non si riusano.
 - **Motivo**: il libro soci e le ricevute sono documenti con valore verso soci, revisori e controlli
   (CTS art. 15); i buchi di numerazione devono essere spiegati da un annullamento motivato e registrato.

@@ -11,11 +11,13 @@
         <button class="btn w-100" type="submit">Mostra i soci da rinnovare</button>
       </form>
       <div class="card-body border-top">
-        <p>Saranno rilasciate <strong>{{ da_rinnovare|length }}</strong> tessere {{ anno }}, «da pagare», con la quota della tipologia di ciascun socio. Gli incassi si registrano poi uno per uno.</p>
+        <p>Saranno rinnovati <strong>{{ da_rinnovare|length }}</strong> soci per il {{ anno }}, con la quota «da pagare» della tipologia di ciascuno. Gli incassi si registrano poi uno per uno.</p>
+        <p>Tessere fisiche {{ anno }} disponibili: <strong>{{ disponibili }}</strong>{% if disponibili < da_rinnovare|length %} <span class="text-orange">(non bastano per tutti: gli altri resteranno «da attribuire»)</span>{% endif %}.</p>
         {% if da_rinnovare %}
-        <form method="post" data-conferma="Rilasciare {{ da_rinnovare|length }} tessere per il {{ anno }}?">{% csrf_token %}
+        <form method="post" data-conferma="Rinnovare {{ da_rinnovare|length }} soci per il {{ anno }}?">{% csrf_token %}
           <input type="hidden" name="anno" value="{{ anno }}"><input type="hidden" name="conferma" value="1">
-          <button class="btn btn-primary w-100" type="submit"><i class="ti ti-refresh me-1"></i>Rilascia {{ da_rinnovare|length }} tessere</button>
+          <label class="form-check mb-3"><input class="form-check-input" type="checkbox" name="attribuisci" checked><span class="form-check-label">Attribuisci subito le tessere disponibili, in ordine di numero socio</span></label>
+          <button class="btn btn-primary w-100" type="submit"><i class="ti ti-refresh me-1"></i>Rinnova {{ da_rinnovare|length }} soci</button>
         </form>
         {% endif %}
       </div>

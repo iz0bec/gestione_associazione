@@ -19,7 +19,7 @@ from apps.anagrafica.models import Consenso, Soggetto
 from apps.core.models import EventoAudit, Organizzazione
 from apps.soci import servizi
 from apps.soci.forms import DomandaPubblicaForm
-from apps.soci.models import DomandaIscrizione, Socio, Tessera, TipologiaSocio
+from apps.soci.models import CartaTessera, DomandaIscrizione, Socio, Tessera, TipologiaSocio
 from apps.soci.servizi import OperazioneNonValida
 
 CF_ROSSI = "RSSMRA50C15A519V"  # Rossi Mario, 15/03/1950
@@ -116,7 +116,8 @@ class TestCessazione:
 class TestTessere:
     def test_rilascio_con_quota_della_tipologia(self, socio, admin_utente):
         t = servizi.rilascia_tessera(socio, ANNO, admin_utente)
-        assert t.importo == Decimal("25.00") and t.numero == 1 and t.stato == "da pagare"
+        assert t.importo == Decimal("25.00") and t.stato == "da pagare"
+        assert not t.attribuita and t.codice == "da attribuire"
         with pytest.raises(OperazioneNonValida):
             servizi.rilascia_tessera(socio, ANNO, admin_utente)
 
@@ -126,7 +127,7 @@ class TestTessere:
             servizi.annulla_tessera(t1, admin_utente, "  ")
         servizi.annulla_tessera(t1, admin_utente, "errore di quota")
         t2 = servizi.rilascia_tessera(socio, ANNO, admin_utente, importo=Decimal("30"))
-        assert t2.numero == 2  # il numero annullato non si riusa
+        assert t2.importo == Decimal("30") and t2.pk != t1.pk
 
     def test_pagamento_e_ricevute_progressive(self, socio, persona, ordinario, admin_utente):
         altro = servizi.ammetti_socio(persona("Verdi"), ordinario, admin_utente)
@@ -151,6 +152,84 @@ class TestTessere:
         servizi.cambia_stato(socio, "sospeso", admin_utente)
         with pytest.raises(OperazioneNonValida):
             servizi.rilascia_tessera(socio, ANNO, admin_utente)
+
+
+def _lotto(utente, da=1001, a=1005, **extra):
+    return servizi.carica_lotto(
+        utente, anno=ANNO, numero_da=da, numero_a=a, costo_unitario=Decimal("2.50"), **extra
+    )
+
+
+class TestTessereFisiche:
+    def test_carico_e_formattazione(self, admin_utente):
+        lotto = _lotto(admin_utente, 7, 9, serie="ab", cifre=6)
+        assert list(CartaTessera.objects.values_list("codice", flat=True)) == [
+            "AB 000007", "AB 000008", "AB 000009",
+        ]  # fmt: skip
+        assert lotto.quantita == 3 and str(lotto) == f"{ANNO}: AB 000007 – AB 000009"
+
+    def test_carico_sovrapposto_rifiutato(self, admin_utente):
+        _lotto(admin_utente, 1, 10)
+        with pytest.raises(OperazioneNonValida):
+            _lotto(admin_utente, 10, 20)
+        with pytest.raises(OperazioneNonValida):
+            _lotto(admin_utente, 30, 20)
+        assert CartaTessera.objects.count() == 10
+
+    def test_attribuzione_prossima_e_numero_indicato(self, socio, persona, ordinario, admin_utente):
+        _lotto(admin_utente)
+        t1 = servizi.rilascia_tessera(socio, ANNO, admin_utente, carta="prossima")
+        assert t1.codice == "1001" and t1.carta.stato == "attribuita"
+        altro = servizi.ammetti_socio(persona("Verdi"), ordinario, admin_utente)
+        t2 = servizi.rilascia_tessera(altro, ANNO, admin_utente, carta="1004")
+        assert t2.codice == "1004"
+        terzo = servizi.ammetti_socio(persona("Neri"), ordinario, admin_utente)
+        with pytest.raises(OperazioneNonValida):  # già attribuita
+            servizi.rilascia_tessera(terzo, ANNO, admin_utente, carta="1004")
+        with pytest.raises(OperazioneNonValida):  # non caricata
+            servizi.rilascia_tessera(terzo, ANNO, admin_utente, carta="9999")
+        assert not Tessera.objects.filter(socio=terzo).exists()  # tutto annullato
+        t3 = servizi.rilascia_tessera(terzo, ANNO, admin_utente)
+        assert servizi.attribuisci_carta(t3, admin_utente).codice == "1002"
+        with pytest.raises(OperazioneNonValida):
+            servizi.attribuisci_carta(t3, admin_utente)
+
+    def test_annullamento_libera_o_annulla_la_tessera(self, socio, admin_utente):
+        _lotto(admin_utente)
+        t = servizi.rilascia_tessera(socio, ANNO, admin_utente, carta="prossima")
+        servizi.annulla_tessera(t, admin_utente, "attribuita per errore", libera_carta=True)
+        assert CartaTessera.objects.get(codice="1001").stato == "disponibile"
+        t = servizi.rilascia_tessera(socio, ANNO, admin_utente, carta="prossima")
+        assert t.codice == "1001"
+        servizi.annulla_tessera(t, admin_utente, "tessera rovinata")
+        assert CartaTessera.objects.get(codice="1001").stato == "annullata"
+        t = servizi.rilascia_tessera(socio, ANNO, admin_utente, carta="prossima")
+        assert t.codice == "1002"
+
+    def test_stato_e_giacenza(self, socio, admin_utente):
+        _lotto(admin_utente)
+        servizi.rilascia_tessera(socio, ANNO, admin_utente, carta="prossima")
+        carta = CartaTessera.objects.get(codice="1005")
+        with pytest.raises(OperazioneNonValida):
+            servizi.cambia_stato_carta(carta, "smarrita", admin_utente, "")
+        servizi.cambia_stato_carta(carta, "restituita", admin_utente, "reso a fine anno")
+        with pytest.raises(OperazioneNonValida):
+            servizi.cambia_stato_carta(
+                CartaTessera.objects.get(codice="1001"), "smarrita", admin_utente, "x"
+            )
+        g = servizi.giacenza(ANNO)
+        assert (g["totale"], g["disponibile"], g["attribuita"], g["restituita"]) == (5, 3, 1, 1)
+        assert g["costo"] == Decimal("10.00")  # 4 tessere non restituite x 2,50
+
+    def test_rinnovo_e_attribuzione_massiva(self, persona, ordinario, admin_utente):
+        soci = [servizi.ammetti_socio(persona(f"S{i}"), ordinario, admin_utente) for i in range(4)]
+        _lotto(admin_utente, 1, 2)
+        rilasciate, _ = servizi.rinnovo_massivo(ANNO, admin_utente, attribuisci=True)
+        assert [t.codice for t in rilasciate] == ["1", "2", "da attribuire", "da attribuire"]
+        _lotto(admin_utente, 50, 60)
+        fatte, mancanti = servizi.attribuzione_massiva(ANNO, admin_utente)
+        assert [t.socio for t in fatte] == soci[2:] and mancanti == 0
+        assert [t.codice for t in fatte] == ["50", "51"]
 
 
 class TestMorositaERinnovo:
@@ -362,6 +441,29 @@ class TestViste:
         segretario = client_ruolo("Segretario", username="segretario")
         assert segretario.post(reverse("soci:pagamento", args=[t.pk]), dati).status_code == 403
         assert segretario.get(reverse("soci:libro_pdf")).status_code == 200
+
+    def test_tessere_fisiche_da_interfaccia(self, client, client_ruolo, socio, admin_utente):
+        client.force_login(admin_utente)
+        r = client.post(
+            reverse("soci:lotto_nuovo"),
+            {"anno": ANNO, "serie": "", "numero_da": 100, "numero_a": 104, "cifre": 0,
+             "data_acquisizione": date.today().isoformat(), "fornitore": "Sede centrale",
+             "costo_unitario": "3.00"},
+        )  # fmt: skip
+        assert r.status_code == 302 and CartaTessera.objects.count() == 5
+        t = servizi.rilascia_tessera(socio, ANNO, admin_utente)
+        client.post(reverse("soci:attribuisci", args=[t.pk]), {"codice": "103"})
+        t.refresh_from_db()
+        assert t.codice == "103"
+        for url in [reverse("soci:tessere_fisiche"), reverse("soci:lotto_nuovo"),
+                    reverse("soci:tessere") + "?stato=da_attribuire"]:  # fmt: skip
+            assert client.get(url).status_code == 200, url
+        r = client.get(reverse("soci:esporta_tesserati"), {"anno": ANNO})
+        assert "103;1;Rossi" in r.content.decode("utf-8-sig")
+        client.logout()
+        c = client_ruolo("Consigliere")
+        assert c.get(reverse("soci:tessere_fisiche")).status_code == 200
+        assert c.get(reverse("soci:lotto_nuovo")).status_code == 403
 
     def test_esportazione_csv_sicura(self, client, persona, ordinario, admin_utente):
         servizi.ammetti_socio(persona("=HYPERLINK(1)"), ordinario, admin_utente)

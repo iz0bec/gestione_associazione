@@ -11,8 +11,9 @@
 
 # Soci e tesseramento
 
-Il modulo tiene il **libro soci** (art. 15 D.Lgs. 117/2017), le **tessere annuali** con le
-quote e le **ricevute**, e raccoglie le **domande di iscrizione**, anche dal sito.
+Il modulo tiene il **libro soci** (art. 15 D.Lgs. 117/2017), il **tesseramento annuale** con le
+**tessere fisiche** ricevute dalla sede centrale, le quote e le **ricevute**, e raccoglie le
+**domande di iscrizione**, anche dal sito.
 
 Un socio è sempre una **persona dell'anagrafica**: i dati personali (indirizzo, recapiti,
 codice fiscale) si modificano dalla scheda anagrafica e valgono ovunque.
@@ -24,7 +25,8 @@ codice fiscale) si modificano dalla scheda anagrafica e valgono ovunque.
 | **Numero di iscrizione** | Progressivo unico del libro soci, assegnato automaticamente all'ammissione. Non si modifica e non si riusa, nemmeno dopo la cessazione. |
 | **Tipologia** | Ordinario, sostenitore, onorario... Ognuna ha una **quota annua** proposta al rilascio della tessera (0 = esente). |
 | **Stato** | *Attivo*, *sospeso* (non riceve la tessera, resta nel libro) o *cessato* (con data e causa). |
-| **Tessera** | Una per socio e per anno, numerata per anno (es. `2026/0012`), con la quota. Può essere *da pagare*, *pagata*, *esente* o *annullata*. |
+| **Tessera fisica** | Tessera prestampata e numerata dalla **sede centrale**, ricevuta a lotti. È *disponibile*, *attribuita* a un socio, *annullata* (deteriorata, errata), *smarrita* o *restituita*. |
+| **Tesseramento** | Uno per socio e per anno, con la quota e la tessera fisica attribuita (il suo numero è quello stampato). La quota può essere *da pagare*, *pagata*, *esente*; il tesseramento può essere *annullato*. |
 | **Ricevuta** | Numerata per anno di incasso (es. `2026/0007`), assegnata quando si registra il pagamento. |
 | **In regola / moroso** | In regola = ha la tessera dell'anno pagata. Moroso = socio attivo senza tessera pagata (gli esenti non sono morosi). |
 
@@ -51,24 +53,53 @@ la storia delle operazioni. Dai pulsanti in alto:
   viene riportata anche nella scheda anagrafica, così la persona esce da auguri e comunicazioni.
 - **Riammetti** (socio cessato): torna attivo con **lo stesso numero**.
 
-## Tessere e quote
+## Tessere dalla sede centrale
 
-- **Rilascio singolo**: dalla scheda del socio, pulsante **Tessera**. La quota proposta è quella
-  della tipologia; si può cambiare (es. quota ridotta). Chi ha il permesso di incasso può segnare
-  subito *Quota incassata ora*.
+**Tesseramento → Tessere dalla sede centrale**.
+
+1. Quando arrivano le tessere, **Carico tessere**: anno, primo e ultimo numero stampati, eventuale
+   **serie** (lettere prima del numero) e numero di **cifre** (per gli zeri iniziali, es. 6 → `000123`),
+   data, fornitore, riferimento (ordine, documento di trasporto, protocollo) e **costo per tessera**
+   dovuto alla sede centrale. Se i numeri non sono consecutivi si registra un carico per ogni blocco.
+   Un numero già caricato per lo stesso anno viene rifiutato.
+2. La pagina mostra la **giacenza**: tessere ricevute, disponibili, attribuite, fuori uso e restituite,
+   con il costo complessivo (le restituite non si contano), e l'elenco tessera per tessera con il socio.
+3. Una tessera non attribuita si può segnare **annullata** (deteriorata, stampata male), **smarrita**
+   o **restituita** alla sede centrale, sempre con il motivo; per errore si rimette *disponibile*.
+4. **Elenco tesserati (CSV)**: numero di tessera e dati dei soci tesserati nell'anno, da inviare
+   alla sede centrale.
+
+## Attribuire le tessere
+
+- **Al rinnovo annuale**: con la casella *Attribuisci subito le tessere disponibili* ogni socio
+  rinnovato riceve la prima tessera libera, in ordine di numero socio. Se le tessere non bastano,
+  i rimanenti restano *senza tessera*.
+- **Dopo** (es. arriva un nuovo lotto): in *Tesseramento* compare l'avviso con i soci senza tessera e
+  il pulsante **Attribuisci** (in ordine di numero socio o di cognome); il filtro *Senza tessera* li elenca.
+- **Singolarmente**: pulsante **Attribuisci** sulla riga del tesseramento, indicando il **numero
+  stampato** sulla tessera consegnata (con o senza serie e zeri iniziali) o lasciando vuoto per la prima
+  disponibile.
+- Annullando un tesseramento la tessera fisica diventa *annullata*; se non era stata consegnata si
+  spunta *rimettila tra le disponibili* e potrà essere data a un altro socio.
+
+## Quote e ricevute
+
+- **Tesseramento singolo**: dalla scheda del socio, pulsante **Tessera**: anno, quota (proposta
+  quella della tipologia, modificabile), tessera fisica (*prima disponibile*, *numero indicato* o
+  *da attribuire in seguito*). Chi ha il permesso di incasso può segnare subito *Quota incassata ora*.
 - **Incasso**: pulsante **Incassa** (scheda del socio o pagina Tesseramento). Si indicano data,
   importo, metodo (contanti, bonifico, POS) e un riferimento (es. CRO). Viene assegnato il numero di
   ricevuta.
 - **Ricevuta**: pulsante **Ricevuta** su ogni tessera pagata, in PDF con l'intestazione dell'ente,
   da stampare, firmare o inviare.
-- **Annullamento**: pulsante ✕ con il motivo obbligatorio. La tessera resta visibile come annullata
-  e i numeri (tessera e ricevuta) **non vengono riutilizzati**; poi si può rilasciare una nuova tessera.
+- **Annullamento**: pulsante ✕ con il motivo obbligatorio. Il tesseramento resta visibile come
+  annullato e la ricevuta non viene riutilizzata; poi si può rifare il tesseramento.
 
 ## Rinnovo annuale
 
-**Tesseramento → Rinnovo annuale**: scelto l'anno, mostra i soci attivi che non hanno ancora la
-tessera e, alla conferma, la rilascia a tutti (da pagare, con la quota della loro tipologia).
-Gli incassi si registrano poi man mano.
+**Tesseramento → Rinnovo annuale**: scelto l'anno, mostra i soci attivi non ancora rinnovati e
+le tessere fisiche disponibili; alla conferma crea il tesseramento per tutti (quota da pagare della
+loro tipologia) e, se richiesto, attribuisce le tessere. Gli incassi si registrano poi man mano.
 
 La pagina **Tesseramento** riassume per l'anno scelto: tessere rilasciate e pagate, totale
 incassato e da incassare, soci non in regola e soci ancora senza tessera.

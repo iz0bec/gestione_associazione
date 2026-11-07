@@ -46,12 +46,12 @@
       </div>
       <div class="table-responsive">
         <table class="table table-vcenter card-table">
-          <thead><tr><th>Anno</th><th>Tessera</th><th>Quota</th><th>Stato</th><th class="w-1"></th></tr></thead>
+          <thead><tr><th>Anno</th><th>Tessera n.</th><th>Quota</th><th>Stato</th><th class="w-1"></th></tr></thead>
           <tbody>
           {% for t in tessere %}
             <tr class="{% if t.annullata %}text-secondary text-decoration-line-through{% endif %}">
               <td>{{ t.anno }}</td>
-              <td>{{ t.codice }}<div class="small text-secondary">rilasciata il {{ t.data_rilascio|date:"d/m/Y" }}</div></td>
+              <td>{% if t.attribuita %}<span class="fw-medium">{{ t.codice }}</span>{% elif not t.annullata and perms.soci.add_tessera %}<button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#attribuisci-{{ t.pk }}">Attribuisci tessera</button>{% else %}<span class="badge bg-yellow-lt">da attribuire</span>{% endif %}<div class="small text-secondary">dal {{ t.data_rilascio|date:"d/m/Y" }}</div></td>
               <td>{{ t.importo }} €</td>
               <td>{% include "soci/_stato_tessera.html" with anno=t.anno %}{% if t.pagata %}<div class="small text-secondary">{{ t.pagata_il|date:"d/m/Y" }} · {{ t.get_metodo_pagamento_display }}</div>{% endif %}{% if t.annullata %}<div class="small">{{ t.motivo_annullamento }}</div>{% endif %}</td>
               <td class="text-nowrap">
@@ -88,7 +88,7 @@
         {% if tessera_corrente and not tessera_corrente.pagata and not tessera_corrente.annullata and tessera_corrente.importo > 0 and perms.soci.incassa_quota %}
         <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ tessera_corrente.pk }}"><i class="ti ti-cash me-1"></i>Incassa {{ tessera_corrente.importo }} €</button>
         {% elif not tessera_corrente and socio.stato == "attivo" and perms.soci.add_tessera %}
-        <button class="btn btn-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#nuova-tessera"><i class="ti ti-id-badge-2 me-1"></i>Rilascia tessera {{ anno }}</button>
+        <button class="btn btn-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#nuova-tessera"><i class="ti ti-id-badge-2 me-1"></i>Tesseramento {{ anno }}</button>
         {% endif %}
       </div>
     </div>
@@ -97,14 +97,16 @@
 
 {% for t in tessere %}{% if not t.annullata %}
   {% if not t.pagata %}{% include "soci/_modale_pagamento.html" %}{% endif %}
+  {% if not t.attribuita and perms.soci.add_tessera %}{% include "soci/_modale_attribuzione.html" %}{% endif %}
   <div class="modal fade" id="annulla-{{ t.pk }}" tabindex="-1" aria-labelledby="titolo-annulla-{{ t.pk }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <form class="modal-content" method="post" action="{% url 'soci:annulla_tessera' t.pk %}">{% csrf_token %}
-        <div class="modal-header"><h2 class="modal-title h3" id="titolo-annulla-{{ t.pk }}">Annulla la tessera {{ t.codice }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+        <div class="modal-header"><h2 class="modal-title h3" id="titolo-annulla-{{ t.pk }}">Annulla il tesseramento {{ t.anno }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
         <div class="modal-body">
           <label class="form-label required" for="mo-{{ t.pk }}">Motivo</label>
           <input class="form-control" id="mo-{{ t.pk }}" name="annulla-motivo" maxlength="255" required>
-          <p class="text-secondary small mt-2 mb-0">La tessera resta visibile come annullata{% if t.pagata %}, così come la ricevuta {{ t.codice_ricevuta }}{% endif %}; i numeri non vengono riutilizzati.</p>
+          {% if t.attribuita %}<label class="form-check mt-3"><input class="form-check-input" type="checkbox" name="annulla-libera"><span class="form-check-label">La tessera {{ t.codice }} non è stata consegnata: rimettila tra le disponibili</span></label>{% endif %}
+          <p class="text-secondary small mt-2 mb-0">Il tesseramento resta visibile come annullato{% if t.pagata %}, così come la ricevuta {{ t.codice_ricevuta }}{% endif %}. La tessera fisica, se non rimessa tra le disponibili, risulterà annullata.</p>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Indietro</button><button type="submit" class="btn btn-danger">Annulla tessera</button></div>
       </form>
@@ -116,12 +118,14 @@
 <div class="modal fade" id="nuova-tessera" tabindex="-1" aria-labelledby="titolo-nuova-tessera" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <form class="modal-content" method="post" action="{% url 'soci:tessera_nuova' socio.pk %}" novalidate>{% csrf_token %}
-      <div class="modal-header"><h2 class="modal-title h3" id="titolo-nuova-tessera">Nuova tessera</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-nuova-tessera">Tesseramento</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
       <div class="modal-body">
         <div class="row">
           <div class="col-6">{{ form_tessera.anno.as_field_group }}</div>
           <div class="col-6">{{ form_tessera.importo.as_field_group }}</div>
           <div class="col-12">{{ form_tessera.data_rilascio.as_field_group }}</div>
+          <div class="col-12">{{ form_tessera.attribuzione.as_field_group }}</div>
+          <div class="col-12">{{ form_tessera.numero_tessera.as_field_group }}</div>
           {% if perms.soci.incassa_quota %}
           <div class="col-12">{{ form_tessera.pagata.as_field_group }}</div>
           <div class="col-6">{{ form_tessera.metodo.as_field_group }}</div>

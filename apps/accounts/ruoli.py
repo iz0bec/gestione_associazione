@@ -27,6 +27,8 @@ SOCI_LETTURA = [
     "soci.view_tessera",
     "soci.view_tipologiasocio",
     "soci.view_domandaiscrizione",
+    "soci.view_lottotessere",
+    "soci.view_cartatessera",
 ]
 SOCI_SEGRETERIA = [
     *SOCI_LETTURA,
@@ -38,8 +40,15 @@ SOCI_SEGRETERIA = [
     "soci.esporta_libro_soci",
     "soci.add_tipologiasocio",
     "soci.change_tipologiasocio",
+    "soci.gestisci_tessere_fisiche",
 ]
-SOCI_TESORERIA = [*SOCI_LETTURA, "soci.add_tessera", "soci.incassa_quota", "soci.annulla_tessera"]
+SOCI_TESORERIA = [
+    *SOCI_LETTURA,
+    "soci.add_tessera",
+    "soci.incassa_quota",
+    "soci.annulla_tessera",
+    "soci.gestisci_tessere_fisiche",
+]
 
 PROTOCOLLO_LETTURA = ["protocollo.view_protocollo", "protocollo.view_classificazione"]
 PROTOCOLLO_OPERATIVO = [

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block titolo %}Tessere {{ anno }} dalla sede centrale{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere' %}?anno={{ anno }}">Tesseramento</a></div>{% endblock %}
+{% block titolo_pagina %}Tessere {{ anno }} dalla sede centrale{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <form method="get"><select class="form-select" name="anno" aria-label="Anno" data-invio-automatico>{% for a in anni %}<option value="{{ a }}"{% if a == anno %} selected{% endif %}>{{ a }}</option>{% endfor %}</select><noscript><button class="btn" type="submit">Vai</button></noscript></form>
+  {% if perms.soci.gestisci_tessere_fisiche %}<a class="btn btn-primary" href="{% url 'soci:lotto_nuovo' %}"><i class="ti ti-package-import me-1"></i>Carico tessere</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards mb-3">
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Ricevute</div><div class="h1 mb-0">{{ giacenza.totale }}</div><div class="small text-secondary">costo {{ giacenza.costo|floatformat:2 }} €</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Disponibili</div><div class="h1 mb-0 text-green">{{ giacenza.disponibile }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Attribuite</div><div class="h1 mb-0">{{ giacenza.attribuita }}</div>{% if perms.soci.esporta_libro_soci %}<a class="small" href="{% url 'soci:esporta_tesserati' %}?anno={{ anno }}">elenco tesserati (CSV)</a>{% endif %}</div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Fuori uso / restituite</div><div class="h1 mb-0 text-secondary">{{ giacenza.annullata|add:giacenza.smarrita }} / {{ giacenza.restituita }}</div></div></div></div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title"><i class="ti ti-package me-2"></i>Lotti ricevuti</h2></div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Numeri</th><th>Quantità</th><th>Disponibili</th><th class="d-none d-md-table-cell">Acquisizione</th><th class="d-none d-lg-table-cell">Riferimento</th><th class="text-end">Costo</th></tr></thead>
+      <tbody>
+      {% for l in lotti %}
+        <tr>
+          <td><a href="?anno={{ anno }}&amp;lotto={{ l.pk }}">{{ l }}</a></td>
+          <td>{{ l.quantita }}</td>
+          <td>{{ l.disponibili }}</td>
+          <td class="d-none d-md-table-cell">{{ l.data_acquisizione|date:"d/m/Y" }} · {{ l.fornitore }}</td>
+          <td class="d-none d-lg-table-cell">{{ l.riferimento|default:"—" }}</td>
+          <td class="text-end">{{ l.costo_unitario }} € / tessera</td>
+        </tr>
+      {% empty %}<tr><td colspan="6" class="text-secondary py-4 text-center">Nessuna tessera {{ anno }} caricata. Usare «Carico tessere» quando arrivano dalla sede centrale.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100">
+      <input type="hidden" name="anno" value="{{ anno }}">
+      <div class="col-md-6"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Numero tessera o cognome del socio" aria-label="Cerca"></div>
+      <div class="col-md-4"><select class="form-select" name="stato" aria-label="Stato" data-invio-automatico><option value="">Tutti gli stati</option>{% for v, e in stati %}<option value="{{ v }}"{% if v == stato %} selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button class="btn w-100" type="submit">Cerca</button></div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-sm">
+      <thead><tr><th>Tessera</th><th>Stato</th><th>Socio</th><th></th></tr></thead>
+      <tbody>
+      {% for c in carte %}
+        <tr>
+          <td class="fw-medium">{{ c.codice }}</td>
+          <td><span class="badge {% if c.stato == 'disponibile' %}bg-green-lt{% elif c.stato == 'attribuita' %}bg-blue-lt{% else %}bg-secondary-lt{% endif %}">{{ c.get_stato_display|lower }}</span>{% if c.motivo %}<div class="small text-secondary">{{ c.motivo }}</div>{% endif %}</td>
+          <td>{% if c.stato == "attribuita" %}{% with t=c.tessera %}<a href="{{ t.socio.get_absolute_url }}">{{ t.socio.soggetto.nome_completo }}</a> <span class="small text-secondary">n. {{ t.socio.numero }}</span>{% endwith %}{% endif %}</td>
+          <td class="text-end">{% if perms.soci.gestisci_tessere_fisiche and c.stato != "attribuita" %}<button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#carta-{{ c.pk }}">Stato</button>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna tessera.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+
+{% if perms.soci.gestisci_tessere_fisiche %}{% for c in carte %}{% if c.stato != "attribuita" %}
+<div class="modal fade" id="carta-{{ c.pk }}" tabindex="-1" aria-labelledby="titolo-carta-{{ c.pk }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <form class="modal-content" method="post" action="{% url 'soci:stato_carta' c.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-carta-{{ c.pk }}">Tessera {{ c.codice }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <label class="form-label" for="st-{{ c.pk }}">Stato</label>
+        <select class="form-select mb-2" id="st-{{ c.pk }}" name="stato">{% for v, e in form_stato.fields.stato.choices %}<option value="{{ v }}"{% if v == c.stato %} selected{% endif %}>{{ e }}</option>{% endfor %}</select>
+        <label class="form-label" for="mo-{{ c.pk }}">Motivo</label>
+        <input class="form-control" id="mo-{{ c.pk }}" name="motivo" maxlength="255" value="{{ c.motivo }}" placeholder="es. stampata con errore">
+      </div>
+      <div class="modal-footer"><button type="submit" class="btn btn-primary">Salva</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}{% endfor %}{% endif %}
+{% endblock %}

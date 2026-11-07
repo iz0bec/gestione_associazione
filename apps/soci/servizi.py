@@ -10,6 +10,7 @@
 
 import csv
 from datetime import date
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -22,8 +23,9 @@ from apps.core.numerazione import prossimo_numero
 from .models import (
     SEQ_LIBRO_SOCI,
     SEQ_RICEVUTA,
-    SEQ_TESSERA,
+    CartaTessera,
     DomandaIscrizione,
+    LottoTessere,
     Socio,
     Tessera,
     TipologiaSocio,
@@ -151,6 +153,184 @@ def _assegna_ricevuta(tessera):
     tessera.ricevuta_numero = prossimo_numero(SEQ_RICEVUTA, tessera.ricevuta_anno)
 
 
+# --- tessere fisiche dalla sede centrale ---------------------------------------------------
+
+MASSIMO_PER_LOTTO = 10_000
+
+
+@transaction.atomic
+def carica_lotto(utente, *, anno, numero_da, numero_a, serie="", cifre=0, **dati):
+    """Registra un carico di tessere prestampate e crea una riga per ogni tessera fisica."""
+    serie = serie.strip().upper()
+    if numero_a < numero_da:
+        raise OperazioneNonValida("Il numero finale precede quello iniziale.")
+    if numero_a - numero_da + 1 > MASSIMO_PER_LOTTO:
+        raise OperazioneNonValida(f"Un lotto può contenere al massimo {MASSIMO_PER_LOTTO} tessere.")
+    lotto = LottoTessere(
+        anno=anno, serie=serie, numero_da=numero_da, numero_a=numero_a, cifre=cifre,
+        creato_da=utente, modificato_da=utente, **dati,
+    )  # fmt: skip
+    codici = [lotto.formatta(n) for n in range(numero_da, numero_a + 1)]
+    gia_presenti = list(
+        CartaTessera.objects.filter(anno=anno, codice__in=codici).values_list("codice", flat=True)[
+            :5
+        ]
+    )
+    if gia_presenti:
+        raise OperazioneNonValida(
+            f"Tessere già caricate per il {anno}: {', '.join(gia_presenti)}"
+            + ("..." if len(gia_presenti) == 5 else "")
+        )
+    lotto.save()
+    CartaTessera.objects.bulk_create(
+        CartaTessera(lotto=lotto, anno=anno, numero=n, codice=c)
+        for n, c in zip(range(numero_da, numero_a + 1), codici, strict=True)
+    )
+    registra(
+        Azione.CREAZIONE,
+        lotto,
+        utente=utente,
+        descrizione=f"Carico tessere {lotto}",
+        quantita=lotto.quantita,
+    )
+    return lotto
+
+
+def prossima_carta(anno):
+    """Prima tessera disponibile dell'anno (lotti più vecchi prima, numeri in ordine)."""
+    return (
+        CartaTessera.objects.select_for_update(skip_locked=True, of=("self",))
+        .filter(anno=anno, stato=CartaTessera.Stato.DISPONIBILE)
+        .order_by("lotto__data_acquisizione", "lotto_id", "numero")
+        .first()
+    )
+
+
+def carta_per_codice(anno, codice):
+    codice = " ".join(codice.strip().upper().split())
+    carta = CartaTessera.objects.select_for_update().filter(anno=anno, codice=codice).first()
+    if carta is None and codice.isdigit():
+        # numero scritto senza serie o senza zeri iniziali
+        candidate = list(
+            CartaTessera.objects.select_for_update().filter(anno=anno, numero=int(codice))[:2]
+        )
+        carta = candidate[0] if len(candidate) == 1 else None
+    if carta is None:
+        raise OperazioneNonValida(
+            f"La tessera {codice} non risulta tra quelle caricate per il {anno}."
+        )
+    return carta
+
+
+@transaction.atomic
+def attribuisci_carta(tessera, utente, codice=None):
+    """Attribuisce al tesseramento una tessera fisica: quella indicata o la prossima disponibile."""
+    tessera = (
+        Tessera.objects.select_for_update().select_related("socio__soggetto").get(pk=tessera.pk)
+    )
+    if tessera.annullata:
+        raise OperazioneNonValida("Il tesseramento è annullato.")
+    if tessera.carta_id:
+        raise OperazioneNonValida(f"Tessera già attribuita: {tessera.carta.codice}.")
+    carta = carta_per_codice(tessera.anno, codice) if codice else prossima_carta(tessera.anno)
+    if carta is None:
+        raise OperazioneNonValida(
+            f"Nessuna tessera {tessera.anno} disponibile: caricare un lotto dalla sede centrale."
+        )
+    if carta.stato != CartaTessera.Stato.DISPONIBILE:
+        raise OperazioneNonValida(
+            f"La tessera {carta.codice} non è disponibile ({carta.get_stato_display().lower()})."
+        )
+    carta.stato = CartaTessera.Stato.ATTRIBUITA
+    carta.save(update_fields=["stato", "modificata_il"])
+    tessera.carta = carta
+    tessera.modificato_da = utente
+    tessera.save(update_fields=["carta", "modificato_da", "modificato_il"])
+    registra(Azione.MODIFICA, tessera, utente=utente, tessera_fisica=carta.codice)
+    return tessera
+
+
+def da_attribuire(anno):
+    return Tessera.objects.valide().filter(anno=anno, carta__isnull=True)
+
+
+def attribuzione_massiva(anno, utente, ordine="numero"):
+    """Attribuisce le tessere disponibili ai tesseramenti dell'anno che ne sono privi.
+
+    `ordine`: "numero" (numero di iscrizione) o "cognome". Si ferma quando le tessere finiscono.
+    """
+    campi = (
+        ["socio__numero"]
+        if ordine == "numero"
+        else ["socio__soggetto__cognome", "socio__soggetto__nome"]
+    )
+    fatte, mancanti = [], 0
+    for tessera in da_attribuire(anno).order_by(*campi):
+        try:
+            fatte.append(attribuisci_carta(tessera, utente))
+        except OperazioneNonValida:
+            mancanti += 1
+    registra(
+        Azione.MODIFICA,
+        utente=utente,
+        descrizione=f"Attribuzione tessere {anno}",
+        attribuite=len(fatte),
+        senza_tessera=mancanti,
+    )
+    return fatte, mancanti
+
+
+@transaction.atomic
+def cambia_stato_carta(carta, stato, utente, motivo):
+    """Tessera non attribuita: fuori uso (annullata, smarrita), restituita o disponibile."""
+    motivo = (motivo or "").strip()
+    carta = CartaTessera.objects.select_for_update().get(pk=carta.pk)
+    if carta.stato == CartaTessera.Stato.ATTRIBUITA:
+        raise OperazioneNonValida(
+            "La tessera è attribuita: annullare prima il tesseramento del socio."
+        )
+    if stato == CartaTessera.Stato.ATTRIBUITA:
+        raise OperazioneNonValida("Per attribuire una tessera usare il tesseramento del socio.")
+    if stato != CartaTessera.Stato.DISPONIBILE and not motivo:
+        raise OperazioneNonValida("Indicare il motivo.")
+    precedente = carta.stato
+    carta.stato = stato
+    carta.motivo = motivo[:255]
+    carta.save()
+    registra(
+        Azione.MODIFICA,
+        carta.lotto,
+        utente=utente,
+        descrizione=f"Tessera {carta.codice}",
+        stato={"prima": precedente, "dopo": stato},
+        motivo=motivo,
+    )
+    return carta
+
+
+def giacenza(anno):
+    """Riepilogo delle tessere fisiche dell'anno per stato, con costo verso la sede centrale."""
+    from django.db.models import Count, Q
+
+    carte = CartaTessera.objects.filter(anno=anno)
+    conteggi = carte.aggregate(
+        totale=Count("id"),
+        **{s: Count("id", filter=Q(stato=s)) for s in CartaTessera.Stato.values},
+    )
+    # costo dovuto alla sede centrale: tessere usate o fuori uso (le restituite no)
+    costo = sum(
+        (
+            lotto.costo_unitario * lotto.carte.exclude(stato=CartaTessera.Stato.RESTITUITA).count()
+            for lotto in LottoTessere.objects.filter(anno=anno)
+        ),
+        start=Decimal("0"),
+    )
+    return {**conteggi, "costo": costo}
+
+
+# --- tesseramento annuale ----------------------------------------------------------------
+
+
 @transaction.atomic
 def rilascia_tessera(
     socio,
@@ -162,8 +342,13 @@ def rilascia_tessera(
     pagata_il=None,
     metodo="",
     riferimento="",
+    carta=None,
 ):
-    """Crea la tessera dell'anno; se `pagata_il` è indicato registra anche l'incasso."""
+    """Crea il tesseramento dell'anno; se `pagata_il` è indicato registra anche l'incasso.
+
+    `carta`: None = da attribuire dopo; "prossima" = prima tessera disponibile; altrimenti il
+    numero della tessera fisica da attribuire.
+    """
     socio = Socio.objects.select_for_update().select_related("tipologia").get(pk=socio.pk)
     if socio.stato != Socio.Stato.ATTIVO:
         raise OperazioneNonValida("La tessera si rilascia solo ai soci attivi.")
@@ -172,7 +357,6 @@ def rilascia_tessera(
     tessera = Tessera(
         socio=socio,
         anno=anno,
-        numero=prossimo_numero(SEQ_TESSERA, anno),
         data_rilascio=data_rilascio or date.today(),
         importo=socio.tipologia.quota_annua if importo is None else importo,
         creato_da=utente,
@@ -192,6 +376,11 @@ def rilascia_tessera(
         importo=str(tessera.importo),
         ricevuta=tessera.codice_ricevuta,
     )
+    if carta == "prossima":
+        if CartaTessera.objects.filter(anno=anno, stato=CartaTessera.Stato.DISPONIBILE).exists():
+            tessera = attribuisci_carta(tessera, utente)
+    elif carta:
+        tessera = attribuisci_carta(tessera, utente, carta)
     return tessera
 
 
@@ -225,8 +414,12 @@ def registra_pagamento(tessera, utente, *, pagata_il, metodo, importo=None, rife
 
 
 @transaction.atomic
-def annulla_tessera(tessera, utente, motivo):
-    """Annulla la tessera: numero e ricevuta non vengono riutilizzati."""
+def annulla_tessera(tessera, utente, motivo, *, libera_carta=False):
+    """Annulla il tesseramento; la ricevuta non si riutilizza.
+
+    La tessera fisica attribuita diventa annullata, oppure torna disponibile se `libera_carta`
+    (es. attribuita per errore e mai consegnata al socio).
+    """
     if not motivo.strip():
         raise OperazioneNonValida("Indicare il motivo dell'annullamento.")
     tessera = Tessera.objects.select_for_update().get(pk=tessera.pk)
@@ -235,8 +428,26 @@ def annulla_tessera(tessera, utente, motivo):
     tessera.annullata = True
     tessera.motivo_annullamento = motivo.strip()
     tessera.modificato_da = utente
+    carta = tessera.carta
+    if carta:
+        carta.stato = (
+            CartaTessera.Stato.DISPONIBILE if libera_carta else CartaTessera.Stato.ANNULLATA
+        )
+        carta.motivo = (
+            "" if libera_carta else f"Tesseramento annullato: {tessera.motivo_annullamento}"[:255]
+        )
+        carta.save()
+        if libera_carta:
+            tessera.carta = None  # la tessera fisica torna disponibile per un altro socio
     tessera.save()
-    registra(Azione.ANNULLAMENTO, tessera, utente=utente, motivo=tessera.motivo_annullamento)
+    registra(
+        Azione.ANNULLAMENTO,
+        tessera,
+        utente=utente,
+        motivo=tessera.motivo_annullamento,
+        tessera_fisica=carta.codice if carta else "",
+        tessera_fisica_liberata=libera_carta,
+    )
     return tessera
 
 
@@ -248,15 +459,18 @@ def soci_da_rinnovare(anno):
     )
 
 
-def rinnovo_massivo(anno, utente):
-    """Rilascia la tessera dell'anno (da pagare) a tutti i soci attivi che non l'hanno.
+def rinnovo_massivo(anno, utente, *, attribuisci=False):
+    """Crea il tesseramento dell'anno (da pagare) per tutti i soci attivi che non l'hanno;
+    con `attribuisci` assegna anche le tessere fisiche disponibili, in ordine di numero socio.
 
     Una transazione per socio: un errore su un socio non blocca gli altri.
     """
     rilasciate, errori = [], []
     for socio in soci_da_rinnovare(anno).order_by("numero"):
         try:
-            rilasciate.append(rilascia_tessera(socio, anno, utente))
+            rilasciate.append(
+                rilascia_tessera(socio, anno, utente, carta="prossima" if attribuisci else None)
+            )
         except OperazioneNonValida as e:
             errori.append((socio, e.message))
     registra(
@@ -324,7 +538,7 @@ def accogli_domanda(
             modalita=modalita,
         )
     if tessera_anno:
-        rilascia_tessera(socio, tessera_anno, utente)
+        rilascia_tessera(socio, tessera_anno, utente, carta="prossima")
     domanda.stato = DomandaIscrizione.Stato.ACCOLTA
     domanda.esito_il = date.today()
     domanda.esito_note = note_esito or delibera
@@ -375,6 +589,39 @@ def esporta_libro_csv(queryset, destinazione, utente):
         writer.writerow([cella_sicura(v) for v in riga])
         n += 1
     registra(Azione.ESPORTAZIONE, utente=utente, descrizione=f"Libro soci CSV ({n} righe)", righe=n)
+    return n
+
+
+INTESTAZIONE_TESSERATI = [
+    "tessera", "numero_socio", "cognome", "nome", "codice_fiscale", "data_nascita",
+    "luogo_nascita", "indirizzo", "cap", "comune", "provincia", "tipologia", "data_rilascio",
+    "quota", "pagata_il",
+]  # fmt: skip
+
+
+def esporta_tesserati_csv(anno, destinazione, utente):
+    """Elenco dei tesserati dell'anno con il numero di tessera (per la sede centrale)."""
+    writer = csv.writer(destinazione, delimiter=";")
+    writer.writerow(INTESTAZIONE_TESSERATI)
+    n = 0
+    tessere = (
+        Tessera.objects.valide()
+        .filter(anno=anno, carta__isnull=False)
+        .select_related("carta", "socio__soggetto", "socio__tipologia")
+        .order_by("carta__lotto__serie", "carta__numero")
+    )
+    for t in tessere:
+        p = t.socio.soggetto
+        riga = [
+            t.carta.codice, t.socio.numero, p.cognome, p.nome, p.codice_fiscale, p.data_nascita,
+            p.luogo_nascita, p.indirizzo, p.cap, p.comune, p.provincia, t.socio.tipologia.nome,
+            t.data_rilascio, t.importo, t.pagata_il,
+        ]  # fmt: skip
+        writer.writerow([cella_sicura(v) for v in riga])
+        n += 1
+    registra(
+        Azione.ESPORTAZIONE, utente=utente, descrizione=f"Tesserati {anno} CSV ({n} righe)", righe=n
+    )
     return n
 
 

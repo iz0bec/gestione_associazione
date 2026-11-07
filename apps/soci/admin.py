@@ -12,7 +12,7 @@ from django.contrib import admin
 
 from apps.core.admin import SolaLettura
 
-from .models import DomandaIscrizione, Socio, Tessera, TipologiaSocio
+from .models import CartaTessera, DomandaIscrizione, LottoTessere, Socio, Tessera, TipologiaSocio
 
 
 @admin.register(TipologiaSocio)
@@ -37,3 +37,16 @@ class TesseraAdmin(SolaLettura):
 class DomandaIscrizioneAdmin(SolaLettura):
     list_display = ["cognome", "nome", "ricevuta_il", "origine", "stato"]
     list_filter = ["stato", "origine"]
+
+
+@admin.register(LottoTessere)
+class LottoTessereAdmin(SolaLettura):
+    list_display = ["__str__", "anno", "data_acquisizione", "fornitore", "costo_unitario"]
+    list_filter = ["anno"]
+
+
+@admin.register(CartaTessera)
+class CartaTesseraAdmin(SolaLettura):
+    list_display = ["codice", "anno", "stato", "lotto"]
+    list_filter = ["anno", "stato"]
+    search_fields = ["codice"]

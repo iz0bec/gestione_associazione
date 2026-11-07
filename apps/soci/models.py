@@ -23,7 +23,6 @@ from apps.core.models import ModelloBase, validatore_cap, validatore_provincia
 
 # chiavi delle sequenze di numerazione (apps.core.numerazione)
 SEQ_LIBRO_SOCI = "libro_soci"  # progressivo unico, mai riavviato
-SEQ_TESSERA = "tessera"  # annuale
 SEQ_RICEVUTA = "ricevuta_quota"  # annuale, per anno di incasso
 
 
@@ -160,8 +159,96 @@ class TesseraQuerySet(models.QuerySet):
         return self.valide().filter(pagata_il__isnull=True, importo__gt=0)
 
 
+class LottoTessere(ModelloBase):
+    """Carico di tessere fisiche ricevute dalla sede centrale, con numerazione prestampata."""
+
+    anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
+    serie = models.CharField(
+        max_length=10,
+        blank=True,
+        help_text="Lettere o prefisso stampati prima del numero, se presenti.",
+    )
+    numero_da = models.PositiveIntegerField("dal numero")
+    numero_a = models.PositiveIntegerField("al numero")
+    cifre = models.PositiveSmallIntegerField(
+        default=0, help_text="Cifre del numero stampato (zeri iniziali), 0 = come scritto."
+    )
+    data_acquisizione = models.DateField("data di acquisizione", default=date.today)
+    fornitore = models.CharField(max_length=100, default="Sede centrale")
+    riferimento = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Es. ordine, protocollo di consegna, documento di trasporto.",
+    )
+    costo_unitario = models.DecimalField(
+        "costo per tessera",
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Quota dovuta alla sede centrale per ogni tessera.",
+    )
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "lotto di tessere"
+        verbose_name_plural = "lotti di tessere"
+        ordering = ["-anno", "data_acquisizione", "numero_da"]
+        permissions = [("gestisci_tessere_fisiche", "Può caricare e gestire le tessere fisiche")]
+
+    def __str__(self):
+        return f"{self.anno}: {self.formatta(self.numero_da)} – {self.formatta(self.numero_a)}"
+
+    @property
+    def quantita(self):
+        return self.numero_a - self.numero_da + 1
+
+    def formatta(self, numero):
+        testo = f"{numero:0{self.cifre}d}" if self.cifre else str(numero)
+        return f"{self.serie} {testo}".strip()
+
+
+class CartaTesseraQuerySet(models.QuerySet):
+    def disponibili(self):
+        return self.filter(stato=CartaTessera.Stato.DISPONIBILE)
+
+
+class CartaTessera(models.Model):
+    """Singola tessera fisica di un lotto: disponibile, attribuita a un socio o fuori uso."""
+
+    class Stato(models.TextChoices):
+        DISPONIBILE = "disponibile", "Disponibile"
+        ATTRIBUITA = "attribuita", "Attribuita"
+        ANNULLATA = "annullata", "Annullata (deteriorata, errata)"
+        SMARRITA = "smarrita", "Smarrita"
+        RESTITUITA = "restituita", "Restituita alla sede centrale"
+
+    lotto = models.ForeignKey(LottoTessere, on_delete=models.PROTECT, related_name="carte")
+    anno = models.PositiveIntegerField(db_index=True)
+    numero = models.PositiveIntegerField()
+    codice = models.CharField("numero tessera", max_length=30)
+    stato = models.CharField(
+        max_length=12, choices=Stato.choices, default=Stato.DISPONIBILE, db_index=True
+    )
+    motivo = models.CharField(max_length=255, blank=True)
+    modificata_il = models.DateTimeField(auto_now=True)
+
+    objects = CartaTesseraQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = "tessera fisica"
+        verbose_name_plural = "tessere fisiche"
+        ordering = ["anno", "lotto__serie", "numero"]
+        constraints = [
+            models.UniqueConstraint(fields=["anno", "codice"], name="carta_tessera_unica_per_anno")
+        ]
+
+    def __str__(self):
+        return self.codice
+
+
 class Tessera(ModelloBase):
-    """Tessera annuale di un socio con la relativa quota."""
+    """Tesseramento annuale di un socio: tessera fisica attribuita e quota."""
 
     class Metodo(models.TextChoices):
         CONTANTI = "contanti", "Contanti"
@@ -171,7 +258,15 @@ class Tessera(ModelloBase):
 
     socio = models.ForeignKey(Socio, on_delete=models.PROTECT, related_name="tessere")
     anno = models.PositiveIntegerField(db_index=True)
-    numero = models.PositiveIntegerField(editable=False)
+    carta = models.OneToOneField(
+        CartaTessera,
+        verbose_name="tessera fisica",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="tessera",
+        editable=False,
+    )
     data_rilascio = models.DateField("data di rilascio", default=date.today)
     importo = models.DecimalField(
         "quota", max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
@@ -194,15 +289,12 @@ class Tessera(ModelloBase):
     class Meta:
         verbose_name = "tessera"
         verbose_name_plural = "tessere"
-        ordering = ["-anno", "-numero"]
+        ordering = ["-anno", "socio__numero"]
         permissions = [
             ("incassa_quota", "Può registrare il pagamento delle quote ed emettere ricevute"),
             ("annulla_tessera", "Può annullare una tessera"),
         ]
         constraints = [
-            models.UniqueConstraint(
-                fields=["anno", "numero"], name="tessera_numero_unico_per_anno"
-            ),
             models.UniqueConstraint(
                 fields=["socio", "anno"],
                 condition=Q(annullata=False),
@@ -218,7 +310,11 @@ class Tessera(ModelloBase):
 
     @property
     def codice(self):
-        return f"{self.anno}/{self.numero:04d}"
+        return self.carta.codice if self.carta_id else "da attribuire"
+
+    @property
+    def attribuita(self):
+        return self.carta_id is not None
 
     @property
     def codice_ricevuta(self):

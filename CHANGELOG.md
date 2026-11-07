@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Modificato - Tessere dalla sede centrale
+- Le tessere non sono più numerate dall'applicazione: si caricano i **lotti di tessere prestampate**
+  ricevuti dalla sede centrale (anno, serie, intervallo di numeri, cifre, data, riferimento, costo per
+  tessera) e si **attribuiscono** ai soci: al rinnovo, in blocco in seguito (per numero socio o cognome),
+  o singolarmente con il numero stampato.
+- Giacenza per anno (disponibili, attribuite, annullate, smarrite, restituite) con costo verso la sede
+  centrale; elenco dei tesserati in CSV da inviare alla sede centrale.
+- Annullando un tesseramento la tessera fisica si annulla o, se non consegnata, torna disponibile.
+
 ### Aggiunto - Protocollo
 - Registro di protocollo in entrata, uscita e interno con numerazione annuale `AAAA-NNNNN`, mezzo,
   classificazione (titolario di base modificabile), data e protocollo del mittente, collegamento

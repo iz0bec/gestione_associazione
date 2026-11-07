@@ -26,13 +26,13 @@ I ruoli li assegna l'amministratore.
 
 ### Soci e tesseramento
 
-| Ruolo | Libro soci | Tessere | Incassi e annullamenti | Domande | Stampa libro soci | Tipologie |
-|---|---|---|---|---|---|---|
-| Amministratore di sistema | consulta, iscrive, modifica, cessa | rilascia, rinnovo | sì | registra, accoglie/respinge | sì | modifica |
-| Presidente | consulta | consulta | - | accoglie/respinge | sì | consulta |
-| Segretario | consulta, iscrive, modifica, cessa | rilascia, rinnovo | - | registra, accoglie/respinge | sì | modifica |
-| Tesoriere | consulta | rilascia, rinnovo | **sì** | consulta | - | consulta |
-| Consigliere, Revisore | consulta | consulta | - | consulta | - | consulta |
+| Ruolo | Libro soci | Tesseramento e attribuzione | Carico tessere dalla sede centrale | Incassi e annullamenti | Domande | Stampe ed elenco tesserati | Tipologie |
+|---|---|---|---|---|---|---|---|
+| Amministratore di sistema | consulta, iscrive, modifica, cessa | sì | sì | sì | registra, accoglie/respinge | sì | modifica |
+| Presidente | consulta | consulta | consulta | - | accoglie/respinge | sì | consulta |
+| Segretario | consulta, iscrive, modifica, cessa | sì | sì | - | registra, accoglie/respinge | sì | modifica |
+| Tesoriere | consulta | sì | sì | **sì** | consulta | - | consulta |
+| Consigliere, Revisore | consulta | consulta | consulta | - | consulta | - | consulta |
 | Addetto protocollo | - | - | - | - | - | - |
 
 Incassi e segreteria sono separati di proposito: chi iscrive i soci non registra i pagamenti.

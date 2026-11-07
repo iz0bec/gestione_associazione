@@ -57,7 +57,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Email: Django 6.1 usa `MAILERS` (le impostazioni `EMAIL_*` sono deprecate) — vedi `config/settings.py`.
 - PDF: `apps.core.pdf.risposta_pdf(template, contesto, nome)`; i modelli estendono `pdf/base.html`
   e referenziano risorse solo come `risorsa:static/...` / `risorsa:media/...` (il fetcher rifiuta il resto).
-- Soci: sequenze `libro_soci` (unica), `tessera` e `ricevuta_quota` (annuali) — chiavi in `apps/soci/models.py`;
+- Soci: sequenze `libro_soci` (unica) e `ricevuta_quota` (annuale). Le **tessere sono fisiche, numerate dalla
+  sede centrale**: lotti `LottoTessere` → `CartaTessera` (stato) → attribuite a `Tessera` (tesseramento annuale)
+  con `servizi.attribuisci_carta`; mai generare numeri di tessera;
   operazioni solo da `apps/soci/servizi.py` (sollevano `OperazioneNonValida` con messaggio per l'utente).
 - Modulo pubblico `/iscrizione/`: anti-spam in `DomandaPubblicaForm` (orologio in `_adesso()`, patchabile nei test).
 - Protocollo: sequenza `protocollo` (annuale); registrazione solo con `servizi.registra_protocollo`;

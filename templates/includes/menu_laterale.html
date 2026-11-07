@@ -1,5 +1,5 @@
 {% comment %}Menu laterale: le voci compaiono solo con i permessi necessari.{% endcomment %}
-{% with nome=request.resolver_match.namespace %}
+{% with nome=request.resolver_match.namespace chiave=","|add:request.resolver_match.url_name|add:"," TESSERAMENTO=",tessere,rinnovo,tessere_fisiche,lotto_nuovo,tipologie,tipologia_nuova,tipologia_modifica," %}
 <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark" aria-label="Menu principale">
   <div class="container-fluid">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-laterale" aria-controls="menu-laterale" aria-expanded="false" aria-label="Apri il menu">
@@ -20,12 +20,12 @@
         </li>
         {% endif %}
         {% if perms.soci.view_socio %}
-        <li class="nav-item{% if nome == 'soci' and request.resolver_match.url_name != 'tessere' and request.resolver_match.url_name != 'rinnovo' and 'domand' not in request.resolver_match.url_name %} active{% endif %}">
+        <li class="nav-item{% if nome == 'soci' and not chiave in TESSERAMENTO and 'domand' not in request.resolver_match.url_name %} active{% endif %}">
           <a class="nav-link" href="{% url 'soci:elenco' %}"><span class="nav-link-icon"><i class="ti ti-users-group"></i></span><span class="nav-link-title">Soci</span></a>
         </li>
         {% endif %}
         {% if perms.soci.view_tessera %}
-        <li class="nav-item{% if request.resolver_match.url_name == 'tessere' or request.resolver_match.url_name == 'rinnovo' %} active{% endif %}">
+        <li class="nav-item{% if nome == 'soci' and chiave in TESSERAMENTO %} active{% endif %}">
           <a class="nav-link" href="{% url 'soci:tessere' %}"><span class="nav-link-icon"><i class="ti ti-id-badge-2"></i></span><span class="nav-link-title">Tesseramento</span></a>
         </li>
         {% endif %}

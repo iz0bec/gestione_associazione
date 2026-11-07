@@ -20,7 +20,14 @@ from apps.anagrafica.forms import CampoData
 from apps.anagrafica.validatori import dati_da_codice_fiscale
 from apps.core.forms import StileMixin
 
-from .models import DomandaIscrizione, Socio, Tessera, TipologiaSocio
+from .models import (
+    CartaTessera,
+    DomandaIscrizione,
+    LottoTessere,
+    Socio,
+    Tessera,
+    TipologiaSocio,
+)
 
 
 def _anni_proposti():
@@ -57,7 +64,9 @@ class AmmissioneForm(StileMixin, forms.Form):
     )
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
     tessera = forms.BooleanField(
-        label="Rilascia subito la tessera dell'anno in corso", required=False, initial=True
+        label="Tesseramento dell'anno in corso con la prima tessera disponibile",
+        required=False,
+        initial=True,
     )
 
     def clean_data_ammissione(self):
@@ -96,11 +105,37 @@ class TesseraForm(StileMixin, forms.Form):
         help_text="Vuoto = quota della tipologia del socio.",
     )  # fmt: skip
     data_rilascio = forms.DateField(label="Data di rilascio", widget=CampoData, initial=date.today)
+    attribuzione = forms.ChoiceField(
+        label="Tessera fisica",
+        choices=[
+            ("prossima", "Prima tessera disponibile"),
+            ("numero", "Numero indicato"),
+            ("dopo", "Da attribuire in seguito"),
+        ],
+        initial="prossima",
+        widget=forms.RadioSelect,
+    )
+    numero_tessera = forms.CharField(
+        label="Numero della tessera", required=False, max_length=30,
+        help_text="Come stampato sulla tessera (con la serie, se presente).",
+    )  # fmt: skip
     pagata = forms.BooleanField(label="Quota incassata ora", required=False)
     metodo = forms.ChoiceField(
         label="Metodo di pagamento", choices=Tessera.Metodo.choices, required=False
     )
     riferimento = forms.CharField(label="Riferimento pagamento", required=False, max_length=100)
+
+    def clean(self):
+        dati = super().clean()
+        if dati.get("attribuzione") == "numero" and not dati.get("numero_tessera"):
+            self.add_error("numero_tessera", "Indicare il numero della tessera.")
+        return dati
+
+    def carta(self):
+        scelta = self.cleaned_data["attribuzione"]
+        if scelta == "numero":
+            return self.cleaned_data["numero_tessera"]
+        return "prossima" if scelta == "prossima" else None
 
 
 class PagamentoForm(StileMixin, forms.Form):
@@ -123,6 +158,39 @@ class RinnovoForm(StileMixin, forms.Form):
     anno = forms.TypedChoiceField(
         coerce=int, choices=_anni_proposti, initial=lambda: date.today().year
     )
+    attribuisci = forms.BooleanField(
+        label="Attribuisci subito le tessere disponibili (in ordine di numero socio)",
+        required=False,
+        initial=True,
+    )
+
+
+class LottoForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = LottoTessere
+        fields = [
+            "anno", "serie", "numero_da", "numero_a", "cifre", "data_acquisizione", "fornitore",
+            "riferimento", "costo_unitario", "note",
+        ]  # fmt: skip
+        widgets = {"data_acquisizione": CampoData}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["anno"].initial = date.today().year
+
+    def clean(self):
+        dati = super().clean()
+        da, a = dati.get("numero_da"), dati.get("numero_a")
+        if da is not None and a is not None and a < da:
+            self.add_error("numero_a", "Deve essere maggiore o uguale al numero iniziale.")
+        return dati
+
+
+class StatoCartaForm(StileMixin, forms.Form):
+    stato = forms.ChoiceField(
+        choices=[c for c in CartaTessera.Stato.choices if c[0] != CartaTessera.Stato.ATTRIBUITA]
+    )
+    motivo = forms.CharField(required=False, max_length=255)
 
 
 class AccoglimentoForm(AmmissioneForm):

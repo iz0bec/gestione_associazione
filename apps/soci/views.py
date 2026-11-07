@@ -41,14 +41,16 @@ from .forms import (
     AmmissioneForm,
     CessazioneForm,
     DomandaForm,
+    LottoForm,
     MotivoForm,
     PagamentoForm,
     RinnovoForm,
     SocioForm,
+    StatoCartaForm,
     TesseraForm,
     TipologiaForm,
 )
-from .models import DomandaIscrizione, Socio, Tessera, TipologiaSocio
+from .models import CartaTessera, DomandaIscrizione, LottoTessere, Socio, Tessera, TipologiaSocio
 from .servizi import OperazioneNonValida
 
 
@@ -169,7 +171,9 @@ class AmmissioneView(PermessoMixin, FormView):
                 note=d["note"],
             )
             if d["tessera"]:
-                servizi.rilascia_tessera(socio, date.today().year, self.request.user)
+                servizi.rilascia_tessera(
+                    socio, date.today().year, self.request.user, carta="prossima"
+                )
         except OperazioneNonValida as e:
             form.add_error(None, e)
             return self.form_invalid(form)
@@ -239,7 +243,9 @@ class TesseraNuovaView(_AzioneSocioView):
     def esegui(self, request, socio):
         form = TesseraForm(request.POST, prefix="tessera")
         if not form.is_valid():
-            raise OperazioneNonValida("Dati della tessera non validi.")
+            raise OperazioneNonValida(
+                [m for errori in form.errors.values() for m in errori] or "Dati non validi."
+            )
         d = form.cleaned_data
         if d["pagata"] and not request.user.has_perm("soci.incassa_quota"):
             raise OperazioneNonValida("Non si ha il permesso di registrare incassi.")
@@ -252,8 +258,9 @@ class TesseraNuovaView(_AzioneSocioView):
             pagata_il=date.today() if d["pagata"] else None,
             metodo=d["metodo"],
             riferimento=d["riferimento"],
+            carta=form.carta(),
         )
-        messages.success(request, f"Tessera {tessera.codice} rilasciata.")
+        messages.success(request, f"Tesseramento {tessera.anno}: tessera {tessera.codice}.")
 
 
 # --- tessere -----------------------------------------------------------------------------
@@ -298,7 +305,12 @@ class AnnullaTesseraView(_AzioneTesseraView):
     permission_required = "soci.annulla_tessera"
 
     def esegui(self, request, tessera):
-        servizi.annulla_tessera(tessera, request.user, request.POST.get("annulla-motivo", ""))
+        servizi.annulla_tessera(
+            tessera,
+            request.user,
+            request.POST.get("annulla-motivo", ""),
+            libera_carta=request.POST.get("annulla-libera") == "on",
+        )
         messages.success(request, f"Tessera {tessera.codice} annullata.")
 
 
@@ -334,15 +346,17 @@ class TessereView(PermessoMixin, ListView):
             return date.today().year
 
     def get_queryset(self):
-        qs = Tessera.objects.filter(anno=self.get_anno()).select_related("socio__soggetto")
+        qs = Tessera.objects.filter(anno=self.get_anno()).select_related("socio__soggetto", "carta")
         filtro = self.request.GET.get("stato")
-        if filtro == "da_pagare":
+        if filtro == "da_attribuire":
+            qs = qs.valide().filter(carta__isnull=True)
+        elif filtro == "da_pagare":
             qs = qs.da_pagare()
         elif filtro == "pagate":
             qs = qs.pagate()
         elif filtro == "annullate":
             qs = qs.filter(annullata=True)
-        return qs.order_by("numero")
+        return qs.order_by("socio__numero")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -359,6 +373,8 @@ class TessereView(PermessoMixin, ListView):
         )
         ctx["da_rinnovare"] = servizi.soci_da_rinnovare(anno).count()
         ctx["morosi"] = Socio.objects.morosi(anno).count()
+        ctx["da_attribuire"] = servizi.da_attribuire(anno).count()
+        ctx["disponibili"] = CartaTessera.objects.disponibili().filter(anno=anno).count()
         ctx["form_pagamento"] = PagamentoForm(prefix="pagamento")
         return ctx
 
@@ -380,14 +396,22 @@ class RinnovoView(PermessoMixin, FormView):
         anno = form.cleaned_data["anno"] if form.is_bound and form.is_valid() else date.today().year
         ctx["anno"] = anno
         ctx["da_rinnovare"] = servizi.soci_da_rinnovare(anno).order_by("numero")
+        ctx["disponibili"] = CartaTessera.objects.disponibili().filter(anno=anno).count()
         return ctx
 
     def form_valid(self, form):
         if self.request.method == "GET" or self.request.POST.get("conferma") != "1":
             return self.render_to_response(self.get_context_data(form=form))
         anno = form.cleaned_data["anno"]
-        rilasciate, errori = servizi.rinnovo_massivo(anno, self.request.user)
-        messages.success(self.request, f"Rilasciate {len(rilasciate)} tessere per il {anno}.")
+        rilasciate, errori = servizi.rinnovo_massivo(
+            anno, self.request.user, attribuisci=form.cleaned_data["attribuisci"]
+        )
+        senza = sum(1 for t in rilasciate if not t.attribuita)
+        messages.success(
+            self.request,
+            f"Tesseramento {anno}: {len(rilasciate)} soci rinnovati"
+            + (f", {senza} ancora senza tessera fisica." if senza else "."),
+        )
         for socio, errore in errori:
             messages.warning(self.request, f"{socio}: {errore}")
         return redirect(f"{reverse('soci:tessere')}?anno={anno}")
@@ -397,6 +421,131 @@ class RinnovoView(PermessoMixin, FormView):
         if form.is_bound:
             form.is_valid()
         return self.render_to_response(self.get_context_data(form=form))
+
+
+class AttribuisciView(_AzioneTesseraView):
+    permission_required = "soci.add_tessera"
+
+    def esegui(self, request, tessera):
+        t = servizi.attribuisci_carta(tessera, request.user, request.POST.get("codice", "").strip())
+        messages.success(request, f"Attribuita la tessera {t.codice}.")
+
+
+class AttribuzioneMassivaView(PermessoMixin, View):
+    permission_required = "soci.add_tessera"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        try:
+            anno = int(request.POST.get("anno"))
+        except (TypeError, ValueError):
+            anno = date.today().year
+        ordine = "cognome" if request.POST.get("ordine") == "cognome" else "numero"
+        fatte, mancanti = servizi.attribuzione_massiva(anno, request.user, ordine)
+        messages.success(request, f"Attribuite {len(fatte)} tessere.")
+        if mancanti:
+            messages.warning(
+                request, f"{mancanti} soci restano senza tessera: caricare un nuovo lotto."
+            )
+        return redirect(f"{reverse('soci:tessere')}?anno={anno}")
+
+
+# --- tessere fisiche dalla sede centrale -------------------------------------------------
+
+
+class TessereFisicheView(PermessoMixin, ListView):
+    permission_required = "soci.view_lottotessere"
+    template_name = "soci/tessere_fisiche.html"
+    context_object_name = "carte"
+    paginate_by = 100
+
+    def get_anno(self):
+        try:
+            return int(self.request.GET.get("anno") or date.today().year)
+        except ValueError:
+            return date.today().year
+
+    def get_queryset(self):
+        qs = CartaTessera.objects.filter(anno=self.get_anno()).select_related(
+            "lotto", "tessera__socio__soggetto"
+        )
+        if stato := self.request.GET.get("stato"):
+            qs = qs.filter(stato=stato)
+        if lotto := self.request.GET.get("lotto"):
+            qs = qs.filter(lotto_id=lotto)
+        if q := self.request.GET.get("q", "").strip():
+            qs = qs.filter(
+                Q(codice__icontains=q) | Q(tessera__socio__soggetto__cognome__icontains=q)
+            )
+        return qs.order_by("lotto__serie", "numero")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        anno = self.get_anno()
+        ctx["anno"] = anno
+        ctx["anni"] = range(date.today().year + 1, date.today().year - 6, -1)
+        ctx["lotti"] = LottoTessere.objects.filter(anno=anno).annotate(
+            disponibili=Count("carte", filter=Q(carte__stato=CartaTessera.Stato.DISPONIBILE)),
+            attribuite=Count("carte", filter=Q(carte__stato=CartaTessera.Stato.ATTRIBUITA)),
+        )
+        ctx["giacenza"] = servizi.giacenza(anno)
+        ctx["stati"] = CartaTessera.Stato.choices
+        ctx["stato"] = self.request.GET.get("stato", "")
+        ctx["q"] = self.request.GET.get("q", "")
+        ctx["form_stato"] = StatoCartaForm()
+        return ctx
+
+
+class LottoNuovoView(PermessoMixin, FormView):
+    permission_required = "soci.gestisci_tessere_fisiche"
+    form_class = LottoForm
+    template_name = "soci/lotto_modulo.html"
+
+    def form_valid(self, form):
+        d = form.cleaned_data
+        try:
+            lotto = servizi.carica_lotto(self.request.user, **d)
+        except OperazioneNonValida as e:
+            form.add_error(None, e)
+            return self.form_invalid(form)
+        messages.success(self.request, f"Caricate {lotto.quantita} tessere ({lotto}).")
+        return redirect(f"{reverse('soci:tessere_fisiche')}?anno={lotto.anno}")
+
+
+class StatoCartaView(PermessoMixin, View):
+    permission_required = "soci.gestisci_tessere_fisiche"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        carta = get_object_or_404(CartaTessera, pk=pk)
+        form = StatoCartaForm(request.POST)
+        try:
+            if not form.is_valid():
+                raise OperazioneNonValida("Stato non valido.")
+            servizi.cambia_stato_carta(
+                carta, form.cleaned_data["stato"], request.user, form.cleaned_data["motivo"]
+            )
+            messages.success(request, f"Tessera {carta.codice} aggiornata.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect(f"{reverse('soci:tessere_fisiche')}?anno={carta.anno}&q={carta.codice}")
+
+
+class EsportaTesseratiView(PermessoMixin, View):
+    permission_required = "soci.esporta_libro_soci"
+
+    def get(self, request):
+        try:
+            anno = int(request.GET.get("anno") or date.today().year)
+        except ValueError:
+            anno = date.today().year
+        buffer = io.StringIO()
+        servizi.esporta_tesserati_csv(anno, buffer, request.user)
+        risposta = HttpResponse(
+            "\ufeff" + buffer.getvalue(), content_type="text/csv; charset=utf-8"
+        )
+        risposta["Content-Disposition"] = f'attachment; filename="tesserati_{anno}.csv"'
+        return risposta
 
 
 # --- stampe ed esportazioni --------------------------------------------------------------

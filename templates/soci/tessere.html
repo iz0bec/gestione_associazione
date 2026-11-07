@@ -9,21 +9,35 @@
     {% if stato %}<input type="hidden" name="stato" value="{{ stato }}">{% endif %}
     <noscript><button class="btn" type="submit">Vai</button></noscript>
   </form>
+  {% if perms.soci.view_lottotessere %}<a class="btn" href="{% url 'soci:tessere_fisiche' %}?anno={{ anno }}"><i class="ti ti-package me-1"></i>Tessere dalla sede centrale</a>{% endif %}
   {% if perms.soci.view_tipologiasocio %}<a class="btn" href="{% url 'soci:tipologie' %}"><i class="ti ti-tags me-1"></i>Tipologie e quote</a>{% endif %}
   {% if perms.soci.add_tessera %}<a class="btn btn-primary" href="{% url 'soci:rinnovo' %}?anno={{ anno }}"><i class="ti ti-refresh me-1"></i>Rinnovo annuale</a>{% endif %}
 </div>
 {% endblock %}
 {% block contenuto %}
+{% if da_attribuire %}
+<div class="alert alert-info d-flex flex-wrap align-items-center gap-2">
+  <span class="flex-fill"><strong>{{ da_attribuire }}</strong> soci rinnovati per il {{ anno }} non hanno ancora la tessera fisica; tessere disponibili: <strong>{{ disponibili }}</strong>.</span>
+  {% if perms.soci.add_tessera and disponibili %}
+  <form method="post" action="{% url 'soci:attribuzione' %}" class="d-flex gap-2" data-conferma="Attribuire le tessere disponibili ai soci senza tessera?">{% csrf_token %}
+    <input type="hidden" name="anno" value="{{ anno }}">
+    <select class="form-select form-select-sm" name="ordine" aria-label="Ordine"><option value="numero">per numero socio</option><option value="cognome">per cognome</option></select>
+    <button class="btn btn-sm btn-primary text-nowrap" type="submit">Attribuisci</button>
+  </form>
+  {% elif perms.soci.gestisci_tessere_fisiche %}<a class="btn btn-sm" href="{% url 'soci:lotto_nuovo' %}">Carica tessere</a>{% endif %}
+</div>
+{% endif %}
 <div class="row row-cards mb-3">
-  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Tessere rilasciate</div><div class="h1 mb-0">{{ riepilogo.rilasciate }}</div><div class="text-secondary small">{{ riepilogo.pagate }} pagate</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Soci tesserati</div><div class="h1 mb-0">{{ riepilogo.rilasciate }}</div><div class="text-secondary small">{{ riepilogo.pagate }} pagate</div></div></div></div>
   <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Incassato</div><div class="h1 mb-0 text-green">{{ riepilogo.incassato|floatformat:2 }} €</div></div></div></div>
   <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Da incassare</div><div class="h1 mb-0 text-orange">{{ riepilogo.da_incassare|floatformat:2 }} €</div><a class="small" href="{% url 'soci:elenco' %}?quota=morosi&amp;anno={{ anno }}">{{ morosi }} soci non in regola</a></div></div></div>
-  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Soci senza tessera</div><div class="h1 mb-0">{{ da_rinnovare }}</div>{% if da_rinnovare and perms.soci.add_tessera %}<a class="small" href="{% url 'soci:rinnovo' %}?anno={{ anno }}">rilascia le tessere</a>{% endif %}</div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Soci da rinnovare</div><div class="h1 mb-0">{{ da_rinnovare }}</div>{% if da_rinnovare and perms.soci.add_tessera %}<a class="small" href="{% url 'soci:rinnovo' %}?anno={{ anno }}">rinnova</a>{% endif %}</div></div></div>
 </div>
 <div class="card">
   <div class="card-header">
     <ul class="nav nav-pills card-header-pills">
       <li class="nav-item"><a class="nav-link{% if not stato %} active{% endif %}" href="?anno={{ anno }}">Tutte</a></li>
+      <li class="nav-item"><a class="nav-link{% if stato == 'da_attribuire' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=da_attribuire">Senza tessera</a></li>
       <li class="nav-item"><a class="nav-link{% if stato == 'da_pagare' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=da_pagare">Da pagare</a></li>
       <li class="nav-item"><a class="nav-link{% if stato == 'pagate' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=pagate">Pagate</a></li>
       <li class="nav-item"><a class="nav-link{% if stato == 'annullate' %} active{% endif %}" href="?anno={{ anno }}&amp;stato=annullate">Annullate</a></li>
@@ -35,7 +49,7 @@
       <tbody>
       {% for t in tessere %}
         <tr>
-          <td>{{ t.codice }}</td>
+          <td>{% if t.attribuita %}<span class="fw-medium">{{ t.codice }}</span>{% elif not t.annullata %}{% if perms.soci.add_tessera %}<button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#attribuisci-{{ t.pk }}">Attribuisci</button>{% else %}<span class="badge bg-yellow-lt">da attribuire</span>{% endif %}{% endif %}</td>
           <td><a class="text-reset" href="{{ t.socio.get_absolute_url }}">{{ t.socio.soggetto.nome_completo }}</a> <span class="text-secondary small">n. {{ t.socio.numero }}</span></td>
           <td>{{ t.importo }} €</td>
           <td>{% include "soci/_stato_tessera.html" %}</td>
@@ -53,5 +67,5 @@
   </div>
   {% include "includes/paginazione.html" %}
 </div>
-{% for t in tessere %}{% if not t.pagata and not t.annullata and t.importo > 0 %}{% include "soci/_modale_pagamento.html" with ritorno="tessere" %}{% endif %}{% endfor %}
+{% for t in tessere %}{% if not t.pagata and not t.annullata and t.importo > 0 %}{% include "soci/_modale_pagamento.html" with ritorno="tessere" %}{% endif %}{% if not t.attribuita and not t.annullata and perms.soci.add_tessera %}{% include "soci/_modale_attribuzione.html" with ritorno="tessere" %}{% endif %}{% endfor %}
 {% endblock %}
