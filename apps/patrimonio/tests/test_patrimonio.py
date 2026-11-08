@@ -10,6 +10,7 @@
 
 import hashlib
 import io
+import re
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -181,7 +182,7 @@ class TestViste:
         )
         client.logout()
         r = client.get(reverse("bene_pubblico", args=[b.token]))
-        html = r.content.decode()
+        html = re.sub(r"\?v=\d+", "", r.content.decode())  # versione dei file statici
         assert r.status_code == 200 and "Storia del cimelio" in html
         assert "1500" not in html and "1.500" not in html  # mai il valore
         assert (
