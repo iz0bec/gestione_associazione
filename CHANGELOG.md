@@ -5,10 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.5] - 2026-11-08
+
+Incasso massivo delle quote.
+
 ### Aggiunto
 - **Incasso massivo delle quote** (*Tesseramento → Incasso quote*): si spuntano le quote da pagare
   dell'anno e si indicano una volta data, metodo e riferimento; ricevuta numerata e prima nota per
   ognuna.
+
+### Corretto
+- In sviluppo il browser non usa più copie vecchie degli script dopo un aggiornamento.
 
 ## [0.0.1-rc.4] - 2026-11-08
 
