@@ -21,6 +21,12 @@ urlpatterns = [
     path("sistema/backup/", viste_backup.BackupView.as_view(), name="backup"),
     path("sistema/posta/", views.ServiziPostaView.as_view(), name="servizi_posta"),
     path(
+        "sistema/posta/verifica/<int:pk>/",
+        views.VerificaCasellaView.as_view(),
+        name="verifica_casella",
+    ),
+    path("sistema/posta/verifica-invio/", views.VerificaSmtpView.as_view(), name="verifica_smtp"),
+    path(
         "sistema/backup/<str:nome>/scarica/",
         viste_backup.ScaricaBackupView.as_view(),
         name="scarica_backup",

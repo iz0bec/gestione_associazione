@@ -75,6 +75,12 @@ protocollare) lo segnalano con un avviso. La pagina mostra anche lo **stato**: s
 configurato (la password non è mai mostrata), mittente, messaggi in coda e caselle IMAP con
 l'ultimo controllo ed eventuali errori. Ogni modifica è annotata nel registro attività.
 
+**Verifica** (accanto a ogni casella e al server di invio) fa una **prova di accesso**, anche con i
+servizi spenti: per una casella riporta quanti messaggi contiene, quanti rientrano nel periodo da
+scaricare e quanti sono già nel programma, **senza scaricare nulla** (la cartella è aperta in sola
+lettura); per il server di invio si collega e si disconnette **senza spedire email**. In caso di
+errore mostra il motivo (password errata, server o cartella sbagliati, server non raggiungibile).
+
 Utile durante il collaudo, quando il server di posta non è ancora configurato, o per fermare
 tutto in caso di problemi. Il server SMTP si configura nel file `.env` (manuale di sistema), le
 caselle IMAP in *Protocollo → Posta da protocollare*.

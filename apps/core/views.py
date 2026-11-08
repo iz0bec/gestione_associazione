@@ -196,6 +196,57 @@ class ServiziPostaView(PermessoMixin, UpdateView):
         return ctx
 
 
+class VerificaCasellaView(PermessoMixin, View):
+    """Prova di accesso a una casella IMAP (nulla viene scaricato)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+
+        from apps.protocollo.models import CasellaPosta
+        from apps.protocollo.posta import ErroreCasella, verifica_casella
+
+        casella = get_object_or_404(CasellaPosta, pk=pk)
+        try:
+            esito = verifica_casella(casella)
+        except ErroreCasella as e:
+            messages.error(request, f"{casella}: {e}")
+        except Exception as e:  # noqa: BLE001 - es. password non decifrabile
+            messages.error(request, f"{casella}: verifica non riuscita ({type(e).__name__}).")
+        else:
+            messages.success(request, f"{casella}: {esito}")
+        return redirect("core:servizi_posta")
+
+
+class VerificaSmtpView(PermessoMixin, View):
+    """Prova di accesso al server di invio (nessuna email spedita)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+
+    def post(self, request):
+        from django.core.mail import mailers
+
+        stato = _stato_smtp()
+        if not stato["smtp"]:
+            messages.warning(request, f"Nessun server SMTP: le email vanno a «{stato['backend']}».")
+            return redirect("core:servizi_posta")
+        try:
+            connessione = mailers.default
+            if getattr(connessione, "timeout", None) is None:
+                connessione.timeout = 20  # la verifica non deve bloccare la pagina
+            connessione.open()
+            connessione.close()
+        except Exception as e:  # noqa: BLE001 - l'esito si mostra all'amministratore
+            dettaglio = f"{type(e).__name__}: {str(e)[:150]}"
+            messages.error(request, f"Server di invio {stato['host']}:{stato['porta']}: accesso "
+                                    f"non riuscito ({dettaglio}).")  # fmt: skip
+        else:
+            messages.success(request, f"Server di invio {stato['host']}:{stato['porta']}: accesso "
+                                      "riuscito (nessuna email spedita).")  # fmt: skip
+        return redirect("core:servizi_posta")
+
+
 class AspettoView(PermessoMixin, UpdateView):
     permission_required = "core.gestisci_organizzazione"
     form_class = AspettoForm

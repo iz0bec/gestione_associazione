@@ -32,7 +32,10 @@
           <dt class="col-5">Messaggi in coda</dt><dd class="col-7">{{ in_coda }}{% if in_coda and not object.invio_email %} <span class="text-secondary">(partiranno alla riattivazione)</span>{% endif %}</dd>
         </dl>
       </div>
-      <div class="card-footer small text-secondary">Il server SMTP si configura nel file <code>.env</code> sul server (manuale di sistema); la password non è mai mostrata.</div>
+      <div class="card-footer d-flex align-items-center gap-2">
+        <span class="small text-secondary flex-fill">Il server SMTP si configura nel file <code>.env</code> sul server; la password non è mai mostrata.</span>
+        {% if smtp.smtp %}<form method="post" action="{% url 'core:verifica_smtp' %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>{% endif %}
+      </div>
     </div>
     <div class="card">
       <div class="card-header">
@@ -43,8 +46,12 @@
       <div class="list-group list-group-flush">
         {% for c in caselle %}
         <div class="list-group-item small">
-          <div class="d-flex"><strong class="flex-fill">{{ c.nome }}</strong><span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.attiva %}attiva{% else %}spenta{% endif %}</span></div>
-          <div class="text-secondary">ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
+          <div class="d-flex align-items-center gap-2">
+            <strong class="flex-fill">{{ c.nome }}{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}</strong>
+            <span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.attiva %}attiva{% else %}spenta{% endif %}</span>
+            <form method="post" action="{% url 'core:verifica_casella' c.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nulla viene scaricato"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
+          </div>
+          <div class="text-secondary">{{ c.utente }} · {{ c.server }}:{{ c.porta }} · ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
         </div>
         {% endfor %}
       </div>
@@ -53,5 +60,11 @@
       {% endif %}
     </div>
   </div>
+</div>
+<div class="modal" id="modale-verifica" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-body text-center py-4">
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <div>Verifica in corso…</div><div class="small text-secondary">può richiedere qualche secondo</div>
+  </div></div></div>
 </div>
 {% endblock %}

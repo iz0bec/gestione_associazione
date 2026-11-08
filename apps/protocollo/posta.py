@@ -177,6 +177,35 @@ def scarica_casella(casella):
     return nuovi
 
 
+def verifica_casella(casella):
+    """Prova di accesso (sola lettura, nulla viene scaricato): solleva ErroreCasella o
+    restituisce un messaggio con i messaggi presenti e quelli nel periodo da scaricare."""
+    conn = _connetti(casella)
+    try:
+        stato, dati = conn.select(f'"{casella.cartella}"', readonly=True)
+        if stato != "OK":
+            raise ErroreCasella(
+                f"Accesso riuscito, ma la cartella «{casella.cartella}» non esiste."
+            )
+        try:
+            totale = int(dati[0])
+        except (TypeError, ValueError, IndexError):
+            totale = None
+        dal = (timezone.localdate() - timedelta(days=casella.giorni)).strftime("%d-%b-%Y")
+        stato, trovati = conn.uid("SEARCH", None, f"SINCE {dal}")
+        recenti = len(trovati[0].split()) if stato == "OK" and trovati and trovati[0] else 0
+        gia = MessaggioRicevuto.objects.filter(casella=casella).count()
+    finally:
+        with contextlib.suppress(OSError, imaplib.IMAP4.error):
+            conn.logout()
+    parti = [f"accesso a {casella.server} riuscito, cartella «{casella.cartella}»"]
+    if totale is not None:
+        parti.append(f"{totale} messaggi in tutto")
+    parti.append(f"{recenti} negli ultimi {casella.giorni} giorni")
+    parti.append(f"{gia} già scaricati nel programma")
+    return "; ".join(parti) + "."
+
+
 def scarica_tutte():
     """Per il comando pianificato: scarica da ogni casella attiva, registrando gli errori."""
     from apps.core.models import Organizzazione

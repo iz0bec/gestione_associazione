@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- *Servizi di posta*: pulsante **Verifica** per ogni casella IMAP (accesso in sola lettura con il
+  conteggio dei messaggi, nulla scaricato) e per il server di invio (accesso, nessuna email spedita).
+
 ## [0.0.1-rc.11] - 2026-11-08
 
 Interruttori dei servizi di posta.
