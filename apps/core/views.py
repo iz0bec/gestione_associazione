@@ -39,6 +39,12 @@ class PermessoMixin(LoginRequiredMixin, PermissionRequiredMixin):
 class CruscottoView(LoginRequiredMixin, TemplateView):
     template_name = "core/cruscotto.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        # senza accesso: la pagina pubblica di presentazione, se attiva
+        if not request.user.is_authenticated and Organizzazione.corrente().pagina_pubblica:
+            return PresentazioneView.as_view()(request)
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         from .configurazione import da_configurare
 
@@ -245,6 +251,28 @@ class VerificaSmtpView(PermessoMixin, View):
             messages.success(request, f"Server di invio {stato['host']}:{stato['porta']}: accesso "
                                       "riuscito (nessuna email spedita).")  # fmt: skip
         return redirect("core:servizi_posta")
+
+
+class PresentazioneView(TemplateView):
+    """Pagina pubblica: finalità, documenti pubblici, contatti, accesso (anteprima sempre visibile
+    a chi gestisce l'organizzazione)."""
+
+    template_name = "core/pubblici/presentazione.html"
+
+    def get(self, request, *args, **kwargs):
+        from django.http import Http404
+
+        org = Organizzazione.corrente()
+        if not org.pagina_pubblica and not request.user.has_perm("core.gestisci_organizzazione"):
+            raise Http404
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        from . import pubblici
+
+        ctx = super().get_context_data(**kwargs)
+        ctx["documenti"] = pubblici.pubblicati()
+        return ctx
 
 
 class DocumentiPubbliciView(TemplateView):

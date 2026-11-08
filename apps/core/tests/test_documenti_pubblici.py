@@ -85,3 +85,26 @@ def test_presidente_di_sezione(client_ruolo):
                 "/soci/tipologie/nuova/"):  # fmt: skip
         assert c.get(url).status_code == 403, url
     assert c.get("/calendario/").status_code == 200 and c.get("/anagrafica/").status_code == 200
+
+
+def test_pagina_pubblica_di_presentazione(client, client_ruolo):
+    from apps.core.models import Organizzazione
+
+    org = Organizzazione.corrente()
+    org.denominazione, org.email = "Associazione di prova", "info@prova.invalid"
+    org.presentazione = "Custodiamo la memoria.\n\nPromuoviamo i valori della Costituzione."
+    org.save()
+    # spenta: senza accesso si va alla pagina di accesso, l'anteprima è solo per il gestore
+    assert client.get("/")["Location"].startswith("/account/login/")
+    assert client.get("/presentazione/").status_code == 404
+    gestore = client_ruolo("Segretario")
+    assert "Anteprima" in gestore.get("/presentazione/").content.decode()
+    gestore.logout()
+    Organizzazione.objects.filter(pk=1).update(pagina_pubblica=True, iscrizioni_online=True)
+    testo = client.get("/").content.decode()
+    assert "Custodiamo la memoria." in testo and "<p>Promuoviamo i valori" in testo
+    assert 'href="/account/login/"' in testo and 'href="/iscrizione/"' in testo
+    assert "info@prova.invalid" in testo and 'content="index, follow"' in testo
+    # con l'accesso: il cruscotto come sempre
+    c = client_ruolo("Consigliere", username="c")
+    assert "Custodiamo la memoria." not in c.get("/").content.decode()

@@ -110,6 +110,16 @@ organi dell'associazione; poi se ne nominano i componenti in *Organi sociali*. Q
 organi con componenti, **Organigramma** apre il PDF con una pagina per ogni organo. Lo stesso socio
 può avere cariche nella propria sezione e nell'associazione (vedi [Organi sociali](organi.md)).
 
+## Pagina pubblica
+
+In **Sistema → Organizzazione**, riquadro *Pagina pubblica*: con **Pagina pubblica di presentazione**
+spuntata, chi apre l'indirizzo principale dell'applicazione **senza aver fatto l'accesso** vede una
+pagina con il logo e la denominazione, le **finalità dell'associazione** (testo libero; una riga vuota
+separa i paragrafi), i **documenti pubblici**, i **contatti** (sede, telefono, email, PEC, codice
+fiscale), il pulsante **Accedi** e, se attive, **Chiedi l'iscrizione**. Chi ha fatto l'accesso vede
+sempre il cruscotto. Senza la spunta l'indirizzo principale porta subito alla pagina di accesso.
+Il collegamento *Anteprima* mostra la pagina anche prima di attivarla.
+
 ## Documenti pubblici
 
 ![La gestione dei documenti pubblici](immagini/documenti-pubblici.jpg)

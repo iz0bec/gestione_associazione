@@ -7,7 +7,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
+  <meta name="robots" content="{% block robots %}noindex{% endblock %}">
   <title>{% block titolo %}{% endblock %} · {{ organizzazione.denominazione }}</title>
   <script src="{% static 'js/tema.js' %}"></script>
   <link rel="stylesheet" href="{% static 'vendor/tabler/css/tabler.min.css' %}">

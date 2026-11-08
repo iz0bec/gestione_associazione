@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Pagina pubblica di presentazione** (*Sistema → Organizzazione*): all'indirizzo principale, per
+  chi non ha fatto l'accesso, finalità dell'associazione, documenti pubblici, contatti, pulsanti
+  *Accedi* e *Chiedi l'iscrizione*; spenta per impostazione predefinita, con anteprima.
+
 ## [0.0.1-rc.15] - 2026-11-08
 
 Manuale con immagini e in PDF, password impostata dall'amministratore, sezione del socio.

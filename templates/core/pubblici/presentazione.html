@@ -1,0 +1,49 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Pagina pubblica di presentazione: finalità, documenti pubblici, iscrizione, contatti, accesso
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Benvenuti{% endblock %}
+{% block robots %}{% if organizzazione.pagina_pubblica %}index, follow{% else %}noindex{% endif %}{% endblock %}
+{% block contenuto %}
+{% if not organizzazione.pagina_pubblica %}<div class="alert alert-warning">Anteprima: la pagina pubblica non è attiva (Sistema → Organizzazione).</div>{% endif %}
+<div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+  <a class="btn btn-primary btn-lg" href="{% url 'account_login' %}"><i class="ti ti-login me-1"></i>Accedi</a>
+  {% if organizzazione.iscrizioni_online %}<a class="btn btn-lg" href="{% url 'iscrizione' %}"><i class="ti ti-user-plus me-1"></i>Chiedi l'iscrizione</a>{% endif %}
+</div>
+{% if organizzazione.presentazione %}
+<div class="card mb-3">
+  <div class="card-header"><h1 class="card-title h2">Chi siamo</h1></div>
+  <div class="card-body presentazione">{{ organizzazione.presentazione|linebreaks }}</div>
+</div>
+{% endif %}
+{% if documenti %}
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title">Statuto e regolamento</h2></div>
+  <div class="list-group list-group-flush">
+    {% for d in documenti %}
+    <div class="list-group-item d-flex align-items-center gap-3">
+      <i class="ti ti-file-type-pdf text-red fs-2" aria-hidden="true"></i>
+      <div class="flex-fill"><a class="fw-bold" href="{{ d.get_absolute_url }}" target="_blank" rel="noopener">{{ d.titolo }}</a>{% if d.descrizione %}<div class="small text-secondary">{{ d.descrizione }}</div>{% endif %}</div>
+      <a class="btn btn-sm" href="{{ d.get_absolute_url }}?scarica=1" aria-label="Scarica {{ d.titolo }}"><i class="ti ti-download"></i></a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% if organizzazione.indirizzo or organizzazione.email or organizzazione.pec or organizzazione.telefono %}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Contatti</h2></div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      {% if organizzazione.indirizzo %}<dt class="col-sm-3">Sede</dt><dd class="col-sm-9">{{ organizzazione.indirizzo }}, {{ organizzazione.cap }} {{ organizzazione.comune }}{% if organizzazione.provincia %} ({{ organizzazione.provincia }}){% endif %}</dd>{% endif %}
+      {% if organizzazione.telefono %}<dt class="col-sm-3">Telefono</dt><dd class="col-sm-9">{{ organizzazione.telefono }}</dd>{% endif %}
+      {% if organizzazione.email %}<dt class="col-sm-3">Email</dt><dd class="col-sm-9"><a href="mailto:{{ organizzazione.email }}">{{ organizzazione.email }}</a></dd>{% endif %}
+      {% if organizzazione.pec %}<dt class="col-sm-3">PEC</dt><dd class="col-sm-9">{{ organizzazione.pec }}</dd>{% endif %}
+      {% if organizzazione.codice_fiscale %}<dt class="col-sm-3">Codice fiscale</dt><dd class="col-sm-9">{{ organizzazione.codice_fiscale }}</dd>{% endif %}
+    </dl>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

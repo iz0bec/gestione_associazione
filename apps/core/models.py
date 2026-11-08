@@ -146,6 +146,18 @@ class Organizzazione(models.Model):
         default=False,
         help_text="Pubblica il modulo di domanda di iscrizione all'indirizzo /iscrizione/.",
     )
+    # pagina pubblica di presentazione (indirizzo principale per chi non ha fatto l'accesso)
+    pagina_pubblica = models.BooleanField(
+        "pagina pubblica di presentazione",
+        default=False,
+        help_text="Chi apre l'indirizzo principale senza accesso vede finalità, documenti "
+        "pubblici, contatti e il pulsante per accedere; spenta, va alla pagina di accesso.",
+    )
+    presentazione = models.TextField(
+        "finalità dell'associazione",
+        blank=True,
+        help_text="Testo della pagina pubblica; una riga vuota separa i paragrafi.",
+    )
     # interruttori dei servizi di posta (Sistema -> Servizi di posta)
     invio_email = models.BooleanField(
         "invio delle email",
