@@ -74,6 +74,8 @@ uv run python scripts/manuale/schermate.py http://127.0.0.1:8010   # Chrome tram
 dropdb gestione_demo
 ```
 
-`dati_demo.py` si rifiuta di partire su un database che contiene già dati. Il PDF del manuale si
+`dati_demo.py` si rifiuta di partire su un database che contiene già dati. A ogni versione si aggiorna
+anche la copia nel repository: `manage.py manuale_pdf --uscita docs/manuale/manuale-operativo.pdf`
+(sempre con il database dimostrativo). Il PDF del manuale si
 genera dall'applicazione (*Manuale → Manuale in PDF*) o con `manage.py manuale_pdf --uscita file.pdf`;
 viene conservato in `MEDIA_ROOT/manuale/` e rigenerato solo quando cambiano testi, immagini o versione.

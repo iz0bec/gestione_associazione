@@ -70,6 +70,7 @@ Dettagli in [Sviluppo](docs/sistema/sviluppo.md). Per l'installazione in produzi
 | | |
 |---|---|
 | **Manuale operativo** (per chi usa l'applicazione) | [docs/operativo/](docs/operativo/README.md) |
+| **Manuale operativo in PDF**, con le immagini (dati di esempio) | [docs/manuale/manuale-operativo.pdf](docs/manuale/manuale-operativo.pdf) |
 | **Manuale di sistema** (installazione, configurazione, sicurezza, backup) | [docs/sistema/](docs/sistema/README.md) |
 | Analisi e finalità | [docs/analisi/analisi-e-finalita.md](docs/analisi/analisi-e-finalita.md) |
 | Decisioni di architettura | [docs/architettura/decisioni.md](docs/architettura/decisioni.md) |
