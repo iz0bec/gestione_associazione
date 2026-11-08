@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.13] - 2026-11-08
+
+Modifica delle cariche negli organi sociali.
+
 ### Aggiunto
 - Organi sociali: **modifica delle cariche** (date di inizio e cessazione, atto di nomina, note),
   anche nello storico, con controllo delle sovrapposizioni e registro dei valori prima e dopo.
