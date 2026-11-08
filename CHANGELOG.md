@@ -10,6 +10,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   finestra modale di avanzamento («riga N di M») aggiornata ogni secondo; avanzamento anche nel
   comando `importa_registro_soci`.
 
+### Corretto
+- Importazioni lunghe dall'interfaccia interrotte dal tempo massimo delle richieste (120 s) e quindi
+  annullate per intero: ora girano in un processo separato senza limite di tempo.
+- Configurazione guidata: «Comune, PR» scritto con la virgola viene separato in comune e provincia.
+
 ## [0.0.1-rc.1] - 2026-11-08
 
 Prima release candidate: tutti i moduli di base, installazione su server (script per Debian/Ubuntu e

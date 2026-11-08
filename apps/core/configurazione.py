@@ -9,6 +9,7 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+import re
 from datetime import date
 from decimal import Decimal
 
@@ -87,6 +88,9 @@ class SezioniForm(StileMixin, forms.Form):
                         f"Riga {n}: servono almeno codice e nome separati da «;»."
                     )
                 parti += ["", ""]
+                # «Avigliano, PZ» scritto con la virgola: comune e provincia insieme
+                if not parti[3] and (m := re.fullmatch(r"(.+?),\s*([A-Za-z]{2})", parti[2])):
+                    parti[2], parti[3] = m.group(1).strip(), m.group(2)
                 provincia = parti[3].upper()[:2]
                 d["righe"].append((parti[0][:20], parti[1][:150], parti[2][:100], provincia))
             if not d["righe"]:

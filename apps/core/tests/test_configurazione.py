@@ -96,6 +96,10 @@ class TestConfigurazione:
         assert r.status_code == 302
         assert Sezione.objects.get().codice == "085"
         assert admin_client.post(passo("tesseramento"), {"salta": "1"}).url == passo("tesoreria")
+        r = admin_client.post(passo("sezioni"), {"struttura": "federazione",
+                                                  "elenco": "085; Avigliano; Avigliano, pz"})  # fmt: skip
+        s = Sezione.objects.get(codice="085")
+        assert (s.comune, s.provincia) == ("Avigliano", "PZ")
         r = admin_client.post(passo("sezioni"), {"struttura": "federazione", "elenco": "solo nome"})
         assert r.status_code == 200 and "codice e nome" in r.content.decode()
 
