@@ -34,7 +34,7 @@ COLONNE = {
     "cognome": ["cognome"],
     "nome": ["nome"],
     "nominativo": ["nominativo", "cognome e nome", "cognome nome", "socio"],
-    "codice_fiscale": ["codice fiscale", "cf", "cod fiscale", "codfiscale", "c f"],
+    "codice_fiscale": ["codice fiscale", "codicefiscale", "cf", "cod fiscale", "codfiscale", "c f"],
     "sesso": ["sesso", "genere"],
     "data_nascita": ["data nascita", "data di nascita", "nato il", "nata il", "nascita"],
     "luogo_nascita": ["luogo nascita", "luogo di nascita", "comune di nascita", "nato a"],
@@ -49,9 +49,28 @@ COLONNE = {
     "codice_sezione": ["codice sezione", "cod sezione", "id sezione", "n sezione"],
     "matricola": ["matricola", "numero socio", "n socio", "id socio", "codice socio"],
     "tessera": ["tessera", "numero tessera", "n tessera", "nr tessera", "codice tessera"],
+    "anno_tessera": ["anno sociale", "anno tessera", "anno tesseramento", "anno"],
+    "data_tessera": ["data tessera", "data rilascio tessera", "data rilascio"],
     "tipologia": ["tipologia", "categoria", "tipo socio", "tipologia socio", "qualifica"],
-    "data_iscrizione": ["data iscrizione", "data ammissione", "iscritto dal", "data adesione"],
+    "data_iscrizione": [
+        "data iscrizione",
+        "data ammissione",
+        "iscritto dal",
+        "data adesione",
+        "data di ammissione a socio",
+        "data di ammissione",
+        "data di iscrizione",
+    ],
+    "data_cessazione": [
+        "data di annullamento iscrizione",
+        "data annullamento",
+        "data cessazione",
+        "data di cessazione",
+    ],
+    "incarico": ["codice incarico socio ordinario", "incarico", "carica"],
 }
+# colonne con l'anno nell'intestazione, es. «Numero Tessera Anno 2025»
+COLONNE_CON_ANNO = {"tessera_precedente": re.compile(r"^(?:numero |n |nr )?tessera anno (\d{4})$")}
 CAMPI_ANAGRAFICI = [
     "sesso", "data_nascita", "luogo_nascita", "indirizzo", "cap", "comune", "provincia",
     "email", "telefono", "cellulare",
@@ -72,6 +91,17 @@ _ALIAS = {alias: campo for campo, nomi in COLONNE.items() for alias in nomi}
 
 
 # --- lettura del file --------------------------------------------------------------------
+
+
+def _riconosci(valore):
+    """Campo corrispondente all'intestazione (e anno, per le colonne che lo contengono)."""
+    n = normalizza(valore)
+    if n in _ALIAS:
+        return _ALIAS[n], None
+    for campo, schema in COLONNE_CON_ANNO.items():
+        if m := schema.match(n):
+            return campo, int(m.group(1))
+    return None, None
 
 
 def _celle_xlsx(contenuto):
@@ -122,7 +152,7 @@ def leggi(nome_file, contenuto):
     else:
         raise FileNonValido("Caricare un file .xlsx o .csv.")
 
-    mappa, ignorate, righe = None, [], []
+    mappa, ignorate, righe, anni = None, [], [], {}
     for n, valori in enumerate(celle, start=1):
         if mappa is None:
             if n > 20:
@@ -130,9 +160,13 @@ def leggi(nome_file, contenuto):
                     "Intestazioni non trovate: servono almeno le colonne cognome (o nominativo) "
                     "e codice fiscale nelle prime 20 righe."
                 )
-            candidata = {
-                i: _ALIAS[normalizza(v)] for i, v in enumerate(valori) if normalizza(v) in _ALIAS
-            }
+            candidata, anni = {}, {}
+            for i, v in enumerate(valori):
+                campo, anno = _riconosci(v)
+                if campo and campo not in candidata.values():
+                    candidata[i] = campo
+                    if anno:
+                        anni[campo] = anno
             campi = set(candidata.values())
             if ("cognome" in campi or "nominativo" in campi) and len(campi) >= 2:
                 mappa = candidata
@@ -142,7 +176,7 @@ def leggi(nome_file, contenuto):
             continue
         if len(righe) >= MAX_RIGHE:
             raise FileNonValido(f"Il file ha più di {MAX_RIGHE} righe.")
-        riga = {"_riga": n}
+        riga = {"_riga": n, **{f"_anno_{c}": a for c, a in anni.items()}}
         for i, campo in mappa.items():
             if i < len(valori) and campo not in riga:
                 riga[campo] = valori[i]
@@ -163,12 +197,25 @@ def _testo(v):
     return " ".join(str(v).split())
 
 
+MESI = {m: i for i, m in enumerate(
+    ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto",
+     "settembre", "ottobre", "novembre", "dicembre"], start=1)}  # fmt: skip
+
+
 def _data(v):
     if isinstance(v, datetime):
         return v.date()
     if isinstance(v, date):
         return v
     testo = _testo(v)
+    # «04 agosto 1967», come negli estratti del registro nazionale
+    if m := re.fullmatch(r"(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})", testo):
+        mese = MESI.get(normalizza(m.group(2)))
+        if mese:
+            try:
+                return date(int(m.group(3)), mese, int(m.group(1)))
+            except ValueError:
+                return None
     for formato in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d.%m.%Y", "%d/%m/%y"):
         try:
             return datetime.strptime(testo, formato).date()
@@ -177,16 +224,43 @@ def _data(v):
     return None
 
 
-def _nome_proprio(testo):
-    """MARIO ROSSI -> Mario Rossi; le maiuscole/minuscole già curate restano come sono."""
+MINUSCOLE_LUOGHI = {"di", "del", "della", "dei", "delle", "in", "sul", "sulla", "al", "e"}
+
+
+def _nome_proprio(testo, luogo=False):
+    """MARIO ROSSI -> Mario Rossi; RIONERO IN VULTURE -> Rionero in Vulture (luogo=True).
+    Le maiuscole/minuscole già curate restano come sono."""
     testo = _testo(testo)
-    if testo.isupper() or testo.islower():
-        return " ".join(p.capitalize() if "'" not in p else p.title() for p in testo.split())
-    return testo
+    if not (testo.isupper() or testo.islower()):
+        return testo
+    parole = []
+    for i, p in enumerate(testo.lower().split()):
+        if luogo and i and p in MINUSCOLE_LUOGHI:
+            parole.append(p)
+        else:
+            parole.append(p.title() if "'" in p or "-" in p else p.capitalize())
+    return " ".join(parole)
+
+
+def _telefoni(*valori):
+    """Separa fissi e cellulari (in Italia i cellulari iniziano per 3)."""
+    fissi, cellulari = [], []
+    for v in valori:
+        for numero in re.split(r"[,;/]| e ", _testo(v)):
+            numero = numero.strip()
+            cifre = re.sub(r"\D", "", numero)
+            if len(cifre) < 6:
+                continue
+            (cellulari if cifre.lstrip("0").startswith("3") and not cifre.startswith("0")
+             else fissi).append(numero)  # fmt: skip
+    return ", ".join(fissi)[:30], ", ".join(cellulari)[:30]
+
+
+DATE = ("data_nascita", "data_iscrizione", "data_tessera", "data_cessazione")
 
 
 def _pulisci(riga):
-    d = {k: (v if k in ("data_nascita", "data_iscrizione") else _testo(v)) for k, v in riga.items()}
+    d = {k: (v if k in DATE or k.startswith("_") else _testo(v)) for k, v in riga.items()}
     if not d.get("cognome") and d.get("nominativo"):
         parti = d["nominativo"].split()
         d["cognome"], d["nome"] = (parti[0], " ".join(parti[1:])) if parti else ("", "")
@@ -194,13 +268,24 @@ def _pulisci(riga):
     d["nome"] = _nome_proprio(d.get("nome", ""))
     d["codice_fiscale"] = d.get("codice_fiscale", "").replace(" ", "").upper()
     d["data_nascita"] = _data(d.get("data_nascita"))
-    d["data_iscrizione"] = _data(d.get("data_iscrizione"))
+    for campo in DATE[1:]:
+        d[campo] = _data(d.get(campo))
+    d["telefono"], d["cellulare"] = _telefoni(d.get("telefono"), d.get("cellulare"))
+    for campo in ("tessera", "tessera_precedente"):
+        d[campo] = d.get(campo, "").lstrip("0") if d.get(campo, "").isdigit() else d.get(campo, "")
+    d["anno_tessera"] = int(d["anno_tessera"]) if d.get("anno_tessera", "").isdigit() else None
+    if d.get("incarico", "").lower() in ("socio", "socio ordinario"):
+        d["incarico"] = ""
     d["provincia"] = d.get("provincia", "").upper()[:2]
     d["cap"] = d.get("cap", "").zfill(5) if d.get("cap", "").isdigit() else d.get("cap", "")
     d["email"] = d.get("email", "").lower()
-    for campo in ("comune", "luogo_nascita", "indirizzo"):
+    for campo in ("comune", "luogo_nascita"):
         if d.get(campo):
-            d[campo] = _nome_proprio(d[campo])
+            d[campo] = _nome_proprio(d[campo], luogo=True)
+    if d.get("indirizzo"):
+        d["indirizzo"] = _nome_proprio(d["indirizzo"], luogo=True)
+    if d.get("sezione"):
+        d["sezione"] = _nome_proprio(d["sezione"], luogo=True)
     return d
 
 
@@ -213,7 +298,10 @@ class Opzioni:
     tipologia: TipologiaSocio | None = None  # se la tipologia manca o non è riconosciuta
     crea_sezioni: bool = False
     allinea_sezione: bool = False  # sposta i soci esistenti nella sezione del registro
-    anno_tessere: int | None = None  # attribuisce i numeri di tessera del file per l'anno
+    tessere: bool = True  # registra i tesseramenti con i numeri di tessera del file
+    anno_tessere: int | None = None  # anno delle tessere se il file non ha «Anno sociale»
+    crea_tessere: bool = True  # crea le tessere fisiche non ancora caricate (lotto «registro»)
+    cessazioni: bool = True  # registra le cessazioni (data di annullamento dell'iscrizione)
     sezioni_consentite: set | None = None  # utente limitato a queste sezioni
 
 
@@ -245,6 +333,34 @@ class _Errore(Exception):
     pass
 
 
+PAROLE_GENERICHE = {"ancr", "sezione", "sez", "di", "del", "della", "comunale", "a", "n", "c", "r"}
+
+
+def _nucleo(nome):
+    """«ANCR Sezione di Avigliano» e «AVIGLIANO» -> «avigliano»."""
+    return " ".join(p for p in normalizza(nome).split() if p not in PAROLE_GENERICHE)
+
+
+def _cerca_sezione(nome):
+    if s := Sezione.objects.filter(nome__iexact=nome).first():
+        return s
+    nucleo = _nucleo(nome)
+    if not nucleo:
+        return None
+    for s in Sezione.objects.all():
+        if nucleo in (_nucleo(s.nome), _nucleo(s.comune)):
+            return s
+    return None
+
+
+def _codice_nuovo(nome):
+    base = normalizza(nome).upper().replace(" ", "-")[:20] or "SEZ"
+    codice, n = base, 2
+    while Sezione.objects.filter(codice=codice).exists():
+        codice, n = f"{base[:17]}-{n}", n + 1
+    return codice
+
+
 def _sezione(d, opzioni, cache, rapporto):
     codice, nome = d.get("codice_sezione", ""), d.get("sezione", "")
     chiave = (codice.lower(), nome.lower())
@@ -254,13 +370,15 @@ def _sezione(d, opzioni, cache, rapporto):
     if codice:
         sezione = Sezione.objects.filter(codice__iexact=codice).first()
     if sezione is None and nome:
-        sezione = Sezione.objects.filter(nome__iexact=nome).first()
+        sezione = _cerca_sezione(nome)
     if sezione is None and (codice or nome):
         if not opzioni.crea_sezioni:
             raise _Errore(f"sezione «{nome or codice}» non presente (abilitare la creazione)")
         try:
             with transaction.atomic():
-                sezione = Sezione.objects.create(codice=codice or nome[:20], nome=nome or codice)
+                sezione = Sezione.objects.create(
+                    codice=codice or _codice_nuovo(nome), nome=nome or codice, comune=nome
+                )
         except IntegrityError:
             raise _Errore(f"sezione «{nome or codice}»: codice o nome già usati") from None
         rapporto.sezioni_nuove.append(sezione.nome)
@@ -317,7 +435,8 @@ def _riga(d, sezione, opzioni, utente):
         try:
             valida_codice_fiscale(d["codice_fiscale"])
         except ValidationError:
-            note.append(f"codice fiscale {d['codice_fiscale']} non valido: ignorato")
+            note.append(f"codice fiscale {d['codice_fiscale']} non valido: riportato nelle note")
+            d["cf_non_valido"] = d["codice_fiscale"]
             d["codice_fiscale"] = ""
     da_cf = dati_da_codice_fiscale(d["codice_fiscale"]) if d["codice_fiscale"] else None
     if da_cf:
@@ -334,6 +453,8 @@ def _riga(d, sezione, opzioni, utente):
         soggetto = Soggetto.objects.create(
             tipo=Soggetto.Tipo.PERSONA, cognome=d["cognome"], nome=d["nome"],
             codice_fiscale=d["codice_fiscale"] or None, creato_da=utente, modificato_da=utente,
+            note=f"Codice fiscale nel registro nazionale (non valido): {d['cf_non_valido']}"
+            if d.get("cf_non_valido") else "",
             **{c: d[c] for c in CAMPI_ANAGRAFICI if d.get(c)},
         )  # fmt: skip
         registra(Azione.CREAZIONE, soggetto, utente=utente, origine="registro nazionale")
@@ -363,14 +484,20 @@ def _riga(d, sezione, opzioni, utente):
 
     socio = getattr(soggetto, "socio", None)
     if socio is None:
+        ammissione = d["data_iscrizione"] or d.get("data_tessera") or date.today()
+        if d.get("data_cessazione") and d["data_cessazione"] < ammissione:
+            ammissione = d["data_cessazione"]
         socio = servizi.ammetti_socio(
-            soggetto, tipologia, utente, data_ammissione=d["data_iscrizione"] or date.today(),
+            soggetto, tipologia, utente, data_ammissione=ammissione,
             delibera="Importato dal registro soci nazionale", sezione=sezione,
             matricola=d.get("matricola", ""),
+            note=f"Incarico nel registro nazionale: {d['incarico']}" if d.get("incarico") else "",
         )  # fmt: skip
         if stato == "invariato":
             stato = "aggiornato"
         note.append(f"iscritto al libro soci con il n. {socio.numero}")
+        if not d["data_iscrizione"]:
+            note.append("data di ammissione assente nel registro")
     else:
         cambi = []
         if d.get("matricola") and not socio.matricola:
@@ -397,41 +524,61 @@ def _riga(d, sezione, opzioni, utente):
             stato = "aggiornato" if stato != "nuovo" else stato
             note.append("aggiornati: " + ", ".join(cambi))
 
-    if opzioni.anno_tessere and d.get("tessera"):
-        note += _tessera(socio, d["tessera"], opzioni.anno_tessere, utente)
-        if stato == "invariato" and any(
-            n.startswith("tessera ") and "attribuita" in n for n in note
-        ):
-            stato = "aggiornato"
+    if d.get("incarico"):
+        note.append(f"incarico: {d['incarico']}")
+    cessato = False
+    if d.get("data_cessazione") and opzioni.cessazioni:
+        if socio.stato != Socio.Stato.CESSATO:
+            servizi.cessa_socio(
+                socio, utente, data_cessazione=d["data_cessazione"], causa=Socio.Cessazione.ALTRO,
+                note="Iscrizione annullata nel registro soci nazionale",
+            )  # fmt: skip
+            socio.refresh_from_db()
+            stato = "aggiornato" if stato == "invariato" else stato
+            note.append(f"cessato il {d['data_cessazione']:%d/%m/%Y} (annullato nel registro)")
+        cessato = True
+
+    if opzioni.tessere and not cessato:
+        anno = d.get("anno_tessera") or opzioni.anno_tessere
+        tessere = []
+        if d.get("tessera_precedente") and d.get("_anno_tessera_precedente"):
+            tessere.append((d["_anno_tessera_precedente"], d["tessera_precedente"], None))
+        if d.get("tessera") and anno:
+            tessere.append((anno, d["tessera"], d.get("data_tessera")))
+        for a, codice, rilascio in tessere:
+            esito = _tessera(socio, codice, a, rilascio, opzioni, utente)
+            note += esito
+            if stato == "invariato" and any("attribuita" in n for n in esito):
+                stato = "aggiornato"
     return stato, note, socio
 
 
-def _tessera(socio, codice, anno, utente):
+def _tessera(socio, codice, anno, rilascio, opzioni, utente):
     tessera = socio.tessere.valide().filter(anno=anno).first()
     if tessera and tessera.carta_id:
         if tessera.carta.codice != codice and str(tessera.carta.numero) != codice.lstrip("0"):
-            return [f"tessera locale {tessera.carta.codice}, nel registro {codice}"]
+            return [f"tessera {anno}: locale {tessera.carta.codice}, nel registro {codice}"]
         return []
     if socio.stato != Socio.Stato.ATTIVO:
         return []
     try:
         with transaction.atomic():
+            if opzioni.crea_tessere and codice.isdigit():
+                servizi.carta_da_registro(anno, socio.sezione, int(codice), utente)
             if tessera is None:
-                tessera = servizi.rilascia_tessera(socio, anno, utente)
+                tessera = servizi.rilascia_tessera(
+                    socio, anno, utente, data_rilascio=rilascio or date(anno, 1, 1)
+                )
             tessera = servizi.attribuisci_carta(tessera, utente, codice)
     except ValidationError as e:
-        return [f"tessera {codice} non attribuita: {' '.join(e.messages)}"]
+        return [f"tessera {anno} n. {codice} non attribuita: {' '.join(e.messages)}"]
     return [f"tessera {tessera.codice} attribuita per il {anno}"]
 
 
-def _assenti(sezioni_file, matricole, codici_fiscali):
+def _assenti(sezioni_file, trovati):
     """Soci attivi delle sezioni presenti nel file che nel file non compaiono."""
-    qs = Socio.objects.attivi().filter(sezione__in=sezioni_file).select_related("soggetto")
-    return [
-        s for s in qs.order_by("numero")
-        if not ((s.matricola and s.matricola in matricole)
-                or (s.soggetto.codice_fiscale and s.soggetto.codice_fiscale in codici_fiscali))
-    ]  # fmt: skip
+    qs = Socio.objects.attivi().filter(sezione__in=sezioni_file).exclude(pk__in=trovati)
+    return list(qs.select_related("soggetto").order_by("numero"))
 
 
 def elabora(righe, opzioni, utente, *, esegui=False):
@@ -455,10 +602,9 @@ def elabora(righe, opzioni, utente, *, esegui=False):
             except ValidationError as e:
                 rapporto.esiti.append(Esito(grezza["_riga"], nome, "errore", e.messages))
         sezioni_file = {s.pk for s in cache.values()}
-        matricole = {_testo(r.get("matricola")) for r in righe if r.get("matricola")}
-        cf = {_testo(r.get("codice_fiscale")).upper() for r in righe if r.get("codice_fiscale")}
+        trovati = {e.socio_id for e in rapporto.esiti if e.socio_id}
         rapporto.assenti = [(s.numero, s.soggetto.nome_completo, s.sezione_id)
-                            for s in _assenti(sezioni_file, matricole, cf)]  # fmt: skip
+                            for s in _assenti(sezioni_file, trovati)]  # fmt: skip
         if esegui:
             registra(
                 Azione.CREAZIONE,

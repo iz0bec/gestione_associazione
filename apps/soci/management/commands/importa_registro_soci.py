@@ -26,7 +26,12 @@ class Command(BaseCommand):
         parser.add_argument("--tipologia", default="Ordinario", help="Tipologia predefinita")
         parser.add_argument("--crea-sezioni", action="store_true")
         parser.add_argument("--allinea-sezione", action="store_true")
-        parser.add_argument("--anno-tessere", type=int)
+        parser.add_argument("--anno-tessere", type=int, help="Se il file non ha «Anno sociale»")
+        parser.add_argument("--senza-tessere", action="store_true")
+        parser.add_argument("--senza-cessazioni", action="store_true")
+        parser.add_argument(
+            "--non-creare-tessere", action="store_true", help="Solo tessere già caricate"
+        )
         parser.add_argument("--utente", help="Username registrato come autore (audit)")
         parser.add_argument("--esegui", action="store_true", help="Applica (senza: anteprima)")
         parser.add_argument("--dettagli", action="store_true", help="Mostra ogni riga")
@@ -56,6 +61,8 @@ class Command(BaseCommand):
         opzioni = importazione.Opzioni(
             sezione=sezione, tipologia=tipologia, crea_sezioni=o["crea_sezioni"],
             allinea_sezione=o["allinea_sezione"], anno_tessere=o["anno_tessere"],
+            tessere=not o["senza_tessere"], crea_tessere=not o["non_creare_tessere"],
+            cessazioni=not o["senza_cessazioni"],
         )  # fmt: skip
         r = importazione.elabora(righe, opzioni, utente, esegui=o["esegui"])
         for e in r.esiti:

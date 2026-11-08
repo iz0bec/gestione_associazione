@@ -302,6 +302,32 @@ def carica_lotto(utente, *, anno, numero_da, numero_a, serie="", cifre=0, costo_
     return lotto
 
 
+FORNITORE_REGISTRO = "Registro soci nazionale"
+
+
+def carta_da_registro(anno, sezione, numero, utente):
+    """Tessera fisica indicata dal registro nazionale ma non ancora caricata: la aggiunge al
+    lotto «Registro soci nazionale» dell'anno e della sezione (creato se manca)."""
+    if CartaTessera.objects.filter(anno=anno, numero=numero).exists():
+        return None
+    lotto = (
+        LottoTessere.objects.select_for_update()
+        .filter(anno=anno, sezione=sezione, fornitore=FORNITORE_REGISTRO)
+        .first()
+    )
+    if lotto is None:
+        lotto = LottoTessere.objects.create(
+            anno=anno, sezione=sezione, numero_da=numero, numero_a=numero,
+            fornitore=FORNITORE_REGISTRO, riferimento="Importazione dal registro nazionale",
+            costo_unitario=costo_acquisto(anno) or Decimal("0"),
+            creato_da=utente, modificato_da=utente,
+        )  # fmt: skip
+    elif not lotto.numero_da <= numero <= lotto.numero_a:
+        lotto.numero_da, lotto.numero_a = min(lotto.numero_da, numero), max(lotto.numero_a, numero)
+        lotto.save(update_fields=["numero_da", "numero_a", "modificato_il"])
+    return CartaTessera.objects.create(lotto=lotto, anno=anno, numero=numero, codice=str(numero))
+
+
 def prossima_carta(anno, sezione_id):
     """Prima tessera disponibile dell'anno per la sezione (lotti più vecchi, numeri in ordine)."""
     return (

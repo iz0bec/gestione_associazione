@@ -903,6 +903,10 @@ class ImportaView(PermessoMixin, FormView):
             crea_sezioni=bool(dati.get("crea_sezioni"))
             and self.request.user.has_perm("soci.add_sezione"),
             allinea_sezione=bool(dati.get("allinea_sezione")),
+            tessere=bool(dati.get("tessere")),
+            crea_tessere=bool(dati.get("crea_tessere"))
+            and self.request.user.has_perm("soci.gestisci_tessere_fisiche"),
+            cessazioni=bool(dati.get("cessazioni")),
             anno_tessere=dati.get("anno_tessere"),
             sezioni_consentite=sezioni.id_sezioni(self.request.user),
         )
@@ -923,6 +927,8 @@ class ImportaView(PermessoMixin, FormView):
             "sezione": d["sezione"].pk if d["sezione"] else None,
             "tipologia": d["tipologia"].pk, "crea_sezioni": d["crea_sezioni"],
             "allinea_sezione": d["allinea_sezione"], "anno_tessere": d["anno_tessere"],
+            "tessere": d["tessere"], "crea_tessere": d["crea_tessere"],
+            "cessazioni": d["cessazioni"],
         }  # fmt: skip
         return self.render_to_response(
             self.get_context_data(

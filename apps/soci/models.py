@@ -301,7 +301,8 @@ class LottoTessere(ModelloBase):
 
     @property
     def quantita(self):
-        return self.numero_a - self.numero_da + 1
+        # le tessere registrate (i lotti dal registro nazionale non sono numerazioni continue)
+        return self.carte.count()
 
     def formatta(self, numero):
         testo = f"{numero:0{self.cifre}d}" if self.cifre else str(numero)

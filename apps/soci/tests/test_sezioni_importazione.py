@@ -238,3 +238,64 @@ class TestImportazione:
 
     def test_permesso(self, client_ruolo):
         assert client_ruolo("Consigliere").get(reverse("soci:importa")).status_code == 403
+
+
+INTESTAZIONI_REGISTRO = [
+    None, "Opzioni", "Regione", "Federazione", "Sezione", "Cognome", "Nome", "Luogo Di Nascita",
+    "Data Di Nascita", "CodiceFiscale", "Indirizzo", "CAP", "Città", "PR", "Telefono", "Email",
+    "Data Di Ammissione A Socio", "Numero Tessera Anno 2025", "Numero Tessera", "Data Tessera",
+    "Anno Sociale", "Scheda Completa", "Scheda Completa Percentuale",
+    "Data Di Annullamento Iscrizione", "Codice Incarico Socio Ordinario", "Valido",
+]  # fmt: skip
+
+
+class TestFormatoRegistroNazionale:
+    """Stessa struttura dell'estratto «Gestione Registro Soci» (dati inventati)."""
+
+    def file(self):
+        wb = Workbook()
+        ws = wb.active
+        ws.append(["Gestione Registro Soci - Associazione Nazionale Combattenti e Reduci"])
+        ws.append(INTESTAZIONI_REGISTRO)
+        ws.append([None, None, "BASILICATA", "POTENZA MATERA", "RIONERO IN VULTURE", "ROSSI",
+                   "MARIO", "Avigliano", "15 marzo 1950", CF_ROSSI, "VIA ROMA,1", 85028,
+                   "RIONERO IN VULTURE", "pz", "0972-123456, 3331234567", None,
+                   "01 gennaio 2023", 31767, "029037", "01 febbraio 2026", 2026, "Completa", 1,
+                   None, "Presidente"])  # fmt: skip
+        ws.append([None, None, "BASILICATA", "POTENZA MATERA", "RIONERO IN VULTURE", "BIANCHI",
+                   "Laura", "Milano", "01 gennaio 1980", CF_BIANCHI, None, None, None, None,
+                   3471234567, None, "05 aprile 2024", None, None, None, 2026,
+                   "1) Numero Tessera assente", 0.9, "10 marzo 2026", "Socio"])  # fmt: skip
+        buf = io.BytesIO()
+        wb.save(buf)
+        return buf.getvalue()
+
+    def test_importazione(self, capo, ordinario):
+        mappa, righe, ignorate = importazione.leggi("registro.xlsx", self.file())
+        assert {"tessera_precedente", "anno_tessera", "data_cessazione", "incarico"} <= set(
+            mappa.values()
+        )
+        assert "Regione" in ignorate and righe[0]["_anno_tessera_precedente"] == 2025
+        opzioni = importazione.Opzioni(tipologia=ordinario, crea_sezioni=True)
+        r = importazione.elabora(righe, opzioni, capo, esegui=True)
+        assert r.riepilogo["errore"] == 0 and r.sezioni_nuove == ["Rionero in Vulture"]
+        rossi = Socio.objects.get(soggetto__codice_fiscale=CF_ROSSI)
+        p = rossi.soggetto
+        assert (p.cognome, p.nome, p.comune, p.provincia, p.indirizzo) == (
+            "Rossi", "Mario", "Rionero in Vulture", "PZ", "Via Roma,1",
+        )  # fmt: skip
+        assert (p.telefono, p.cellulare) == ("0972-123456", "3331234567")
+        assert rossi.data_ammissione == date(2023, 1, 1) and "Presidente" in rossi.note
+        assert rossi.sezione.nome == "Rionero in Vulture"
+        t26, t25 = rossi.tessera_anno(2026), rossi.tessera_anno(2025)
+        assert (t26.codice, t26.data_rilascio, t25.codice) == ("29037", date(2026, 2, 1), "31767")
+        assert t26.carta.lotto.fornitore == servizi.FORNITORE_REGISTRO
+        bianchi = Socio.objects.get(soggetto__codice_fiscale=CF_BIANCHI)
+        assert bianchi.stato == "cessato" and bianchi.data_cessazione == date(2026, 3, 10)
+        assert not bianchi.tessere.exists() and bianchi.soggetto.cellulare == "3471234567"
+        # l'estratto della sola sezione si abbina alla sezione già creata, anche se scritta diversa
+        Sezione.objects.filter(nome="Rionero in Vulture").update(
+            nome="ANCR Sezione di Rionero in Vulture"
+        )
+        r = importazione.elabora(righe, importazione.Opzioni(tipologia=ordinario), capo)
+        assert r.riepilogo == {"nuovo": 0, "aggiornato": 0, "invariato": 2, "errore": 0}

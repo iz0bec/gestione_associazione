@@ -71,6 +71,9 @@
         </div>
         {% if perms.soci.add_sezione %}{{ form.crea_sezioni.as_field_group }}{% endif %}
         {{ form.allinea_sezione.as_field_group }}
+        {{ form.cessazioni.as_field_group }}
+        {{ form.tessere.as_field_group }}
+        {% if perms.soci.gestisci_tessere_fisiche %}{{ form.crea_tessere.as_field_group }}{% endif %}
         {{ form.anno_tessere.as_field_group }}
       </div>
       <div class="card-footer d-flex">

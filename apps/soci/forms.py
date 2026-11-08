@@ -307,13 +307,30 @@ class ImportaForm(StileMixin, forms.Form):
     allinea_sezione = forms.BooleanField(
         label="Sposta i soci già presenti nella sezione indicata dal registro", required=False
     )
+    tessere = forms.BooleanField(
+        label="Registra i tesseramenti con i numeri di tessera del file",
+        required=False,
+        initial=True,
+        help_text="Anche l'anno precedente, se il file ha la colonna «Numero tessera anno …». "
+        "Le quote risultano da incassare.",
+    )
+    crea_tessere = forms.BooleanField(
+        label="Aggiungi le tessere fisiche non ancora caricate",
+        required=False,
+        initial=True,
+        help_text="Finiscono nel carico «Registro soci nazionale» dell'anno e della sezione.",
+    )
     anno_tessere = forms.TypedChoiceField(
-        label="Numeri di tessera del file",
+        label="Anno delle tessere",
         coerce=int,
         empty_value=None,
         required=False,
-        choices=lambda: [("", "— non attribuire —"), *_anni_proposti()],
-        help_text="Attribuisce ai soci le tessere fisiche già caricate con quel numero.",
+        choices=lambda: [("", "— dalla colonna «Anno sociale» —"), *_anni_proposti()],
+    )
+    cessazioni = forms.BooleanField(
+        label="Registra le cessazioni (data di annullamento dell'iscrizione)",
+        required=False,
+        initial=True,
     )
 
     def __init__(self, *args, utente=None, **kwargs):
