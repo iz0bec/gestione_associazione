@@ -47,6 +47,11 @@ urlpatterns = [
     path("domande/<int:pk>/respingi/", views.RespingiView.as_view(), name="respingi"),
     path("tessere/listino/", views.ListinoView.as_view(), name="listino"),
     path("importa/", views.ImportaView.as_view(), name="importa"),
+    path(
+        "importa/<str:lavoro>/avanzamento/",
+        views.AvanzamentoImportazioneView.as_view(),
+        name="importa_avanzamento",
+    ),
     path("sezioni/", views.SezioniView.as_view(), name="sezioni"),
     path("sezioni/nuova/", views.SezioneNuovaView.as_view(), name="sezione_nuova"),
     path("sezioni/<int:pk>/", views.SezioneModificaView.as_view(), name="sezione_modifica"),

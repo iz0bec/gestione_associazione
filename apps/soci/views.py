@@ -34,8 +34,7 @@ from apps.core.models import EventoAudit, Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
 
-from . import importazione, servizi, sezioni
-from . import temporanei as servizi_file
+from . import importazione, lavori_importazione, servizi, sezioni
 from .filtri import SocioFilter
 from .forms import (
     AccoglimentoForm,
@@ -887,31 +886,45 @@ class TipologiaModificaView(PermessoMixin, _TipologiaMixin, UpdateView):
 
 
 class ImportaView(PermessoMixin, FormView):
-    """Caricamento del file, anteprima esatta (simulazione) e conferma dell'importazione."""
+    """Caricamento del file; anteprima ed esecuzione girano in un processo separato e
+    l'avanzamento compare in una finestra modale."""
 
     permission_required = "soci.importa_soci"
     form_class = ImportaForm
     template_name = "soci/importa.html"
-    CHIAVE = "importazione_soci"
 
     def get_form_kwargs(self):
         return {**super().get_form_kwargs(), "utente": self.request.user}
 
-    def _opzioni(self, dati):
-        return importazione.Opzioni(
-            sezione=dati.get("sezione"),
-            tipologia=dati.get("tipologia"),
-            crea_sezioni=bool(dati.get("crea_sezioni"))
-            and self.request.user.has_perm("soci.add_sezione"),
-            allinea_sezione=bool(dati.get("allinea_sezione")),
-            tessere=bool(dati.get("tessere")),
-            crea_tessere=bool(dati.get("crea_tessere"))
-            and self.request.user.has_perm("soci.gestisci_tessere_fisiche"),
-            cessazioni=bool(dati.get("cessazioni")),
-            quote_pagate=dati.get("quote") == "pagate",
-            anno_tessere=dati.get("anno_tessere"),
-            sezioni_consentite=sezioni.id_sezioni(self.request.user),
-        )
+    def _opzioni(self, d):
+        utente = self.request.user
+        consentite = sezioni.id_sezioni(utente)
+        return {
+            "sezione": d["sezione"].pk if d.get("sezione") else None,
+            "tipologia": d["tipologia"].pk if d.get("tipologia") else None,
+            "crea_sezioni": bool(d.get("crea_sezioni")) and utente.has_perm("soci.add_sezione"),
+            "allinea_sezione": bool(d.get("allinea_sezione")),
+            "tessere": bool(d.get("tessere")),
+            "crea_tessere": bool(d.get("crea_tessere"))
+            and utente.has_perm("soci.gestisci_tessere_fisiche"),
+            "cessazioni": bool(d.get("cessazioni")),
+            "quote_pagate": d.get("quote") == "pagate",
+            "anno_tessere": d.get("anno_tessere"),
+            "sezioni_consentite": sorted(consentite) if consentite is not None else None,
+        }
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        lavoro = lavori_importazione.leggi(self.request.GET.get("lavoro", ""), self.request.user)
+        if lavoro:
+            ctx["lavoro"] = lavoro
+            ctx["in_corso"] = lavoro["stato"] in ("in_attesa", "in_corso")
+            if lavoro["stato"] == "completato":
+                ctx["rapporto"] = lavoro["rapporto"]
+                ctx["nome_file"] = lavoro["nome_file"]
+                ctx["colonne"] = lavoro["colonne"]
+                ctx["ignorate"] = lavoro["ignorate"]
+        return ctx
 
     def form_valid(self, form):
         f = form.cleaned_data["file"]
@@ -921,56 +934,43 @@ class ImportaView(PermessoMixin, FormView):
         except importazione.FileNonValido as e:
             form.add_error("file", e)
             return self.form_invalid(form)
-        rapporto = importazione.elabora(righe, self._opzioni(form.cleaned_data), self.request.user)
-        percorso = servizi_file.salva_temporaneo(contenuto, f.name)
-        d = form.cleaned_data
-        self.request.session[self.CHIAVE] = {
-            "percorso": percorso, "nome": f.name,
-            "sezione": d["sezione"].pk if d["sezione"] else None,
-            "tipologia": d["tipologia"].pk, "crea_sezioni": d["crea_sezioni"],
-            "allinea_sezione": d["allinea_sezione"], "anno_tessere": d["anno_tessere"],
-            "tessere": d["tessere"], "crea_tessere": d["crea_tessere"],
-            "cessazioni": d["cessazioni"], "quote": d["quote"],
-        }  # fmt: skip
-        return self.render_to_response(
-            self.get_context_data(
-                form=form,
-                rapporto=rapporto,
-                colonne=sorted(set(mappa.values())),
-                ignorate=ignorate,
-                nome_file=f.name,
-            )  # fmt: skip
-        )
+        lavoro_id = lavori_importazione.nuovo(
+            self.request.user, f.name, contenuto, self._opzioni(form.cleaned_data),
+            sorted(set(mappa.values())), ignorate, len(righe),
+        )  # fmt: skip
+        lavori_importazione.avvia(lavoro_id, "anteprima")
+        return redirect(f"{reverse('soci:importa')}?lavoro={lavoro_id}")
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("azione") != "esegui":
             return super().post(request, *args, **kwargs)
-        salvato = request.session.pop(self.CHIAVE, None)
-        contenuto = servizi_file.leggi_temporaneo(salvato["percorso"]) if salvato else None
-        if contenuto is None:
-            messages.error(request, "Anteprima scaduta: caricare di nuovo il file.")
+        lavoro_id = request.POST.get("lavoro", "")
+        lavoro = lavori_importazione.leggi(lavoro_id, request.user)
+        if not lavoro or lavoro["fase"] != "anteprima" or lavoro["stato"] != "completato":
+            messages.error(request, "Anteprima scaduta o già usata: caricare di nuovo il file.")
             return redirect("soci:importa")
-        servizi_file.elimina_temporaneo(salvato["percorso"])
-        _, righe, _ = importazione.leggi(salvato["nome"], contenuto)
-        dati = {
-            **salvato,
-            "sezione": Sezione.objects.filter(pk=salvato["sezione"]).first(),
-            "tipologia": TipologiaSocio.objects.get(pk=salvato["tipologia"]),
-        }
-        rapporto = importazione.elabora(righe, self._opzioni(dati), request.user, esegui=True)
-        r = rapporto.riepilogo
-        messages.success(
-            request,
-            f"Importazione completata: {r['nuovo']} nuovi, {r['aggiornato']} aggiornati, "
-            f"{r['invariato']} invariati, {r['errore']} con errori.",
-        )
-        return self.render_to_response(
-            self.get_context_data(
-                form=self.get_form_class()(utente=request.user),
-                rapporto=rapporto,
-                nome_file=salvato["nome"],
-            )  # fmt: skip
-        )
+        registra(Azione.CREAZIONE, descrizione=f"Importazione avviata: {lavoro['nome_file']}")
+        lavori_importazione.avvia(lavoro_id, "esecuzione")
+        return redirect(f"{reverse('soci:importa')}?lavoro={lavoro_id}")
+
+
+class AvanzamentoImportazioneView(PermessoMixin, View):
+    """Contenuto della finestra di avanzamento, richiesto ogni secondo (HTMX)."""
+
+    permission_required = "soci.importa_soci"
+
+    def get(self, request, lavoro):
+        from django.http import Http404
+        from django.shortcuts import render
+
+        dati = lavori_importazione.leggi(lavoro, request.user)
+        if dati is None:
+            raise Http404
+        if dati["stato"] not in ("in_attesa", "in_corso"):
+            risposta = HttpResponse(status=204)
+            risposta["HX-Redirect"] = f"{reverse('soci:importa')}?lavoro={lavoro}"
+            return risposta
+        return render(request, "soci/_avanzamento_importazione.html", {"lavoro": dati})
 
 
 # --- modulo di adesione (Allegato A) e richiesta firmata ---------------------------------

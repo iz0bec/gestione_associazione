@@ -67,7 +67,15 @@ class Command(BaseCommand):
             tessere=not o["senza_tessere"], crea_tessere=not o["non_creare_tessere"],
             cessazioni=not o["senza_cessazioni"], quote_pagate=o["quote_pagate"],
         )  # fmt: skip
-        r = importazione.elabora(righe, opzioni, utente, esegui=o["esegui"])
+        passo = max(1, len(righe) // 10)
+
+        def avanzamento(fatte, totale):
+            if fatte and fatte % passo == 0:
+                self.stderr.write(f"  riga {fatte} di {totale} ({fatte * 100 // totale}%)")
+
+        r = importazione.elabora(
+            righe, opzioni, utente, esegui=o["esegui"], avanzamento=avanzamento
+        )
         for e in r.esiti:
             if o["dettagli"] or e.stato == "errore":
                 self.stdout.write(f"  riga {e.riga:>5} {e.stato:<10} {e.nome}: {'; '.join(e.note)}")

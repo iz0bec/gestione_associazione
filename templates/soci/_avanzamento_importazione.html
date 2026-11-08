@@ -1,0 +1,9 @@
+{% comment %}Avanzamento di un'importazione: si aggiorna da solo ogni secondo; a lavoro finito il
+server risponde con HX-Redirect verso il rapporto.{% endcomment %}
+<div id="avanzamento-importazione" hx-get="{% url 'soci:importa_avanzamento' lavoro.id %}" hx-trigger="every 1s" hx-swap="outerHTML">
+  <h3 class="mb-1">{% if lavoro.fase == "esecuzione" %}Importazione in corso{% else %}Preparazione dell'anteprima{% endif %}</h3>
+  <p class="text-secondary small text-break mb-3">{{ lavoro.nome_file }}</p>
+  <progress class="avanzamento" value="{{ lavoro.fatte }}" max="{{ lavoro.totale|default:1 }}" aria-label="Avanzamento"></progress>
+  <div class="mt-2"><strong>riga {{ lavoro.fatte }} di {{ lavoro.totale }}</strong>{% if lavoro.totale %} · {% widthratio lavoro.fatte lavoro.totale 100 %}%{% endif %}</div>
+  <p class="small text-secondary mt-3 mb-0">{% if lavoro.fase == "esecuzione" %}I dati vengono scritti riga per riga: non chiudere la pagina.{% else %}Nulla viene modificato finché non si conferma l'importazione.{% endif %}</p>
+</div>

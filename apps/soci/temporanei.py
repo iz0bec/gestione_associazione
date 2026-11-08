@@ -25,9 +25,10 @@ def _cartella():
 
 def _pulisci_vecchi(cartella):
     limite = time.time() - DURATA
-    for f in cartella.glob("*.dat"):
-        if f.stat().st_mtime < limite:
-            f.unlink(missing_ok=True)
+    for schema in ("*.dat", "lavoro_*.json"):
+        for f in cartella.glob(schema):
+            if f.stat().st_mtime < limite:
+                f.unlink(missing_ok=True)
 
 
 def salva_temporaneo(contenuto, nome_originale=""):

@@ -218,6 +218,11 @@ nazionale in Excel (`.xlsx`) o CSV. Il formato `.xls` di Excel 97-2003 va prima 
    *invariato* o *errore*, con le note. **Nulla viene modificato.**
 3. Premere **Esegui l'importazione**. Le righe con errori vengono saltate e le altre importate.
 
+Anteprima ed esecuzione girano in sottofondo: una finestra mostra l'avanzamento («riga 258 di 588 ·
+44%») e si chiude da sola alla fine, mostrando il rapporto. Con file grandi possono servire alcuni
+minuti; l'importazione prosegue anche se la pagina viene chiusa, e riaprendo lo stesso indirizzo si
+ritrova l'avanzamento.
+
 Il file **«Gestione Registro Soci»** esportato dal registro nazionale (di una sezione o di tutta la
 federazione) si carica così com'è. Ecco cosa si ricava:
 

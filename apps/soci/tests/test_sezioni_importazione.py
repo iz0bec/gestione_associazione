@@ -223,18 +223,48 @@ class TestImportazione:
             None,
         )
 
-    def test_vista_anteprima_e_conferma(self, client, capo, ordinario, nord):
+    def test_vista_anteprima_e_conferma(self, client, capo, ordinario, nord, crea_utente):
+        from unittest import mock
+
+        from django.core.management import call_command
+
+        def processo(argomenti, **_):  # il processo separato, eseguito qui
+            call_command("lavoro_importazione", argomenti[-1])
+
         client.force_login(capo)
         assert client.get(reverse("soci:importa")).status_code == 200
         f = SimpleUploadedFile("registro.xlsx", xlsx(self.righe()))
-        r = client.post(reverse("soci:importa"), {"file": f, "tipologia": ordinario.pk,
-                                                 "azione": "anteprima"})  # fmt: skip
-        html = r.content.decode()
-        assert "Anteprima" in html and "Sezione Inesistente" in html and not Socio.objects.exists()
-        r = client.post(reverse("soci:importa"), {"azione": "esegui"})
-        assert r.status_code == 200 and Socio.objects.count() == 2
-        r = client.post(reverse("soci:importa"), {"azione": "esegui"})  # anteprima già usata
-        assert r.status_code == 302
+        with mock.patch("apps.soci.lavori_importazione.subprocess.Popen", side_effect=processo):
+            r = client.post(reverse("soci:importa"), {"file": f, "tipologia": ordinario.pk,
+                                                     "azione": "anteprima"})  # fmt: skip
+            assert r.status_code == 302 and "lavoro=" in r.url
+            lavoro = r.url.split("lavoro=")[1]
+            html = client.get(r.url).content.decode()
+            assert "Anteprima" in html and "Sezione Inesistente" in html
+            assert 'id="modale-importazione"' in html and not Socio.objects.exists()
+            # la finestra chiede l'avanzamento: a lavoro finito rimanda al rapporto
+            a = client.get(reverse("soci:importa_avanzamento", args=[lavoro]))
+            assert a.status_code == 204 and "lavoro=" in a["HX-Redirect"]
+            r = client.post(reverse("soci:importa"), {"azione": "esegui", "lavoro": lavoro})
+            assert r.status_code == 302 and Socio.objects.count() == 2
+            assert "Esito dell" in client.get(r.url).content.decode()
+            r = client.post(reverse("soci:importa"), {"azione": "esegui", "lavoro": lavoro})
+            assert r.url == reverse("soci:importa")  # anteprima già usata
+        # il lavoro di un altro utente non è visibile
+        altro = crea_utente("altro", ruoli=["Amministratore di sistema"])
+        client.force_login(altro)
+        assert client.get(reverse("soci:importa_avanzamento", args=[lavoro])).status_code == 404
+
+    def test_avanzamento_in_corso(self, client, capo):
+        from apps.soci import lavori_importazione
+
+        client.force_login(capo)
+        lavoro = lavori_importazione.nuovo(capo, "r.csv", b"Cognome;Nome\nA;B\n", {}, [], [], 120)
+        lavori_importazione.scrivi(lavoro, stato="in_corso", fatte=30)
+        html = client.get(reverse("soci:importa_avanzamento", args=[lavoro])).content.decode()
+        assert "riga 30 di 120" in html and "25%" in html and 'hx-trigger="every 1s"' in html
+        pagina = client.get(reverse("soci:importa") + f"?lavoro={lavoro}").content.decode()
+        assert "data-modale-aperto" in pagina
 
     def test_permesso(self, client_ruolo):
         assert client_ruolo("Consigliere").get(reverse("soci:importa")).status_code == 403

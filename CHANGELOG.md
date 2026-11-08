@@ -3,6 +3,13 @@
 Tutte le modifiche rilevanti del progetto. Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
+## [Non rilasciato]
+
+### Modificato
+- Importazione dal registro nazionale: anteprima ed esecuzione in un processo separato, con una
+  finestra modale di avanzamento («riga N di M») aggiornata ogni secondo; avanzamento anche nel
+  comando `importa_registro_soci`.
+
 ## [0.0.1-rc.1] - 2026-11-08
 
 Prima release candidate: tutti i moduli di base, installazione su server (script per Debian/Ubuntu e

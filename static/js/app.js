@@ -27,6 +27,22 @@
     }
   });
 
+  // Finestre modali: aperte al caricamento (data-modale-aperto) o all'invio di un modulo
+  // (data-modale-invio="#id"), es. avanzamento delle importazioni
+  function apriModale(el) {
+    var bs = window.tabler && window.tabler.bootstrap;
+    if (bs && bs.Modal) bs.Modal.getOrCreateInstance(el).show();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-modale-aperto]").forEach(apriModale);
+  });
+  document.addEventListener("submit", function (ev) {
+    var modulo = ev.target.closest("form[data-modale-invio]");
+    if (!modulo || ev.defaultPrevented) return;
+    var modale = document.querySelector(modulo.getAttribute("data-modale-invio"));
+    if (modale) apriModale(modale);
+  });
+
   // Select che inviano il modulo al cambio (es. scelta dell'anno)
   document.addEventListener("change", function (ev) {
     if (ev.target.matches("select[data-invio-automatico]") && ev.target.form) {

@@ -592,13 +592,15 @@ def _assenti(sezioni_file, trovati):
     return list(qs.select_related("soggetto").order_by("numero"))
 
 
-def elabora(righe, opzioni, utente, *, esegui=False):
+def elabora(righe, opzioni, utente, *, esegui=False, avanzamento=None):
     """Importa le righe. Senza `esegui` tutto avviene in una transazione poi annullata:
     l'anteprima mostra esattamente ciò che accadrà, senza modificare nulla."""
     rapporto = Rapporto(eseguito=esegui)
     with transaction.atomic():
         cache = {}
-        for grezza in righe:
+        for n, grezza in enumerate(righe, start=1):
+            if avanzamento:
+                avanzamento(n - 1, len(righe))
             d = _pulisci(grezza)
             nome = f"{d['cognome']} {d['nome']}".strip() or "(senza nome)"
             try:

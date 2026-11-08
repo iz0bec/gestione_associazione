@@ -8,6 +8,17 @@
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a></div>{% endblock %}
 {% block titolo_pagina %}Importazione dal registro soci nazionale{% endblock %}
 {% block contenuto %}
+<div class="modal" id="modale-importazione" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="titolo-modale-importazione"{% if in_corso %} data-modale-aperto{% endif %}>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4" id="titolo-modale-importazione">
+        {% if in_corso %}{% include "soci/_avanzamento_importazione.html" %}
+        {% else %}<div class="spinner-border text-primary mb-3" role="status"></div><h3 class="mb-1">Caricamento del file…</h3><p class="small text-secondary mb-0">Per i file grandi può servire qualche secondo.</p>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% if lavoro.stato == "errore" %}<div class="alert alert-danger">Importazione non riuscita: {{ lavoro.errore }}</div>{% endif %}
 {% if rapporto %}
 <div class="card mb-3">
   <div class="card-header">
@@ -50,8 +61,9 @@
   {% if not rapporto.eseguito %}
   <div class="card-footer d-flex">
     <a class="btn btn-link" href="{% url 'soci:importa' %}">Annulla</a>
-    <form method="post" class="ms-auto" data-conferma="Eseguire l'importazione? Le righe con errori saranno saltate.">{% csrf_token %}
+    <form method="post" class="ms-auto" data-conferma="Eseguire l'importazione? Le righe con errori saranno saltate." data-modale-invio="#modale-importazione">{% csrf_token %}
       <input type="hidden" name="azione" value="esegui">
+      <input type="hidden" name="lavoro" value="{{ lavoro.id }}">
       <button class="btn btn-primary" type="submit"{% if not rapporto.riepilogo.nuovo and not rapporto.riepilogo.aggiornato %} disabled{% endif %}><i class="ti ti-check me-1"></i>Esegui l'importazione</button>
     </form>
   </div>
@@ -61,7 +73,7 @@
 {% if not rapporto or rapporto.eseguito %}
 <div class="row row-cards">
   <div class="col-lg-7">
-    <form method="post" class="card" enctype="multipart/form-data" novalidate>{% csrf_token %}
+    <form method="post" class="card" enctype="multipart/form-data" novalidate data-modale-invio="#modale-importazione">{% csrf_token %}
       <div class="card-body">
         {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
         {{ form.file.as_field_group }}
