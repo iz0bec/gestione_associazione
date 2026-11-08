@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.3] - 2026-11-08
+
+Gestione degli utenti dall'interfaccia, importazione dai tre gestionali precedenti, aiuto in linea.
+
 ### Modificato - Stampe
 - Le stampe PDF non aprono più una scheda vuota durante la preparazione: una finestra di attesa
   con il tempo trascorso e la possibilità di annullare; a documento pronto il PDF si apre (o si
