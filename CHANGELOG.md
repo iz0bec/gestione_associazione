@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.7] - 2026-11-08
+
+Calendario con esportazione iCal, anagrafica da e verso le rubriche (vCard), colonna «Valido»
+del registro nazionale, novità nella pagina Informazioni. Prima pubblicazione anche su GitHub.
+
 ### Aggiunto
 - Importazione dal registro nazionale: opzione **«Tieni conto della colonna Valido»** (socio
   validato = attivo e in regola): validato → quota dell'anno incassata, non validato → da
