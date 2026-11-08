@@ -29,6 +29,8 @@
       <div class="card-header"><h3 class="card-title">Accesso</h3></div>
       <div class="card-body">
         <dl class="row mb-0">
+          <dt class="col-6">Anagrafica</dt>
+          <dd class="col-6">{% if utente.soggetto %}<a href="{{ utente.soggetto.get_absolute_url }}">{{ utente.soggetto.nome_completo }}</a>{% if utente.soggetto.socio %}<div><span class="badge bg-green-lt">socio n. {{ utente.soggetto.socio.numero }}</span></div>{% endif %}{% else %}<span class="text-danger">nessuna scheda: collegarla</span>{% endif %}</dd>
           <dt class="col-6">Ultimo accesso</dt><dd class="col-6">{% if utente.last_login %}{{ utente.last_login|date:"d/m/Y H:i" }}{% else %}mai{% endif %}</dd>
           <dt class="col-6">Creato il</dt><dd class="col-6">{{ utente.date_joined|date:"d/m/Y" }}</dd>
           <dt class="col-6">Password</dt><dd class="col-6">{% if utente.deve_cambiare_password %}<span class="text-warning">temporanea</span>{% elif utente.has_usable_password %}scelta dall'utente{% else %}non impostata{% endif %}</dd>

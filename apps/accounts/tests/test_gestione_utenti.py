@@ -32,6 +32,7 @@ def _dati(**extra):
         "email": "Anna@Example.org",
         "telefono": "",
         "groups": [Group.objects.get(name="Segretario").pk],
+        "crea_scheda": "on",
     }
     dati.update(extra)
     return dati
@@ -79,6 +80,35 @@ class TestCreazione:
         assert list(u.groups.values_list("name", flat=True)) == ["Segretario"]
         evento = EventoAudit.objects.filter(oggetto_id=str(u.pk)).latest("momento")
         assert password not in str(evento.dettagli)
+
+    def test_crea_la_scheda_in_anagrafica(self, client_ruolo):
+        client_ruolo(ADMIN).post("/sistema/utenti/nuovo/", _dati(telefono="333 1234567"))
+        u = Utente.objects.get(username="nuovo")
+        assert u.soggetto.cognome == "Rossi" and u.soggetto.email == "anna@example.org"
+        assert u.soggetto.cellulare == "333 1234567"
+
+    def test_scheda_obbligatoria(self, client_ruolo):
+        dati = _dati()
+        del dati["crea_scheda"]
+        r = client_ruolo(ADMIN).post("/sistema/utenti/nuovo/", dati)
+        assert "Scegliere la scheda" in r.content.decode()
+        assert not Utente.objects.filter(username="nuovo").exists()
+
+    def test_collega_un_socio_esistente(self, client_ruolo):
+        from apps.anagrafica.models import Soggetto
+        from apps.soci import servizi as soci
+        from apps.soci.models import TipologiaSocio
+
+        admin = client_ruolo(ADMIN)
+        s = Soggetto.objects.create(tipo=Soggetto.Tipo.PERSONA, cognome="Verdi", nome="Ugo")
+        socio = soci.ammetti_socio(s, TipologiaSocio.objects.get(nome="Ordinario"), admin.utente)
+        dati = _dati(first_name="", last_name="", soggetto=s.pk)
+        del dati["crea_scheda"]
+        admin.post("/sistema/utenti/nuovo/", dati)
+        u = Utente.objects.get(username="nuovo")
+        assert u.soggetto == s and u.last_name == "Verdi"  # completato dalla scheda
+        testo = admin.get("/sistema/utenti/").content.decode()
+        assert f"socio n. {socio.numero}" in testo
 
     def test_email_duplicata(self, client_ruolo, crea_utente):
         crea_utente("esistente")

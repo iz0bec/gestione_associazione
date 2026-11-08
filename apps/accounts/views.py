@@ -43,7 +43,9 @@ class UtentiView(PermessoMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        qs = _con_secondo_fattore(Utente.objects.prefetch_related("groups", "sezioni"))
+        qs = _con_secondo_fattore(
+            Utente.objects.select_related("soggetto__socio").prefetch_related("groups", "sezioni")
+        )
         self.q = self.request.GET.get("q", "").strip()
         self.ruolo = self.request.GET.get("ruolo", "")
         self.stato = self.request.GET.get("stato", "attivi")

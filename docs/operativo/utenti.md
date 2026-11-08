@@ -25,8 +25,13 @@ ha ancora attivato.
 ## Nuovo utente
 
 **Nuovo utente**: nome utente, nome, cognome, email (unica, serve anche per accedere), telefono,
-scheda anagrafica collegata (facoltativa: solo persone non già collegate a un altro utente), ruoli
-e, in una federazione, sezioni.
+ruoli e, in una federazione, sezioni.
+
+Ogni utente **deve avere una scheda in anagrafica**: si sceglie la persona (solo persone non già
+collegate a un altro utente) oppure si spunta *Crea la scheda in anagrafica*, che la crea con nome,
+cognome, email e telefono dell'utente. Se la persona è un socio, l'elenco degli utenti mostra il
+numero di socio. Gli utenti creati prima di questa regola (es. l'amministratore iniziale) sono
+segnalati con *senza scheda in anagrafica*: si collegano dalla loro scheda.
 
 Alla creazione il programma genera una **password temporanea** e la mostra **una sola volta**:
 comunicarla all'interessato di persona o per telefono. Al primo accesso l'utente deve sceglierne

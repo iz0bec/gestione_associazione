@@ -14,6 +14,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ### Modificato
 - Menu *Sistema* compatto ed espandibile.
+- Ogni utente deve essere collegato a una scheda dell'anagrafica (scelta o creata con l'utente);
+  numero di socio nell'elenco degli utenti.
+
+### Sicurezza
+- Il protocollo rifiuta le registrazioni di chi non ha il permesso di protocollare, qualunque
+  modulo le chieda; negli invii email l'opzione di protocollazione richiede quel permesso.
+- Invii email di ricevute, esiti e convocazioni: serve anche il permesso di consultare tessera,
+  domanda o riunione, e solo nelle proprie sezioni.
+- Test di coerenza: ogni pagina protetta, ogni voce di menu apribile dal ruolo che la vede,
+  chi modifica può consultare, permessi collegati fra moduli.
 
 ## [0.0.1-rc.3] - 2026-11-08
 

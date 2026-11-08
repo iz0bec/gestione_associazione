@@ -100,6 +100,17 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Presidente, Tesoriere, Addetto protocollo | sì | - |
 | Consigliere, Revisore | - | - |
 
-La registrazione a protocollo di un documento stampato richiede anche il permesso di protocollare.
+## Funzioni che coinvolgono più moduli
+
+Un'operazione che scrive in un altro modulo richiede anche il permesso di quel modulo:
+
+- **protocollare** (convocazioni e verbali degli Organi, passaggi di consegne, email inviate,
+  documenti stampati) richiede il permesso di registrare protocolli: chi non lo ha non vede
+  l'opzione, e il protocollo rifiuta comunque la registrazione;
+- **inviare per email** ricevute, esiti delle domande e convocazioni richiede anche di poter
+  consultare la tessera, la domanda o la riunione, e solo per le proprie sezioni;
+- **incassare le quote** è dato solo a chi può anche registrare in prima nota.
+
+La coerenza fra ruoli, menu e permessi è verificata dai test automatici a ogni modifica.
 
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

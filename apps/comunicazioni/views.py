@@ -245,6 +245,8 @@ class _DaOrigineView(PermessoMixin, View):
 
 
 class DaRiunioneView(_DaOrigineView):
+    permission_required = ("comunicazioni.add_invio", "organi.view_riunione")
+
     def oggetto(self, pk):
         from apps.organi.models import Riunione
 
@@ -258,10 +260,15 @@ class DaRiunioneView(_DaOrigineView):
 
 
 class DaTesseraView(_DaOrigineView):
+    permission_required = ("comunicazioni.add_invio", "soci.view_tessera")
+
     def oggetto(self, pk):
+        from apps.soci import sezioni
         from apps.soci.models import Tessera
 
-        return get_object_or_404(Tessera.objects.select_related("socio__soggetto"), pk=pk)
+        t = get_object_or_404(Tessera.objects.select_related("socio__soggetto"), pk=pk)
+        sezioni.controlla(self.request.user, t.socio.sezione_id)
+        return t
 
     def crea(self, t, utente):
         return servizi.da_tessera(t, utente)
@@ -271,10 +278,15 @@ class DaTesseraView(_DaOrigineView):
 
 
 class DaDomandaView(_DaOrigineView):
+    permission_required = ("comunicazioni.add_invio", "soci.view_domandaiscrizione")
+
     def oggetto(self, pk):
+        from apps.soci import sezioni
         from apps.soci.models import DomandaIscrizione
 
-        return get_object_or_404(DomandaIscrizione, pk=pk)
+        d = get_object_or_404(DomandaIscrizione, pk=pk)
+        sezioni.controlla(self.request.user, d.sezione_id)
+        return d
 
     def crea(self, d, utente):
         return servizi.da_domanda(d, utente)

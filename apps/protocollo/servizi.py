@@ -124,6 +124,20 @@ def corrispondente_da_soggetto(soggetto, ruolo, pec_preferita=False):
     }
 
 
+PERMESSO_PROTOCOLLARE = "protocollo.add_protocollo"
+
+
+def puo_protocollare(utente):
+    """Chi può registrare protocolli. `None` = operazione di sistema (lavori pianificati)."""
+    return utente is None or utente.has_perm(PERMESSO_PROTOCOLLARE)
+
+
+def controlla_permesso(utente):
+    """Ogni registrazione, anche fatta da altri moduli, richiede il permesso di protocollare."""
+    if not puo_protocollare(utente):
+        raise OperazioneNonValida(f"{utente} non ha il permesso di protocollare.")
+
+
 @transaction.atomic
 def registra_protocollo(dati, corrispondenti, utente, *, allegati=(), principale=None):
     """Assegna il numero e registra.
@@ -131,6 +145,7 @@ def registra_protocollo(dati, corrispondenti, utente, *, allegati=(), principale
     `dati`: campi del protocollo; `corrispondenti`: lista di dict (ruolo, soggetto, descrizione,
     indirizzo); `allegati`: file caricati; `principale`: indice del documento principale.
     """
+    controlla_permesso(utente)
     if not dati.get("oggetto", "").strip():
         raise OperazioneNonValida("L'oggetto è obbligatorio.")
     ruoli = {c["ruolo"] for c in corrispondenti}

@@ -49,6 +49,8 @@
               {% if not u.is_active %}<span class="badge bg-secondary-lt ms-1">disattivato</span>{% endif %}
               {% if u.deve_cambiare_password %}<span class="badge bg-yellow-lt ms-1" title="Password temporanea da cambiare">password temporanea</span>{% endif %}
               <div class="small text-secondary">{{ u.username }} · {{ u.email }}</div>
+              {% if u.soggetto %}<div class="small"><i class="ti ti-address-book"></i> {{ u.soggetto.nome_completo }}{% if u.soggetto.socio %} · <span class="badge bg-green-lt">socio n. {{ u.soggetto.socio.numero }}</span>{% endif %}</div>
+              {% else %}<span class="badge bg-red-lt" title="Collegare l'utente a una scheda dell'anagrafica">senza scheda in anagrafica</span>{% endif %}
             </td>
             <td class="d-none d-md-table-cell">
               {% for g in u.groups.all %}<span class="badge bg-blue-lt me-1">{{ g.name }}</span>{% empty %}<span class="text-secondary small">nessuno</span>{% endfor %}

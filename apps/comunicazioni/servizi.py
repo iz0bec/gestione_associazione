@@ -197,6 +197,11 @@ def crea_invio(
     """
     if not oggetto.strip() or not corpo.strip():
         raise OperazioneNonValida("Oggetto e testo sono obbligatori.")
+    if protocolla:
+        from apps.protocollo.servizi import puo_protocollare
+
+        if not puo_protocollare(utente):
+            raise OperazioneNonValida("Non hai il permesso di protocollare.")
     soggetti = list({s.pk: s for s in soggetti}.values())
     if not soggetti and not indirizzi:
         raise OperazioneNonValida("Indicare almeno un destinatario.")

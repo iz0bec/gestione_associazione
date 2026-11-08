@@ -77,10 +77,28 @@ def ruoli_con_mfa() -> set[int]:
 # --- operazioni -------------------------------------------------------------------------
 
 
+def _collega_scheda(utente, form, attore):
+    """Crea la scheda in anagrafica se richiesto; completa nome e cognome dalla scheda."""
+    from apps.anagrafica.models import Soggetto
+
+    if form.cleaned_data.get("crea_scheda"):
+        soggetto = Soggetto.objects.create(
+            tipo=Soggetto.Tipo.PERSONA, cognome=utente.last_name.strip(),
+            nome=utente.first_name.strip(), email=utente.email, cellulare=utente.telefono,
+            creato_da=attore, modificato_da=attore,
+        )  # fmt: skip
+        registra(Azione.CREAZIONE, soggetto, utente=attore, origine="utente " + utente.username)
+        utente.soggetto = soggetto
+    elif utente.soggetto_id:
+        utente.first_name = utente.first_name or utente.soggetto.nome
+        utente.last_name = utente.last_name or utente.soggetto.cognome
+
+
 @transaction.atomic
 def crea_utente(form, attore) -> tuple[Utente, str]:
     """Salva un nuovo utente dal modulo; restituisce l'utente e la password temporanea."""
     utente = form.save(commit=False)
+    _collega_scheda(utente, form, attore)
     password = password_temporanea()
     utente.set_password(password)
     utente.deve_cambiare_password = True
@@ -101,7 +119,10 @@ def crea_utente(form, attore) -> tuple[Utente, str]:
 def aggiorna_utente(form, attore, dettagli: dict) -> Utente:
     puo_gestire(attore, form.instance)
     controlla_ruoli_propri(attore, form.instance, form.cleaned_data["groups"])
-    utente = form.save()
+    utente = form.save(commit=False)
+    _collega_scheda(utente, form, attore)
+    utente.save()
+    form.save_m2m()
     if dettagli.get("campi"):
         registra(Azione.MODIFICA, utente, **dettagli)
     return utente
