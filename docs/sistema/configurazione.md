@@ -64,7 +64,9 @@ Con Docker il pianificatore è il servizio `pianificatore` di `compose.yaml`; se
 
 | Comando | Cosa fa |
 |---|---|
-| `manage.py importa_registro_soci FILE [opzioni]` | importa i soci dall'estratto `.xlsx`/`.csv` del registro nazionale. **Senza `--esegui` mostra solo l'anteprima.** Opzioni: `--sezione CODICE` (righe senza sezione), `--tipologia NOME` (predefinita `Ordinario`), `--crea-sezioni`, `--allinea-sezione`, `--anno-tessere ANNO`, `--utente USERNAME` (autore nel registro attività), `--dettagli` (una riga per socio) |
+| `manage.py importa_registro_soci FILE [opzioni]` | importa i soci dall'estratto `.xlsx`/`.csv` del registro nazionale. **Senza `--esegui` mostra solo l'anteprima.** Opzioni: `--sezione CODICE` (righe senza sezione), `--tipologia NOME` (predefinita `Ordinario`), `--crea-sezioni`, `--allinea-sezione`, `--anno-tessere ANNO`, `--quote-pagate` (quote già incassate),
+`--senza-tessere`, `--non-creare-tessere`, `--senza-cessazioni`, `--utente USERNAME` (autore nel registro attività), `--dettagli` (una riga per socio) |
+| `manage.py inizializza` | **cancella tutti i dati** e riporta a una nuova installazione, dopo conferma e backup (vedi [Backup](backup.md#inizializzazione-azzerare-tutto)) |
 | `manage.py configura_ruoli` | riallinea i permessi dei ruoli predefiniti (eseguito anche dalle migrazioni) |
 
 Esempio, con l'estratto in `tmp/` (cartella esclusa dal versionamento: contiene dati personali):

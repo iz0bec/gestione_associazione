@@ -32,6 +32,7 @@ online sia per il PDF da stampare e far firmare:
 | Articoli dello statuto richiamati | all'art. 2 ed agli articoli 5, 6, 7, 8, 9 e 58 |
 | Dichiarazione SI/NO | iscritto all'Associazione Decorati di Medaglia d'Oro al valor Militare e/o Valor Civile |
 | Piè di pagina | sede legale nazionale, partita IVA, codice fiscale, recapiti |
+| Logo del modulo | il logo della presidenza nazionale (senza, si usa il logo dell'ente) |
 | Informativa privacy | il testo dell'informativa ex art. 13 GDPR; i titoletti («Diritti dell'interessato.») vengono stampati in grassetto |
 
 Il PDF ha tre pagine, come l'originale: richiesta di adesione, consenso al trattamento dei dati,

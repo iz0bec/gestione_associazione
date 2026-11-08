@@ -16,11 +16,12 @@ from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.generic import ListView, TemplateView, UpdateView
 
 from .audit import Azione, campi_modificati, registra
-from .forms import AspettoForm, OrganizzazioneForm
+from .forms import AspettoForm, OrganizzazioneCompletaForm
 from .models import EventoAudit, Organizzazione
 
 
@@ -111,7 +112,7 @@ def _riepilogo_protocollo(utente):
 
 class OrganizzazioneView(PermessoMixin, UpdateView):
     permission_required = "core.gestisci_organizzazione"
-    form_class = OrganizzazioneForm
+    form_class = OrganizzazioneCompletaForm
     template_name = "core/organizzazione.html"
     success_url = reverse_lazy("core:organizzazione")
 
@@ -119,12 +120,30 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
         return Organizzazione.corrente()
 
     def form_valid(self, form):
+        from .immagini import ImmagineNonValida, ripulisci
+
         dettagli = campi_modificati(form)
-        risposta = super().form_valid(form)
-        if dettagli.get("campi"):
-            registra(Azione.MODIFICA, self.object, **dettagli)
+        org = form.save(commit=False)
+        nuovo, togli = (
+            form.cleaned_data.get("nuovo_logo_modulo"),
+            form.cleaned_data.get("togli_logo_modulo"),
+        )
+        try:
+            if nuovo:
+                pulito = ripulisci(nuovo, lato=600, formato="PNG")
+                if org.modulo_logo:
+                    org.modulo_logo.delete(save=False)
+                org.modulo_logo.save("logo.png", pulito, save=False)
+            elif togli and org.modulo_logo:
+                org.modulo_logo.delete(save=False)
+        except ImmagineNonValida as e:
+            form.add_error("nuovo_logo_modulo", e)
+            return self.form_invalid(form)
+        org.save()
+        if dettagli.get("campi") or nuovo or togli:
+            registra(Azione.MODIFICA, org, logo_modulo=bool(nuovo) or None, **dettagli)
         messages.success(self.request, "Dati dell'organizzazione salvati.")
-        return risposta
+        return redirect(self.success_url)
 
 
 class AspettoView(PermessoMixin, UpdateView):
@@ -152,6 +171,15 @@ class AspettoView(PermessoMixin, UpdateView):
             return self.form_invalid(form)
         messages.success(self.request, "Aspetto dell'interfaccia salvato.")
         return redirect(self.success_url)
+
+
+class LogoModuloView(PermessoMixin, View):
+    permission_required = "core.gestisci_organizzazione"
+
+    def get(self, request):
+        from .immagini import risposta_immagine
+
+        return risposta_immagine(Organizzazione.corrente().modulo_logo)
 
 
 class RegistroAttivitaView(PermessoMixin, ListView):

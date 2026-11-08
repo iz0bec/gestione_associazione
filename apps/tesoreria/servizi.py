@@ -277,6 +277,8 @@ def registra_quota(tessera, utente):
     """Mette in prima nota l'incasso della quota. Restituisce (movimento, motivo se non fatto)."""
     if not tessera.pagata or tessera.importo <= 0 or tessera.annullata:
         return None, "quota non incassata"
+    if tessera.incasso_esterno:
+        return None, "incassata fuori dall'applicazione"
     if Movimento.objects.filter(tessera=tessera).exists():
         return None, "già in prima nota"
     esercizio = esercizio_di(tessera.pagata_il)
@@ -311,6 +313,7 @@ def quote_da_registrare(esercizio):
     return (
         Tessera.objects.pagate()
         .filter(pagata_il__year=esercizio.anno, importo__gt=0, movimento__isnull=True)
+        .exclude(incasso_esterno=True)
         .select_related("socio__soggetto")
     )
 

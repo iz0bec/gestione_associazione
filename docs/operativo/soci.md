@@ -234,8 +234,13 @@ federazione) si carica così com'è. Ecco cosa si ricava:
 | Regione, Federazione, Scheda completa, Valido | ignorate |
 
 Le tessere indicate dal registro e non ancora caricate vengono aggiunte al carico **«Registro soci
-nazionale»** dell'anno e della sezione, con il costo d'acquisto del listino. Le quote dei tesseramenti
-importati risultano **da incassare**. I codici fiscali non validi non vengono usati per riconoscere la
+nazionale»** dell'anno e della sezione, con il costo d'acquisto del listino.
+
+Per le **quote** dei tesseramenti importati si sceglie al momento dell'importazione:
+
+- **da incassare**: compaiono tra i morosi finché non si registra l'incasso, con ricevuta e prima nota;
+- **già incassate**: risultano pagate alla data della tessera, *incassate fuori dall'applicazione*.
+  Non hanno ricevuta e non vanno in prima nota, perché gli incassi sono avvenuti prima. I codici fiscali non validi non vengono usati per riconoscere la
 persona, ma restano nelle note della scheda per poterli correggere.
 
 Per altri formati le colonne sono riconosciute dalle intestazioni, anche se il file ha righe di

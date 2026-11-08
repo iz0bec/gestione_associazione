@@ -311,8 +311,7 @@ class ImportaForm(StileMixin, forms.Form):
         label="Registra i tesseramenti con i numeri di tessera del file",
         required=False,
         initial=True,
-        help_text="Anche l'anno precedente, se il file ha la colonna «Numero tessera anno …». "
-        "Le quote risultano da incassare.",
+        help_text="Anche l'anno precedente, se il file ha la colonna «Numero tessera anno …».",
     )
     crea_tessere = forms.BooleanField(
         label="Aggiungi le tessere fisiche non ancora caricate",
@@ -326,6 +325,19 @@ class ImportaForm(StileMixin, forms.Form):
         empty_value=None,
         required=False,
         choices=lambda: [("", "— dalla colonna «Anno sociale» —"), *_anni_proposti()],
+    )
+    quote = forms.ChoiceField(
+        label="Quote dei tesseramenti importati",
+        choices=[
+            (
+                "da_incassare",
+                "Da incassare (compaiono tra i morosi finché non si registra l'incasso)",
+            ),
+            ("pagate", "Già incassate (senza ricevuta e senza registrazione in prima nota)"),
+        ],
+        initial="da_incassare",
+        required=False,
+        widget=forms.RadioSelect,
     )
     cessazioni = forms.BooleanField(
         label="Registra le cessazioni (data di annullamento dell'iscrizione)",

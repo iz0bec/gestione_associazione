@@ -401,6 +401,13 @@ class Tessera(ModelloBase):
     )
     ricevuta_anno = models.PositiveIntegerField(null=True, blank=True, editable=False)
     ricevuta_numero = models.PositiveIntegerField(null=True, blank=True, editable=False)
+    incasso_esterno = models.BooleanField(
+        "incassata fuori dall'applicazione",
+        default=False,
+        editable=False,
+        help_text="Quota già incassata prima dell'uso dell'applicazione (es. importata dal "
+        "registro nazionale): senza ricevuta e senza registrazione in prima nota.",
+    )
     annullata = models.BooleanField(default=False, editable=False)
     motivo_annullamento = models.CharField(max_length=255, blank=True, editable=False)
     note = models.CharField(max_length=255, blank=True)

@@ -302,6 +302,7 @@ class Opzioni:
     anno_tessere: int | None = None  # anno delle tessere se il file non ha «Anno sociale»
     crea_tessere: bool = True  # crea le tessere fisiche non ancora caricate (lotto «registro»)
     cessazioni: bool = True  # registra le cessazioni (data di annullamento dell'iscrizione)
+    quote_pagate: bool = False  # le quote dei tesseramenti importati risultano già incassate
     sezioni_consentite: set | None = None  # utente limitato a queste sezioni
 
 
@@ -443,7 +444,12 @@ def _riga(d, sezione, opzioni, utente):
         d.setdefault("sesso", "")
         d["sesso"] = d["sesso"][:1].upper() if d["sesso"] else da_cf["sesso"]
         d["data_nascita"] = d["data_nascita"] or da_cf["data_nascita"]
-        d["luogo_nascita"] = d.get("luogo_nascita") or da_cf["luogo_nascita"]
+        # dal codice fiscale anche la provincia: «Ruoti» -> «Ruoti (PZ)»
+        luogo_cf = da_cf["luogo_nascita"]
+        if not d.get("luogo_nascita") or normalizza(d["luogo_nascita"]) == normalizza(
+            luogo_cf.split(" (")[0]
+        ):
+            d["luogo_nascita"] = luogo_cf
     tipologia, avvisi = _tipologia(d, opzioni)
     note += avvisi
 
@@ -570,6 +576,11 @@ def _tessera(socio, codice, anno, rilascio, opzioni, utente):
                     socio, anno, utente, data_rilascio=rilascio or date(anno, 1, 1)
                 )
             tessera = servizi.attribuisci_carta(tessera, utente, codice)
+            if opzioni.quote_pagate:
+                servizi.segna_incasso_esterno(
+                    tessera, utente, pagata_il=tessera.data_rilascio,
+                    nota="Registro soci nazionale",
+                )  # fmt: skip
     except ValidationError as e:
         return [f"tessera {anno} n. {codice} non attribuita: {' '.join(e.messages)}"]
     return [f"tessera {tessera.codice} attribuita per il {anno}"]

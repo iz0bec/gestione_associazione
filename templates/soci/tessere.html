@@ -62,7 +62,7 @@
           <td>{% include "soci/_stato_tessera.html" %}</td>
           <td class="d-none d-md-table-cell">{% if t.pagata %}{{ t.codice_ricevuta }} <span class="text-secondary small">{{ t.pagata_il|date:"d/m/Y" }}</span>{% endif %}</td>
           <td class="text-nowrap">
-            {% if t.pagata and not t.annullata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" rel="noopener" aria-label="Ricevuta {{ t.codice_ricevuta }}"><i class="ti ti-receipt"></i></a>
+            {% if t.pagata and not t.annullata and not t.incasso_esterno %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" rel="noopener" aria-label="Ricevuta {{ t.codice_ricevuta }}"><i class="ti ti-receipt"></i></a>
             {% elif not t.annullata and t.importo > 0 and perms.soci.incassa_quota %}<button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ t.pk }}"><i class="ti ti-cash me-1"></i>Incassa</button>{% endif %}
           </td>
         </tr>

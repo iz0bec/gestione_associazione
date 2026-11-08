@@ -115,6 +115,14 @@ class Organizzazione(models.Model):
         help_text="Una riga per voce; la prima in grande (es. il nome dell'associazione "
         "nazionale). Vuoto = denominazione dell'ente.",
     )
+    modulo_logo = models.ImageField(
+        "logo del modulo di adesione",
+        upload_to=percorso_logo,
+        blank=True,
+        max_length=255,
+        editable=False,
+        help_text="Es. il logo della presidenza nazionale; vuoto = logo dell'ente.",
+    )
     modulo_articoli_statuto = models.CharField(
         "articoli dello statuto richiamati",
         max_length=200,

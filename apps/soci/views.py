@@ -376,6 +376,7 @@ class RicevutaView(PermessoMixin, View):
             _tessere(request).select_related("socio__soggetto", "socio__tipologia"),
             pk=pk,
             pagata_il__isnull=False,
+            ricevuta_numero__isnull=False,
         )
         registra(Azione.CONSULTAZIONE, tessera, descrizione=f"Ricevuta {tessera.codice_ricevuta}")
         return risposta_pdf(
@@ -907,6 +908,7 @@ class ImportaView(PermessoMixin, FormView):
             crea_tessere=bool(dati.get("crea_tessere"))
             and self.request.user.has_perm("soci.gestisci_tessere_fisiche"),
             cessazioni=bool(dati.get("cessazioni")),
+            quote_pagate=dati.get("quote") == "pagate",
             anno_tessere=dati.get("anno_tessere"),
             sezioni_consentite=sezioni.id_sezioni(self.request.user),
         )
@@ -928,7 +930,7 @@ class ImportaView(PermessoMixin, FormView):
             "tipologia": d["tipologia"].pk, "crea_sezioni": d["crea_sezioni"],
             "allinea_sezione": d["allinea_sezione"], "anno_tessere": d["anno_tessere"],
             "tessere": d["tessere"], "crea_tessere": d["crea_tessere"],
-            "cessazioni": d["cessazioni"],
+            "cessazioni": d["cessazioni"], "quote": d["quote"],
         }  # fmt: skip
         return self.render_to_response(
             self.get_context_data(

@@ -3,7 +3,7 @@
 {% block sopratitolo %}<div class="page-pretitle">Sistema</div>{% endblock %}
 {% block titolo_pagina %}Dati dell'organizzazione{% endblock %}
 {% block contenuto %}
-<form method="post" class="card" novalidate>
+<form method="post" class="card" novalidate enctype="multipart/form-data">
   {% csrf_token %}
   <div class="card-body">
     <p class="text-secondary">Questi dati compaiono nelle intestazioni dei documenti, nelle comunicazioni e nei moduli.</p>
@@ -31,6 +31,10 @@
         <div class="col-md-6">{{ form.modulo_piede.as_field_group }}</div>
         <div class="col-md-6">{{ form.modulo_articoli_statuto.as_field_group }}</div>
         <div class="col-md-6">{{ form.modulo_dichiarazione.as_field_group }}</div>
+        <div class="col-md-6 d-flex gap-3 align-items-center">
+          {% if organizzazione.modulo_logo %}<img class="anteprima-logo" src="{% url 'core:logo_modulo' %}" alt="Logo del modulo">{% endif %}
+          <div class="flex-fill">{{ form.nuovo_logo_modulo.as_field_group }}{% if organizzazione.modulo_logo %}{{ form.togli_logo_modulo.as_field_group }}{% endif %}</div>
+        </div>
       </div>
     </fieldset>
     <div class="row">

@@ -48,7 +48,7 @@
 <div class="pagina">
   <div class="testata">
     {% for r in righe %}<div class="r{% if forloop.first %}0{% elif forloop.counter == 2 %}1{% else %}2{% endif %}">{{ r }}</div>{% endfor %}
-    {% if org.logo %}<img src="risorsa:media/{{ org.logo.name }}" alt="">{% endif %}
+    {% if org.modulo_logo %}<img src="risorsa:media/{{ org.modulo_logo.name }}" alt="">{% elif org.logo %}<img src="risorsa:media/{{ org.logo.name }}" alt="">{% endif %}
   </div>
   <h1>MODULO DI RICHIESTA DI ADESIONE</h1>
   <div class="destra" style="line-height:1.9">
@@ -59,7 +59,7 @@
   <p class="giustificato" style="margin-top:14pt">
     Il/La sottoscritto/a {% if m.nominativo %}<span class="campo"><i>{{ m.nominativo }}</i></span>{% else %}<span class="vuoto lungo"></span>{% endif %}
     nato/a {% if m.luogo_nascita %}<span class="campo">{{ m.luogo_nascita }}</span>{% else %}<span class="vuoto"></span>{% endif %}
-    il {% if m.data_nascita %}<span class="campo">{{ m.data_nascita|date:"j F Y" }}</span>{% else %}<span class="vuoto corto"></span>{% endif %}
+    il {% if m.data_nascita %}<span class="campo">{{ m.data_nascita|date:"j F Y"|lower }}</span>{% else %}<span class="vuoto corto"></span>{% endif %}
     e residente in Via {% if m.indirizzo %}<span class="campo">{{ m.indirizzo }}</span>{% else %}<span class="vuoto lungo"></span>{% endif %}
     {% if m.comune %}<span class="campo">{{ m.cap }} - {{ m.comune|upper }}{% if m.provincia %} ({{ m.provincia }}){% endif %}</span>{% else %}<span class="vuoto"></span>{% endif %},
     Telefono {% if m.telefono %}<span class="campo">{{ m.telefono }}</span>{% else %}<span class="vuoto"></span>{% endif %}

@@ -285,6 +285,7 @@ class TestFormatoRegistroNazionale:
             "Rossi", "Mario", "Rionero in Vulture", "PZ", "Via Roma,1",
         )  # fmt: skip
         assert (p.telefono, p.cellulare) == ("0972-123456", "3331234567")
+        assert p.luogo_nascita == "Avigliano (PZ)"  # provincia ricavata dal codice fiscale
         assert rossi.data_ammissione == date(2023, 1, 1) and "Presidente" in rossi.note
         assert rossi.sezione.nome == "Rionero in Vulture"
         t26, t25 = rossi.tessera_anno(2026), rossi.tessera_anno(2025)
@@ -299,3 +300,23 @@ class TestFormatoRegistroNazionale:
         )
         r = importazione.elabora(righe, importazione.Opzioni(tipologia=ordinario), capo)
         assert r.riepilogo == {"nuovo": 0, "aggiornato": 0, "invariato": 2, "errore": 0}
+
+
+class TestQuoteImportate:
+    def test_scelta_da_incassare_o_pagate(self, capo, ordinario):
+        from apps.tesoreria import servizi as tesoreria
+
+        ordinario.quota_annua = 25
+        ordinario.save()
+        _, righe, _ = importazione.leggi("r.xlsx", TestFormatoRegistroNazionale().file())
+        base = {"tipologia": ordinario, "crea_sezioni": True}
+        r = importazione.elabora(righe, importazione.Opzioni(**base), capo)
+        assert r.riepilogo["errore"] == 0
+        importazione.elabora(righe, importazione.Opzioni(**base, quote_pagate=True), capo,
+                             esegui=True)  # fmt: skip
+        t = Socio.objects.get(soggetto__codice_fiscale=CF_ROSSI).tessera_anno(2026)
+        assert t.pagata and t.incasso_esterno and t.pagata_il == date(2026, 2, 1)
+        assert t.codice_ricevuta == "" and not Socio.objects.morosi(2026).exists()
+        e = tesoreria.apri_esercizio(2026, capo)
+        assert not tesoreria.quote_da_registrare(e).exists()
+        assert tesoreria.registra_quota(t, capo)[0] is None

@@ -534,6 +534,20 @@ def rilascia_tessera(
     return tessera
 
 
+def segna_incasso_esterno(tessera, utente, *, pagata_il, nota=""):
+    """Quota già incassata altrove (es. dal registro nazionale): niente ricevuta né prima nota."""
+    if tessera.annullata or tessera.pagata or tessera.importo <= 0:
+        return tessera
+    tessera.pagata_il = pagata_il
+    tessera.metodo_pagamento = Tessera.Metodo.ALTRO
+    tessera.riferimento_pagamento = nota[:100]
+    tessera.incasso_esterno = True
+    tessera.modificato_da = utente
+    tessera.save()
+    registra(Azione.MODIFICA, tessera, utente=utente, incasso_esterno=str(pagata_il), nota=nota)
+    return tessera
+
+
 @transaction.atomic
 def registra_pagamento(tessera, utente, *, pagata_il, metodo, importo=None, riferimento=""):
     """Registra l'incasso della quota e assegna il numero di ricevuta."""

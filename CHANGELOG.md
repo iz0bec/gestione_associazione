@@ -13,6 +13,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   domanda o dai dati del socio.
 - Richiesta di adesione firmata nella scheda del socio, consultabile nella pagina; caricamento di un
   PDF o delle foto delle pagine (unite in PDF).
+- Comando `inizializza`: azzera database e file e riporta a una nuova installazione, con conferma
+  e backup obbligatorio prima della cancellazione.
+- Importazione: scelta delle quote da incassare o già incassate (senza ricevuta né prima nota);
+  luogo di nascita con la provincia ricavata dal codice fiscale.
+- Logo proprio del modulo di adesione (es. quello della presidenza nazionale).
 - Importazione adattata all'estratto «Gestione Registro Soci»: date in italiano, anno sociale, tessera
   dell'anno precedente, annullamenti come cessazioni, incarichi, telefoni, sezioni riconosciute per nome.
 

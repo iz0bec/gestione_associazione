@@ -30,6 +30,9 @@ class Command(BaseCommand):
         parser.add_argument("--senza-tessere", action="store_true")
         parser.add_argument("--senza-cessazioni", action="store_true")
         parser.add_argument(
+            "--quote-pagate", action="store_true", help="Quote importate già incassate"
+        )
+        parser.add_argument(
             "--non-creare-tessere", action="store_true", help="Solo tessere già caricate"
         )
         parser.add_argument("--utente", help="Username registrato come autore (audit)")
@@ -62,7 +65,7 @@ class Command(BaseCommand):
             sezione=sezione, tipologia=tipologia, crea_sezioni=o["crea_sezioni"],
             allinea_sezione=o["allinea_sezione"], anno_tessere=o["anno_tessere"],
             tessere=not o["senza_tessere"], crea_tessere=not o["non_creare_tessere"],
-            cessazioni=not o["senza_cessazioni"],
+            cessazioni=not o["senza_cessazioni"], quote_pagate=o["quote_pagate"],
         )  # fmt: skip
         r = importazione.elabora(righe, opzioni, utente, esegui=o["esegui"])
         for e in r.esiti:

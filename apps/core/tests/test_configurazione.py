@@ -131,3 +131,42 @@ class TestAspetto:
         r = admin_client.post(reverse("core:aspetto"), {"colore_primario": "#112233", "stile_menu": "scuro",
                                                          "nuovo_logo": SimpleUploadedFile("x.png", b"no")})  # fmt: skip
         assert r.status_code == 200 and not Organizzazione.corrente().logo
+
+
+class TestLogoModulo:
+    def test_caricato_e_usato_nel_pdf(self, admin_client):
+        from apps.core.forms import OrganizzazioneCompletaForm
+
+        dati = {
+            f: getattr(Organizzazione.corrente(), f) for f in OrganizzazioneCompletaForm.Meta.fields
+        }
+        dati = {k: v for k, v in dati.items() if v not in (None, False)}
+        r = admin_client.post(reverse("core:organizzazione"), {**dati, "nuovo_logo_modulo": png()})
+        assert r.status_code == 302
+        org = Organizzazione.corrente()
+        assert org.modulo_logo and admin_client.get(reverse("core:logo_modulo")).status_code == 200
+        assert admin_client.get(reverse("soci:modulo_vuoto")).content.startswith(b"%PDF")
+
+
+class TestInizializza:
+    def test_conferma_obbligatoria(self):
+        from django.core.management import CommandError, call_command
+
+        from apps.anagrafica.models import Soggetto
+
+        Soggetto.objects.create(cognome="Resta")
+        with pytest.raises(CommandError, match="nome del database"):
+            call_command("inizializza", conferma="sbagliato", stdout=io.StringIO())
+        assert Soggetto.objects.filter(cognome="Resta").exists()
+
+    def test_senza_backup_non_cancella(self, monkeypatch, settings):
+        from django.core.management import CommandError, call_command
+
+        from apps.anagrafica.models import Soggetto
+
+        Soggetto.objects.create(cognome="Resta")
+        monkeypatch.setattr("shutil.which", lambda _: None)
+        nome = settings.DATABASES["default"]["NAME"]
+        with pytest.raises(CommandError, match="pg_dump"):
+            call_command("inizializza", conferma=nome, stdout=io.StringIO())
+        assert Soggetto.objects.filter(cognome="Resta").exists()

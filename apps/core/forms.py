@@ -63,6 +63,18 @@ class OrganizzazioneForm(StileMixin, forms.ModelForm):
         return self.cleaned_data["codice_fiscale"].strip().upper()
 
 
+class OrganizzazioneCompletaForm(OrganizzazioneForm):
+    """Pagina Organizzazione: anche il logo del modulo di adesione."""
+
+    nuovo_logo_modulo = forms.ImageField(
+        label="Logo del modulo",
+        required=False,
+        help_text="Es. il logo della presidenza nazionale; senza, si usa il logo dell'ente.",
+        widget=forms.FileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+    )
+    togli_logo_modulo = forms.BooleanField(label="Togli il logo del modulo", required=False)
+
+
 class EnteForm(OrganizzazioneForm):
     """Solo i dati dell'ente (primo passo della configurazione iniziale)."""
 

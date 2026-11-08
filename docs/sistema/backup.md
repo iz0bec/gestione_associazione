@@ -52,3 +52,44 @@ vanno fatti insieme. Conservare a parte anche il file `.env` (in particolare `CH
 - Provare il ripristino su un'installazione di prova almeno due volte l'anno.
 
 Backup automatici con verifica sono previsti nella [roadmap](../roadmap.md).
+
+## Inizializzazione (azzerare tutto)
+
+Per ripartire da zero, ad esempio dopo le prove o prima di caricare i dati definitivi, il comando
+`inizializza` riporta l'applicazione allo stato di una nuova installazione:
+
+1. mostra cosa verrà cancellato: database, numero di soci, protocolli e movimenti, cartella dei file;
+2. chiede di **scrivere il nome del database** come conferma (oppure `--conferma NOME` negli script);
+3. salva un **backup completo** in `var/backup/` (o in `--cartella-backup`): il database con
+   `pg_dump` (formato custom) e l'archivio dei file caricati. **Se il backup non riesce, non
+   cancella nulla**;
+4. elimina tutte le tabelle e le ricrea con le migrazioni, con i dati iniziali (ruoli, tipologie,
+   piano dei conti, organi, ricorrenze, sezione predefinita);
+5. cancella i file caricati (allegati, foto, loghi, moduli firmati);
+6. crea l'amministratore (`--admin`, `--email`; password chiesta due volte, oppure dalla variabile
+   `INIZIALIZZA_PASSWORD`).
+
+Al primo accesso riparte la [configurazione guidata](../operativo/configurazione-iniziale.md).
+
+```bash
+# fermare prima l'applicazione e il pianificatore
+sudo systemctl stop gestione-associazione gestione-associazione-pianificatore
+sudo -u gestione /opt/gestione-associazione/.venv/bin/python manage.py inizializza
+sudo systemctl start gestione-associazione gestione-associazione-pianificatore
+
+# con Docker
+docker compose stop app pianificatore
+docker compose run --rm app python manage.py inizializza
+docker compose start app pianificatore
+```
+
+Per tornare indietro si ripristina il backup appena creato:
+
+```bash
+pg_restore --clean --no-owner -d NOME_DATABASE var/backup/prima_inizializzazione_AAAAMMGG_HHMMSS.dump
+tar -xzf var/backup/prima_inizializzazione_AAAAMMGG_HHMMSS_file.tar.gz -C /percorso/di/MEDIA_ROOT --strip-components=1
+```
+
+L'inizializzazione **non esiste nell'interfaccia web**, di proposito: un'operazione che cancella tutto
+deve richiedere l'accesso al server.
+
