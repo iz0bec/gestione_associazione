@@ -2,7 +2,8 @@
 {% block titolo %}{{ socio.soggetto.nome_completo }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · socio n. {{ socio.numero }}</div>{% endblock %}
 {% block titolo_pagina %}{{ socio.soggetto.intestazione }}
-  <span class="badge fs-5 align-middle {% if socio.stato == 'attivo' %}bg-green-lt{% elif socio.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %}">{{ socio.get_stato_display|lower }}</span>{% endblock %}
+  <span class="badge fs-5 align-middle {% if socio.stato == 'attivo' %}bg-green-lt{% elif socio.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %}">{{ socio.get_stato_display|lower }}</span>
+  {% for c in cariche %}{% if c.in_carica %}<span class="badge fs-5 align-middle bg-blue-lt" title="dal {{ c.dal|date:'d/m/Y' }}">{{ c.get_ruolo_display }} · {{ c.organo.sigla|default:c.organo.nome }}</span>{% endif %}{% endfor %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
   {% if perms.soci.change_socio %}
@@ -42,6 +43,7 @@
       </div>
       <div class="card-footer"><a href="{{ socio.soggetto.get_absolute_url }}"><i class="ti ti-address-book me-1"></i>Scheda anagrafica completa</a></div>
     </div>
+    {% include "organi/_cariche_soggetto.html" %}
 
     <div class="card mt-3" id="modulo-adesione">
       <div class="card-header">

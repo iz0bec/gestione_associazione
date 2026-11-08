@@ -79,6 +79,12 @@ class Organo(models.Model):
         return self.cariche.filter(Q(al__isnull=True) | Q(al__gte=giorno), dal__lte=giorno)
 
 
+def cariche_di(soggetto):
+    """Cariche di una persona: prima quelle in corso, poi le concluse (più recenti prima)."""
+    cariche = list(soggetto.cariche.select_related("organo").order_by("-dal"))
+    return sorted(cariche, key=lambda c: not c.in_carica)
+
+
 class Carica(ModelloBase):
     """Incarico di una persona in un organo, con data di inizio e (eventuale) fine."""
 

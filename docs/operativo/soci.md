@@ -48,7 +48,10 @@ enti, persone archiviate o decedute, né chi è già nel libro soci.
 ## Scheda del socio
 
 Mostra i dati di iscrizione, le tessere di tutti gli anni, la situazione della quota corrente e
-la storia delle operazioni. Dai pulsanti in alto:
+la storia delle operazioni. Le **cariche sociali** in corso (es. *Presidente · CD*) compaiono accanto
+al nome; il riquadro *Cariche sociali* elenca anche quelle concluse, con date e atto di nomina
+(le cariche si registrano negli [Organi sociali](organi.md#cariche) e compaiono anche nella scheda
+dell'anagrafica). Dai pulsanti in alto:
 
 - **Modifica**: sezione, matricola, tipologia, data e delibera di ammissione, note, **foto** (ogni
   cambio è registrato);

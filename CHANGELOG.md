@@ -17,6 +17,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 - Ogni utente deve essere collegato a una scheda dell'anagrafica (scelta o creata con l'utente);
   numero di socio nell'elenco degli utenti.
 
+- Cariche sociali (in corso e concluse) nella scheda del socio e in quella dell'anagrafica; le
+  cariche in corso accanto al nome del socio.
+
 ### Sicurezza
 - Il protocollo rifiuta le registrazioni di chi non ha il permesso di protocollare, qualunque
   modulo le chieda; negli invii email l'opzione di protocollazione richiede quel permesso.

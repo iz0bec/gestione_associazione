@@ -136,6 +136,9 @@ class DettaglioView(PermessoMixin, DetailView):
             initial={"importo": servizi.quota_per(self.object.tipologia, anno)}, prefix="tessera"
         )
         ctx["form_pagamento"] = PagamentoForm(prefix="pagamento")
+        from apps.organi.models import cariche_di
+
+        ctx["cariche"] = cariche_di(self.object.soggetto)
         ctx["form_cessazione"] = CessazioneForm(prefix="cessazione")
         ctx["form_annullamento"] = MotivoForm(prefix="annulla")
         if self.request.user.has_perm("core.view_eventoaudit"):

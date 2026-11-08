@@ -1,0 +1,23 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Cariche sociali di una persona (in corso e passate). Variabile: cariche.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% if cariche %}
+<div class="card {{ classe|default:'mt-3' }}" id="cariche-sociali">
+  <div class="card-header"><h2 class="card-title"><i class="ti ti-gavel me-2"></i>Cariche sociali</h2></div>
+  <div class="list-group list-group-flush">
+    {% for c in cariche %}
+    <div class="list-group-item{% if not c.in_carica %} text-secondary{% endif %}">
+      <div class="d-flex align-items-center">
+        <div class="flex-fill">
+          <span class="fw-medium">{{ c.get_ruolo_display }}</span> · {% if perms.organi.view_organo %}<a href="{% url 'organi:organo' c.organo_id %}">{{ c.organo.nome }}</a>{% else %}{{ c.organo.nome }}{% endif %}
+          <div class="small">dal {{ c.dal|date:"d/m/Y" }}{% if c.al %} al {{ c.al|date:"d/m/Y" }}{% endif %}{% if c.nomina %} · {{ c.nomina }}{% endif %}</div>
+        </div>
+        {% if c.in_carica %}<span class="badge bg-green-lt">in carica</span>{% else %}<span class="badge bg-secondary-lt">conclusa</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

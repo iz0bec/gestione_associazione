@@ -58,6 +58,9 @@ class DettaglioView(PermessoMixin, DetailView):
         ctx["consensi"] = self.object.consensi.all()
         ctx["form_consenso"] = ConsensoForm()
         ctx["socio"] = getattr(self.object, "socio", None)
+        from apps.organi.models import cariche_di
+
+        ctx["cariche"] = cariche_di(self.object) if self.object.is_persona else []
         if self.request.user.has_perm("comunicazioni.view_invio"):
             ctx["comunicazioni"] = self.object.comunicazioni.select_related("invio").order_by(
                 "-invio__creato_il"
