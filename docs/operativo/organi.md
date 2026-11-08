@@ -33,7 +33,8 @@ Le **regole** di ogni organo (pulsante *Regole*, solo amministratore) vanno alli
 
 Nella pagina di un organo (non dell'assemblea, che è formata da tutti i soci): **Nomina** con persona,
 ruolo (presidente, vicepresidente, segretario, tesoriere, consigliere, componente, supplente), data di
-inizio e atto di nomina. **Fine carica** registra la data di cessazione e il motivo. Lo storico resta
+inizio e atto di nomina. **Fine carica** registra la data di cessazione e il motivo: **da quel giorno** la persona non è più
+in carica (con la data di oggi esce subito dai componenti e passa allo storico). Lo storico resta
 consultabile: chi ha avuto quale carica e quando. I **supplenti** non contano tra gli aventi diritto al voto.
 
 **Organigramma PDF** (pulsante in alto nella pagina dell'organo): i componenti in carica alla data

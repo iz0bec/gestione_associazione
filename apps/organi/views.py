@@ -43,7 +43,7 @@ class OrganiView(PermessoMixin, ListView):
     def get_queryset(self):
         oggi = timezone.localdate()
         in_carica = Q(cariche__dal__lte=oggi) & (
-            Q(cariche__al__isnull=True) | Q(cariche__al__gte=oggi)
+            Q(cariche__al__isnull=True) | Q(cariche__al__gt=oggi)
         )
         return Organo.objects.filter(attivo=True).annotate(
             componenti=Count("cariche", filter=in_carica)
@@ -163,6 +163,9 @@ class FineCaricaView(PermessoMixin, View):
                 messages.success(request, "Fine della carica registrata.")
             except OperazioneNonValida as e:
                 _errore(request, e)
+        else:
+            errori = [e for lista in form.errors.values() for e in lista]
+            messages.error(request, "Fine carica non registrata: " + " ".join(errori))
         return redirect(carica.organo)
 
 

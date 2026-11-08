@@ -54,7 +54,7 @@ def nomina(organo, soggetto, ruolo, dal, utente, *, atto="", note=""):
 @transaction.atomic
 def termina_carica(carica, al, utente, motivo=""):
     carica = Carica.objects.select_for_update().get(pk=carica.pk)
-    if carica.al is not None and carica.al < timezone.localdate():
+    if carica.al is not None and carica.al <= timezone.localdate():
         raise OperazioneNonValida("La carica è già terminata.")
     if al < carica.dal:
         raise OperazioneNonValida("La fine non può precedere l'inizio.")

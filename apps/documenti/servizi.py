@@ -57,7 +57,7 @@ def firmatario(modello):
     oggi = timezone.localdate()
     carica = (
         Carica.objects.filter(ruolo=Carica.Ruolo.PRESIDENTE, dal__lte=oggi)
-        .exclude(al__lt=oggi)
+        .exclude(al__lte=oggi)
         .select_related("soggetto")
         .order_by("-dal")
         .first()

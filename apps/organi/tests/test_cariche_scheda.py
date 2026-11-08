@@ -78,3 +78,46 @@ class TestOrganigramma:
         organo = Organo.objects.get(nome="Consiglio di prova")
         r = client_ruolo(username="senza_ruoli").get(f"/organi/{organo.pk}/organigramma/")
         assert r.status_code == 403
+
+
+@pytest.mark.django_db
+class TestFineCarica:
+    def _carica(self):
+        organo, _ = Organo.objects.get_or_create(nome="Consiglio fine", defaults={"sigla": "CF"})
+        s = Soggetto.objects.create(tipo="persona", cognome="Bianchi", nome="Anna")
+        return Carica.objects.create(organo=organo, soggetto=s, ruolo="presidente",
+                                     dal=date(2025, 4, 20))  # fmt: skip
+
+    def test_fine_oggi_esce_subito_dai_componenti(self, client_ruolo):
+        from django.utils import timezone
+
+        c = self._carica()
+        client = client_ruolo("Segretario")
+        oggi = timezone.localdate()
+        r = client.post(f"/organi/cariche/{c.pk}/fine/", {"al": oggi.isoformat(), "motivo": "dimissioni"},
+                        follow=True)  # fmt: skip
+        assert "Fine della carica registrata" in r.content.decode()
+        c.refresh_from_db()
+        assert c.al == oggi and not c.in_carica
+        assert c not in c.organo.cariche_al()
+        assert "Bianchi Anna" not in cariche_di_testo(c.organo)
+        # una seconda volta non si registra
+        r = client.post(f"/organi/cariche/{c.pk}/fine/", {"al": oggi.isoformat(), "motivo": "x"},
+                        follow=True)  # fmt: skip
+        assert "già terminata" in r.content.decode()
+        c.refresh_from_db()
+        assert c.note == "dimissioni"
+
+    def test_data_non_valida_segnalata(self, client_ruolo):
+        c = self._carica()
+        r = client_ruolo("Segretario").post(f"/organi/cariche/{c.pk}/fine/", {"al": "boh"},
+                                            follow=True)  # fmt: skip
+        assert "Fine carica non registrata" in r.content.decode()
+        c.refresh_from_db()
+        assert c.al is None
+
+
+def cariche_di_testo(organo):
+    from apps.organi.servizi import organigramma
+
+    return " ".join(c.soggetto.nome_completo for riga in organigramma(organo) for c in riga)

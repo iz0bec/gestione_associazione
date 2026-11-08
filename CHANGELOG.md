@@ -22,6 +22,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 - Organi sociali: **organigramma in PDF** dei componenti in carica, per livelli e con le foto.
 
+### Corretto
+- Fine di una carica: la data indicata è quella di cessazione (con la data di oggi la persona esce
+  subito dai componenti); una carica chiusa non si chiude due volte; errori del modulo mostrati.
+
 ### Sicurezza
 - Il protocollo rifiuta le registrazioni di chi non ha il permesso di protocollare, qualunque
   modulo le chieda; negli invii email l'opzione di protocollazione richiede quel permesso.

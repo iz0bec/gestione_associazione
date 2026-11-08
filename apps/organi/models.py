@@ -76,7 +76,8 @@ class Organo(models.Model):
 
     def cariche_al(self, giorno=None):
         giorno = giorno or date.today()
-        return self.cariche.filter(Q(al__isnull=True) | Q(al__gte=giorno), dal__lte=giorno)
+        # «al» è la data di cessazione: da quel giorno la persona non è più in carica
+        return self.cariche.filter(Q(al__isnull=True) | Q(al__gt=giorno), dal__lte=giorno)
 
 
 def cariche_di(soggetto):
@@ -130,7 +131,7 @@ class Carica(ModelloBase):
 
     @property
     def in_carica(self):
-        return self.al is None or self.al >= date.today()
+        return self.al is None or self.al > date.today()
 
     @property
     def vota(self):

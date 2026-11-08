@@ -56,7 +56,12 @@ class CaricaForm(StileMixin, forms.Form):
 
 
 class FineCaricaForm(StileMixin, forms.Form):
-    al = forms.DateField(label="Fine della carica", widget=CampoData, initial=date.today)
+    al = forms.DateField(
+        label="Data di cessazione",
+        widget=CampoData,
+        initial=date.today,
+        help_text="Da questo giorno la persona non è più in carica.",
+    )
     motivo = forms.CharField(required=False, max_length=200)
 
 
