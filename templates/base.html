@@ -40,7 +40,7 @@
     </main>
     <footer class="footer footer-transparent d-print-none">
       <div class="container-xl text-secondary small">
-        {{ APP_NOME }} {{ APP_VERSIONE }} · software nel pubblico dominio (CC0 1.0)
+        <a class="text-reset" href="{% url 'core:informazioni' %}">{{ APP_NOME }} {{ APP_VERSIONE }}</a> · di {{ APP_AUTORE }} · software nel pubblico dominio (CC0 1.0)
       </div>
     </footer>
   </div>

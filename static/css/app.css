@@ -70,3 +70,16 @@ fieldset legend.h3 { margin-bottom: .75rem; color: var(--tblr-secondary); }
 
 /* barra di avanzamento (elemento nativo: nessuno stile inline, compatibile con la CSP) */
 progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-primary); }
+
+/* help in linea: pagine del manuale operativo */
+.aiuto h1 { display: none; } /* il titolo è già nell'intestazione della pagina */
+.aiuto h2 { margin-top: 1.75rem; padding-bottom: .25rem; border-bottom: 1px solid var(--tblr-border-color); scroll-margin-top: 1rem; }
+.aiuto h2:first-of-type { margin-top: 0; }
+.aiuto h3 { margin-top: 1.25rem; scroll-margin-top: 1rem; }
+.aiuto table { width: auto; max-width: 100%; display: block; overflow-x: auto; }
+.aiuto pre { background: var(--tblr-bg-surface-secondary); padding: .75rem; border-radius: .25rem; overflow-x: auto; }
+.aiuto code { font-size: .85em; }
+.aiuto li + li { margin-top: .25rem; }
+
+/* versione e crediti nella barra superiore */
+.versione-app { white-space: nowrap; }

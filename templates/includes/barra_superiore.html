@@ -1,4 +1,4 @@
-{% comment %}Barra superiore: ricerca rapida, tema, menu utente.{% endcomment %}
+{% comment %}Barra superiore: ricerca rapida, versione e crediti, aiuto, tema, menu utente.{% endcomment %}
 <header class="navbar navbar-expand-md d-print-none">
   <div class="container-xl">
     {% if perms.anagrafica.view_soggetto %}
@@ -9,7 +9,13 @@
       </div>
     </form>
     {% endif %}
-    <div class="navbar-nav flex-row order-md-last ms-auto">
+    <div class="navbar-nav flex-row order-md-last ms-auto align-items-center">
+      <a class="nav-link px-2 d-none d-md-flex" href="{% url 'core:informazioni' %}" title="{{ APP_NOME }} {{ APP_VERSIONE }} di {{ APP_AUTORE }}: informazioni, crediti e licenze">
+        <span class="badge bg-secondary-lt versione-app">v{{ APP_VERSIONE }}</span>
+      </a>
+      <a class="nav-link px-2" href="{{ AIUTO_URL }}" title="Aiuto su questa pagina" aria-label="Aiuto su questa pagina">
+        <i class="ti ti-help-circle"></i>
+      </a>
       <button type="button" class="nav-link px-2" data-cambia-tema title="Tema chiaro/scuro" aria-label="Cambia tema chiaro o scuro">
         <i class="ti ti-moon icona-tema-scuro"></i><i class="ti ti-sun icona-tema-chiaro"></i>
       </button>
@@ -24,6 +30,9 @@
         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
           <a href="{% url 'account_change_password' %}" class="dropdown-item"><i class="ti ti-key me-2"></i>Cambia password</a>
           <a href="{% url 'mfa_index' %}" class="dropdown-item"><i class="ti ti-shield-lock me-2"></i>Verifica in due passaggi</a>
+          <div class="dropdown-divider"></div>
+          <a href="{% url 'core:aiuto' %}" class="dropdown-item"><i class="ti ti-book me-2"></i>Manuale</a>
+          <a href="{% url 'core:informazioni' %}" class="dropdown-item"><i class="ti ti-info-circle me-2"></i>Informazioni <span class="ms-auto small text-secondary">{{ APP_VERSIONE }}</span></a>
           <div class="dropdown-divider"></div>
           <form method="post" action="{% url 'account_logout' %}">{% csrf_token %}
             <button type="submit" class="dropdown-item"><i class="ti ti-logout me-2"></i>Esci</button>

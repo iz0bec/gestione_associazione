@@ -36,6 +36,7 @@ soggette alle proprie licenze, tutte compatibili con l'uso e la ridistribuzione.
 | openpyxl | 3.1.5 | MIT |
 | et-xmlfile (usata da openpyxl) | 2.0.0 | MIT |
 | defusedxml | 0.7.1 | PSF-2.0 |
+| Markdown (help in linea) | 3.11.3 | BSD-3-Clause |
 
 Versioni esatte di tutte le dipendenze (anche indirette) in `uv.lock`.
 

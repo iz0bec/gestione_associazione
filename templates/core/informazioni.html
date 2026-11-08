@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Informazioni sull'applicazione: versione, crediti, licenza, componenti di terze parti
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Informazioni{% endblock %}
+{% block titolo_pagina %}Informazioni{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="mb-1">{{ APP_NOME }}</h2>
+        <div class="text-secondary mb-3">Versione <strong>{{ APP_VERSIONE }}</strong></div>
+        <p>Gestionale per associazioni: anagrafica, soci e tesseramento, protocollo, organi sociali, comunicazioni, tesoreria e patrimonio.</p>
+        <dl class="row mb-0">
+          <dt class="col-4">Autore</dt><dd class="col-8">{{ APP_AUTORE }}<div class="small"><a href="mailto:info@iz0bec.info">info@iz0bec.info</a></div></dd>
+          <dt class="col-4">Licenza</dt><dd class="col-8">CC0 1.0 Universal: pubblico dominio. Si può usare, modificare e ridistribuire liberamente.</dd>
+          <dt class="col-4">Codice sorgente</dt><dd class="col-8"><a href="{{ repository }}" rel="noopener">{{ repository }}</a></dd>
+          <dt class="col-4">Manuale</dt><dd class="col-8"><a href="{% url 'core:aiuto' %}">Manuale operativo</a> (anche dal pulsante <i class="ti ti-help-circle"></i> in alto, che apre la pagina della sezione in cui ci si trova)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Componenti di terze parti</h3></div>
+      <div class="card-body aiuto">{{ licenze|safe }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

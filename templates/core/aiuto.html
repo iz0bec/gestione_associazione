@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Help in linea: una pagina del manuale operativo con l'indice del manuale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Aiuto - {{ titolo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'core:aiuto' %}">Manuale</a></div>{% endblock %}
+{% block titolo_pagina %}{{ titolo }}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-3 order-lg-last">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Manuale</h3></div>
+      <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action{% if pagina == 'README' %} active{% endif %}" href="{% url 'core:aiuto' %}">Indice</a>
+        {% for nome, titolo_pagina in pagine %}
+        <a class="list-group-item list-group-item-action{% if nome == pagina %} active{% endif %}" href="{% url 'core:aiuto_pagina' nome %}">{{ titolo_pagina }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    {% if indice %}
+    <div class="card mt-3 d-none d-lg-block">
+      <div class="card-header"><h3 class="card-title">In questa pagina</h3></div>
+      <div class="list-group list-group-flush small">
+        {% for ancora, voce in indice %}<a class="list-group-item list-group-item-action" href="#{{ ancora }}">{{ voce }}</a>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-9">
+    <div class="card">
+      <div class="card-body aiuto">{{ html|safe }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

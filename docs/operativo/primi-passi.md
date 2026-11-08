@@ -40,8 +40,13 @@ Protegge l'account anche se qualcuno scopre la password.
 
 - **Menu a sinistra**: i moduli. Si vedono solo quelli consentiti dal proprio ruolo.
   Su smartphone il menu si apre con il pulsante ☰.
-- **Barra in alto**: ricerca rapida in anagrafica, pulsante del tema chiaro/scuro (🌙/☀),
-  menu utente (cambio password, verifica in due passaggi, esci).
+- **Barra in alto**: ricerca rapida in anagrafica; nome e **versione** del programma (un clic apre
+  *Informazioni*: autore, licenza, componenti di terze parti); pulsante **?** dell'aiuto; tema
+  chiaro/scuro (🌙/☀); menu utente (cambio password, verifica in due passaggi, manuale,
+  informazioni, esci).
+- **Aiuto in linea**: il pulsante **?** apre la pagina di questo manuale dedicata alla sezione in
+  cui ci si trova (es. da *Tesoreria* apre il manuale della tesoreria). Dalla pagina dell'aiuto si
+  passa alle altre con l'indice a destra.
 - **Cruscotto**: numeri principali, compleanni dei prossimi 14 giorni, le proprie ultime attività.
 
 ## Uscire

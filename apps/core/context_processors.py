@@ -22,11 +22,19 @@ def _multisezione():
     return multisezione()
 
 
+def _aiuto(request):
+    from .aiuto import url_per
+
+    return url_per(request)
+
+
 def applicazione(request):
     return {
         "multisezione": SimpleLazyObject(_multisezione),
         "APP_NOME": settings.APP_NOME,
         "APP_VERSIONE": settings.APP_VERSIONE,
+        "APP_AUTORE": settings.APP_AUTORE,
+        "AIUTO_URL": SimpleLazyObject(lambda: _aiuto(request)),
         "organizzazione": SimpleLazyObject(Organizzazione.corrente),  # 1 query, solo se usata
         "MODULI_IN_ARRIVO": MODULI_IN_ARRIVO,
     }

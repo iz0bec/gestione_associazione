@@ -207,3 +207,36 @@ def salute(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT 1")
     return HttpResponse("ok", content_type="text/plain")
+
+
+# --- help in linea e crediti ------------------------------------------------------------
+
+
+class AiutoView(LoginRequiredMixin, TemplateView):
+    """Manuale operativo consultabile dall'applicazione (docs/operativo)."""
+
+    template_name = "core/aiuto.html"
+
+    def get_context_data(self, **kwargs):
+        from . import aiuto
+
+        ctx = super().get_context_data(**kwargs)
+        nome = kwargs.get("pagina", aiuto.INDICE)
+        titolo, html, indice = aiuto.pagina(nome)
+        ctx.update(pagina=nome, titolo=titolo, html=html, indice=indice, pagine=aiuto.elenco())
+        return ctx
+
+
+class InformazioniView(LoginRequiredMixin, TemplateView):
+    """Versione, autore, licenza e componenti di terze parti."""
+
+    template_name = "core/informazioni.html"
+
+    def get_context_data(self, **kwargs):
+        from django.conf import settings
+
+        from . import aiuto
+
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(licenze=aiuto.licenze(), repository=settings.APP_REPOSITORY)
+        return ctx

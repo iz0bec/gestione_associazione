@@ -11,6 +11,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   offrono «Apri» e «Scarica»), e gli errori vengono spiegati.
 - Tempo massimo delle richieste portato a 300 secondi nei servizi creati dall'installatore.
 
+### Aggiunto - Aiuto in linea e informazioni
+- Pulsante **?** nella barra in alto: apre il manuale operativo alla pagina della sezione in uso
+  (il manuale è lo stesso di `docs/operativo`, mostrato nell'applicazione con indice e paragrafi).
+- Nome, versione e autore nella barra in alto; pagina *Informazioni* con versione, crediti, licenza
+  e componenti di terze parti.
+
 ### Aggiunto - Importazione dai gestionali precedenti
 - Comando `importa_gestionale` (anteprima predefinita, `--esegui` applica, rieseguibile senza
   doppioni) per **Gestione Soci** (soci, tessere con la quota versata, esercizi passati chiusi con la

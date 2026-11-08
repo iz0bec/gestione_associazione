@@ -84,7 +84,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Importazione dai gestionali precedenti: `apps/migrazione` (`importa_gestionale`), anteprima in
   transazione annullata, `Origine` per la rieseguibilità; protocolli storici solo con
   `protocollo.servizi.registra_storico` (numero originale, sequenza allineata).
-- Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
+- Aiuto in linea: `apps/core/aiuto.py` mostra `docs/operativo/*.md` (pulsante ? della barra);
+  la pagina di ogni sezione si sceglie in `PAGINE_PER_SEZIONE` (namespace o namespace:vista).
+- Ogni modulo nuovo: test, pagina in `docs/operativo/` (con voce in `PAGINE_PER_SEZIONE`), aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
 ## Pubblicazione
