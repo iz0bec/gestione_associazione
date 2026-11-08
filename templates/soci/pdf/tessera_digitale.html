@@ -1,0 +1,55 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Tessera digitale in formato carta (85,6 x 54 mm): fronte con i dati, retro con il QR
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Tessera {{ tessera.anno }} - {{ tessera.socio.soggetto.nome_completo }}{% endblock %}
+{% block formato %}85.6mm 54mm{% endblock %}
+{% block piede %}{% endblock %}
+{% block intestazione %}{% endblock %}
+{% block stile %}
+  @page { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+  html, body { margin: 0; padding: 0; }
+  body { font-size: 7pt; }
+  .faccia { width: 85.6mm; height: 53.8mm; box-sizing: border-box; padding: 3.5mm 4mm; position: relative; overflow: hidden; page-break-after: always; }
+  .faccia:last-child { page-break-after: auto; }
+  .fronte { border-top: 4mm solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .testata { display: flex; align-items: center; gap: 2.5mm; padding-right: 17mm; }
+  .testata img { height: 10mm; }
+  .ente { font-weight: bold; font-size: 7.5pt; line-height: 1.15; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .anno { position: absolute; right: 4mm; top: 5.5mm; font-size: 15pt; font-weight: bold; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .etichetta { font-size: 5.5pt; text-transform: uppercase; color: #666; letter-spacing: .3pt; margin-top: 2.2mm; }
+  .titolare { font-size: 11pt; font-weight: bold; margin-top: .5mm; }
+  .riga { display: flex; gap: 6mm; }
+  .valore { font-size: 8pt; font-weight: bold; }
+  .retro { display: flex; align-items: center; gap: 3mm; }
+  .retro .qr svg { width: 30mm; height: 30mm; }
+  .retro .testo { font-size: 6.5pt; line-height: 1.35; color: #333; }
+  .retro .nota { font-size: 5.5pt; color: #666; margin-top: 2mm; }
+{% endblock %}
+{% block contenuto %}
+<div class="faccia fronte">
+  <div class="testata">
+    {% if organizzazione.logo %}<img src="risorsa:media/{{ organizzazione.logo.name }}" alt="">{% endif %}
+    <div class="ente">{{ organizzazione.denominazione }}</div>
+  </div>
+  <div class="anno">{{ tessera.anno }}</div>
+  <div class="etichetta">Titolare</div>
+  <div class="titolare">{% if tessera.socio.soggetto.titolo %}{{ tessera.socio.soggetto.titolo }} {% endif %}{{ tessera.socio.soggetto.nome }} {{ tessera.socio.soggetto.cognome }}</div>
+  <div class="riga">
+    <div><div class="etichetta">Socio n.</div><div class="valore">{{ tessera.socio.numero }}</div></div>
+    {% if tessera.socio.sezione %}<div><div class="etichetta">Sezione</div><div class="valore">{{ tessera.socio.sezione.nome }}</div></div>{% endif %}
+    <div><div class="etichetta">Tessera n.</div><div class="valore">{{ tessera.codice }}</div></div>
+  </div>
+  <div class="etichetta">{{ tessera.socio.tipologia }}</div>
+</div>
+<div class="faccia retro">
+  <div class="qr">{{ qr }}</div>
+  <div class="testo">
+    <strong>Verifica della tessera</strong><br>
+    Inquadrare il codice per controllare che la tessera sia valida.
+    <div class="nota">Copia digitale della tessera. La tessera è personale; quella rilasciata dalla sede resta il documento ufficiale.</div>
+  </div>
+</div>
+{% endblock %}

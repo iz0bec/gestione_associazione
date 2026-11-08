@@ -1,0 +1,41 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Verifica pubblica di una tessera (dal QR o con numero e cognome): solo l'essenziale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Verifica della tessera{% endblock %}
+{% block contenuto %}
+{% if cercato %}
+  {% if esito %}
+  <div class="card mb-3 {% if esito.valida %}border-success{% else %}border-danger{% endif %}">
+    <div class="card-body text-center py-4">
+      <i class="ti ti-{% if esito.valida %}circle-check text-green{% else %}circle-x text-red{% endif %} display-6" aria-hidden="true"></i>
+      <h1 class="h2 mt-2 mb-1">Tessera {% if esito.valida %}valida{% else %}non valida{% endif %}</h1>
+      <div class="text-secondary mb-3">{{ esito.motivo|capfirst }}</div>
+      <dl class="row text-start mx-auto mb-0 verifica-dati">
+        <dt class="col-5">Titolare</dt><dd class="col-7">{{ esito.nome }}</dd>
+        <dt class="col-5">Tessera</dt><dd class="col-7">n. {{ esito.codice }} · {{ esito.anno }}</dd>
+        {% if esito.sezione %}<dt class="col-5">Sezione</dt><dd class="col-7">{{ esito.sezione }}</dd>{% endif %}
+      </dl>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-warning">Nessuna tessera corrisponde a numero e cognome indicati. Controllare che siano scritti come sulla tessera.</div>
+  {% endif %}
+{% endif %}
+{% if not da_qr %}
+<form method="get" class="card" novalidate>
+  <div class="card-header"><h2 class="card-title">Verifica una tessera</h2></div>
+  <div class="card-body">
+    {% if errore %}<div class="alert alert-danger">{{ errore }}</div>{% endif %}
+    <div class="row g-2">
+      <div class="col-sm-5"><label class="form-label" for="numero">Numero della tessera</label><input class="form-control" id="numero" name="numero" value="{{ numero }}" maxlength="30" inputmode="numeric" autocomplete="off" required></div>
+      <div class="col-sm-7"><label class="form-label" for="cognome">Cognome del titolare</label><input class="form-control" id="cognome" name="cognome" value="{{ cognome }}" maxlength="100" autocomplete="off" required></div>
+    </div>
+    <div class="small text-secondary mt-2">Si vede solo se la tessera è valida, con nome, anno e sezione del titolare.</div>
+  </div>
+  <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-id-badge-2 me-1"></i>Verifica</button></div>
+</form>
+{% endif %}
+{% endblock %}

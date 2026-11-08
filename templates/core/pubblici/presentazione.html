@@ -32,6 +32,16 @@
   </div>
 </div>
 {% endif %}
+<form method="get" action="{% url 'verifica_tessera' %}" class="card mb-3">
+  <div class="card-header"><h2 class="card-title"><i class="ti ti-id-badge-2 me-1"></i>Verifica una tessera</h2></div>
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-4"><label class="form-label" for="verifica-numero">Numero della tessera</label><input class="form-control" id="verifica-numero" name="numero" maxlength="30" inputmode="numeric" autocomplete="off" required></div>
+      <div class="col-sm-5"><label class="form-label" for="verifica-cognome">Cognome</label><input class="form-control" id="verifica-cognome" name="cognome" maxlength="100" autocomplete="off" required></div>
+      <div class="col-sm-3"><button class="btn w-100" type="submit">Verifica</button></div>
+    </div>
+  </div>
+</form>
 {% if organizzazione.indirizzo or organizzazione.email or organizzazione.pec or organizzazione.telefono %}
 <div class="card">
   <div class="card-header"><h2 class="card-title">Contatti</h2></div>

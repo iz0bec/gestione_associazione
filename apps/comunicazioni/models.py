@@ -41,6 +41,7 @@ class Modello(models.Model):
         ANZIANITA = "anzianita", "Anniversario di iscrizione"
         RICORRENZA = "ricorrenza", "Ricorrenza"
         RINNOVO = "rinnovo", "Promemoria di rinnovo della quota"
+        TESSERA = "tessera", "Tessera digitale"
 
     nome = models.CharField(max_length=100, unique=True)
     uso = models.CharField(max_length=15, choices=Uso.choices, default=Uso.GENERICO)

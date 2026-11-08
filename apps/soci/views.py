@@ -371,6 +371,26 @@ class AnnullaTesseraView(_AzioneTesseraView):
         messages.success(request, f"Tessera {tessera.codice} annullata.")
 
 
+class TesseraDigitaleView(PermessoMixin, View):
+    """La tessera digitale in PDF, con il QR di verifica."""
+
+    permission_required = "soci.view_tessera"
+
+    def get(self, request, pk):
+        from . import tessera_digitale
+
+        tessera = get_object_or_404(
+            _tessere(request).select_related("socio__soggetto", "socio__sezione", "carta"),
+            pk=pk, annullata=False, carta__isnull=False,
+        )  # fmt: skip
+        pdf = tessera_digitale.pdf(tessera, request.user, request.build_absolute_uri("/"))
+        risposta = HttpResponse(pdf, content_type="application/pdf")
+        risposta["Content-Disposition"] = (
+            f'inline; filename="{tessera_digitale.nome_file(tessera)}"'
+        )
+        return risposta
+
+
 class RicevutaView(PermessoMixin, View):
     permission_required = "soci.view_tessera"
 

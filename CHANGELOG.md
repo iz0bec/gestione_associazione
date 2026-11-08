@@ -6,6 +6,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Tessera digitale**: PDF in formato carta con QR di verifica dalla scheda del socio, e invio per
+  email in bozza (nuovo modello *Tessera digitale*); la tessera ufficiale resta quella prestampata.
+- **Verifica pubblica della tessera** dal QR o con numero e cognome (anche nella pagina pubblica):
+  solo validità, nome, anno e sezione; limite di tentativi per indirizzo.
 - **Ricerca globale** dalla barra in alto: persone ed enti, soci, protocolli, riunioni, delibere, beni,
   appuntamenti e comunicazioni, raggruppati per modulo, secondo i permessi (soci della propria
   sezione, riservati solo con il permesso).

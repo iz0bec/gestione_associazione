@@ -681,6 +681,32 @@ def da_tessera(tessera, utente):
     )
 
 
+def da_tessera_digitale(tessera, utente, base_url):
+    """Invio (in bozza) della tessera digitale in PDF, con il QR di verifica."""
+    from apps.soci import tessera_digitale
+
+    if tessera.annullata:
+        raise OperazioneNonValida("La tessera è annullata.")
+    if not tessera.attribuita:
+        raise OperazioneNonValida("Alla tessera non è ancora attribuito un numero.")
+    modello = _modello(Modello.Uso.TESSERA)
+    if modello is None:
+        raise OperazioneNonValida("Manca un modello attivo per la tessera digitale.")
+    pdf = tessera_digitale.pdf(tessera, utente, base_url)
+    return crea_invio(
+        utente,
+        oggetto=modello.oggetto,
+        corpo=modello.corpo,
+        finalita=Finalita.ISTITUZIONALE,
+        soggetti=[tessera.socio.soggetto],
+        modello=modello,
+        allegati=[(tessera_digitale.nome_file(tessera), pdf)],
+        origine="tessera_digitale",
+        origine_id=tessera.pk,
+        contesto={"anno_quota": tessera.anno, "tessera": tessera.codice},
+    )
+
+
 def da_domanda(domanda, utente):
     if domanda.stato == "in_attesa":
         raise OperazioneNonValida("La domanda non è ancora stata valutata.")

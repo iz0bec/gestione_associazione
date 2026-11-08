@@ -88,6 +88,11 @@
                   {% if t.pagata and t.incasso_esterno %}<span class="small text-secondary">incassata fuori dall'applicazione</span>
                   {% elif t.pagata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta</a>
                   {% if perms.comunicazioni.add_invio and socio.soggetto.email %}<form class="d-inline" method="post" action="{% url 'comunicazioni:da_tessera' t.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Invia la ricevuta per email" aria-label="Invia la ricevuta per email"><i class="ti ti-mail"></i></button></form>{% endif %}
+                  {% endif %}
+                  {% if t.attribuita %}<a class="btn btn-sm" href="{% url 'soci:tessera_digitale' t.pk %}" target="_blank" data-stampa rel="noopener" title="Tessera digitale in PDF, con il QR di verifica"><i class="ti ti-id-badge-2 me-1"></i>Tessera</a>
+                  {% if perms.comunicazioni.add_invio and socio.soggetto.email %}<form class="d-inline" method="post" action="{% url 'comunicazioni:da_tessera_digitale' t.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Invia la tessera digitale per email" aria-label="Invia la tessera digitale per email"><i class="ti ti-send"></i></button></form>{% endif %}
+                  {% endif %}
+                  {% if t.pagata %}
                   {% elif perms.soci.incassa_quota and t.importo > 0 %}<button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ t.pk }}"><i class="ti ti-cash me-1"></i>Incassa</button>{% endif %}
                   {% if perms.soci.annulla_tessera %}<button class="btn btn-sm btn-ghost-danger" type="button" data-bs-toggle="modal" data-bs-target="#annulla-{{ t.pk }}" title="Annulla tessera" aria-label="Annulla tessera {{ t.codice }}"><i class="ti ti-x"></i></button>{% endif %}
                 {% endif %}

@@ -288,6 +288,11 @@ class DaTesseraView(_DaOrigineView):
         return t.socio
 
 
+class DaTesseraDigitaleView(DaTesseraView):
+    def crea(self, t, utente):
+        return servizi.da_tessera_digitale(t, utente, self.request.build_absolute_uri("/"))
+
+
 class DaDomandaView(_DaOrigineView):
     permission_required = ("comunicazioni.add_invio", "soci.view_domandaiscrizione")
 

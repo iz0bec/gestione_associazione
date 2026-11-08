@@ -55,3 +55,59 @@ class DomandaPubblicaView(_SoloSeAttiva, FormView):
 
 class DomandaInviataView(_SoloSeAttiva, TemplateView):
     template_name = "soci/pubblico/inviata.html"
+
+
+# --- verifica pubblica della tessera ----------------------------------------------------------
+
+LIMITE_VERIFICHE = 20  # ricerche per numero e cognome, per indirizzo IP e per ora
+
+
+def _troppe_verifiche(request):
+    from django.core.cache import cache
+
+    chiave = f"verifica-tessera:{ip_richiesta(request)}"
+    tentativi = cache.get(chiave, 0) + 1
+    cache.set(chiave, tentativi, 3600)
+    return tentativi > LIMITE_VERIFICHE
+
+
+@method_decorator(never_cache, name="dispatch")
+class VerificaTesseraView(TemplateView):
+    """Verifica con numero di tessera e cognome (dalla pagina pubblica)."""
+
+    template_name = "soci/pubblico/verifica.html"
+
+    def get_context_data(self, **kwargs):
+        from . import tessera_digitale
+
+        ctx = super().get_context_data(**kwargs)
+        numero = self.request.GET.get("numero", "").strip()[:30]
+        cognome = self.request.GET.get("cognome", "").strip()[:100]
+        ctx.update(numero=numero, cognome=cognome)
+        if numero or cognome:
+            if not (numero and cognome):
+                ctx["errore"] = "Indicare sia il numero della tessera sia il cognome."
+            elif _troppe_verifiche(self.request):
+                ctx["errore"] = "Troppe verifiche in poco tempo: riprovare più tardi."
+            else:
+                tessera = tessera_digitale.da_numero(numero, cognome)
+                ctx["cercato"] = True
+                ctx["esito"] = tessera_digitale.esito(tessera) if tessera else None
+        return ctx
+
+
+@method_decorator(never_cache, name="dispatch")
+class VerificaCodiceView(TemplateView):
+    """Verifica dal QR della tessera digitale."""
+
+    template_name = "soci/pubblico/verifica.html"
+
+    def get_context_data(self, **kwargs):
+        from . import tessera_digitale
+
+        ctx = super().get_context_data(**kwargs)
+        tessera = tessera_digitale.da_codice(kwargs.get("codice"))
+        if tessera is None:
+            raise Http404("Codice di verifica sconosciuto.")
+        ctx.update(cercato=True, esito=tessera_digitale.esito(tessera), da_qr=True)
+        return ctx

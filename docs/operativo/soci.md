@@ -114,6 +114,23 @@ dell'anagrafica). Dai pulsanti in alto:
 - **Annullamento**: pulsante ✕ con il motivo obbligatorio. Il tesseramento resta visibile come
   annullato e la ricevuta non viene riutilizzata; poi si può rifare il tesseramento.
 
+## Tessera digitale e verifica
+
+La tessera vera resta quella **prestampata dalla sede centrale** e consegnata a mano. In più, per
+ogni tessera attribuita, nella scheda del socio:
+
+- **Tessera** apre la **tessera digitale** in PDF, in formato carta (fronte con ente, anno, titolare,
+  numero di socio, sezione e numero di tessera; retro con un **QR di verifica**);
+- **✈ (invia)** prepara un'email **in bozza** al socio con la tessera digitale allegata, da
+  controllare e confermare in Comunicazioni (modello *Tessera digitale*). I soci non accedono al
+  programma: la tessera la ricevono così.
+
+**Verifica.** Chi inquadra il QR, o inserisce **numero della tessera e cognome** nella pagina
+`/verifica-tessera/` (c'è un riquadro anche nella pagina pubblica), vede solo se la tessera è
+**valida** - dell'anno in corso, non annullata, quota versata (o esente), titolare socio attivo - con
+nome, anno e sezione del titolare: nessun altro dato. Le ricerche per numero e cognome sono
+limitate a 20 l'ora per indirizzo; il codice nel QR è casuale e non si ricava dal numero.
+
 ## Rinnovo annuale
 
 ![L'incasso delle quote in blocco](immagini/incasso-quote.jpg)

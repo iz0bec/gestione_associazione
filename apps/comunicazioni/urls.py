@@ -24,6 +24,11 @@ urlpatterns = [
     path("<int:pk>/ritenta/", views.RitentaView.as_view(), name="ritenta"),
     path("da/riunione/<int:pk>/", views.DaRiunioneView.as_view(), name="da_riunione"),
     path("da/tessera/<int:pk>/", views.DaTesseraView.as_view(), name="da_tessera"),
+    path(
+        "da/tessera-digitale/<int:pk>/",
+        views.DaTesseraDigitaleView.as_view(),
+        name="da_tessera_digitale",
+    ),
     path("da/domanda/<int:pk>/", views.DaDomandaView.as_view(), name="da_domanda"),
     path("modelli/", views.ModelliView.as_view(), name="modelli"),
     path("modelli/nuovo/", views.ModelloNuovoView.as_view(), name="modello_nuovo"),

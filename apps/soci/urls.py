@@ -39,6 +39,11 @@ urlpatterns = [
     path("tessere/fisiche/<int:pk>/stato/", views.StatoCartaView.as_view(), name="stato_carta"),
     path("tessere/tesserati.csv", views.EsportaTesseratiView.as_view(), name="esporta_tesserati"),
     path("tessere/<int:pk>/ricevuta.pdf", views.RicevutaView.as_view(), name="ricevuta"),
+    path(
+        "tessere/<int:pk>/tessera-digitale.pdf",
+        views.TesseraDigitaleView.as_view(),
+        name="tessera_digitale",
+    ),
     path("domande/", views.DomandeView.as_view(), name="domande"),
     path("domande/modulo.pdf", views.ModuloVuotoView.as_view(), name="modulo_vuoto"),
     path("domande/<int:pk>/modulo.pdf", views.DomandaPdfView.as_view(), name="domanda_pdf"),

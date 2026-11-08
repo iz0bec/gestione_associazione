@@ -116,7 +116,8 @@ In **Sistema → Organizzazione**, riquadro *Pagina pubblica*: con **Pagina pubb
 spuntata, chi apre l'indirizzo principale dell'applicazione **senza aver fatto l'accesso** vede una
 pagina con il logo e la denominazione, le **finalità dell'associazione** (testo libero; una riga vuota
 separa i paragrafi), i **documenti pubblici**, i **contatti** (sede, telefono, email, PEC, codice
-fiscale), il pulsante **Accedi** e, se attive, **Chiedi l'iscrizione**. Chi ha fatto l'accesso vede
+fiscale), il riquadro **Verifica una tessera** (numero e cognome; vedi
+[Soci](soci.md#tessera-digitale-e-verifica)), il pulsante **Accedi** e, se attive, **Chiedi l'iscrizione**. Chi ha fatto l'accesso vede
 sempre il cruscotto. Senza la spunta l'indirizzo principale porta subito alla pagina di accesso.
 Il collegamento *Anteprima* mostra la pagina anche prima di attivarla.
 

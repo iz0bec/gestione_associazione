@@ -411,6 +411,10 @@ class Tessera(ModelloBase):
     annullata = models.BooleanField(default=False, editable=False)
     motivo_annullamento = models.CharField(max_length=255, blank=True, editable=False)
     note = models.CharField(max_length=255, blank=True)
+    token_verifica = models.CharField(
+        "codice di verifica", max_length=64, unique=True, null=True, blank=True, editable=False,
+        help_text="Nel QR della tessera digitale: porta alla pagina pubblica di verifica.",
+    )  # fmt: skip
 
     objects = TesseraQuerySet.as_manager()
 

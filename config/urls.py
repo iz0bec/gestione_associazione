@@ -21,7 +21,12 @@ from apps.core.views import (
 )
 from apps.core.viste_backup import StatoRipristinoView
 from apps.patrimonio.views import BenePubblicoView, FotoPubblicaView
-from apps.soci.pubblico import DomandaInviataView, DomandaPubblicaView
+from apps.soci.pubblico import (
+    DomandaInviataView,
+    DomandaPubblicaView,
+    VerificaCodiceView,
+    VerificaTesseraView,
+)
 
 admin.site.site_header = settings.APP_NOME
 admin.site.site_title = settings.APP_NOME
@@ -55,6 +60,12 @@ urlpatterns = [
         name="documento_pubblico",
     ),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
+    path("verifica-tessera/", VerificaTesseraView.as_view(), name="verifica_tessera"),
+    path(
+        "verifica-tessera/<str:codice>/",
+        VerificaCodiceView.as_view(),
+        name="verifica_tessera_codice",
+    ),
     path("configurazione-iniziale/", ConfigurazioneView.as_view(), name="configurazione_inizio"),
     path(
         "configurazione-iniziale/<str:passo>/", ConfigurazioneView.as_view(), name="configurazione"
