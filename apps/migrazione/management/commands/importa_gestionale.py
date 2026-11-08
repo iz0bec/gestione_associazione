@@ -32,7 +32,11 @@ class Command(BaseCommand):
         gs.add_argument("--conto", help="Conto della cassa importata (predefinito: contanti)")
         gs.add_argument("--senza-tesoreria", action="store_true")
         gs.add_argument("--senza-beni", action="store_true")
-        for p in (gs,):
+        asm = sotto.add_parser("assemblee", help="Gestione Assemblee (database SQLite)")
+        asm.add_argument(
+            "database", help="File .db di Gestione Assemblee (instance/ancr_gestione.db)"
+        )
+        for p in (gs, asm):
             p.add_argument("--utente", help="Username registrato come autore (audit)")
             p.add_argument("--esegui", action="store_true", help="Applica (senza: anteprima)")
             p.add_argument("--dettagli", action="store_true", help="Mostra ogni record")
@@ -74,3 +78,8 @@ class Command(BaseCommand):
             beni=not o["senza_beni"],
         )  # fmt: skip
         return gestione_soci.importa(o["database"], opzioni, utente, esegui=o["esegui"])
+
+    def _assemblee(self, o, utente):
+        from apps.migrazione import assemblee
+
+        return assemblee.importa(o["database"], utente, esegui=o["esegui"])
