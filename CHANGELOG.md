@@ -10,6 +10,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   finestra modale di avanzamento («riga N di M») aggiornata ogni secondo; avanzamento anche nel
   comando `importa_registro_soci`.
 
+- Importazione: la sezione del file si riconosce **per comune** (predefinito), per nome o per
+  codice, a scelta; solo sezioni attive; l'anteprima mostra l'abbinamento di ogni valore.
+- Un comune può avere una sola sezione attiva (pagina Sezioni e configurazione guidata).
+
 ### Corretto
 - Importazioni lunghe dall'interfaccia interrotte dal tempo massimo delle richieste (120 s) e quindi
   annullate per intero: ora girano in un processo separato senza limite di tempo.

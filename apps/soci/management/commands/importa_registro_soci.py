@@ -24,6 +24,10 @@ class Command(BaseCommand):
         parser.add_argument("file")
         parser.add_argument("--sezione", help="Codice della sezione per le righe senza sezione")
         parser.add_argument("--tipologia", default="Ordinario", help="Tipologia predefinita")
+        parser.add_argument(
+            "--abbina", choices=["comune", "nome", "codice"], default="comune",
+            help="Campo delle sezioni da confrontare con la colonna Sezione del file",
+        )  # fmt: skip
         parser.add_argument("--crea-sezioni", action="store_true")
         parser.add_argument("--allinea-sezione", action="store_true")
         parser.add_argument("--anno-tessere", type=int, help="Se il file non ha «Anno sociale»")
@@ -63,6 +67,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Colonne ignorate: {', '.join(ignorate)}")
         opzioni = importazione.Opzioni(
             sezione=sezione, tipologia=tipologia, crea_sezioni=o["crea_sezioni"],
+            abbina=o["abbina"],
             allinea_sezione=o["allinea_sezione"], anno_tessere=o["anno_tessere"],
             tessere=not o["senza_tessere"], crea_tessere=not o["non_creare_tessere"],
             cessazioni=not o["senza_cessazioni"], quote_pagate=o["quote_pagate"],
@@ -79,6 +84,8 @@ class Command(BaseCommand):
         for e in r.esiti:
             if o["dettagli"] or e.stato == "errore":
                 self.stdout.write(f"  riga {e.riga:>5} {e.stato:<10} {e.nome}: {'; '.join(e.note)}")
+        for valore, esito in r.abbinamenti.items():
+            self.stdout.write(f"Sezione «{valore}» -> {esito}")
         if r.sezioni_nuove:
             self.stdout.write(f"Sezioni nuove: {', '.join(r.sezioni_nuove)}")
         if r.assenti:

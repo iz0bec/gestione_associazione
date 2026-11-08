@@ -100,6 +100,9 @@ class TestConfigurazione:
                                                   "elenco": "085; Avigliano; Avigliano, pz"})  # fmt: skip
         s = Sezione.objects.get(codice="085")
         assert (s.comune, s.provincia) == ("Avigliano", "PZ")
+        r = admin_client.post(passo("sezioni"), {"struttura": "federazione",
+                                                  "elenco": "1; A; Ruoti\n2; B; RUOTI, PZ"})  # fmt: skip
+        assert "una sola sezione" in r.content.decode()
         r = admin_client.post(passo("sezioni"), {"struttura": "federazione", "elenco": "solo nome"})
         assert r.status_code == 200 and "codice e nome" in r.content.decode()
 

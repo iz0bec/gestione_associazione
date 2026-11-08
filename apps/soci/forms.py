@@ -301,6 +301,19 @@ class ImportaForm(StileMixin, forms.Form):
         label="Tipologia predefinita",
         help_text="Per le righe senza tipologia o con una tipologia non riconosciuta.",
     )
+    abbina = forms.ChoiceField(
+        label="Riconosci la sezione del file per",
+        choices=[
+            ("comune", "Comune della sezione (ogni comune ha una sola sezione)"),
+            ("nome", "Nome della sezione"),
+            ("codice", "Codice della sezione"),
+        ],
+        initial="comune",
+        required=False,
+        widget=forms.RadioSelect,
+        help_text="Il valore della colonna «Sezione» del file (es. RIONERO IN VULTURE) viene "
+        "confrontato con questo campo delle sezioni registrate.",
+    )
     crea_sezioni = forms.BooleanField(
         label="Crea le sezioni presenti nel file e non ancora registrate", required=False
     )
@@ -362,6 +375,22 @@ class SezioneForm(StileMixin, forms.ModelForm):
 
     def clean_provincia(self):
         return self.cleaned_data["provincia"].strip().upper()
+
+    def clean(self):
+        """Ogni comune ha una sola sezione attiva."""
+        from .importazione import comune_normale
+
+        dati = super().clean()
+        n = comune_normale(dati.get("comune", ""))
+        if n and dati.get("attiva"):
+            for altra in Sezione.objects.filter(attiva=True).exclude(pk=self.instance.pk):
+                if comune_normale(altra.comune) == n:
+                    self.add_error(
+                        "comune",
+                        f"Il comune ha già una sezione attiva: {altra.codice} {altra.nome}.",
+                    )
+                    break
+        return dati
 
     def clean_attiva(self):
         attiva = self.cleaned_data["attiva"]

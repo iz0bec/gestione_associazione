@@ -901,6 +901,7 @@ class ImportaView(PermessoMixin, FormView):
         consentite = sezioni.id_sezioni(utente)
         return {
             "sezione": d["sezione"].pk if d.get("sezione") else None,
+            "abbina": d.get("abbina") or "comune",
             "tipologia": d["tipologia"].pk if d.get("tipologia") else None,
             "crea_sezioni": bool(d.get("crea_sezioni")) and utente.has_perm("soci.add_sezione"),
             "allinea_sezione": bool(d.get("allinea_sezione")),

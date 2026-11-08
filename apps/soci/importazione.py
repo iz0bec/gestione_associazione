@@ -295,6 +295,7 @@ def _pulisci(riga):
 @dataclass
 class Opzioni:
     sezione: Sezione | None = None  # se il file non ha la colonna sezione
+    abbina: str = "comune"  # come riconoscere la sezione del file: comune, nome, codice
     tipologia: TipologiaSocio | None = None  # se la tipologia manca o non è riconosciuta
     crea_sezioni: bool = False
     allinea_sezione: bool = False  # sposta i soci esistenti nella sezione del registro
@@ -319,6 +320,7 @@ class Esito:
 class Rapporto:
     esiti: list = field(default_factory=list)
     sezioni_nuove: list = field(default_factory=list)
+    abbinamenti: dict = field(default_factory=dict)  # valore del file -> sezione scelta
     assenti: list = field(default_factory=list)  # soci attivi locali non presenti nel file
     eseguito: bool = False
 
@@ -362,34 +364,82 @@ def _codice_nuovo(nome):
     return codice
 
 
+ABBINAMENTI = {
+    "comune": "comune",
+    "nome": "nome della sezione",
+    "codice": "codice della sezione",
+}
+
+
+def comune_normale(testo):
+    """«Avigliano, PZ», «AVIGLIANO (PZ)», «Avigliano» -> «avigliano»."""
+    testo = re.sub(r"\(.*?\)", " ", testo or "")
+    testo = re.sub(r",\s*[A-Za-z]{2}\s*$", "", testo.strip())
+    return normalizza(testo)
+
+
+def _cerca_per(campo, valore):
+    """Sezioni attive corrispondenti (a quelle disattivate non si assegnano soci)."""
+    attive = Sezione.objects.filter(attiva=True)
+    if campo == "codice":
+        return list(attive.filter(codice__iexact=valore))
+    if campo == "comune":
+        n = comune_normale(valore)
+        return [s for s in attive if n and comune_normale(s.comune) == n]
+    trovata = _cerca_sezione(valore)
+    return [trovata] if trovata and trovata.attiva else []
+
+
 def _sezione(d, opzioni, cache, rapporto):
-    codice, nome = d.get("codice_sezione", ""), d.get("sezione", "")
-    chiave = (codice.lower(), nome.lower())
+    """Sezione della riga, cercata per comune, nome o codice (opzioni.abbina)."""
+    campo = opzioni.abbina
+    valore = d.get("sezione", "")
+    if campo == "codice" and d.get("codice_sezione"):
+        valore = d["codice_sezione"]
+    chiave = valore.lower()
     if chiave in cache:
+        if isinstance(cache[chiave], _Errore):
+            raise cache[chiave]
         return cache[chiave]
-    sezione = None
-    if codice:
-        sezione = Sezione.objects.filter(codice__iexact=codice).first()
-    if sezione is None and nome:
-        sezione = _cerca_sezione(nome)
-    if sezione is None and (codice or nome):
-        if not opzioni.crea_sezioni:
-            raise _Errore(f"sezione «{nome or codice}» non presente (abilitare la creazione)")
-        try:
-            with transaction.atomic():
-                sezione = Sezione.objects.create(
-                    codice=codice or _codice_nuovo(nome), nome=nome or codice, comune=nome
+    try:
+        if not valore:
+            sezione = opzioni.sezione
+            if sezione is None:
+                raise _Errore("sezione non indicata")
+        else:
+            trovate = _cerca_per(campo, valore)
+            if len(trovate) > 1:
+                elenco = ", ".join(f"{s.codice} {s.nome}" for s in trovate)
+                raise _Errore(f"più sezioni con {ABBINAMENTI[campo]} «{valore}»: {elenco}")
+            if trovate:
+                sezione = trovate[0]
+            elif not opzioni.crea_sezioni:
+                raise _Errore(
+                    f"nessuna sezione con {ABBINAMENTI[campo]} «{valore}» "
+                    "(correggere le sezioni o abilitare la creazione)"
                 )
-        except IntegrityError:
-            raise _Errore(f"sezione «{nome or codice}»: codice o nome già usati") from None
-        rapporto.sezioni_nuove.append(sezione.nome)
-    if sezione is None:
-        sezione = opzioni.sezione
-    if sezione is None:
-        raise _Errore("sezione non indicata")
-    if opzioni.sezioni_consentite is not None and sezione.pk not in opzioni.sezioni_consentite:
-        raise _Errore(f"sezione «{sezione}» non consentita all'utente")
+            else:
+                try:
+                    with transaction.atomic():
+                        sezione = Sezione.objects.create(
+                            codice=valore[:20] if campo == "codice" else _codice_nuovo(valore),
+                            nome=valore,
+                            comune="" if campo == "codice" else valore,
+                        )
+                except IntegrityError:
+                    raise _Errore(f"sezione «{valore}»: codice o nome già usati") from None
+                rapporto.sezioni_nuove.append(sezione.nome)
+        if opzioni.sezioni_consentite is not None and sezione.pk not in opzioni.sezioni_consentite:
+            raise _Errore(f"sezione «{sezione}» non consentita all'utente")
+    except _Errore as e:
+        cache[chiave] = e
+        if valore:
+            rapporto.abbinamenti[valore] = f"non abbinata: {e}"
+        raise
     cache[chiave] = sezione
+    if valore:
+        nuova = " (nuova)" if sezione.nome in rapporto.sezioni_nuove else ""
+        rapporto.abbinamenti[valore] = f"{sezione.codice} {sezione.nome}{nuova}"
     return sezione
 
 
@@ -614,7 +664,7 @@ def elabora(righe, opzioni, utente, *, esegui=False, avanzamento=None):
                 rapporto.esiti.append(Esito(grezza["_riga"], nome, "errore", [str(e)]))
             except ValidationError as e:
                 rapporto.esiti.append(Esito(grezza["_riga"], nome, "errore", e.messages))
-        sezioni_file = {s.pk for s in cache.values()}
+        sezioni_file = {s.pk for s in cache.values() if isinstance(s, Sezione)}
         trovati = {e.socio_id for e in rapporto.esiti if e.socio_id}
         rapporto.assenti = [(s.numero, s.soggetto.nome_completo, s.sezione_id)
                             for s in _assenti(sezioni_file, trovati)]  # fmt: skip

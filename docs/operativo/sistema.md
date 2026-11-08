@@ -60,7 +60,9 @@ e su richiesta, da scaricare e conservare fuori dal server; ripristino con confe
 
 ## Sezioni
 
-**Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Con
+**Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Ogni
+comune ha **una sola sezione attiva**: il comune serve anche a riconoscere la sezione nell'importazione
+dal registro nazionale, quindi va scritto come nel registro (es. «Rionero in Vulture»). Con
 una sola sezione l'applicazione si comporta come per un'associazione singola. Con più sezioni
 compaiono il filtro e la scelta della sezione in soci, tessere e domande di iscrizione. Una
 sezione con soci attivi non si può disattivare.

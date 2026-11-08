@@ -228,7 +228,7 @@ federazione) si carica così com'è. Ecco cosa si ricava:
 
 | Colonna del registro | Cosa diventa |
 |---|---|
-| Sezione | sezione del socio (riconosciuta anche se scritta diversamente, es. «AVIGLIANO» e «ANCR Sezione di Avigliano»; se manca si crea, con l'opzione) |
+| Sezione | sezione del socio, riconosciuta **per comune** (vedi sotto); se manca si crea, con l'opzione |
 | Cognome, Nome, Luogo e Data di nascita, CodiceFiscale, Indirizzo, CAP, Città, PR, Email | scheda anagrafica (nomi e luoghi scritti in maiuscolo diventano «Rionero in Vulture») |
 | Telefono | separato in telefono fisso e cellulare |
 | Data di ammissione a socio | data di ammissione nel libro soci |
@@ -247,6 +247,18 @@ Per le **quote** dei tesseramenti importati si sceglie al momento dell'importazi
 - **già incassate**: risultano pagate alla data della tessera, *incassate fuori dall'applicazione*.
   Non hanno ricevuta e non vanno in prima nota, perché gli incassi sono avvenuti prima. I codici fiscali non validi non vengono usati per riconoscere la
 persona, ma restano nelle note della scheda per poterli correggere.
+
+**Come si riconosce la sezione.** Il valore della colonna «Sezione» del file (es. «RIONERO IN
+VULTURE») si confronta, a scelta, con:
+
+- il **comune** delle sezioni (predefinito): poiché ogni comune ha una sola sezione è il confronto più
+  sicuro, e non dipende da come è stato scritto il nome («Sezione Rionero», «ANCR Rionero»...).
+  Maiuscole, accenti e una provincia scritta dopo («Rionero in Vulture, PZ») non contano;
+- il **nome** della sezione, anche se scritto diversamente («AVIGLIANO» e «ANCR Sezione di Avigliano»);
+- il **codice** della sezione (o la colonna «Codice sezione», se il file ce l'ha).
+
+Si considerano solo le sezioni **attive**. L'anteprima elenca per ogni valore del file la sezione
+scelta, o il motivo per cui non è stata abbinata (nessuna sezione con quel comune, oppure più di una).
 
 Per altri formati le colonne sono riconosciute dalle intestazioni, anche se il file ha righe di
 titolo sopra:

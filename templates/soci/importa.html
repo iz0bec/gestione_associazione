@@ -33,6 +33,11 @@
     </div>
     {% if colonne %}<p class="small text-secondary mb-1"><strong>Colonne riconosciute:</strong> {{ colonne|join:", " }}.</p>{% endif %}
     {% if ignorate %}<p class="small text-secondary mb-1"><strong>Colonne ignorate:</strong> {{ ignorate|join:", " }}.</p>{% endif %}
+    {% if rapporto.abbinamenti %}
+    <div class="small mb-2"><strong>Sezioni del file:</strong>
+      <ul class="mb-0">{% for valore, esito in rapporto.abbinamenti.items %}<li>{{ valore }} → {% if "non abbinata" in esito %}<span class="text-red">{{ esito }}</span>{% else %}{{ esito }}{% endif %}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
     {% if rapporto.sezioni_nuove %}<p class="small mb-1"><strong>Sezioni {% if rapporto.eseguito %}create{% else %}da creare{% endif %}:</strong> {{ rapporto.sezioni_nuove|join:", " }}.</p>{% endif %}
     <p class="small text-secondary mb-0">Le schede anagrafiche esistenti sono solo completate nei dati mancanti: ciò che è già registrato qui non viene sovrascritto (le differenze sono segnalate nelle note).</p>
   </div>
@@ -81,6 +86,7 @@
           <div class="col-md-6">{{ form.sezione.as_field_group }}</div>
           <div class="col-md-6">{{ form.tipologia.as_field_group }}</div>
         </div>
+        {{ form.abbina.as_field_group }}
         {% if perms.soci.add_sezione %}{{ form.crea_sezioni.as_field_group }}{% endif %}
         {{ form.allinea_sezione.as_field_group }}
         {{ form.cessazioni.as_field_group }}

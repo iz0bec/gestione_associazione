@@ -85,6 +85,7 @@ def opzioni_da_dict(d):
     return importazione.Opzioni(
         sezione=Sezione.objects.filter(pk=d.get("sezione")).first() if d.get("sezione") else None,
         tipologia=TipologiaSocio.objects.filter(pk=d.get("tipologia")).first(),
+        abbina=d.get("abbina", "comune"),
         crea_sezioni=d.get("crea_sezioni", False),
         allinea_sezione=d.get("allinea_sezione", False),
         tessere=d.get("tessere", True),

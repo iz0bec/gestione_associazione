@@ -95,6 +95,14 @@ class SezioniForm(StileMixin, forms.Form):
                 d["righe"].append((parti[0][:20], parti[1][:150], parti[2][:100], provincia))
             if not d["righe"]:
                 raise ValidationError("Indicare almeno una sezione.")
+            from apps.soci.importazione import comune_normale
+
+            comuni = [comune_normale(r[2]) for r in d["righe"] if r[2]]
+            doppi = sorted({c for c in comuni if comuni.count(c) > 1})
+            if doppi:
+                raise ValidationError(
+                    f"Ogni comune può avere una sola sezione: ripetuto {', '.join(doppi)}."
+                )
         return d
 
 

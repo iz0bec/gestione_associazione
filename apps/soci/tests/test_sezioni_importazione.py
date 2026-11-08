@@ -46,7 +46,9 @@ def ordinario():
 
 @pytest.fixture
 def nord():
-    return Sezione.objects.create(codice="N01", nome="Sezione Nord")
+    return Sezione.objects.create(
+        codice="N01", nome="Sezione Nord", comune="Nordville", provincia="PZ"
+    )
 
 
 def xlsx(righe, titolo=True):
@@ -161,10 +163,10 @@ class TestImportazione:
         return [
             INTESTAZIONI,
             ["A123", "ROSSI", "MARIO", CF_ROSSI, "15/03/1950", "AVIGLIANO", "M.Rossi@Example.org",
-             "Sezione Nord", "1001", "x"],
-            ["A124", "Bianchi", "Laura", CF_BIANCHI, date(1980, 1, 1), "Potenza", "", "Sezione Nord",
+             "NORDVILLE", "1001", "x"],
+            ["A124", "Bianchi", "Laura", CF_BIANCHI, date(1980, 1, 1), "Potenza", "", "Nordville",
              "1002", "y"],
-            ["A125", "Senza", "Sezione", "", "", "", "", "Sezione Inesistente", "", ""],
+            ["A125", "Senza", "Sezione", "", "", "", "", "Altrove", "", ""],
         ]  # fmt: skip
 
     def test_lettura_intestazioni(self):
@@ -204,7 +206,8 @@ class TestImportazione:
         _, righe, _ = importazione.leggi("r.xlsx", xlsx(self.righe()))
         opzioni = importazione.Opzioni(tipologia=ordinario, crea_sezioni=True)
         r = importazione.elabora(righe, opzioni, capo, esegui=True)
-        assert r.sezioni_nuove == ["Sezione Inesistente"] and r.riepilogo["errore"] == 0
+        assert r.sezioni_nuove == ["Altrove"] and r.riepilogo["errore"] == 0
+        assert Sezione.objects.get(nome="Altrove").comune == "Altrove"
         limitate = importazione.Opzioni(tipologia=ordinario, sezioni_consentite={nord.pk})
         r = importazione.elabora(righe, limitate, capo)
         assert "non consentita" in r.esiti[2].note[0]
@@ -240,7 +243,8 @@ class TestImportazione:
             assert r.status_code == 302 and "lavoro=" in r.url
             lavoro = r.url.split("lavoro=")[1]
             html = client.get(r.url).content.decode()
-            assert "Anteprima" in html and "Sezione Inesistente" in html
+            assert "Anteprima" in html and "Nordville → N01 Sezione Nord" in html
+            assert 'Altrove → <span class="text-red">non abbinata' in html
             assert 'id="modale-importazione"' in html and not Socio.objects.exists()
             # la finestra chiede l'avanzamento: a lavoro finito rimanda al rapporto
             a = client.get(reverse("soci:importa_avanzamento", args=[lavoro]))
@@ -350,3 +354,49 @@ class TestQuoteImportate:
         e = tesoreria.apri_esercizio(2026, capo)
         assert not tesoreria.quote_da_registrare(e).exists()
         assert tesoreria.registra_quota(t, capo)[0] is None
+
+
+class TestAbbinamentoSezioni:
+    """Ogni comune ha una sola sezione: il file si abbina per comune (o per nome o codice)."""
+
+    def righe(self, valore):
+        return [{"_riga": 2, "cognome": "Rossi", "nome": "Mario", "codice_fiscale": CF_ROSSI,
+                 "sezione": valore}]  # fmt: skip
+
+    def test_per_comune_nome_codice(self, capo, ordinario):
+        s = Sezione.objects.create(codice="085", nome="ANCR Sezione di Rionero",
+                                   comune="Rionero in Vulture, PZ")  # fmt: skip
+        for campo, valore in [("comune", "RIONERO IN VULTURE"), ("nome", "Rionero"),
+                              ("codice", "085")]:  # fmt: skip
+            r = importazione.elabora(self.righe(valore), importazione.Opzioni(
+                tipologia=ordinario, abbina=campo), capo)  # fmt: skip
+            assert r.riepilogo["errore"] == 0, (campo, r.esiti[0].note)
+            assert list(r.abbinamenti.values()) == ["085 ANCR Sezione di Rionero"]
+        # per comune il nome non conta, e viceversa
+        r = importazione.elabora(self.righe("Rionero"), importazione.Opzioni(tipologia=ordinario),
+                                 capo)  # fmt: skip
+        assert r.riepilogo["errore"] == 1 and "nessuna sezione con comune" in r.esiti[0].note[0]
+        assert s.pk
+
+    def test_comune_ambiguo_e_unicita(self, capo, ordinario):
+        from apps.soci.forms import SezioneForm
+
+        Sezione.objects.create(codice="A", nome="Uno", comune="Ruoti")
+        Sezione.objects.create(codice="B", nome="Due", comune="RUOTI (PZ)")
+        r = importazione.elabora(self.righe("Ruoti"), importazione.Opzioni(tipologia=ordinario),
+                                 capo)  # fmt: skip
+        assert "più sezioni con comune" in r.esiti[0].note[0]
+        Sezione.objects.filter(codice="A").update(
+            attiva=False
+        )  # le sezioni disattivate non contano
+        r = importazione.elabora(self.righe("Ruoti"), importazione.Opzioni(tipologia=ordinario),
+                                 capo)  # fmt: skip
+        assert r.riepilogo["errore"] == 0 and list(r.abbinamenti.values()) == ["B Due"]
+        form = SezioneForm({"codice": "C", "nome": "Tre", "comune": "ruoti, pz", "ordine": 0,
+                            "attiva": "on"})  # fmt: skip
+        assert not form.is_valid() and "già una sezione" in str(form.errors["comune"])
+        # una sezione con comune ripetuto si può sempre disattivare
+        a = Sezione.objects.get(codice="A")
+        form = SezioneForm({"codice": "A", "nome": "Uno", "comune": "Ruoti", "ordine": 0},
+                           instance=a)  # fmt: skip
+        assert form.is_valid(), form.errors
