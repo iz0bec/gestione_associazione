@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.9] - 2026-11-08
+
+### Corretto
+- La 0.0.1-rc.8 non conteneva il modulo dell'IP reale (`apps/core/rete.py`), richiesto dalla
+  configurazione: **non installarla**, usare questa.
+
 ## [0.0.1-rc.8] - 2026-11-08
 
 IP reale dei visitatori dietro reverse proxy.
