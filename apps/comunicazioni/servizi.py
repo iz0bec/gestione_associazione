@@ -38,6 +38,7 @@ from .models import (
     Finalita,
     Invio,
     Modello,
+    PromemoriaRinnovo,
     Ricorrenza,
 )
 
@@ -492,6 +493,94 @@ def auguri_del_giorno(oggi=None, adesso=None):
         auto.save(update_fields=["ultimo_giorno"])
     creati += _ricorrenze_del_giorno(oggi)
     return creati
+
+
+def _euro(valore):
+    return f"{valore:.2f}".replace(".", ",")
+
+
+def soci_da_sollecitare(anno):
+    """Soci attivi non in regola con la quota dell'anno: (socio, contesto del messaggio)."""
+    from apps.soci.models import Socio, Tessera
+    from apps.soci.servizi import quota_per
+
+    soci = Socio.objects.morosi(anno).select_related("soggetto", "tipologia")
+    tessere = {
+        t.socio_id: t
+        for t in Tessera.objects.valide().filter(anno=anno, socio__in=soci, pagata_il__isnull=True)
+    }
+    elenco = []
+    for socio in soci:
+        tessera = tessere.get(socio.pk)
+        importo = tessera.importo if tessera else quota_per(socio.tipologia, anno)
+        contesto = {"anno_quota": anno, "importo": _euro(importo)}
+        if tessera and tessera.codice:
+            contesto["tessera"] = tessera.codice
+        elenco.append((socio, contesto))
+    return elenco
+
+
+def promemoria_rinnovo(oggi=None, adesso=None, *, utente=None, subito=False):
+    """Promemoria ai soci non in regola. Dal pianificatore (subito=False) parte solo nelle date
+    impostate, dopo l'ora indicata, una volta al giorno, ed è confermato; con `subito` prepara
+    un invio in bozza da controllare. Nessuno lo riceve due volte nello stesso giorno."""
+    conf = PromemoriaRinnovo.corrente()
+    oggi = oggi or timezone.localdate()
+    ora = (adesso or timezone.localtime()).hour
+    if not subito and (
+        not conf.attivo
+        or conf.ultimo_giorno == oggi
+        or ora < conf.ora
+        or (oggi.day, oggi.month) not in conf.date_scelte()
+    ):
+        return None
+    modello = conf.modello or _modello(Modello.Uso.RINNOVO)
+    if modello is None:
+        if subito:
+            raise OperazioneNonValida("Manca un modello di promemoria di rinnovo attivo.")
+        log.warning("Promemoria di rinnovo: nessun modello")
+        return None
+    chiave = f"rinnovo-{oggi.year}"
+    nuovi = []
+    for socio, contesto in soci_da_sollecitare(oggi.year):
+        try:
+            with transaction.atomic():
+                DestinatarioRegistrato.objects.create(
+                    automazione=chiave, soggetto=socio.soggetto, giorno=oggi
+                )
+            nuovi.append((socio.soggetto, contesto))
+        except IntegrityError:
+            continue
+    if not subito:
+        conf.ultimo_giorno = oggi
+        conf.save(update_fields=["ultimo_giorno"])
+    if not nuovi:
+        if subito:
+            raise OperazioneNonValida(
+                "Nessun socio da sollecitare oggi: sono tutti in regola o hanno già ricevuto "
+                "il promemoria in giornata."
+            )
+        return None
+    invio = crea_invio(
+        utente,
+        oggetto=modello.oggetto,
+        corpo=modello.corpo,
+        finalita=Finalita.ISTITUZIONALE,
+        soggetti=[s for s, _c in nuovi],
+        modello=modello,
+        origine="rinnovo",
+        contesti_soggetto={s.pk: c for s, c in nuovi},
+    )
+    DestinatarioRegistrato.objects.filter(
+        automazione=chiave, giorno=oggi, soggetto__in=[s for s, _c in nuovi]
+    ).update(invio=invio)
+    if subito:
+        return invio
+    if invio.destinatari.filter(stato=Destinatario.Stato.IN_ATTESA).exists():
+        return conferma(invio, None)
+    invio.stato = Invio.Stato.ANNULLATO
+    invio.save(update_fields=["stato"])
+    return invio
 
 
 def _ricorrenze_del_giorno(oggi):

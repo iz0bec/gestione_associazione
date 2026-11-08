@@ -16,7 +16,15 @@ from apps.organi.forms import CampoDataOra
 from apps.protocollo.forms import CampoFileMultiplo
 
 from .anniversari import normalizza_nome
-from .models import Automazione, Finalita, Lista, Modello, Onomastico, Ricorrenza
+from .models import (
+    Automazione,
+    Finalita,
+    Lista,
+    Modello,
+    Onomastico,
+    PromemoriaRinnovo,
+    Ricorrenza,
+)
 from .servizi import SEGNAPOSTO, leggi_indirizzi, segnaposto_sconosciuti
 
 AIUTO_SEGNAPOSTO = "Segnaposto: " + ", ".join("{{ " + k + " }}" for k in SEGNAPOSTO)
@@ -150,3 +158,25 @@ class AutomazioneForm(StileMixin, forms.ModelForm):
         self.fields["modello"].empty_label = "— il primo modello attivo di questo tipo —"
         if self.instance.tipo != Automazione.Tipo.ANZIANITA:
             del self.fields["anni"]
+
+
+class PromemoriaRinnovoForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = PromemoriaRinnovo
+        fields = ["attivo", "modello", "date_invio", "ora"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["modello"].queryset = Modello.objects.filter(uso="rinnovo", attivo=True)
+        self.fields["modello"].empty_label = "— il primo modello attivo di questo tipo —"
+
+    def clean_date_invio(self):
+        valore = self.cleaned_data["date_invio"]
+        prova = PromemoriaRinnovo(date_invio=valore)
+        if not prova.date_scelte():
+            raise forms.ValidationError(
+                "Indicare almeno una data nella forma giorno/mese, es. 15/01."
+            )
+        return ", ".join(
+            f"{g:02d}/{m:02d}" for g, m in sorted(prova.date_scelte(), key=lambda d: (d[1], d[0]))
+        )

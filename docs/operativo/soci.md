@@ -122,6 +122,26 @@ incassato e da incassare, soci non in regola e soci ancora senza tessera.
 **Soci**, filtro *Quota: non in regola* (con l'anno accanto): elenco dei soci attivi senza la
 tessera pagata. Si può esportare in CSV dal menu *Stampa ed esporta*. Lo stesso dato è sul cruscotto.
 
+### Promemoria di rinnovo
+
+**Tesseramento → Promemoria di rinnovo** (Amministratore di sistema, Segretario e Tesoriere li
+impostano; il Presidente li consulta). Nelle **date dell'anno** indicate (es. `15/01, 01/03, 15/04,
+01/06`), dopo l'**ora** scelta, il programma scrive per email ai soci non in regola con la quota
+dell'anno, con l'**importo dovuto** (quello della tessera già rilasciata e non pagata, altrimenti
+la quota del listino per la tipologia) e il numero di tessera se c'è. Sono **spenti** dopo
+l'installazione: si attivano con la spunta *Attivo*.
+
+- Esclusi gli esenti (quota 0), i cessati, i deceduti e chi non ha l'email: la pagina indica
+  quanti soci non in regola sono **senza email**, da contattare in altro modo.
+- Nessuno riceve il promemoria due volte nello stesso giorno.
+- **Prepara ora il promemoria** crea subito un invio **in bozza** con tutti i destinatari: lo si
+  controlla e lo si conferma in *Comunicazioni*, come ogni altro invio.
+- Il testo è il modello *Promemoria di rinnovo della quota* (Comunicazioni → Modelli), con i
+  segnaposto `{{ anno_quota }}`, `{{ importo }}` e `{{ tessera }}`.
+
+Il promemoria è una comunicazione istituzionale (non serve un consenso specifico). Per l'invio
+automatico serve il pianificatore attivo sul server.
+
 ## Domande di iscrizione
 
 La domanda ha **gli stessi campi e le stesse dichiarazioni del modulo di richiesta di adesione e

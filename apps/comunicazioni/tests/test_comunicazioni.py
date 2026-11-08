@@ -27,6 +27,7 @@ from apps.comunicazioni.models import (
     Invio,
     Lista,
     Modello,
+    PromemoriaRinnovo,
     Ricorrenza,
 )
 from apps.core.models import Organizzazione
@@ -347,3 +348,75 @@ class TestViste:
         assert c.get(reverse("comunicazioni:anniversari")).status_code == 200
         assert c.get(reverse("comunicazioni:invii")).status_code == 403
         assert c.get(reverse("comunicazioni:nuovo")).status_code == 403
+
+
+class TestPromemoriaRinnovo:
+    @pytest.fixture
+    def soci_misti(self, utente):
+        ordinario = TipologiaSocio.objects.get(nome="Ordinario")
+        ordinario.quota_annua = Decimal("25")
+        ordinario.save()
+        moroso = soci.ammetti_socio(persona("Moroso"), ordinario, utente)
+        con_tessera = soci.ammetti_socio(persona("Tessera"), ordinario, utente)
+        soci.rilascia_tessera(con_tessera, OGGI.year, utente, importo=Decimal("30"))
+        pagato = soci.ammetti_socio(persona("Pagato"), ordinario, utente)
+        soci.rilascia_tessera(pagato, OGGI.year, utente, pagata_il=OGGI)
+        soci.ammetti_socio(persona("Senzamail", email=""), ordinario, utente)
+        return moroso, con_tessera
+
+    def _attiva(self, date=None):
+        PromemoriaRinnovo.objects.filter(pk=1).update(
+            attivo=True, ora=8, date_invio=date or f"{OGGI:%d/%m}", ultimo_giorno=None
+        )
+
+    def test_date_scelte(self):
+        p = PromemoriaRinnovo(date_invio="15/01, 1-3; 31/12, 40/2, xx, 5/13")
+        assert p.date_scelte() == {(15, 1), (1, 3), (31, 12)}
+
+    def test_automatico_solo_nei_giorni_e_dopo_l_ora(self, soci_misti):
+        alle = timezone.localtime().replace(hour=9)
+        assert servizi.promemoria_rinnovo(adesso=alle) is None  # spento
+        domani = OGGI + timedelta(days=1)
+        self._attiva(f"{domani:%d/%m}")
+        assert servizi.promemoria_rinnovo(adesso=alle) is None  # non è il giorno
+        self._attiva()
+        assert servizi.promemoria_rinnovo(adesso=alle.replace(hour=7)) is None  # troppo presto
+        invio = servizi.promemoria_rinnovo(adesso=alle)
+        assert invio.stato == "in_coda" and invio.origine == "rinnovo"
+        dest = {d.nome: d for d in invio.destinatari.all()}
+        assert set(dest) == {"Moroso Mario", "Tessera Mario", "Senzamail Mario"}
+        assert dest["Senzamail Mario"].stato == "escluso"
+        assert dest["Moroso Mario"].contesto == {"anno_quota": OGGI.year, "importo": "25,00"}
+        assert dest["Tessera Mario"].contesto["importo"] == "30,00"
+        servizi.elabora_coda()
+        oggetti = {m.subject for m in mail.outbox}
+        assert oggetti == {f"Rinnovo della quota associativa {OGGI.year}"} and len(mail.outbox) == 2
+        assert "25,00 euro" in next(m.body for m in mail.outbox if "moroso" in m.to[0].lower())
+        assert servizi.promemoria_rinnovo(adesso=alle) is None  # una volta al giorno
+        PromemoriaRinnovo.objects.update(ultimo_giorno=None)
+        assert servizi.promemoria_rinnovo(adesso=alle) is None  # nessun doppione
+
+    def test_prepara_ora_in_bozza(self, soci_misti, client_ruolo):
+        c = client_ruolo("Tesoriere")
+        pagina = c.get("/comunicazioni/promemoria-rinnovo/").content.decode()
+        assert "Soci non in regola" in pagina and ">3<" in pagina.replace(" ", "")
+        r = c.post("/comunicazioni/promemoria-rinnovo/prepara/")
+        invio = Invio.objects.get(origine="rinnovo")
+        assert r.status_code == 302 and invio.stato == "bozza" and invio.creato_da == c.utente
+        r = c.post("/comunicazioni/promemoria-rinnovo/prepara/", follow=True)
+        assert "Nessun socio da sollecitare" in r.content.decode()
+
+    def test_impostazioni_e_permessi(self, client_ruolo):
+        assert client_ruolo("Consigliere", username="c").get(
+            "/comunicazioni/promemoria-rinnovo/").status_code == 403  # fmt: skip
+        presidente = client_ruolo("Presidente", username="p")
+        assert presidente.get("/comunicazioni/promemoria-rinnovo/").status_code == 200
+        assert presidente.post("/comunicazioni/promemoria-rinnovo/", {}).status_code == 403
+        c = client_ruolo("Segretario", username="s")
+        r = c.post("/comunicazioni/promemoria-rinnovo/",
+                   {"attivo": "on", "date_invio": "1/3, 15/1", "ora": "10"})  # fmt: skip
+        assert r.status_code == 302
+        p = PromemoriaRinnovo.corrente()
+        assert p.attivo and p.date_invio == "15/01, 01/03" and p.ora == 10
+        r = c.post("/comunicazioni/promemoria-rinnovo/", {"date_invio": "mai", "ora": "10"})
+        assert "giorno/mese" in r.content.decode()

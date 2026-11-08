@@ -12,6 +12,7 @@
 from datetime import date
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
@@ -37,9 +38,19 @@ from .forms import (
     ListaForm,
     ModelloForm,
     OnomasticoForm,
+    PromemoriaRinnovoForm,
     RicorrenzaForm,
 )
-from .models import Automazione, Destinatario, Invio, Lista, Modello, Onomastico, Ricorrenza
+from .models import (
+    Automazione,
+    Destinatario,
+    Invio,
+    Lista,
+    Modello,
+    Onomastico,
+    PromemoriaRinnovo,
+    Ricorrenza,
+)
 from .servizi import OperazioneNonValida
 
 
@@ -482,3 +493,56 @@ class OnomasticoModificaView(PermessoMixin, _ConfigMixin, UpdateView):
     template_name = "comunicazioni/modulo.html"
     success_url = reverse_lazy("comunicazioni:onomastici")
     extra_context = {"titolo": "Onomastico", "indietro": reverse_lazy("comunicazioni:onomastici")}
+
+
+class PromemoriaRinnovoView(PermessoMixin, UpdateView):
+    """Impostazioni dei promemoria di rinnovo, soci da sollecitare e ultimi invii."""
+
+    permission_required = "comunicazioni.view_promemoriarinnovo"
+    form_class = PromemoriaRinnovoForm
+    template_name = "comunicazioni/promemoria_rinnovo.html"
+    success_url = reverse_lazy("comunicazioni:promemoria_rinnovo")
+
+    def get_object(self, queryset=None):
+        return PromemoriaRinnovo.corrente()
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.has_perm("comunicazioni.change_promemoriarinnovo"):
+            raise PermissionDenied
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        dettagli = campi_modificati(form)
+        risposta = super().form_valid(form)
+        registra(Azione.MODIFICA, self.object, **dettagli)
+        messages.success(self.request, "Promemoria di rinnovo salvati.")
+        return risposta
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        anno = date.today().year
+        soci = servizi.soci_da_sollecitare(anno)
+        ctx.update(
+            anno=anno,
+            da_sollecitare=len(soci),
+            senza_email=sum(1 for s, _c in soci if not s.soggetto.email),
+            invii=Invio.objects.filter(origine="rinnovo").order_by("-creato_il")[:10],
+        )
+        return ctx
+
+
+class PromemoriaPreparaView(PermessoMixin, View):
+    """Prepara subito il promemoria in bozza, da controllare e confermare."""
+
+    permission_required = ("comunicazioni.view_promemoriarinnovo", "comunicazioni.add_invio")
+
+    def post(self, request):
+        try:
+            invio = servizi.promemoria_rinnovo(utente=request.user, subito=True)
+        except OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return redirect("comunicazioni:promemoria_rinnovo")
+        messages.success(
+            request, "Promemoria preparato in bozza: controllare e confermare l'invio."
+        )
+        return redirect("comunicazioni:invio", invio.pk)

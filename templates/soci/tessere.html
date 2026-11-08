@@ -13,6 +13,7 @@
   {% if perms.soci.change_listinotessere %}<a class="btn" href="{% url 'soci:listino' %}?anno={{ anno }}"><i class="ti ti-receipt-2 me-1"></i>Listino {{ anno }}</a>{% endif %}
   {% if perms.soci.view_tipologiasocio %}<a class="btn" href="{% url 'soci:tipologie' %}"><i class="ti ti-tags me-1"></i>Tipologie</a>{% endif %}
   {% if perms.soci.incassa_quota %}<a class="btn" href="{% url 'soci:incasso_massivo' %}?anno={{ anno }}"><i class="ti ti-cash me-1"></i>Incasso quote</a>{% endif %}
+  {% if perms.comunicazioni.view_promemoriarinnovo %}<a class="btn" href="{% url 'comunicazioni:promemoria_rinnovo' %}"><i class="ti ti-bell-ringing me-1"></i>Promemoria di rinnovo</a>{% endif %}
   {% if perms.soci.add_tessera %}<a class="btn btn-primary" href="{% url 'soci:rinnovo' %}?anno={{ anno }}"><i class="ti ti-refresh me-1"></i>Rinnovo annuale</a>{% endif %}
 </div>
 {% endblock %}

@@ -102,6 +102,7 @@ COMUNICAZIONI_INVIO = [
     *COMUNICAZIONI_LETTURA,
     "comunicazioni.add_invio",
     "comunicazioni.conferma_invio",
+    "comunicazioni.view_promemoriarinnovo",
 ]
 COMUNICAZIONI_GESTIONE = [
     *COMUNICAZIONI_INVIO,
@@ -115,6 +116,7 @@ COMUNICAZIONI_GESTIONE = [
     "comunicazioni.change_onomastico",
     "comunicazioni.view_automazione",
     "comunicazioni.change_automazione",
+    "comunicazioni.change_promemoriarinnovo",
 ]
 
 TESORERIA_LETTURA = [
@@ -241,6 +243,7 @@ RUOLI = {
         *DOCUMENTI_GESTIONE,
     ],
     "Tesoriere": [
+        "comunicazioni.change_promemoriarinnovo",
         *CALENDARIO_GESTIONE,
         *ANAGRAFICA_LETTURA,
         *SOCI_TESORERIA,

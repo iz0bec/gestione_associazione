@@ -74,6 +74,10 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Addetto protocollo, Revisore | sì | sì | - | consulta |
 | Consigliere | sì | - | - | - |
 
+**Promemoria di rinnovo della quota**: li imposta chi gestisce le comunicazioni (Amministratore,
+Segretario) e il Tesoriere; li consultano Presidente e chi può inviare. *Prepara ora* richiede di
+poter scrivere comunicazioni.
+
 ### Tesoreria
 
 | Ruolo | Rendiconti | Prima nota, saldi, preventivo | Registra e annulla movimenti, chiude gli esercizi, conti e piano dei conti |

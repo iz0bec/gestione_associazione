@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Promemoria di rinnovo della quota: impostazioni, soci da sollecitare, ultimi invii
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Promemoria di rinnovo{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere' %}">Tesseramento</a></div>{% endblock %}
+{% block titolo_pagina %}Promemoria di rinnovo della quota{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-header">
+        <h3 class="card-title">Invio automatico</h3>
+        <div class="card-actions"><span class="badge {% if object.attivo %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if object.attivo %}attivo{% else %}spento{% endif %}</span></div>
+      </div>
+      <div class="card-body">
+        {% if perms.comunicazioni.change_promemoriarinnovo %}
+        {{ form }}
+        {% else %}
+        <dl class="row mb-0">
+          <dt class="col-5">Date</dt><dd class="col-7">{{ object.date_invio }}</dd>
+          <dt class="col-5">Ora</dt><dd class="col-7">{{ object.ora }}</dd>
+          <dt class="col-5">Modello</dt><dd class="col-7">{{ object.modello|default:"predefinito" }}</dd>
+        </dl>
+        {% endif %}
+        {% if object.ultimo_giorno %}<p class="small text-secondary mt-2 mb-0">Ultimo invio automatico: {{ object.ultimo_giorno|date:"d/m/Y" }}.</p>{% endif %}
+      </div>
+      {% if perms.comunicazioni.change_promemoriarinnovo %}
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+      {% endif %}
+    </form>
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Ultimi promemoria</h3></div>
+      {% if invii %}
+      <div class="list-group list-group-flush">
+        {% for i in invii %}<a class="list-group-item list-group-item-action d-flex" href="{% url 'comunicazioni:invio' i.pk %}"><span class="text-secondary me-3 text-nowrap">{{ i.creato_il|date:"d/m/Y H:i" }}</span><span class="flex-fill">{{ i.oggetto }}</span><span class="badge bg-secondary-lt">{{ i.get_stato_display }}</span></a>{% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body text-secondary">Nessun promemoria inviato finora.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-secondary">Soci non in regola con la quota {{ anno }}</div>
+        <div class="h1 mb-1">{{ da_sollecitare }}</div>
+        {% if senza_email %}<div class="small text-orange">{{ senza_email }} senza email: non possono ricevere il promemoria (vanno contattati in altro modo).</div>{% endif %}
+        <a class="small" href="{% url 'soci:elenco' %}?quota=morosi&amp;anno={{ anno }}">Elenco dei soci non in regola</a>
+      </div>
+      {% if perms.comunicazioni.add_invio %}
+      <div class="card-footer">
+        <form method="post" action="{% url 'comunicazioni:promemoria_prepara' %}">{% csrf_token %}
+          <button class="btn w-100" type="submit"{% if not da_sollecitare %} disabled{% endif %}><i class="ti ti-mail-forward me-1"></i>Prepara ora il promemoria</button>
+        </form>
+        <div class="small text-secondary mt-2">Crea un invio <strong>in bozza</strong> con l'elenco dei destinatari, da controllare e confermare in Comunicazioni.</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card mt-3"><div class="card-body small text-secondary">
+      <p>Nelle <strong>date indicate</strong>, dopo l'ora scelta, il programma scrive ai soci attivi che non hanno ancora pagato la quota dell'anno (esclusi gli esenti), con l'importo dovuto. Ognuno lo riceve al massimo una volta al giorno.</p>
+      <p class="mb-0">Il testo si cambia nei <a href="{% url 'comunicazioni:modelli' %}">modelli</a> di tipo «Promemoria di rinnovo della quota»: segnaposto <code>{% templatetag openvariable %} anno_quota {% templatetag closevariable %}</code>, <code>{% templatetag openvariable %} importo {% templatetag closevariable %}</code>, <code>{% templatetag openvariable %} tessera {% templatetag closevariable %}</code>.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

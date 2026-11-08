@@ -6,6 +6,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Promemoria di rinnovo della quota** (*Tesseramento → Promemoria di rinnovo*): email automatiche
+  nelle date scelte ai soci non in regola, con l'importo dovuto; mai due volte nello stesso giorno;
+  *Prepara ora* crea un invio in bozza da confermare. Modello di messaggio pronto (spenti
+  dopo l'installazione).
 - Calendario: **appuntamenti e scadenze** inseriti a mano (evento, cerimonia, scadenza,
   promemoria; anche su più giorni o ogni anno), scadenze da segnare come fatte, in rosso se
   superate; **vista mensile**; riquadro **Prossimi impegni** nel cruscotto (14 giorni e scadenze

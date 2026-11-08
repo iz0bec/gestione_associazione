@@ -40,6 +40,7 @@ class Modello(models.Model):
         ONOMASTICO = "onomastico", "Auguri di onomastico"
         ANZIANITA = "anzianita", "Anniversario di iscrizione"
         RICORRENZA = "ricorrenza", "Ricorrenza"
+        RINNOVO = "rinnovo", "Promemoria di rinnovo della quota"
 
     nome = models.CharField(max_length=100, unique=True)
     uso = models.CharField(max_length=15, choices=Uso.choices, default=Uso.GENERICO)
@@ -322,6 +323,49 @@ class Automazione(models.Model):
 
     def anni_scelti(self):
         return {int(a) for a in self.anni.replace(" ", "").split(",") if a.isdigit()}
+
+
+class PromemoriaRinnovo(models.Model):
+    """Promemoria automatici ai soci non in regola con la quota dell'anno (una sola riga)."""
+
+    attivo = models.BooleanField(default=False)
+    modello = models.ForeignKey(
+        Modello, null=True, blank=True, on_delete=models.SET_NULL,
+        limit_choices_to={"uso": "rinnovo"}, verbose_name="modello del messaggio",
+    )  # fmt: skip
+    date_invio = models.CharField(
+        "date dell'invio",
+        max_length=200,
+        default="15/01, 01/03, 15/04, 01/06",
+        help_text="Giorno/mese, separati da virgola: in quei giorni parte il promemoria ai soci "
+        "non ancora in regola con la quota dell'anno.",
+    )
+    ora = models.PositiveSmallIntegerField(
+        "ora dell'invio", default=9, validators=[MaxValueValidator(23)]
+    )
+    ultimo_giorno = models.DateField(null=True, blank=True, editable=False)
+
+    class Meta:
+        verbose_name = "promemoria di rinnovo"
+        verbose_name_plural = "promemoria di rinnovo"
+
+    def __str__(self):
+        return "Promemoria di rinnovo della quota"
+
+    @classmethod
+    def corrente(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+    def date_scelte(self):
+        """Insiemi di (giorno, mese) validi tra quelli scritti."""
+        scelte = set()
+        for parte in self.date_invio.replace(";", ",").split(","):
+            pezzi = parte.strip().replace("-", "/").replace(".", "/").split("/")
+            if len(pezzi) == 2 and all(p.strip().isdigit() for p in pezzi):
+                giorno, mese = int(pezzi[0]), int(pezzi[1])
+                if 1 <= mese <= 12 and 1 <= giorno <= 31:
+                    scelte.add((giorno, mese))
+        return scelte
 
 
 class DestinatarioRegistrato(models.Model):

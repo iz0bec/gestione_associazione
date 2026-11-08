@@ -34,6 +34,12 @@ urlpatterns = [
     path("liste/<int:pk>/modifica/", views.ListaModificaView.as_view(), name="lista_modifica"),
     path("anniversari/", views.AnniversariView.as_view(), name="anniversari"),
     path("auguri/", views.AuguriView.as_view(), name="auguri"),
+    path("promemoria-rinnovo/", views.PromemoriaRinnovoView.as_view(), name="promemoria_rinnovo"),
+    path(
+        "promemoria-rinnovo/prepara/",
+        views.PromemoriaPreparaView.as_view(),
+        name="promemoria_prepara",
+    ),
     path("auguri/<int:pk>/", views.AutomazioneView.as_view(), name="automazione"),
     path("ricorrenze/nuova/", views.RicorrenzaNuovaView.as_view(), name="ricorrenza_nuova"),
     path("ricorrenze/<int:pk>/", views.RicorrenzaModificaView.as_view(), name="ricorrenza"),

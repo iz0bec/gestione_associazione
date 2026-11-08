@@ -114,4 +114,7 @@ volte gli stessi auguri nello stesso giorno.
 fondazione, inaugurazione del monumento) con l'anno di inizio. Con *invio automatico*, il giorno della
 ricorrenza parte un messaggio alla lista indicata.
 
+I **promemoria di rinnovo della quota** ai soci non in regola funzionano allo stesso modo: si
+impostano da *Tesseramento → Promemoria di rinnovo* (vedi [Soci](soci.md#promemoria-di-rinnovo)).
+
 Per il funzionamento automatico serve il **pianificatore** attivo sul server (manuale di sistema).

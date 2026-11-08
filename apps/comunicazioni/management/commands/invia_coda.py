@@ -10,14 +10,17 @@
 
 from django.core.management.base import BaseCommand
 
-from apps.comunicazioni.servizi import auguri_del_giorno, elabora_coda
+from apps.comunicazioni.servizi import auguri_del_giorno, elabora_coda, promemoria_rinnovo
 
 
 class Command(BaseCommand):
-    help = "Prepara gli auguri del giorno e spedisce i messaggi in coda."
+    help = "Prepara auguri e promemoria di rinnovo del giorno e spedisce i messaggi in coda."
 
     def handle(self, *args, **options):
         auguri = auguri_del_giorno()
+        rinnovo = promemoria_rinnovo()
+        if rinnovo:
+            self.stdout.write(f"Promemoria di rinnovo: {rinnovo.destinatari.count()} soci")
         inviati, errori = elabora_coda()
         if auguri or inviati or errori:
             self.stdout.write(
