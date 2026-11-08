@@ -19,7 +19,8 @@ Nasce dall'unione di tre applicazioni usate da una sezione ANCR (Associazione Na
 Combattenti e Reduci): **Protocollo ANCR**, **Gestione Soci** e **Gestione Assemblee**.
 L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/analisi-e-finalita.md).
 
-> **Stato**: in sviluppo, versione `0.0.1.dev0`. Non ancora pronto per la produzione.
+> **Stato**: release candidate `0.0.1-rc.1`, in collaudo. Installazione su server Debian/Ubuntu o in
+> un container LXC su Proxmox: vedi [Installazione](docs/sistema/installazione.md).
 > Moduli disponibili: accesso con secondo fattore, ruoli, dati dell'organizzazione,
 > registro attività, **anagrafica unica**, **soci e tesseramento** (libro soci, quote,
 > ricevute, domande di iscrizione anche online), **protocollo** (registro, documenti,

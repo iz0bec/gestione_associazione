@@ -263,3 +263,19 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   la risposta che serve il file sovrascrive per sé sola `X-Frame-Options`/`frame-ancestors` con
   `SAMEORIGIN`/`'self'`; tutte le altre pagine restano `DENY`.
 
+## ADR-026 - Backup e ripristino nell'applicazione; installazione senza Docker
+
+- Un backup è **un solo file** `.tar` (non compresso fuori, compressi dentro): `pg_dump` in formato custom,
+  archivio dei file caricati, manifesto con versione, migrazioni applicate e impronte SHA-256. È portabile tra
+  server e verificabile prima del ripristino.
+- Il ripristino rifiuta backup con migrazioni sconosciute (versione più recente del codice) e applica quelle
+  mancanti (versione precedente); prima salva sempre lo stato attuale.
+- Dal web il ripristino gira in un **processo separato** (sostituisce anche utenti e sessioni, e può superare
+  il timeout delle richieste); la pagina di avanzamento legge un file di stato e non usa il database, con
+  indirizzo firmato.
+- Nessuna cifratura dei backup nell'applicazione: restano sul server con permessi 700/600; la cifratura è
+  raccomandata per le copie esterne (documentazione).
+- Installazione su host con uno script bash rieseguibile (stesso approccio del Protocollo ANCR) e un secondo
+  script per Proxmox che crea un LXC non privilegiato e lo riusa: un solo percorso di installazione da
+  mantenere.
+

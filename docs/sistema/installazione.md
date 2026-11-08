@@ -15,7 +15,7 @@ Requisiti comuni: un server Linux (o un PC sempre acceso) con almeno 1 GB di RAM
 un nome a dominio o un indirizzo fisso nella rete locale, e preferibilmente un reverse proxy
 con HTTPS (per esempio nginx o Nginx Proxy Manager).
 
-## Con Docker (consigliato)
+## Con Docker
 
 ```bash
 git clone <repository> gestione_associazione && cd gestione_associazione
@@ -41,89 +41,105 @@ docker compose exec app python manage.py createsuperuser
 L'app è su `http://<server>:<APP_PORT>`. All'avvio il container applica le migrazioni e
 allinea i ruoli. I dati stanno in due volumi: `db` (PostgreSQL) e `media` (allegati).
 
-## Su server Linux senza Docker
+## Su server Linux senza Docker (consigliato)
 
-Uno script automatico (come quello del Protocollo ANCR) è previsto per la 0.0.1 RC.
-Fino ad allora, i passi manuali su Debian/Ubuntu sono:
+`scripts/installa.sh` installa tutto il necessario su **Debian 12/13** o **Ubuntu 22.04/24.04** con
+systemd, senza Docker:
+
+- pacchetti di sistema: PostgreSQL, le librerie per i PDF e i caratteri;
+- `uv` e Python 3.13 (scaricato da uv se il sistema ha una versione più vecchia);
+- l'utente di sistema `gestione`, con il codice in `/opt/gestione-associazione` e i dati
+  (`media`, `static`, `backup`) in `/var/lib/gestione-associazione`;
+- il database e il ruolo PostgreSQL, di proprietà dell'utente applicativo, con password generata;
+- il file `.env` con i segreti generati (`SECRET_KEY`, password del database,
+  `CHIAVE_CIFRATURA`) e `ALLOWED_HOSTS` con il nome e gli IP del server;
+- migrazioni, file statici e amministratore con password casuale, salvata in
+  `/root/gestione-associazione-credenziali.txt`;
+- i servizi `gestione-associazione` (gunicorn) e `gestione-associazione-pianificatore` (email,
+  posta, registri e backup notturno).
 
 ```bash
-# 1. pacchetti
-apt install -y postgresql libpango-1.0-0 libpangoft2-1.0-0 git curl
-curl -LsSf https://astral.sh/uv/install.sh | sh        # uv (gestione Python)
-
-# 2. utente e codice
-useradd --system --home-dir /opt/gestione-associazione --shell /usr/sbin/nologin gestione
-git clone <repository> /opt/gestione-associazione
-
-# 3. database (proprietario = utente applicativo: necessario da PostgreSQL 15)
-runuser -u postgres -- psql -c "create role gestione login password 'PASSWORD-CASUALE'"
-runuser -u postgres -- psql -c "create database gestione_associazione owner gestione"
-
-# 4. configurazione: .env con SECRET_KEY, DATABASE_URL=postgres://gestione:PASSWORD@127.0.0.1:5432/gestione_associazione,
-#    ALLOWED_HOSTS, MEDIA_ROOT=/var/lib/gestione-associazione/media
-cd /opt/gestione-associazione && cp .env.example .env && chmod 600 .env
-
-# 5. dipendenze, migrazioni, file statici
-uv sync --frozen --no-dev
-uv run python manage.py migrate
-uv run python manage.py collectstatic --noinput
-chown -R gestione:gestione /opt/gestione-associazione /var/lib/gestione-associazione
+git clone https://mygitlab.iz0bec.info/sbart64/gestione_associazione.git /root/gestione-associazione-src
+cd /root/gestione-associazione-src && git checkout v0.0.1-rc.1
+./scripts/installa.sh --porta 8000
 ```
 
-Servizio systemd `/etc/systemd/system/gestione-associazione.service`:
+| Opzione | |
+|---|---|
+| `--porta N` | porta del servizio web (predefinita 8000) |
+| `--indirizzo IP` | indirizzo di ascolto (predefinito `0.0.0.0`; `127.0.0.1` dietro un reverse proxy sullo stesso server) |
+| `--host NOMI` | nomi aggiuntivi per `ALLOWED_HOSTS`, es. `gestione.example.it` |
+| `--db NOME` | nome del database (predefinito `gestione_associazione`) |
+| `--admin`, `--email` | amministratore creato alla prima installazione |
+| `-y` | nessuna domanda |
+
+Lo script è **rieseguibile**: se trova il `.env` lo considera un aggiornamento. In quel caso non
+tocca `.env`, database, file e backup, e prima di migrare crea un backup completo. Se il backup non
+riesce, l'aggiornamento si ferma.
+
+Su un server che ospita già altri servizi, scegliere una porta libera (`ss -ltn`). Il PostgreSQL già
+presente viene usato così com'è: lo script aggiunge solo il proprio ruolo e il proprio database.
+
+## Su Proxmox VE (container LXC)
+
+`scripts/proxmox/crea-lxc.sh` si esegue **sull'host Proxmox** come root. Crea un container
+**Debian non privilegiato** e vi installa l'applicazione con `installa.sh`:
+
+```bash
+# sull'host Proxmox
+curl -fsSLO https://mygitlab.iz0bec.info/sbart64/gestione_associazione/-/raw/main/scripts/proxmox/crea-lxc.sh
+bash crea-lxc.sh --versione v0.0.1-rc.1 --ip 192.168.0.40/24 --gw 192.168.0.1 --email segreteria@example.it
+```
+
+| Opzione | Predefinito | |
+|---|---|---|
+| `--id N` | primo libero | numero del container |
+| `--nome` | `gestione-associazione` | hostname |
+| `--storage`, `--storage-template` | `local-lvm`, `local` | dove creare il disco e scaricare il template |
+| `--disco`, `--ram`, `--core` | 8 GB, 2048 MB, 2 | risorse |
+| `--bridge`, `--ip`, `--gw`, `--dns` | `vmbr0`, `dhcp` | rete (`--ip 192.168.0.40/24 --gw 192.168.0.1` per un IP fisso) |
+| `--debian` | 13 | versione del template |
+| `--password-root`, `--chiave-ssh` | generata | accesso al container |
+| `--sorgente` | repository GitLab | URL git oppure una cartella locale dell'host con il codice |
+| `--versione` | `main` | tag o ramo da installare |
+| `--porta` | 8000 | porta web |
+
+Alla fine lo script stampa l'indirizzo, la password di root del container e le credenziali
+dell'amministratore dell'applicazione. Il container si avvia con l'host (`onboot`).
+
+Aggiornamento, con backup automatico prima:
+
+```bash
+bash crea-lxc.sh --aggiorna --id 120 --versione v0.0.1-rc.2
+```
+
+Per i backup conviene anche il backup del container di Proxmox (snapshot o vzdump), in aggiunta ai
+backup dell'applicazione.
+
+## Configurazione manuale dei servizi
+
+Per installazioni particolari, i servizi creati dallo script sono:
 
 ```ini
-[Unit]
-Description=Gestione Associazione
-After=network-online.target postgresql.service
-Wants=postgresql.service
-
+# /etc/systemd/system/gestione-associazione.service
 [Service]
 User=gestione
-Group=gestione
 WorkingDirectory=/opt/gestione-associazione
-ExecStart=/opt/gestione-associazione/.venv/bin/gunicorn config.wsgi --bind 127.0.0.1:8000 --workers 3
+ExecStart=/opt/gestione-associazione/.venv/bin/gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3 --timeout 120
 Restart=on-failure
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
 ProtectHome=true
 
-[Install]
-WantedBy=multi-user.target
-```
-
-Servizio dei lavori periodici `/etc/systemd/system/gestione-associazione-pianificatore.service`
-(scarica la posta del protocollo ogni 15 minuti e genera il registro giornaliero di notte):
-
-```ini
-[Unit]
-Description=Gestione Associazione - lavori periodici
-After=gestione-associazione.service
-
+# /etc/systemd/system/gestione-associazione-pianificatore.service
 [Service]
 User=gestione
-Group=gestione
 WorkingDirectory=/opt/gestione-associazione
 ExecStart=/opt/gestione-associazione/.venv/bin/python manage.py pianificatore
 Restart=on-failure
 RestartSec=30
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=full
-ProtectHome=true
-
-[Install]
-WantedBy=multi-user.target
 ```
-
-```bash
-systemctl daemon-reload && systemctl enable --now gestione-associazione gestione-associazione-pianificatore
-```
-
-In alternativa al pianificatore si possono usare cron o timer systemd con i singoli comandi
-`manage.py scarica_posta` (ogni 15 minuti) e `manage.py registro_giornaliero` (ogni notte):
-entrambi sono rieseguibili senza effetti doppi.
 
 ## HTTPS e reverse proxy
 
@@ -141,8 +157,10 @@ funzionano solo in HTTPS (o su `localhost`).
 
 ## Primo accesso
 
-1. Accedere con il superutente creato.
-2. **Sistema → Organizzazione**: inserire i dati dell'ente.
+1. Accedere con l'amministratore creato (credenziali in `/root/gestione-associazione-credenziali.txt`),
+   cambiare subito la password e cancellare il file.
+2. Parte la [configurazione guidata](../operativo/configurazione-iniziale.md): dati dell'ente, logo e
+   colori, sezioni, tesseramento, tesoreria.
 3. Attivare la verifica in due passaggi (menu utente → *Verifica in due passaggi*).
 4. Creare gli utenti e assegnare i ruoli da *Amministrazione tecnica → Utenti*
    (la gestione utenti nell'interfaccia principale è prevista per la 0.0.1 RC).
@@ -155,12 +173,11 @@ Docker:
 git pull && docker compose up -d --build
 ```
 
-Senza Docker:
+Senza Docker, dalla copia del repository usata per l'installazione:
 
 ```bash
-cd /opt/gestione-associazione && git pull
-uv sync --frozen --no-dev && uv run python manage.py migrate && uv run python manage.py collectstatic --noinput
-systemctl restart gestione-associazione
+cd /root/gestione-associazione-src && git fetch --tags && git checkout v0.0.1-rc.2
+./scripts/installa.sh -y      # backup automatico, migrazioni, riavvio dei servizi
 ```
 
 Fare sempre un [backup](backup.md) prima di aggiornare.

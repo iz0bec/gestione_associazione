@@ -15,7 +15,8 @@
 
 | Versione | Contenuto | Pubblicazione |
 |---|---|---|
-| **0.0.1 RC** | tutti i moduli di base utilizzabili, import dai tre gestionali attuali, installazione Docker e su host | GitLab personale |
+| **0.0.1-rc.1** ✅ | moduli di base, configurazione guidata, importazione dal registro nazionale, backup e ripristino, installazione su host e LXC | GitLab personale (pubblico) |
+| 0.0.1-rc.2 | import dai tre gestionali attuali, gestione utenti dall'interfaccia | GitLab |
 | 0.x | collaudo presso la sezione, correzioni, funzionalità della fase 2 | GitLab |
 | **1.0** | prima release stabile, documentazione completa, Django 6.2 LTS | GitHub |
 
@@ -62,10 +63,12 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    **importazione dal registro soci nazionale** (Excel/CSV) con anteprima. *Da completare*: adattare le
    colonne all'estratto reale del registro quando disponibile (`tmp/`, non versionato).
 7. **Documenti PDF** - modelli di stampa HTML con intestazione dell'ente (WeasyPrint).
-8. **Import** - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione
+8. **Import** (rimandato alla rc.2) - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione
    Assemblee (SQLite), con deduplica dell'anagrafica per codice fiscale/email e rapporto finale.
-9. **Installazione su host** - script per Debian/Ubuntu/RHEL con systemd (come per il Protocollo).
-10. **Gestione utenti dall'interfaccia** - creazione, ruoli, reimpostazione, MFA obbligatoria per ruolo.
+9. ✅ **Installazione su host** - `scripts/installa.sh` (Debian/Ubuntu, systemd) e
+   `scripts/proxmox/crea-lxc.sh` (container LXC su Proxmox). Backup e ripristino dall'interfaccia.
+   *Rimandati*: RHEL/Rocky.
+10. **Gestione utenti dall'interfaccia** (rimandata alla rc.2) - creazione, ruoli, reimpostazione, MFA obbligatoria per ruolo.
 
 ## Fase 2 - Dopo la RC (proposte)
 

@@ -83,7 +83,11 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 
 ## Pubblicazione
 
-- Nessun remote finché non c'è la **0.0.1 RC**: allora GitLab personale (`mygitlab.iz0bec.info/sbart64/`).
+- Remote: GitLab personale `https://mygitlab.iz0bec.info/sbart64/gestione_associazione` (pubblico), ramo `main`, tag `vX.Y.Z-rc.N`.
+- Produzione: `192.168.0.34` (Debian 13), installata con `scripts/installa.sh --porta 8003` in
+  `/opt/gestione-associazione`, dati in `/var/lib/gestione-associazione`, servizi `gestione-associazione`
+  e `gestione-associazione-pianificatore`. Sullo stesso host gira il Protocollo ANCR (8002) e altri servizi:
+  non toccarli. È produzione: niente reset o ripristini senza conferma esplicita.
 - Release stabile (1.0) su **GitHub**.
 
 ## Stato

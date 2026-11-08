@@ -3,7 +3,23 @@
 Tutte le modifiche rilevanti del progetto. Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
-## [Non rilasciato] - 0.0.1.dev0
+## [0.0.1-rc.1] - 2026-11-08
+
+Prima release candidate: tutti i moduli di base, installazione su server (script per Debian/Ubuntu e
+per container LXC su Proxmox), backup e ripristino.
+
+**Limiti noti** (previsti per le prossime RC): importazione dai tre gestionali precedenti
+(Protocollo ANCR, Gestione Soci, Gestione Assemblee); gestione degli utenti dall'interfaccia
+principale (per ora da *Amministrazione tecnica*); installatore per RHEL/Rocky; immagine Docker non
+ancora verificata.
+
+### Aggiunto - Installazione
+- `scripts/installa.sh`: installazione e aggiornamento su Debian/Ubuntu con systemd, senza Docker
+  (PostgreSQL, Python con uv, segreti generati, servizi applicazione e pianificatore, backup prima
+  di ogni aggiornamento).
+- `scripts/proxmox/crea-lxc.sh`: crea su Proxmox VE un container LXC Debian non privilegiato con
+  l'applicazione installata; `--aggiorna` per gli aggiornamenti.
+
 
 ### Aggiunto - Backup e ripristino
 - Backup completi (database e file caricati) in un unico file con manifesto e impronte; creazione,
