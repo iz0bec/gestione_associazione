@@ -81,6 +81,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Utenti: operazioni solo da `apps/accounts/servizi.py` (password temporanea mostrata una volta, mai nel
   registro; niente superutenti dall'interfaccia); `ObblighiAccessoMiddleware` blocca chi deve cambiare
   password o configurare il secondo fattore richiesto dal ruolo (`PoliticaRuolo`).
+- Importazione dai gestionali precedenti: `apps/migrazione` (`importa_gestionale`), anteprima in
+  transazione annullata, `Origine` per la rieseguibilità; protocolli storici solo con
+  `protocollo.servizi.registra_storico` (numero originale, sequenza allineata).
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -101,5 +104,4 @@ anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`), **Patrim
 (`apps/core/aspetto.py`, CSS servito da `/aspetto.css`), sezioni (`apps/soci/sezioni.py`: filtrare
 sempre soci/tessere/carte/domande con `sezioni.filtra()` nelle viste), listino annuale, importazione dal
 registro nazionale (`apps/soci/importazione.py`; gli estratti reali stanno in `tmp/`, mai versionati).
-Prossimo (roadmap punto 7-10):
-modelli di stampa, import dai tre gestionali. Fatti: installer su host, gestione utenti (`apps/accounts`, `/sistema/utenti/`).
+Prossimo (roadmap punto 7): modelli di stampa. Fatti: import dai tre gestionali (`apps/migrazione`), installer su host, gestione utenti (`apps/accounts`, `/sistema/utenti/`).

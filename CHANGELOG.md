@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto - Importazione dai gestionali precedenti
+- Comando `importa_gestionale` (anteprima predefinita, `--esegui` applica, rieseguibile senza
+  doppioni) per **Gestione Soci** (soci, tessere con la quota versata, esercizi passati chiusi con la
+  prima nota, beni), **Gestione Assemblee** (rubrica, modelli email) e **Protocollo ANCR**
+  (rubrica, liste, registrazioni con il numero originale, annullamenti, documenti).
+- Prevalgono i dati già presenti: delle schede esistenti si completano solo i campi vuoti.
+- Abbinamento dei soci anche per tessera e data di nascita (codici fiscali errati in un archivio).
+
 ### Aggiunto - Utenti e ruoli
 - **Sistema → Utenti e ruoli**: elenco con ricerca e filtri, creazione, modifica di dati, ruoli e
   sezioni, collegamento alla scheda anagrafica; disattivazione e riattivazione (mai eliminazione).

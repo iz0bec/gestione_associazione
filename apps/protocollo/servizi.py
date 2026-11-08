@@ -26,7 +26,7 @@ from django.utils import timezone
 from apps.anagrafica.models import Soggetto
 from apps.anagrafica.servizi import cella_sicura
 from apps.core.audit import Azione, campi_modificati, registra
-from apps.core.models import Organizzazione
+from apps.core.models import Organizzazione, Sequenza
 from apps.core.numerazione import prossimo_numero
 
 from .models import (
@@ -169,6 +169,37 @@ def registra_protocollo(dati, corrispondenti, utente, *, allegati=(), principale
         direzione=direzione,
         allegati=len(allegati),
     )
+    return protocollo
+
+
+@transaction.atomic
+def registra_storico(dati, *, anno, numero, registrato_il, corrispondenti, utente,
+                     annullato=False, motivo_annullamento=""):  # fmt: skip
+    """Registrazione importata da un protocollo precedente, con il suo numero originale.
+
+    Unica eccezione a `prossimo_numero`: la sequenza dell'anno viene portata almeno al numero
+    importato, così le registrazioni successive continuano la numerazione senza buchi né doppi.
+    """
+    if Protocollo.objects.filter(anno=anno, numero=numero).exists():
+        raise OperazioneNonValida(f"Il numero {anno}-{numero:05d} esiste già.")
+    Sequenza.objects.bulk_create(
+        [Sequenza(chiave=SEQ_PROTOCOLLO, anno=anno)], ignore_conflicts=True
+    )
+    sequenza = Sequenza.objects.select_for_update().get(chiave=SEQ_PROTOCOLLO, anno=anno)
+    if sequenza.ultimo_numero < numero:
+        sequenza.ultimo_numero = numero
+        sequenza.save(update_fields=["ultimo_numero"])
+    protocollo = Protocollo.objects.create(
+        **dati, anno=anno, numero=numero, registrato_il=registrato_il, creato_da=utente,
+        modificato_da=utente, annullato=annullato,
+        motivo_annullamento=motivo_annullamento[:500] if annullato else "",
+        annullato_il=registrato_il if annullato else None,
+    )  # fmt: skip
+    for c in corrispondenti:
+        Corrispondente.objects.create(
+            protocollo=protocollo, ruolo=c["ruolo"], soggetto=c.get("soggetto"),
+            descrizione=c["descrizione"][:300], indirizzo=(c.get("indirizzo") or "")[:300],
+        )  # fmt: skip
     return protocollo
 
 

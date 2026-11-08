@@ -36,7 +36,14 @@ class Command(BaseCommand):
         asm.add_argument(
             "database", help="File .db di Gestione Assemblee (instance/ancr_gestione.db)"
         )
-        for p in (gs, asm):
+        pr = sotto.add_parser("protocollo", help="Protocollo ANCR (database PostgreSQL)")
+        connessione = pr.add_mutually_exclusive_group(required=True)
+        connessione.add_argument("--dsn", help="Es. postgresql://utente:password@host/database")
+        connessione.add_argument(
+            "--env", help="File .env del Protocollo ANCR (DB_HOST, DB_NAME...)"
+        )
+        pr.add_argument("--allegati", help="Cartella dei documenti (public/uploads del Protocollo)")
+        for p in (gs, asm, pr):
             p.add_argument("--utente", help="Username registrato come autore (audit)")
             p.add_argument("--esegui", action="store_true", help="Applica (senza: anteprima)")
             p.add_argument("--dettagli", action="store_true", help="Mostra ogni record")
@@ -83,3 +90,9 @@ class Command(BaseCommand):
         from apps.migrazione import assemblee
 
         return assemblee.importa(o["database"], utente, esegui=o["esegui"])
+
+    def _protocollo(self, o, utente):
+        from apps.migrazione import protocollo
+
+        dsn = o["dsn"] or protocollo.dsn_da_env(o["env"])
+        return protocollo.importa(dsn, utente, cartella_allegati=o["allegati"], esegui=o["esegui"])

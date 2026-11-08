@@ -64,8 +64,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    **importazione dal registro soci nazionale** (Excel/CSV) con anteprima. *Da completare*: adattare le
    colonne all'estratto reale del registro quando disponibile (`tmp/`, non versionato).
 7. **Documenti PDF** - modelli di stampa HTML con intestazione dell'ente (WeasyPrint).
-8. **Import** (rimandato alla rc.3) - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione
-   Assemblee (SQLite), con deduplica dell'anagrafica per codice fiscale/email e rapporto finale.
+8. ✅ **Import** - `importa_gestionale` da Gestione Soci e Gestione Assemblee (SQLite) e Protocollo
+   ANCR (PostgreSQL), con anteprima, deduplica dell'anagrafica e rapporto finale.
+   *Rimandati*: foto dei soci, passaggi di consegne e cessioni dei beni, verbali delle assemblee.
 9. ✅ **Installazione su host** - `scripts/installa.sh` (Debian/Ubuntu, systemd) e
    `scripts/proxmox/crea-lxc.sh` (container LXC su Proxmox). Backup e ripristino dall'interfaccia.
    *Rimandati*: RHEL/Rocky.
