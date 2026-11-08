@@ -65,6 +65,22 @@ class OrganiView(PermessoMixin, ListView):
         return ctx
 
 
+class OrganigrammaView(PermessoMixin, View):
+    """Organigramma dei componenti in carica, in PDF."""
+
+    permission_required = "organi.view_organo"
+
+    def get(self, request, pk):
+        from django.utils.text import slugify
+
+        organo = get_object_or_404(Organo, pk=pk)
+        pdf = servizi.pdf_organigramma(organo, request.user)
+        risposta = HttpResponse(pdf, content_type="application/pdf")
+        nome = f"organigramma_{slugify(organo.sigla or organo.nome)}.pdf"
+        risposta["Content-Disposition"] = f'inline; filename="{nome}"'
+        return risposta
+
+
 class OrganoView(PermessoMixin, DetailView):
     permission_required = "organi.view_organo"
     model = Organo

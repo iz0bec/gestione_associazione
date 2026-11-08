@@ -20,6 +20,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 - Cariche sociali (in corso e concluse) nella scheda del socio e in quella dell'anagrafica; le
   cariche in corso accanto al nome del socio.
 
+- Organi sociali: **organigramma in PDF** dei componenti in carica, per livelli e con le foto.
+
 ### Sicurezza
 - Il protocollo rifiuta le registrazioni di chi non ha il permesso di protocollare, qualunque
   modulo le chieda; negli invii email l'opzione di protocollazione richiede quel permesso.

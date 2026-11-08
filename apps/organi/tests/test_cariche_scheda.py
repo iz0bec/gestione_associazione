@@ -52,3 +52,29 @@ class TestCaricheNellaScheda:
             "Cariche sociali"
             not in client_ruolo("Consigliere").get(f"/soci/{socio.pk}/").content.decode()
         )
+
+
+@pytest.mark.django_db
+class TestOrganigramma:
+    def test_livelli(self, socio_presidente):
+        from apps.organi.servizi import organigramma
+
+        organo = Organo.objects.get(nome="Consiglio di prova")
+        s = Soggetto.objects.create(tipo="persona", cognome="Verdi")
+        Carica.objects.create(organo=organo, soggetto=s, ruolo="tesoriere", dal=date(2022, 1, 1))
+        livelli = organigramma(organo)
+        assert [[c.ruolo for c in riga] for riga in livelli] == [["presidente"], ["tesoriere"]]
+
+    def test_pdf(self, client_ruolo, socio_presidente, settings, tmp_path):
+        settings.MEDIA_ROOT = tmp_path
+        organo = Organo.objects.get(nome="Consiglio di prova")
+        client = client_ruolo("Consigliere")
+        assert "Organigramma PDF" in client.get(f"/organi/{organo.pk}/").content.decode()
+        r = client.get(f"/organi/{organo.pk}/organigramma/")
+        assert r.status_code == 200 and r.content.startswith(b"%PDF")
+        assert "organigramma_cp.pdf" in r["Content-Disposition"]
+
+    def test_permesso(self, client_ruolo, socio_presidente):
+        organo = Organo.objects.get(nome="Consiglio di prova")
+        r = client_ruolo(username="senza_ruoli").get(f"/organi/{organo.pk}/organigramma/")
+        assert r.status_code == 403

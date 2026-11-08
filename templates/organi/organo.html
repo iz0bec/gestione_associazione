@@ -4,6 +4,7 @@
 {% block titolo_pagina %}{{ organo }}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
+  {% if not organo.e_assemblea %}<a class="btn" href="{% url 'organi:organigramma' organo.pk %}" target="_blank" rel="noopener"><i class="ti ti-hierarchy-2 me-1"></i>Organigramma PDF</a>{% endif %}
   {% if perms.organi.change_organo %}<a class="btn" href="{% url 'organi:organo_modifica' organo.pk %}"><i class="ti ti-settings me-1"></i>Regole</a>{% endif %}
   {% if perms.organi.add_riunione %}<a class="btn btn-primary" href="{% url 'organi:riunione_nuova' %}?organo={{ organo.pk }}"><i class="ti ti-plus me-1"></i>Nuova riunione</a>{% endif %}
 </div>

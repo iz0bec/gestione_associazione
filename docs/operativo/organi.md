@@ -36,6 +36,11 @@ ruolo (presidente, vicepresidente, segretario, tesoriere, consigliere, component
 inizio e atto di nomina. **Fine carica** registra la data di cessazione e il motivo. Lo storico resta
 consultabile: chi ha avuto quale carica e quando. I **supplenti** non contano tra gli aventi diritto al voto.
 
+**Organigramma PDF** (pulsante in alto nella pagina dell'organo): i componenti in carica alla data
+di oggi, su carta intestata e in orizzontale. In alto il presidente; sotto vicepresidente, segretario
+e tesoriere; poi i consiglieri, i componenti e i supplenti. Ogni scheda riporta la foto dell'anagrafica
+(o le iniziali), il ruolo, il nome e la data di inizio della carica.
+
 ## Riunioni
 
 1. **Nuova riunione**: organo, ordinaria o straordinaria, data, ora e luogo della **prima** e (facoltativa)

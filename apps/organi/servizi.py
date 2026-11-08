@@ -483,3 +483,41 @@ def delibere_registro():
     return Delibera.objects.filter(verbale__chiuso=True).select_related(
         "verbale__riunione__organo", "punto"
     )
+
+
+# --- organigramma --------------------------------------------------------------------------------
+
+LIVELLI_ORGANIGRAMMA = [
+    ["presidente"],
+    ["vicepresidente", "segretario", "tesoriere"],
+    ["consigliere"],
+    ["presidente_controllo", "componente"],
+    ["supplente"],
+]
+
+
+def organigramma(organo, giorno=None):
+    """Componenti in carica raggruppati per livello (presidenza, ufficio, consiglieri...)."""
+    cariche = list(organo.cariche_al(giorno).select_related("soggetto").order_by("dal"))
+    livelli = []
+    for ruoli in LIVELLI_ORGANIGRAMMA:
+        riga = sorted(
+            (c for c in cariche if c.ruolo in ruoli),
+            key=lambda c: (ruoli.index(c.ruolo), c.soggetto.nome_completo),
+        )
+        if riga:
+            livelli.append(riga)
+    return livelli
+
+
+def pdf_organigramma(organo, utente):
+    from apps.core.pdf import genera_pdf
+
+    oggi = timezone.localdate()
+    pdf = genera_pdf(
+        "organi/pdf/organigramma.html",
+        {"organo": organo, "livelli": organigramma(organo, oggi), "oggi": oggi,
+         "organizzazione": Organizzazione.corrente()},
+    )  # fmt: skip
+    registra(Azione.ESPORTAZIONE, organo, utente=utente, documento="organigramma")
+    return pdf

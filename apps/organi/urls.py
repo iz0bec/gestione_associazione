@@ -16,6 +16,7 @@ app_name = "organi"
 urlpatterns = [
     path("", views.OrganiView.as_view(), name="organi"),
     path("<int:pk>/", views.OrganoView.as_view(), name="organo"),
+    path("<int:pk>/organigramma/", views.OrganigrammaView.as_view(), name="organigramma"),
     path("<int:pk>/regole/", views.OrganoModificaView.as_view(), name="organo_modifica"),
     path("<int:pk>/nomina/", views.NominaView.as_view(), name="nomina"),
     path("cariche/<int:pk>/fine/", views.FineCaricaView.as_view(), name="fine_carica"),

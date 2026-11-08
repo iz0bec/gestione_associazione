@@ -1,0 +1,41 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Organigramma di un organo: componenti in carica per livello, con foto o iniziali
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Organigramma {{ organo.nome }}{% endblock %}
+{% block formato %}A4 landscape{% endblock %}
+{% block stile %}
+  h1 { text-align: center; margin-bottom: 2pt; }
+  .sottotitolo { text-align: center; font-size: 9pt; color: #555; margin-bottom: 14pt; }
+  .livello { display: flex; justify-content: center; flex-wrap: wrap; gap: 8pt; position: relative; }
+  .collegamento { height: 12pt; width: 0; margin: 0 auto; border-left: 1.2pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .persona { width: 46mm; border: .8pt solid #c9d3e0; border-radius: 6pt; padding: 6pt 4pt; text-align: center; background: #fff; page-break-inside: avoid; }
+  .persona.vertice { width: 58mm; border: 1.4pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .foto { width: 18mm; height: 18mm; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 4pt; }
+  .iniziali { width: 18mm; height: 18mm; border-radius: 50%; margin: 0 auto 4pt; background: #e7eef7; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; font-size: 15pt; font-weight: bold; line-height: 18mm; }
+  .ruolo { font-size: 8pt; text-transform: uppercase; letter-spacing: .4pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; font-weight: bold; }
+  .nome { font-size: 10pt; font-weight: bold; margin-top: 2pt; }
+  .dal { font-size: 7.5pt; color: #666; margin-top: 2pt; }
+  .vuoto { text-align: center; color: #666; margin-top: 30pt; }
+{% endblock %}
+{% block contenuto %}
+<h1>{{ organo.nome }}</h1>
+<div class="sottotitolo">Componenti in carica al {{ oggi|date:"d/m/Y" }}</div>
+{% for livello in livelli %}
+  {% if not forloop.first %}<div class="collegamento"></div>{% endif %}
+  <div class="livello">
+    {% for c in livello %}
+    <div class="persona{% if c.ruolo == 'presidente' %} vertice{% endif %}">
+      {% if c.soggetto.foto %}<img class="foto" src="risorsa:media/{{ c.soggetto.foto.name }}" alt="">{% else %}<div class="iniziali">{{ c.soggetto.iniziali }}</div>{% endif %}
+      <div class="ruolo">{{ c.get_ruolo_display }}</div>
+      <div class="nome">{% if c.soggetto.titolo %}{{ c.soggetto.titolo }} {% endif %}{{ c.soggetto.nome_completo }}</div>
+      <div class="dal">dal {{ c.dal|date:"d/m/Y" }}</div>
+    </div>
+    {% endfor %}
+  </div>
+{% empty %}
+<div class="vuoto">Nessun componente in carica registrato.</div>
+{% endfor %}
+{% endblock %}
