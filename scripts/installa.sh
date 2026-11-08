@@ -170,7 +170,7 @@ fi
 passo "Migrazioni e file statici"
 gestisci migrate --noinput
 gestisci collectstatic --noinput --verbosity 0
-gestisci check --deploy --fail-level ERROR >/dev/null
+gestisci check --deploy --fail-level ERROR >/dev/null 2>&1 || errore "controllo della configurazione non superato: manage.py check --deploy"
 
 PASSWORD_ADMIN=""
 if [[ "$(gestisci shell -c 'from django.contrib.auth import get_user_model as g; print(g().objects.exists())' 2>/dev/null | tail -1)" != "True" ]]; then
@@ -236,7 +236,7 @@ for _ in $(seq 1 20); do
 done
 [[ "${OK:-0}" == 1 ]] || errore "il servizio non risponde: journalctl -u ${NOME}"
 
-VERSIONE="$(grep -m1 '^version' "${DIR_APP}/pyproject.toml" | cut -d'"' -f2)"
+VERSIONE="$(grep -m1 '^APP_VERSIONE' "${DIR_APP}/config/settings.py" | cut -d'"' -f2)"
 echo -e "\n\033[1;32mGestione Associazione ${VERSIONE} attiva su http://$(hostname -I | awk '{print $1}'):${PORTA}/\033[0m"
 if [[ -n "$PASSWORD_ADMIN" ]]; then
   echo "Primo accesso: utente ${ADMIN}, password ${PASSWORD_ADMIN}"

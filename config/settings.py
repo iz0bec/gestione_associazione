@@ -240,7 +240,8 @@ CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
-SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+# i browser la ignorano (con un avviso) sulle origini non HTTPS
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin" if HTTPS else None
 
 # Content Security Policy: solo risorse locali, script inline solo con nonce
 SECURE_CSP = {
