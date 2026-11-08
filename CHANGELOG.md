@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.4] - 2026-11-08
+
+Modelli di stampa, utenti collegati all'anagrafica, coerenza fra ruoli e funzioni, cariche e
+organigramma degli organi sociali, ricevuta su una pagina.
+
 ### Aggiunto - Documenti e modelli di stampa
 - Modelli di lettere, attestati e documenti con segnaposto, grassetto ed elenchi, stampati su
   carta intestata; firma del presidente in carica; tre modelli pronti.

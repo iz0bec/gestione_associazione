@@ -18,7 +18,7 @@
 | **0.0.1-rc.1** ✅ | moduli di base, configurazione guidata, importazione dal registro nazionale, backup e ripristino, installazione su host e LXC | GitLab personale (pubblico) |
 | **0.0.1-rc.2** ✅ | correzioni del primo collaudo (installatore, backup, importazione dal registro) | GitLab |
 | **0.0.1-rc.3** ✅ | gestione utenti dall'interfaccia, import dai tre gestionali attuali, aiuto in linea | GitLab |
-| 0.0.1-rc.4 | modelli di stampa, utenti collegati all'anagrafica, verifica dei permessi | GitLab |
+| **0.0.1-rc.4** ✅ | modelli di stampa, utenti collegati all'anagrafica, verifica dei permessi, organigramma | GitLab |
 | 0.x | collaudo presso la sezione, correzioni, funzionalità della fase 2 | GitLab |
 | **1.0** | prima release stabile, documentazione completa, Django 6.2 LTS | GitHub |
 
