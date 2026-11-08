@@ -42,6 +42,7 @@ from .forms import (
     CessazioneForm,
     DomandaForm,
     ImportaForm,
+    IncassoMassivoForm,
     ListinoForm,
     LottoForm,
     MotivoForm,
@@ -490,6 +491,60 @@ class RinnovoView(PermessoMixin, FormView):
         if form.is_bound:
             form.is_valid()
         return self.render_to_response(self.get_context_data(form=form))
+
+
+class IncassoMassivoView(PermessoMixin, FormView):
+    """Incasso di più quote dell'anno con la stessa data e lo stesso metodo."""
+
+    permission_required = "soci.incassa_quota"
+    form_class = IncassoMassivoForm
+    template_name = "soci/incasso_massivo.html"
+
+    def get_anno(self):
+        try:
+            return int(self.request.GET.get("anno") or self.request.POST.get("anno"))
+        except (TypeError, ValueError):
+            return date.today().year
+
+    def da_pagare(self):
+        return (
+            _tessere(self.request)
+            .da_pagare()
+            .filter(anno=self.get_anno())
+            .select_related("socio__soggetto", "socio__sezione", "carta")
+            .order_by("socio__numero")
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["tessere"] = self.da_pagare()
+        kwargs["prefix"] = "incasso"
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["anno"] = self.get_anno()
+        ctx["da_pagare"] = self.da_pagare()
+        ctx["anni"] = range(date.today().year + 1, date.today().year - 6, -1)
+        ctx["scelte"] = {str(v) for v in (ctx["form"]["tessere"].value() or [])}
+        return ctx
+
+    def form_valid(self, form):
+        d = form.cleaned_data
+        fatte, errori = servizi.incasso_massivo(
+            list(d["tessere"]), self.request.user, pagata_il=d["pagata_il"], metodo=d["metodo"],
+            riferimento=d["riferimento"],
+        )  # fmt: skip
+        if fatte:
+            totale = sum(t.importo for t in fatte)
+            messages.success(
+                self.request,
+                f"Incassate {len(fatte)} quote per {totale} €: ricevute dalla "
+                f"{fatte[0].codice_ricevuta} alla {fatte[-1].codice_ricevuta}.",
+            )
+        for t, errore in errori:
+            messages.warning(self.request, f"{t.socio.soggetto.nome_completo}: {errore}")
+        return redirect(f"{reverse('soci:tessere')}?anno={self.get_anno()}&stato=pagate")
 
 
 class AttribuisciView(_AzioneTesseraView):

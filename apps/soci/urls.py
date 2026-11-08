@@ -29,6 +29,7 @@ urlpatterns = [
     path("<int:pk>/tessera/", views.TesseraNuovaView.as_view(), name="tessera_nuova"),
     path("tessere/", views.TessereView.as_view(), name="tessere"),
     path("tessere/rinnovo/", views.RinnovoView.as_view(), name="rinnovo"),
+    path("tessere/incasso/", views.IncassoMassivoView.as_view(), name="incasso_massivo"),
     path("tessere/<int:pk>/pagamento/", views.PagamentoView.as_view(), name="pagamento"),
     path("tessere/<int:pk>/annulla/", views.AnnullaTesseraView.as_view(), name="annulla_tessera"),
     path("tessere/<int:pk>/attribuisci/", views.AttribuisciView.as_view(), name="attribuisci"),

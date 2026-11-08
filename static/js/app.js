@@ -171,6 +171,15 @@
       });
     });
   }
+  // «Seleziona tutte»: <input type="checkbox" data-seleziona-tutte="nome-delle-caselle">
+  document.addEventListener("change", function (ev) {
+    var nome = ev.target.getAttribute && ev.target.getAttribute("data-seleziona-tutte");
+    if (!nome) return;
+    var modulo = ev.target.form || document;
+    modulo.querySelectorAll('input[type="checkbox"][name="' + nome + '"]').forEach(function (c) {
+      c.checked = ev.target.checked;
+    });
+  });
   document.addEventListener("DOMContentLoaded", function () { inizializza(document); });
   document.addEventListener("htmx:load", function (ev) { inizializza(ev.target); });
 })();

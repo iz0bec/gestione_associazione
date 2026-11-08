@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Incasso massivo delle quote: tessere da pagare dell'anno con dati di incasso comuni
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Incasso quote {{ anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere' %}?anno={{ anno }}">Tesseramento</a></div>{% endblock %}
+{% block titolo_pagina %}Incasso quote {{ anno }}{% endblock %}
+{% block azioni %}
+<form method="get" class="d-flex gap-2">
+  <select class="form-select" name="anno" aria-label="Anno" data-invio-automatico>
+    {% for a in anni %}<option value="{{ a }}"{% if a == anno %} selected{% endif %}>{{ a }}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn" type="submit">Mostra</button></noscript>
+</form>
+{% endblock %}
+{% block contenuto %}
+<form method="post" novalidate data-conferma="Registrare l'incasso delle quote spuntate? A ognuna sarà assegnata la sua ricevuta.">{% csrf_token %}
+  <input type="hidden" name="anno" value="{{ anno }}">
+  {% if form.non_field_errors or form.tessere.errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }} {{ form.tessere.errors|join:" " }}</div>{% endif %}
+  <div class="row row-cards">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Quote da incassare <span class="badge bg-yellow-lt ms-1">{{ da_pagare|length }}</span></h2>
+        </div>
+        {% if da_pagare %}
+        <div class="table-responsive">
+          <table class="table table-vcenter card-table table-sm">
+            <thead><tr>
+              <th class="w-1"><input class="form-check-input" type="checkbox" data-seleziona-tutte="incasso-tessere" aria-label="Seleziona tutte"></th>
+              <th>Socio</th><th class="d-none d-md-table-cell">Tessera</th>{% if multisezione %}<th class="d-none d-lg-table-cell">Sezione</th>{% endif %}<th class="text-end">Importo</th>
+            </tr></thead>
+            <tbody>
+            {% for t in da_pagare %}
+              <tr>
+                <td><input class="form-check-input" type="checkbox" name="incasso-tessere" value="{{ t.pk }}" id="quota-{{ t.pk }}"{% if t.pk|stringformat:"d" in scelte %} checked{% endif %}></td>
+                <td><label for="quota-{{ t.pk }}" class="mb-0"><span class="text-secondary">n. {{ t.socio.numero }}</span> {{ t.socio.soggetto.nome_completo }}</label></td>
+                <td class="d-none d-md-table-cell">{% if t.attribuita %}{{ t.codice }}{% else %}<span class="badge bg-yellow-lt">da attribuire</span>{% endif %}</td>
+                {% if multisezione %}<td class="d-none d-lg-table-cell">{{ t.socio.sezione }}</td>{% endif %}
+                <td class="text-end">{{ t.importo }} €</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="card-body text-secondary">Nessuna quota da incassare per il {{ anno }}.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Dati dell'incasso</h2></div>
+        <div class="card-body">
+          {{ form.pagata_il.as_field_group }}
+          {{ form.metodo.as_field_group }}
+          {{ form.riferimento.as_field_group }}
+          <p class="small text-secondary mb-0">Valgono per tutte le quote spuntate; ognuna mantiene il proprio importo, riceve la sua ricevuta numerata ed è registrata in prima nota.</p>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-success w-100" type="submit"{% if not da_pagare %} disabled{% endif %}><i class="ti ti-cash me-1"></i>Incassa le quote spuntate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

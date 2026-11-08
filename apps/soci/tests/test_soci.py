@@ -499,3 +499,63 @@ def test_ricevuta_su_una_sola_pagina(crea_utente, settings, tmp_path):
     html = render_to_string("soci/pdf/ricevuta.html",
                             {"tessera": t, "organizzazione": Organizzazione.corrente()})  # fmt: skip
     assert len(HTML(string=html, url_fetcher=_fetcher_locale()).render().pages) == 1
+
+
+@pytest.mark.django_db
+class TestIncassoMassivo:
+    @pytest.fixture
+    def tessere(self, crea_utente, settings, tmp_path):
+        from apps.anagrafica.models import Soggetto
+        from apps.soci import servizi
+        from apps.soci.models import TipologiaSocio
+
+        settings.MEDIA_ROOT = tmp_path
+        u = crea_utente("seg2", ruoli=["Segretario"])
+        tipo = TipologiaSocio.objects.get(nome="Ordinario")
+        risultato = []
+        for cognome in ("Alfa", "Beta", "Gamma"):
+            s = Soggetto.objects.create(tipo="persona", cognome=cognome)
+            socio = servizi.ammetti_socio(s, tipo, u)
+            risultato.append(servizi.rilascia_tessera(socio, ANNO, u, importo=Decimal("15")))
+        return risultato
+
+    def test_pagina_solo_per_chi_incassa(self, client_ruolo, tessere):
+        assert client_ruolo("Segretario", username="s").get(
+            f"/soci/tessere/incasso/?anno={ANNO}").status_code == 403  # fmt: skip
+        testo = (
+            client_ruolo("Tesoriere").get(f"/soci/tessere/incasso/?anno={ANNO}").content.decode()
+        )
+        assert "Alfa" in testo and "Gamma" in testo
+
+    def test_incassa_le_spuntate(self, client_ruolo, tessere):
+        client = client_ruolo("Tesoriere")
+        r = client.post("/soci/tessere/incasso/", {
+            "anno": ANNO, "incasso-tessere": [tessere[0].pk, tessere[2].pk],
+            "incasso-pagata_il": date.today().isoformat(), "incasso-metodo": "contanti",
+            "incasso-riferimento": "assemblea",
+        }, follow=True)  # fmt: skip
+        assert "Incassate 2 quote per 30" in r.content.decode()
+        for t in tessere:
+            t.refresh_from_db()
+        assert tessere[0].pagata and tessere[2].pagata and not tessere[1].pagata
+        assert tessere[0].ricevuta_numero + 1 == tessere[2].ricevuta_numero
+        assert tessere[0].riferimento_pagamento == "assemblea"
+        from apps.tesoreria.models import Movimento
+
+        assert Movimento.objects.filter(tessera__in=[tessere[0], tessere[2]]).count() in (0, 2)
+
+    def test_una_gia_pagata_non_blocca_le_altre(self, crea_utente, tessere):
+        from apps.soci import servizi
+
+        u = crea_utente("tes", ruoli=["Tesoriere"])
+        servizi.registra_pagamento(tessere[1], u, pagata_il=date.today(), metodo="contanti")
+        tessere[1].refresh_from_db()
+        fatte, errori = servizi.incasso_massivo(tessere, u, pagata_il=date.today(),
+                                                metodo="contanti")  # fmt: skip
+        assert len(fatte) == 2 and len(errori) == 1 and "già registrato" in errori[0][1]
+
+    def test_niente_selezione(self, client_ruolo, tessere):
+        r = client_ruolo("Tesoriere").post("/soci/tessere/incasso/", {
+            "anno": ANNO, "incasso-pagata_il": date.today().isoformat(),
+            "incasso-metodo": "contanti"})  # fmt: skip
+        assert "Spuntare almeno una quota" in r.content.decode()

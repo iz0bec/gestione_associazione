@@ -578,6 +578,33 @@ def registra_pagamento(tessera, utente, *, pagata_il, metodo, importo=None, rife
     return tessera
 
 
+def incasso_massivo(tessere, utente, *, pagata_il, metodo, riferimento=""):
+    """Incassa più quote con gli stessi dati: ognuna con la sua ricevuta e la prima nota.
+
+    Una quota che non si può incassare (già pagata, annullata...) non blocca le altre.
+    Restituisce (tessere incassate, [(tessera, errore)]).
+    """
+    fatte, errori = [], []
+    for t in sorted(tessere, key=lambda t: (t.socio.numero, t.pk)):
+        try:
+            with transaction.atomic():
+                fatte.append(registra_pagamento(
+                    t, utente, pagata_il=pagata_il, metodo=metodo, riferimento=riferimento
+                ))  # fmt: skip
+        except ValidationError as e:
+            errori.append((t, " ".join(e.messages)))
+    if fatte:
+        registra(
+            Azione.MODIFICA,
+            utente=utente,
+            descrizione="Incasso massivo delle quote",
+            quote=len(fatte),
+            totale=str(sum(t.importo for t in fatte)),
+            ricevute=f"{fatte[0].codice_ricevuta} - {fatte[-1].codice_ricevuta}",
+        )
+    return fatte, errori
+
+
 @transaction.atomic
 def annulla_tessera(tessera, utente, motivo, *, libera_carta=False):
     """Annulla il tesseramento; la ricevuta non si riutilizza.

@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Incasso massivo delle quote** (*Tesseramento → Incasso quote*): si spuntano le quote da pagare
+  dell'anno e si indicano una volta data, metodo e riferimento; ricevuta numerata e prima nota per
+  ognuna.
+
 ## [0.0.1-rc.4] - 2026-11-08
 
 Modelli di stampa, utenti collegati all'anagrafica, coerenza fra ruoli e funzioni, cariche e

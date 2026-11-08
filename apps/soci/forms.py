@@ -194,6 +194,18 @@ class PagamentoForm(StileMixin, forms.Form):
         return _non_futura(self.cleaned_data["pagata_il"], "La data dell'incasso")
 
 
+class IncassoMassivoForm(PagamentoForm):
+    """Dati comuni dell'incasso massivo; l'importo è quello di ciascuna tessera."""
+
+    tessere = forms.ModelMultipleChoiceField(queryset=Tessera.objects.none())
+
+    def __init__(self, *args, tessere=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields["importo"]
+        self.fields["tessere"].queryset = tessere if tessere is not None else Tessera.objects.none()
+        self.fields["tessere"].error_messages["required"] = "Spuntare almeno una quota."
+
+
 class MotivoForm(StileMixin, forms.Form):
     motivo = forms.CharField(label="Motivo", max_length=255)
 

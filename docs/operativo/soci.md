@@ -98,6 +98,11 @@ dell'anagrafica). Dai pulsanti in alto:
 - **Incasso**: pulsante **Incassa** (scheda del socio o pagina Tesseramento). Si indicano data,
   importo, metodo (contanti, bonifico, POS) e un riferimento (es. CRO). Viene assegnato il numero di
   ricevuta.
+- **Incasso di più quote insieme** (Tesoriere e Amministratore): *Tesseramento → Incasso quote*
+  elenca le quote da pagare dell'anno; si spuntano (o *seleziona tutte*) e si indicano una sola volta
+  data, metodo e riferimento (es. «assemblea del 15/03»). Ogni quota mantiene il suo importo, riceve
+  la sua ricevuta numerata ed entra in prima nota; una quota già pagata nel frattempo viene
+  segnalata senza bloccare le altre.
 - **Ricevuta**: pulsante **Ricevuta** su ogni tessera pagata, in PDF con l'intestazione dell'ente,
   da stampare, firmare o inviare.
 - **Annullamento**: pulsante ✕ con il motivo obbligatorio. Il tesseramento resta visibile come

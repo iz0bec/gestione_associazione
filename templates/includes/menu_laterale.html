@@ -1,5 +1,5 @@
 {% comment %}Menu laterale: le voci compaiono solo con i permessi necessari.{% endcomment %}
-{% with nome=request.resolver_match.namespace chiave=","|add:request.resolver_match.url_name|add:"," TESSERAMENTO=",tessere,rinnovo,tessere_fisiche,lotto_nuovo,tipologie,tipologia_nuova,tipologia_modifica,listino," SISTEMA=",organizzazione,aspetto,logo_modulo,configurazione,ripristino,registro_attivita," %}
+{% with nome=request.resolver_match.namespace chiave=","|add:request.resolver_match.url_name|add:"," TESSERAMENTO=",tessere,rinnovo,incasso_massivo,tessere_fisiche,lotto_nuovo,tipologie,tipologia_nuova,tipologia_modifica,listino," SISTEMA=",organizzazione,aspetto,logo_modulo,configurazione,ripristino,registro_attivita," %}
 <aside class="navbar navbar-vertical navbar-expand-lg{% if organizzazione.stile_menu == 'colorato' %} menu-colorato{% endif %}" data-bs-theme="{% if organizzazione.stile_menu == 'chiaro' %}light{% else %}dark{% endif %}" aria-label="Menu principale">
   <div class="container-fluid">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-laterale" aria-controls="menu-laterale" aria-expanded="false" aria-label="Apri il menu">
