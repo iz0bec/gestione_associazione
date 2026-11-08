@@ -58,3 +58,20 @@ class TestAiuto:
         testo = client.get("/informazioni/").content.decode()
         assert settings.APP_AUTORE in testo and "CC0 1.0" in testo
         assert "WeasyPrint" in testo and "Markdown" in testo
+
+
+@pytest.mark.django_db
+class TestMenuSistema:
+    def _menu(self, client, url):
+        testo = client.get(url).content.decode()
+        return re.search(r'<div class="dropdown-menu( show)?" id="menu-sistema">', testo)
+
+    def test_chiuso_fuori_e_aperto_dentro(self, client_ruolo):
+        client = client_ruolo("Amministratore di sistema")
+        assert self._menu(client, "/").group(1) is None
+        assert self._menu(client, "/anagrafica/").group(1) is None
+        for url in ("/sistema/utenti/", "/soci/sezioni/", "/sistema/backup/", "/organizzazione/"):
+            assert self._menu(client, url).group(1) == " show", url
+
+    def test_assente_senza_permessi(self, client_ruolo):
+        assert self._menu(client_ruolo("Addetto protocollo"), "/") is None

@@ -1,5 +1,5 @@
 {% comment %}Menu laterale: le voci compaiono solo con i permessi necessari.{% endcomment %}
-{% with nome=request.resolver_match.namespace chiave=","|add:request.resolver_match.url_name|add:"," TESSERAMENTO=",tessere,rinnovo,tessere_fisiche,lotto_nuovo,tipologie,tipologia_nuova,tipologia_modifica,listino," %}
+{% with nome=request.resolver_match.namespace chiave=","|add:request.resolver_match.url_name|add:"," TESSERAMENTO=",tessere,rinnovo,tessere_fisiche,lotto_nuovo,tipologie,tipologia_nuova,tipologia_modifica,listino," SISTEMA=",organizzazione,aspetto,logo_modulo,configurazione,ripristino,registro_attivita," %}
 <aside class="navbar navbar-vertical navbar-expand-lg{% if organizzazione.stile_menu == 'colorato' %} menu-colorato{% endif %}" data-bs-theme="{% if organizzazione.stile_menu == 'chiaro' %}light{% else %}dark{% endif %}" aria-label="Menu principale">
   <div class="container-fluid">
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-laterale" aria-controls="menu-laterale" aria-expanded="false" aria-label="Apri il menu">
@@ -75,52 +75,22 @@
         </li>
         {% endfor %}
         {% if perms.core.gestisci_organizzazione or perms.core.view_eventoaudit or perms.soci.view_sezione or perms.core.gestisci_backup or perms.accounts.view_utente or user.is_superuser %}
-        <li class="nav-item mt-3"><span class="nav-link text-uppercase small text-secondary">Sistema</span></li>
-        {% if perms.core.gestisci_organizzazione %}
-        <li class="nav-item{% if request.resolver_match.url_name == 'organizzazione' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'core:organizzazione' %}"><span class="nav-link-icon"><i class="ti ti-building"></i></span><span class="nav-link-title">Organizzazione</span></a>
+        <li class="nav-item dropdown mt-3{% if nome == 'utenti' or chiave in SISTEMA or 'sezion' in request.resolver_match.url_name or 'importa' in request.resolver_match.url_name or 'backup' in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link dropdown-toggle{% if nome == 'utenti' or chiave in SISTEMA or 'sezion' in request.resolver_match.url_name or 'importa' in request.resolver_match.url_name or 'backup' in request.resolver_match.url_name %} show{% endif %}" href="#menu-sistema" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{% if nome == 'utenti' or chiave in SISTEMA or 'sezion' in request.resolver_match.url_name or 'importa' in request.resolver_match.url_name or 'backup' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+            <span class="nav-link-icon"><i class="ti ti-settings-2"></i></span><span class="nav-link-title">Sistema</span>
+          </a>
+          <div class="dropdown-menu{% if nome == 'utenti' or chiave in SISTEMA or 'sezion' in request.resolver_match.url_name or 'importa' in request.resolver_match.url_name or 'backup' in request.resolver_match.url_name %} show{% endif %}" id="menu-sistema">
+            {% if perms.core.gestisci_organizzazione %}<a class="dropdown-item{% if request.resolver_match.url_name == 'organizzazione' %} active{% endif %}" href="{% url 'core:organizzazione' %}"><i class="ti ti-building me-2"></i>Organizzazione</a>{% endif %}
+            {% if perms.core.gestisci_organizzazione %}<a class="dropdown-item{% if request.resolver_match.url_name == 'aspetto' %} active{% endif %}" href="{% url 'core:aspetto' %}"><i class="ti ti-palette me-2"></i>Aspetto</a>{% endif %}
+            {% if perms.core.gestisci_organizzazione %}<a class="dropdown-item{% if request.resolver_match.url_name == 'configurazione' %} active{% endif %}" href="{% url 'configurazione' 'ente' %}"><i class="ti ti-wand me-2"></i>Configurazione guidata</a>{% endif %}
+            {% if perms.soci.view_sezione %}<a class="dropdown-item{% if 'sezion' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'soci:sezioni' %}"><i class="ti ti-map-pin me-2"></i>Sezioni</a>{% endif %}
+            {% if perms.soci.importa_soci %}<a class="dropdown-item{% if 'importa' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'soci:importa' %}"><i class="ti ti-file-import me-2"></i>Importa soci</a>{% endif %}
+            {% if perms.accounts.view_utente %}<a class="dropdown-item{% if nome == 'utenti' %} active{% endif %}" href="{% url 'utenti:elenco' %}"><i class="ti ti-user-shield me-2"></i>Utenti e ruoli</a>{% endif %}
+            {% if perms.core.gestisci_backup %}<a class="dropdown-item{% if 'backup' in request.resolver_match.url_name or request.resolver_match.url_name == 'ripristino' %} active{% endif %}" href="{% url 'core:backup' %}"><i class="ti ti-database-export me-2"></i>Backup</a>{% endif %}
+            {% if perms.core.view_eventoaudit %}<a class="dropdown-item{% if request.resolver_match.url_name == 'registro_attivita' %} active{% endif %}" href="{% url 'core:registro_attivita' %}"><i class="ti ti-history me-2"></i>Registro attività</a>{% endif %}
+            {% if user.is_superuser %}<a class="dropdown-item" href="{% url 'admin:index' %}"><i class="ti ti-settings me-2"></i>Amministrazione tecnica</a>{% endif %}
+          </div>
         </li>
-        {% endif %}
-        {% if perms.core.gestisci_organizzazione %}
-        <li class="nav-item{% if request.resolver_match.url_name == 'aspetto' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'core:aspetto' %}"><span class="nav-link-icon"><i class="ti ti-palette"></i></span><span class="nav-link-title">Aspetto</span></a>
-        </li>
-        {% endif %}
-        {% if perms.core.gestisci_organizzazione %}
-        <li class="nav-item{% if request.resolver_match.url_name == 'configurazione' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'configurazione' 'ente' %}"><span class="nav-link-icon"><i class="ti ti-wand"></i></span><span class="nav-link-title">Configurazione guidata</span></a>
-        </li>
-        {% endif %}
-        {% if perms.soci.view_sezione %}
-        <li class="nav-item{% if 'sezion' in request.resolver_match.url_name %} active{% endif %}">
-          <a class="nav-link" href="{% url 'soci:sezioni' %}"><span class="nav-link-icon"><i class="ti ti-map-pin"></i></span><span class="nav-link-title">Sezioni</span></a>
-        </li>
-        {% endif %}
-        {% if perms.soci.importa_soci %}
-        <li class="nav-item{% if 'importa' in request.resolver_match.url_name %} active{% endif %}">
-          <a class="nav-link" href="{% url 'soci:importa' %}"><span class="nav-link-icon"><i class="ti ti-file-import"></i></span><span class="nav-link-title">Importa soci</span></a>
-        </li>
-        {% endif %}
-        {% if perms.accounts.view_utente %}
-        <li class="nav-item{% if nome == 'utenti' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'utenti:elenco' %}"><span class="nav-link-icon"><i class="ti ti-user-shield"></i></span><span class="nav-link-title">Utenti e ruoli</span></a>
-        </li>
-        {% endif %}
-        {% if perms.core.gestisci_backup %}
-        <li class="nav-item{% if 'backup' in request.resolver_match.url_name or request.resolver_match.url_name == 'ripristino' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'core:backup' %}"><span class="nav-link-icon"><i class="ti ti-database-export"></i></span><span class="nav-link-title">Backup</span></a>
-        </li>
-        {% endif %}
-        {% if perms.core.view_eventoaudit %}
-        <li class="nav-item{% if request.resolver_match.url_name == 'registro_attivita' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'core:registro_attivita' %}"><span class="nav-link-icon"><i class="ti ti-history"></i></span><span class="nav-link-title">Registro attività</span></a>
-        </li>
-        {% endif %}
-        {% if user.is_superuser %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'admin:index' %}"><span class="nav-link-icon"><i class="ti ti-settings"></i></span><span class="nav-link-title">Amministrazione tecnica</span></a>
-        </li>
-        {% endif %}
         {% endif %}
       </ul>
     </div>
