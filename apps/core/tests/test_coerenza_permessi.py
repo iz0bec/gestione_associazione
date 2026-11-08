@@ -20,7 +20,7 @@ from apps.accounts.ruoli import RUOLI
 # pagine raggiungibili senza accesso, per scelta
 PUBBLICHE = {
     "salute", "aspetto_css", "logo", "stato_ripristino", "bene_pubblico", "bene_pubblico_foto",
-    "iscrizione", "iscrizione_inviata",
+    "iscrizione", "iscrizione_inviata", "feed_pubblico",
 }  # fmt: skip
 
 # chi ha il primo permesso deve avere anche il secondo (la funzione lo usa)
@@ -30,6 +30,8 @@ IMPLICAZIONI = [
     ("documenti.stampa_documento", "anagrafica.view_soggetto"),  # scelta dei destinatari
     ("comunicazioni.add_invio", "anagrafica.view_soggetto"),
     ("soci.add_socio", "anagrafica.view_soggetto"),
+    ("anagrafica.importa_soggetti", "anagrafica.add_soggetto"),
+    ("anagrafica.importa_soggetti", "anagrafica.change_soggetto"),
     ("protocollo.add_protocollo", "anagrafica.view_soggetto"),
 ]
 

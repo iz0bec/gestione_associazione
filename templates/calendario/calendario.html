@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Calendario: prossimi impegni ed esportazione iCal (file e collegamento personale)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Calendario{% endblock %}
+{% block titolo_pagina %}Calendario{% endblock %}
+{% block azioni %}
+<a class="btn" href="{% url 'calendario:scarica' %}{% if compleanni %}?compleanni=1{% endif %}"><i class="ti ti-download me-1"></i>Scarica .ics</a>
+{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Prossimi 60 giorni</h3>
+        {% if puo_compleanni %}
+        <div class="card-actions">
+          {% if compleanni %}<a class="btn btn-sm" href="{% url 'calendario:calendario' %}">Nascondi i compleanni</a>
+          {% else %}<a class="btn btn-sm" href="{% url 'calendario:calendario' %}?compleanni=1"><i class="ti ti-cake me-1"></i>Mostra i compleanni</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% if prossimi %}
+      <div class="list-group list-group-flush">
+        {% for giorno, e in prossimi %}
+        <div class="list-group-item">
+          <div class="row align-items-center g-2">
+            <div class="col-auto text-center calendario-giorno">
+              <div class="small text-secondary text-uppercase">{{ giorno|date:"D" }}</div>
+              <div class="h3 mb-0">{{ giorno|date:"j" }}</div>
+              <div class="small text-secondary">{{ giorno|date:"M" }}</div>
+            </div>
+            <div class="col">
+              <div><i class="ti ti-{{ e.icona }} text-secondary me-1"></i>{% if e.percorso %}<a href="{{ e.percorso }}">{{ e.titolo }}</a>{% else %}{{ e.titolo }}{% endif %}{% if giorno == oggi %} <span class="badge bg-green-lt">oggi</span>{% endif %}</div>
+              <div class="small text-secondary">
+                {% if not e.tutto_il_giorno %}ore {{ e.inizio|time:"H:i" }}{% if e.luogo %} · {% endif %}{% endif %}{{ e.luogo }}
+                {% if e.annuale %}<span class="ms-1">· ogni anno</span>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body text-secondary">Nessun impegno nei prossimi 60 giorni.</div>
+      {% endif %}
+      <div class="card-footer small text-secondary">Riunioni convocate degli organi, ricorrenze, restituzioni previste dei beni in prestito{% if puo_compleanni %} e, a scelta, compleanni dei soci{% endif %}: ognuno vede ciò che i propri permessi consentono.</div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-device-mobile me-1"></i>Sul telefono e sul computer</h3></div>
+      <div class="card-body">
+        {% if url_feed %}
+        <div class="alert alert-success">
+          <div class="mb-2"><strong>Collegamento personale</strong>: copialo ora, non sarà più mostrato.</div>
+          <input class="form-control mb-2" type="text" value="{{ url_feed }}" readonly aria-label="Collegamento al calendario" data-copia>
+          <a class="btn btn-sm" href="{{ url_webcal }}"><i class="ti ti-calendar-plus me-1"></i>Apri nell'app Calendario</a>
+        </div>
+        {% endif %}
+        <p class="small">Con il <strong>collegamento personale</strong> il calendario del telefono o del computer si abbona agli impegni e si aggiorna da solo (ogni poche ore):</p>
+        <ul class="small">
+          <li><strong>iPhone/iPad</strong>: «Apri nell'app Calendario», oppure Impostazioni → Calendario → Account → Aggiungi → Altro → Calendario sottoscritto.</li>
+          <li><strong>Android / Google Calendar</strong>: da computer, calendar.google.com → Altri calendari → + → Da URL.</li>
+          <li><strong>Outlook</strong>: Aggiungi calendario → Sottoscrivi dal Web.</li>
+        </ul>
+        <p class="small text-secondary">Il collegamento è segreto come una password: chi lo conosce legge gli impegni che vedi tu. Se viene diffuso per errore, crearne uno nuovo (il vecchio smette di funzionare) o revocarlo.</p>
+        {% if feed %}
+        <dl class="row small mb-3">
+          <dt class="col-5">Attivo dal</dt><dd class="col-7">{{ feed.creato_il|date:"d/m/Y H:i" }}</dd>
+          <dt class="col-5">Ultima lettura</dt><dd class="col-7">{{ feed.ultimo_accesso|date:"d/m/Y H:i"|default:"mai" }}</dd>
+          <dt class="col-5">Compleanni</dt><dd class="col-7">{{ feed.compleanni|yesno:"inclusi,non inclusi" }}</dd>
+        </dl>
+        {% endif %}
+        <form method="post" action="{% url 'calendario:collegamento' %}"{% if feed %} data-conferma="Il collegamento attuale smetterà di funzionare. Crearne uno nuovo?"{% endif %}>{% csrf_token %}
+          {% if puo_compleanni %}
+          <label class="form-check mb-2"><input class="form-check-input" type="checkbox" name="compleanni" value="1"{% if feed.compleanni %} checked{% endif %}><span class="form-check-label">Includi i compleanni dei soci</span></label>
+          {% endif %}
+          <button class="btn btn-primary" type="submit" name="azione" value="crea"><i class="ti ti-link me-1"></i>{% if feed %}Nuovo collegamento{% else %}Crea il collegamento{% endif %}</button>
+        </form>
+        {% if feed %}
+        <form method="post" action="{% url 'calendario:collegamento' %}" class="mt-2" data-conferma="Revocare il collegamento? I calendari abbonati non si aggiorneranno più.">{% csrf_token %}
+          <button class="btn btn-outline-danger btn-sm" type="submit" name="azione" value="revoca"><i class="ti ti-link-off me-1"></i>Revoca</button>
+        </form>
+        {% endif %}
+      </div>
+      <div class="card-footer small text-secondary">In alternativa, <strong>Scarica .ics</strong> salva una copia degli impegni (tre mesi indietro e un anno avanti) da importare una volta: non si aggiorna.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

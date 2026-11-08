@@ -153,6 +153,7 @@ class Soggetto(ModelloBase):
         permissions = [
             ("archivia_soggetto", "Può archiviare e ripristinare soggetti"),
             ("esporta_soggetti", "Può esportare l'anagrafica"),
+            ("importa_soggetti", "Può importare schede da una rubrica (vCard)"),
         ]
         constraints = [
             models.CheckConstraint(

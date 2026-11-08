@@ -5,6 +5,10 @@
 <div class="btn-list">
   {% if perms.anagrafica.esporta_soggetti %}
   <a class="btn" href="{% url 'anagrafica:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-1"></i>Esporta CSV</a>
+  <a class="btn" href="{% url 'anagrafica:esporta_vcard' %}?{{ request.GET.urlencode }}" title="Le schede dell'elenco filtrato, da aprire con la rubrica del telefono o del computer"><i class="ti ti-address-book me-1"></i>Esporta in rubrica</a>
+  {% endif %}
+  {% if perms.anagrafica.importa_soggetti %}
+  <a class="btn" href="{% url 'anagrafica:importa_vcard' %}"><i class="ti ti-file-import me-1"></i>Importa da rubrica</a>
   {% endif %}
   {% if perms.anagrafica.add_soggetto %}
   <a class="btn btn-primary" href="{% url 'anagrafica:nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo</a>

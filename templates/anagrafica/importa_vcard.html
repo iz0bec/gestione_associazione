@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Importazione di schede da una rubrica (vCard): caricamento, anteprima, conferma
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Importa da rubrica{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'anagrafica:elenco' %}">Anagrafica</a></div>{% endblock %}
+{% block titolo_pagina %}Importa da rubrica (vCard){% endblock %}
+{% block contenuto %}
+{% if righe is not None %}
+<div class="card mb-3">
+  <div class="card-header">
+    <h3 class="card-title">{% if anteprima %}Anteprima: nulla è stato ancora salvato{% else %}Importazione eseguita{% endif %}</h3>
+    <div class="card-actions text-secondary small">{{ nome_file }}{% if categoria %} · categoria «{{ categoria }}»{% endif %}</div>
+  </div>
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge bg-green-lt">{{ conteggi.nuovo }} schede nuove</span>
+      <span class="badge bg-blue-lt">{{ conteggi.aggiornato }} da completare</span>
+      <span class="badge bg-secondary-lt">{{ conteggi.invariato }} già presenti, invariate</span>
+      {% if conteggi.ambiguo %}<span class="badge bg-yellow-lt">{{ conteggi.ambiguo }} ambigue (saltate)</span>{% endif %}
+      {% if conteggi.scartato %}<span class="badge bg-red-lt">{{ conteggi.scartato }} scartate</span>{% endif %}
+    </div>
+    <p class="small text-secondary mt-2 mb-0">I contatti sono abbinati alle schede esistenti per email, telefono o nome: delle schede già presenti si completano solo i campi vuoti, nessun dato viene sovrascritto.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-vcenter card-table">
+      <thead><tr><th>Contatto</th><th>Esito</th><th>Dettaglio</th></tr></thead>
+      <tbody>
+      {% for r in righe %}
+        <tr>
+          <td>{% if r.soggetto %}<a href="{{ r.soggetto.get_absolute_url }}">{{ r.nome }}</a>{% else %}{{ r.nome }}{% endif %}</td>
+          <td>{% if r.esito == "nuovo" %}<span class="badge bg-green-lt">nuova</span>{% elif r.esito == "aggiornato" %}<span class="badge bg-blue-lt">da completare</span>{% elif r.esito == "invariato" %}<span class="badge bg-secondary-lt">invariata</span>{% elif r.esito == "ambiguo" %}<span class="badge bg-yellow-lt">ambigua</span>{% else %}<span class="badge bg-red-lt">scartata</span>{% endif %}</td>
+          <td class="small text-secondary">{{ r.dettaglio }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if anteprima %}
+  <div class="card-footer d-flex">
+    <a class="btn btn-link" href="{% url 'anagrafica:importa_vcard' %}">Annulla</a>
+    <form method="post" class="ms-auto" data-conferma="Importare i contatti come indicato nell'anteprima?">{% csrf_token %}
+      <input type="hidden" name="azione" value="esegui">
+      <button class="btn btn-primary" type="submit"{% if not conteggi.nuovo and not conteggi.aggiornato %} disabled{% endif %}><i class="ti ti-file-import me-1"></i>Conferma l'importazione</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="card-footer"><a class="btn" href="{% url 'anagrafica:elenco' %}">Vai all'anagrafica</a></div>
+  {% endif %}
+</div>
+{% endif %}
+{% if not eseguita %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" class="card" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      <div class="card-header"><h3 class="card-title">{% if anteprima %}Carica un altro file{% else %}File da importare{% endif %}</h3></div>
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-eye me-1"></i>Mostra l'anteprima</button></div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body small">
+        <h4>Da dove prendere il file</h4>
+        <ul class="mb-0">
+          <li><strong>Android / Google Contatti</strong>: contacts.google.com → Esporta → vCard.</li>
+          <li><strong>iPhone</strong>: icloud.com/contacts → seleziona → ingranaggio → Esporta vCard.</li>
+          <li><strong>Outlook</strong>, <strong>Thunderbird</strong>: esportazione della rubrica in formato vCard (.vcf).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

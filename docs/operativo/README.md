@@ -16,7 +16,7 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 1. [Configurazione iniziale](configurazione-iniziale.md) - il wizard del primo accesso e **cosa preparare prima**
 2. [Primi passi](primi-passi.md) - accesso, verifica in due passaggi, come è fatta l'interfaccia
 3. [Ruoli e permessi](ruoli.md) - chi può fare cosa
-4. [Anagrafica](anagrafica.md) - persone ed enti, foto, categorie, consensi privacy, esportazione
+4. [Anagrafica](anagrafica.md) - persone ed enti, foto, categorie, consensi privacy, esportazione, rubrica del telefono (vCard)
 5. [Soci e tesseramento](soci.md) - libro soci, sezioni, listino, tessere, quote e ricevute, rinnovo, domande di iscrizione, importazione dal registro nazionale
 6. [Protocollo](protocollo.md) - registrazioni, documenti, annullamento, posta e PEC, registri giornalieri
 7. [Organi sociali](organi.md) - cariche, riunioni e convocazioni, presenze e deleghe, verbali e delibere
@@ -26,5 +26,6 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 11. [Organizzazione, aspetto, sezioni e registro attività](sistema.md) - dati dell'ente, logo e colori, sezioni, controllo delle operazioni
 12. [Documenti e modelli di stampa](documenti.md) - lettere e attestati su carta intestata, per una persona, una lista o una categoria, con protocollazione in uscita
 13. [Utenti e ruoli](utenti.md) - account, password temporanee, secondo fattore obbligatorio per ruolo
+14. [Calendario](calendario.md) - prossimi impegni e calendario sul telefono e sul computer (iCal)
 
 Sono pronti tutti i moduli previsti per la 0.0.1.

@@ -10,6 +10,7 @@
     <button class="btn" type="submit"><i class="ti ti-{% if soggetto.attivo %}archive{% else %}restore{% endif %} me-1"></i>{% if soggetto.attivo %}Archivia{% else %}Ripristina{% endif %}</button>
   </form>
   {% endif %}
+  {% if perms.anagrafica.esporta_soggetti and not soggetto.deceduto %}<a class="btn" href="{% url 'anagrafica:vcard' soggetto.pk %}" title="Scheda vCard per la rubrica"><i class="ti ti-address-book me-1"></i>vCard</a>{% endif %}
   {% if perms.documenti.stampa_documento and soggetto.attivo and not soggetto.deceduto %}<a class="btn" href="{% url 'documenti:stampa' %}?soggetto={{ soggetto.pk }}"><i class="ti ti-printer me-1"></i>Stampa documento</a>{% endif %}
   {% if perms.anagrafica.change_soggetto %}<a class="btn btn-primary" href="{% url 'anagrafica:modifica' soggetto.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
 </div>

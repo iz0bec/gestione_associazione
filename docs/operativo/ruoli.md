@@ -15,15 +15,15 @@ Ogni utente ha uno o più **ruoli**; il ruolo decide cosa si vede e cosa si può
 I ruoli li assegna l'amministratore da **Sistema → Utenti e ruoli** (vedi [Utenti e ruoli](utenti.md)),
 dove si sceglie anche per quali ruoli il secondo fattore è obbligatorio.
 
-| Ruolo | Anagrafica | Esporta anagrafica | Dati organizzazione, aspetto, configurazione guidata | Registro attività | Utenti e ruoli |
-|---|---|---|---|---|---|
-| Amministratore di sistema | consulta, inserisce, modifica, archivia | sì | modifica | consulta | **gestisce** |
-| Presidente | consulta, inserisce, modifica, archivia | sì | - | consulta | - |
-| Segretario | consulta, inserisce, modifica, archivia | sì | modifica | - | - |
-| Addetto protocollo | consulta, inserisce, modifica, archivia | - | - | - | - |
-| Tesoriere | consulta | - | - | - | - |
-| Consigliere | consulta | - | - | - | - |
-| Revisore | consulta | - | - | consulta | - |
+| Ruolo | Anagrafica | Esporta anagrafica (CSV, rubrica) | Importa da rubrica | Dati organizzazione, aspetto, configurazione guidata | Registro attività | Utenti e ruoli |
+|---|---|---|---|---|---|---|
+| Amministratore di sistema | consulta, inserisce, modifica, archivia | sì | sì | modifica | consulta | **gestisce** |
+| Presidente | consulta, inserisce, modifica, archivia | sì | - | - | consulta | - |
+| Segretario | consulta, inserisce, modifica, archivia | sì | sì | modifica | - | - |
+| Addetto protocollo | consulta, inserisce, modifica, archivia | - | - | - | - | - |
+| Tesoriere | consulta | - | - | - | - | - |
+| Consigliere | consulta | - | - | - | - | - |
+| Revisore | consulta | - | - | - | consulta | - |
 
 ### Soci e tesseramento
 
@@ -99,6 +99,12 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Amministratore di sistema, Segretario | sì | sì |
 | Presidente, Tesoriere, Addetto protocollo | sì | - |
 | Consigliere, Revisore | - | - |
+
+### Calendario
+
+Il **Calendario** è aperto a tutti gli utenti, ma ognuno vede (e riceve sul telefono) solo gli
+impegni dei moduli che può consultare: riunioni degli organi, ricorrenze, restituzioni dei beni
+in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 
 ## Funzioni che coinvolgono più moduli
 

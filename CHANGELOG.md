@@ -6,6 +6,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Calendario** (nuova voce di menu): prossimi impegni da riunioni, ricorrenze, restituzioni dei
+  prestiti e, a scelta, compleanni dei soci, secondo i permessi; esportazione **iCal** in un file
+  `.ics` o con un **collegamento personale** segreto a cui abbonare i calendari di telefono e
+  computer (si aggiorna da solo; revocabile; nel database solo l'impronta).
+- **Anagrafica ↔ rubrica (vCard)**: *Esporta in rubrica* (elenco filtrato) e *vCard* dalla scheda
+  per i contatti del telefono, Google, iCloud, Outlook; *Importa da rubrica* da file `.vcf`
+  (2.1/3.0/4.0) con anteprima, abbinamento per email, telefono o nome e completamento dei soli
+  campi vuoti. Nuovo permesso *importa_soggetti* (Amministratore di sistema, Segretario).
 - Pagina *Informazioni*: riquadro **Novità** con le ultime cinque versioni del registro delle
   modifiche (la versione installata è evidenziata).
 

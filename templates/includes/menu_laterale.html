@@ -14,6 +14,9 @@
         <li class="nav-item{% if nome == 'core' and request.resolver_match.url_name == 'cruscotto' %} active{% endif %}">
           <a class="nav-link" href="{% url 'core:cruscotto' %}"><span class="nav-link-icon"><i class="ti ti-home"></i></span><span class="nav-link-title">Cruscotto</span></a>
         </li>
+        <li class="nav-item{% if nome == 'calendario' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'calendario:calendario' %}"><span class="nav-link-icon"><i class="ti ti-calendar"></i></span><span class="nav-link-title">Calendario</span></a>
+        </li>
         {% if perms.anagrafica.view_soggetto %}
         <li class="nav-item{% if nome == 'anagrafica' %} active{% endif %}">
           <a class="nav-link" href="{% url 'anagrafica:elenco' %}"><span class="nav-link-icon"><i class="ti ti-address-book"></i></span><span class="nav-link-title">Anagrafica</span></a>

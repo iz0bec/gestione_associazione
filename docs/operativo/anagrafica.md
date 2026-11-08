@@ -77,3 +77,33 @@ Le schede non si cancellano: i documenti ufficiali devono poter fare riferimento
 **Esporta CSV** scarica l'elenco **con i filtri applicati** (file apribile con Excel o LibreOffice,
 separatore `;`). Ogni esportazione viene registrata nel registro attività: i dati esportati
 sono dati personali, da conservare con cura e cancellare quando non servono più.
+
+## Rubrica del telefono e del computer (vCard)
+
+**Esporta in rubrica** scarica le schede dell'elenco **con i filtri applicati** in un file
+`.vcf`, il formato delle rubriche: aprendolo sul telefono, o importandolo in Google Contatti,
+iCloud, Outlook o Thunderbird, i contatti vengono aggiunti con nome (e titolo), email, PEC,
+cellulare, telefono, indirizzo, data di nascita, qualifica e categorie; per i soci attivi è
+indicato il numero di socio. Le persone decedute sono escluse; note e codice fiscale **non** sono
+esportati. Dalla scheda, il pulsante **vCard** scarica il solo contatto. Come per il CSV, ogni
+esportazione è annotata nel registro attività.
+
+**Importa da rubrica** (Amministratore di sistema, Segretario) fa il percorso inverso: si carica
+il file `.vcf` esportato dalla rubrica (vCard 2.1, 3.0 o 4.0, anche con molti contatti) e si
+sceglie, se serve, una categoria da assegnare a tutti (es. «Autorità»). Prima viene mostrata
+un'**anteprima**, senza salvare nulla:
+
+- **nuova**: il contatto non c'è e viene creato (persona, o ente se ha solo il nome
+  dell'organizzazione);
+- **da completare**: il contatto è già in anagrafica (stessa email, stesso telefono o stesso nome
+  e cognome) e se ne riempiono **solo i campi vuoti**: nulla viene sovrascritto;
+- **invariata**: già presente con gli stessi dati;
+- **ambigua**: più schede corrispondono (es. due omonimi), il contatto viene saltato e va
+  sistemato a mano;
+- **scartata**: manca il nome.
+
+Telefoni ed email in più rispetto ai campi della scheda finiscono nelle note; dati malformati
+(CAP non di 5 cifre, email non valide, province non in sigla) sono ignorati. Le categorie del
+contatto vengono assegnate se esistono già con lo stesso nome. Con **Conferma l'importazione**
+le schede sono salvate e l'operazione è annotata nel registro attività. Reimportare lo stesso
+file non crea doppioni.

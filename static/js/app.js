@@ -180,6 +180,13 @@
       c.checked = ev.target.checked;
     });
   });
+  // Campi da copiare (es. collegamento al calendario): <input data-copia> si seleziona al clic
+  document.addEventListener("click", function (ev) {
+    var campo = ev.target.closest && ev.target.closest("input[data-copia]");
+    if (!campo) return;
+    campo.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(campo.value).catch(function () {});
+  });
   document.addEventListener("DOMContentLoaded", function () { inizializza(document); });
   document.addEventListener("htmx:load", function (ev) { inizializza(ev.target); });
 })();

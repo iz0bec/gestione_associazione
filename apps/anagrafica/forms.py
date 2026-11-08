@@ -11,7 +11,7 @@ from django import forms
 
 from apps.core.forms import StileMixin
 
-from .models import Consenso, Soggetto
+from .models import Categoria, Consenso, Soggetto
 from .validatori import dati_da_codice_fiscale
 
 
@@ -88,3 +88,23 @@ class ConsensoForm(StileMixin, forms.ModelForm):
         model = Consenso
         fields = ["finalita", "prestato", "data", "modalita"]
         widgets = {"data": CampoData}
+
+
+class ImportaVCardForm(StileMixin, forms.Form):
+    file = forms.FileField(
+        label="File della rubrica (.vcf)",
+        help_text="Esportato dal telefono, da Google Contatti, Outlook o Thunderbird; può "
+        "contenere molti contatti.",
+        widget=forms.FileInput(attrs={"accept": ".vcf,text/vcard,text/x-vcard"}),
+    )
+    categoria = forms.ModelChoiceField(
+        queryset=Categoria.objects.all(),
+        required=False,
+        help_text="Facoltativa: assegnata a tutti i contatti importati (es. «Autorità»).",
+    )
+
+    def clean_file(self):
+        f = self.cleaned_data["file"]
+        if f.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("Il file supera 10 MB.")
+        return f

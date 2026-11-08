@@ -3,11 +3,13 @@
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
 # * Descrizione: Viste dell'anagrafica: elenco con ricerca istantanea (HTMX),
-# *              scheda, inserimento, modifica, archiviazione, consensi, esportazione.
+# *              scheda, inserimento, modifica, archiviazione, consensi, esportazione CSV e
+# *              vCard, importazione da rubrica.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+import base64
 import io
 from datetime import date
 
@@ -17,17 +19,18 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.text import slugify
 from django.views import View
-from django.views.generic import CreateView, DetailView, UpdateView
+from django.views.generic import CreateView, DetailView, FormView, UpdateView
 from django_filters.views import FilterView
 
 from apps.core.immagini import ImmagineNonValida, risposta_immagine
 from apps.core.models import EventoAudit
 from apps.core.views import PermessoMixin
 
-from . import servizi
+from . import servizi, vcard
 from .filtri import SoggettoFilter
-from .forms import ConsensoForm, SoggettoForm
+from .forms import ConsensoForm, ImportaVCardForm, SoggettoForm
 from .models import Soggetto
 
 
@@ -174,3 +177,78 @@ class EsportaView(PermessoMixin, View):
             f'attachment; filename="anagrafica_{date.today():%Y%m%d}.csv"'
         )
         return risposta
+
+
+def _risposta_vcf(testo, nome):
+    risposta = HttpResponse(testo, content_type="text/vcard; charset=utf-8")
+    risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
+    return risposta
+
+
+class EsportaVCardView(PermessoMixin, View):
+    """Le schede dell'elenco filtrato in un file .vcf da aprire con la rubrica."""
+
+    permission_required = "anagrafica.esporta_soggetti"
+
+    def get(self, request):
+        filtro = SoggettoFilter(request.GET, queryset=Soggetto.objects.all())
+        testo, _n = vcard.esporta(filtro.qs, request.user)
+        return _risposta_vcf(testo, f"rubrica_{date.today():%Y%m%d}.vcf")
+
+
+class VCardSoggettoView(PermessoMixin, View):
+    permission_required = "anagrafica.esporta_soggetti"
+
+    def get(self, request, pk):
+        soggetto = get_object_or_404(Soggetto, pk=pk)
+        testo, _n = vcard.esporta(Soggetto.objects.filter(pk=pk), request.user,
+                                  descrizione=f"vCard di {soggetto}")  # fmt: skip
+        return _risposta_vcf(testo, f"{slugify(soggetto.nome_completo) or soggetto.pk}.vcf")
+
+
+class ImportaVCardView(PermessoMixin, FormView):
+    """Caricamento del file, anteprima (nulla viene salvato) e conferma."""
+
+    permission_required = "anagrafica.importa_soggetti"
+    form_class = ImportaVCardForm
+    template_name = "anagrafica/importa_vcard.html"
+    CHIAVE = "importa_vcard"
+
+    def _rapporto(self, righe, **extra):
+        return self.render_to_response(self.get_context_data(
+            righe=righe, conteggi=vcard.riepilogo(righe), **extra
+        ))  # fmt: skip
+
+    def form_valid(self, form):
+        contenuto = form.cleaned_data["file"].read()
+        try:
+            contatti = vcard.leggi(contenuto)
+        except vcard.FileNonValido as e:
+            form.add_error("file", e)
+            return self.form_invalid(form)
+        categoria = form.cleaned_data["categoria"]
+        self.request.session[self.CHIAVE] = {
+            "contenuto": base64.b64encode(contenuto).decode("ascii"),
+            "nome": form.cleaned_data["file"].name,
+            "categoria": categoria.pk if categoria else None,
+        }
+        righe = vcard.importa(contatti, self.request.user, categoria=categoria)
+        return self._rapporto(righe, anteprima=True, nome_file=form.cleaned_data["file"].name,
+                              categoria=categoria)  # fmt: skip
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("azione") != "esegui":
+            return super().post(request, *args, **kwargs)
+        dati = request.session.pop(self.CHIAVE, None)
+        if not dati:
+            messages.error(request, "Anteprima scaduta: caricare di nuovo il file.")
+            return redirect("anagrafica:importa_vcard")
+        from .models import Categoria
+
+        categoria = Categoria.objects.filter(pk=dati["categoria"]).first()
+        contatti = vcard.leggi(base64.b64decode(dati["contenuto"]))
+        righe = vcard.importa(contatti, request.user, categoria=categoria, esegui=True)
+        c = vcard.riepilogo(righe)
+        messages.success(request, f"Importazione completata: {c['nuovo']} schede nuove, "
+                                  f"{c['aggiornato']} completate.")  # fmt: skip
+        return self._rapporto(righe, eseguita=True, nome_file=dati["nome"], categoria=categoria)

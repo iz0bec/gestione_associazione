@@ -166,6 +166,7 @@ RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
+        "anagrafica.importa_soggetti",
         "anagrafica.add_categoria",
         "anagrafica.change_categoria",
         "core.gestisci_organizzazione",
@@ -215,6 +216,7 @@ RUOLI = {
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
+        "anagrafica.importa_soggetti",
         "anagrafica.add_categoria",
         "anagrafica.change_categoria",
         "core.gestisci_organizzazione",
