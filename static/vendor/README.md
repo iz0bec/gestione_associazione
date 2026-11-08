@@ -8,3 +8,6 @@
 
 Per aggiornare: scaricare con `npm pack <pacchetto>@<versione>`, copiare gli stessi file e
 aggiornare questa tabella e `docs/sistema/licenze-terze-parti.md`.
+
+Nei file minificati di Tabler sono stati tolti i commenti `sourceMappingURL`: le mappe sorgente non
+sono incluse e `collectstatic` (archiviazione con manifesto) si fermerebbe cercandole.
