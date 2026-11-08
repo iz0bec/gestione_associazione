@@ -73,11 +73,19 @@ fi
 
 passo "Pacchetti di sistema"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y -qq --no-install-recommends \
-  ca-certificates curl rsync postgresql postgresql-client \
-  libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 shared-mime-info \
-  fonts-dejavu-core fonts-liberation2 >/dev/null
+PACCHETTI=(ca-certificates curl rsync postgresql postgresql-client
+  libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 shared-mime-info
+  fonts-dejavu-core fonts-liberation2)
+# solo quelli mancanti: su un server condiviso non si aggiornano (né riavviano) i servizi esistenti
+MANCANTI=()
+for p in "${PACCHETTI[@]}"; do
+  dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q "install ok installed" || MANCANTI+=("$p")
+done
+if [[ ${#MANCANTI[@]} -gt 0 ]]; then
+  echo "Da installare: ${MANCANTI[*]}"
+  apt-get update -qq
+  apt-get install -y -qq --no-install-recommends "${MANCANTI[@]}" >/dev/null
+fi
 systemctl enable --now postgresql >/dev/null
 
 if ! command -v uv >/dev/null; then
