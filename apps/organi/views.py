@@ -17,7 +17,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, FormView, ListView, TemplateView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
 from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.views import PermessoMixin
@@ -53,8 +60,10 @@ class OrganiView(PermessoMixin, ListView):
         in_carica = Q(cariche__dal__lte=oggi) & (
             Q(cariche__al__isnull=True) | Q(cariche__al__gt=oggi)
         )
-        return Organo.objects.filter(attivo=True).annotate(
-            componenti=Count("cariche", filter=in_carica)
+        return (
+            Organo.objects.filter(attivo=True)
+            .select_related("sezione")
+            .annotate(componenti=Count("cariche", filter=in_carica))
         )
 
     def get_context_data(self, **kwargs):
@@ -129,6 +138,27 @@ class OrganoModificaView(PermessoMixin, UpdateView):
         if dettagli.get("campi"):
             registra(Azione.MODIFICA, self.object, **dettagli)
         messages.success(self.request, "Regole dell'organo salvate.")
+        return risposta
+
+
+class OrganoNuovoView(PermessoMixin, CreateView):
+    permission_required = "organi.add_organo"
+    model = Organo
+    form_class = OrganoForm
+    template_name = "organi/modulo.html"
+    extra_context = {"titolo": "Nuovo organo"}
+
+    def get_initial(self):
+        iniziali = super().get_initial()
+        sezione = self.request.GET.get("sezione")
+        if sezione and sezione.isdigit():
+            iniziali["sezione"] = int(sezione)
+        return iniziali
+
+    def form_valid(self, form):
+        risposta = super().form_valid(form)
+        registra(Azione.CREAZIONE, self.object)
+        messages.success(self.request, f"Organo «{self.object}» creato.")
         return risposta
 
 

@@ -21,6 +21,21 @@ urlpatterns = [
     path("sistema/backup/", viste_backup.BackupView.as_view(), name="backup"),
     path("sistema/posta/", views.ServiziPostaView.as_view(), name="servizi_posta"),
     path(
+        "sistema/documenti-pubblici/",
+        views.GestioneDocumentiPubbliciView.as_view(),
+        name="documenti_pubblici_gestione",
+    ),
+    path(
+        "sistema/documenti-pubblici/nuovo/",
+        views.DocumentoPubblicoNuovoView.as_view(),
+        name="documento_pubblico_nuovo",
+    ),
+    path(
+        "sistema/documenti-pubblici/<int:pk>/",
+        views.DocumentoPubblicoModificaView.as_view(),
+        name="documento_pubblico_modifica",
+    ),
+    path(
         "sistema/posta/verifica/<int:pk>/",
         views.VerificaCasellaView.as_view(),
         name="verifica_casella",

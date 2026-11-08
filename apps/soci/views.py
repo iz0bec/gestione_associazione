@@ -869,9 +869,56 @@ class SezioniView(PermessoMixin, ListView):
 
     def get_queryset(self):
         return Sezione.objects.annotate(
-            n_soci=Count("soci", filter=Q(soci__stato=Socio.Stato.ATTIVO)),
+            n_soci=Count("soci", filter=Q(soci__stato=Socio.Stato.ATTIVO), distinct=True),
             n_utenti=Count("utenti", distinct=True),
+            n_organi=Count(
+                "organi",
+                filter=~Q(organi__tipo="assemblea") & Q(organi__attivo=True),
+                distinct=True,
+            ),  # fmt: skip
         )
+
+
+class SezioneOrganigrammaView(PermessoMixin, View):
+    """Organigramma in PDF degli organi della sezione (una pagina per organo)."""
+
+    permission_required = "soci.view_sezione"
+
+    def get(self, request, pk):
+        from django.utils.text import slugify
+
+        from apps.organi import servizi as organi
+
+        sezione = get_object_or_404(Sezione, pk=pk)
+        sezioni.controlla(request.user, sezione.pk)
+        try:
+            pdf = organi.pdf_organigramma_sezione(sezione, request.user)
+        except organi.OperazioneNonValida as e:
+            messages.warning(request, " ".join(e.messages))
+            return redirect("soci:sezioni")
+        risposta = HttpResponse(pdf, content_type="application/pdf")
+        nome = f"organigramma_sezione_{slugify(sezione.nome)}.pdf"
+        risposta["Content-Disposition"] = f'inline; filename="{nome}"'
+        return risposta
+
+
+class CreaOrganiSezioneView(PermessoMixin, View):
+    """Consiglio direttivo e assemblea della sezione, con le regole di quelli dell'associazione."""
+
+    permission_required = "organi.add_organo"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        from apps.organi import servizi as organi
+
+        sezione = get_object_or_404(Sezione, pk=pk)
+        creati = organi.crea_organi_sezione(sezione, request.user)
+        if creati:
+            messages.success(request, f"Sezione {sezione}: creati " + ", ".join(
+                o.nome for o in creati) + ". Ora si possono nominare i componenti.")  # fmt: skip
+            return redirect(creati[0])
+        messages.info(request, f"La sezione {sezione} ha già i suoi organi.")
+        return redirect("soci:sezioni")
 
 
 class _SezioneMixin:

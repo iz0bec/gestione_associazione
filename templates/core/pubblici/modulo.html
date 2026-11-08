@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Caricamento o modifica di un documento pubblico
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Documento pubblico{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'core:documenti_pubblici_gestione' %}">Documenti pubblici</a></div>{% endblock %}
+{% block titolo_pagina %}{% if object %}{{ object.titolo }}{% else %}Carica documento{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="row"><div class="col-lg-8">
+  <form method="post" class="card" enctype="multipart/form-data" novalidate>{% csrf_token %}
+    <div class="card-body">
+      {% if object %}<p class="small text-secondary">File attuale: <a href="{{ object.get_absolute_url }}" target="_blank" rel="noopener">{{ object.nome_file }}</a> ({{ object.dimensione|filesizeformat }}).</p>{% endif %}
+      {{ form }}
+    </div>
+    <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'core:documenti_pubblici_gestione' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+  </form>
+</div></div>
+{% endblock %}

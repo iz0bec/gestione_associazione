@@ -20,7 +20,7 @@ from apps.accounts.ruoli import RUOLI
 # pagine raggiungibili senza accesso, per scelta
 PUBBLICHE = {
     "salute", "aspetto_css", "logo", "stato_ripristino", "bene_pubblico", "bene_pubblico_foto",
-    "iscrizione", "iscrizione_inviata", "feed_pubblico",
+    "iscrizione", "iscrizione_inviata", "feed_pubblico", "documenti_pubblici", "documento_pubblico",
 }  # fmt: skip
 
 # chi ha il primo permesso deve avere anche il secondo (la funzione lo usa)

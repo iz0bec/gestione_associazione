@@ -54,6 +54,16 @@ urlpatterns = [
         name="importa_avanzamento",
     ),
     path("sezioni/", views.SezioniView.as_view(), name="sezioni"),
+    path(
+        "sezioni/<int:pk>/organigramma/",
+        views.SezioneOrganigrammaView.as_view(),
+        name="sezione_organigramma",
+    ),
+    path(
+        "sezioni/<int:pk>/crea-organi/",
+        views.CreaOrganiSezioneView.as_view(),
+        name="sezione_crea_organi",
+    ),
     path("sezioni/nuova/", views.SezioneNuovaView.as_view(), name="sezione_nuova"),
     path("sezioni/<int:pk>/", views.SezioneModificaView.as_view(), name="sezione_modifica"),
     path("tipologie/", views.TipologieView.as_view(), name="tipologie"),

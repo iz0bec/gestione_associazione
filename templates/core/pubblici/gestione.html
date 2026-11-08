@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Gestione dei documenti pubblici (statuto, regolamento)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Documenti pubblici{% endblock %}
+{% block titolo_pagina %}Documenti pubblici{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <a class="btn" href="{% url 'documenti_pubblici' %}" target="_blank" rel="noopener"><i class="ti ti-world-www me-1"></i>Pagina pubblica</a>
+  <a class="btn btn-primary" href="{% url 'core:documento_pubblico_nuovo' %}"><i class="ti ti-upload me-1"></i>Carica documento</a>
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-body small text-secondary">Questi documenti sono consultabili da chiunque, senza accesso, all'indirizzo <a href="{% url 'documenti_pubblici' %}" target="_blank" rel="noopener">{{ request.scheme }}://{{ request.get_host }}{% url 'documenti_pubblici' %}</a> (collegato anche dalla pagina di accesso e dal modulo di iscrizione). Per una nuova versione dello statuto si sostituisce il file nel documento esistente.</div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Documento</th><th class="d-none d-md-table-cell">File</th><th>Stato</th><th></th></tr></thead>
+      <tbody>
+      {% for d in documenti %}
+        <tr>
+          <td><div class="fw-medium">{{ d.titolo }}</div>{% if d.descrizione %}<div class="small text-secondary">{{ d.descrizione }}</div>{% endif %}</td>
+          <td class="d-none d-md-table-cell small">{{ d.nome_file }}<div class="text-secondary">{{ d.dimensione|filesizeformat }} · {{ d.modificato_il|date:"d/m/Y H:i" }}</div></td>
+          <td>{% if d.pubblicato %}<a class="badge bg-green-lt" href="{{ d.get_absolute_url }}" target="_blank" rel="noopener">pubblicato</a>{% else %}<span class="badge bg-secondary-lt">non pubblicato</span>{% endif %}</td>
+          <td class="text-end"><a class="btn btn-sm" href="{% url 'core:documento_pubblico_modifica' d.pk %}">Modifica</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessun documento caricato.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

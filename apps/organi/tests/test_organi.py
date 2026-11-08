@@ -312,3 +312,65 @@ class TestModificaCarica:
         r = client_ruolo("Consigliere", username="c").post(
             f"/organi/cariche/{c.pk}/modifica/", {f"carica{c.pk}-dal": "2024-01-01"})  # fmt: skip
         assert r.status_code == 403
+
+
+class TestOrganiDiSezione:
+    @pytest.fixture
+    def avigliano(self):
+        from apps.soci.models import Sezione
+
+        return Sezione.objects.create(codice="AV", nome="Avigliano", comune="Avigliano")
+
+    def test_crea_organi_e_cariche_in_sezione_e_federazione(self, avigliano, consiglio, segretario):
+        creati = servizi.crea_organi_sezione(avigliano, segretario)
+        assert {(o.nome, o.tipo) for o in creati} == {("Consiglio direttivo", "consiglio"),
+                                                        ("Assemblea dei soci", "assemblea")}  # fmt: skip
+        assert servizi.crea_organi_sezione(avigliano, segretario) == []  # niente doppioni
+        cd_sezione = next(o for o in creati if o.tipo == "consiglio")
+        assert cd_sezione.quorum_prima == consiglio.quorum_prima
+        assert str(cd_sezione) == "Consiglio direttivo · Avigliano"
+        p = _persona("Santoro")
+        servizi.nomina(cd_sezione, p, "presidente", date(2025, 1, 1), segretario)
+        servizi.nomina(consiglio, p, "consigliere", date(2025, 1, 1), segretario)  # anche federale
+        assert {c.organo_id for c in p.cariche.all()} == {cd_sezione.pk, consiglio.pk}
+
+    def test_assemblea_di_sezione_solo_i_suoi_soci(self, avigliano, segretario):
+        from apps.soci.models import Sezione
+
+        altra = Sezione.objects.create(codice="PZ", nome="Potenza", comune="Potenza")
+        ordinario = TipologiaSocio.objects.get(nome="Ordinario")
+        soci.ammetti_socio(_persona("Mio"), ordinario, segretario, sezione=avigliano,
+                           data_ammissione=date(2020, 1, 1))  # fmt: skip
+        soci.ammetti_socio(_persona("Altro"), ordinario, segretario, sezione=altra,
+                           data_ammissione=date(2020, 1, 1))  # fmt: skip
+        assemblea = next(o for o in servizi.crea_organi_sezione(avigliano, segretario)
+                         if o.tipo == "assemblea")  # fmt: skip
+        assemblea.solo_soci_in_regola = False
+        assemblea.save()
+        r = Riunione(organo=assemblea, prima_convocazione=timezone.now(), luogo="Sede")
+        assert [s.cognome for s, _q, _v in servizi.aventi_diritto(r)] == ["Mio"]
+
+    def test_nomi_unici_per_sezione(self, avigliano, client_ruolo):
+        c = client_ruolo("Amministratore di sistema")
+        dati = {"nome": "Consiglio direttivo", "sigla": "CD", "tipo": "consiglio",
+                "quorum_prima": 50, "quorum_seconda": 0, "max_deleghe": 1, "ordine": 1,
+                "attivo": "on"}  # fmt: skip
+        r = c.post("/organi/nuovo/", dati)  # già esiste quello dell'associazione
+        assert r.status_code == 200 and "Esiste già un organo" in r.content.decode()
+        r = c.post("/organi/nuovo/", {**dati, "sezione": avigliano.pk})
+        assert r.status_code == 302 and Organo.objects.filter(sezione=avigliano).count() == 1
+        assert "Sezione di Avigliano" in c.get("/organi/").content.decode()
+
+    def test_organigramma_della_sezione(self, avigliano, segretario, client_ruolo):
+        c = client_ruolo("Amministratore di sistema")
+        pagina = c.get("/soci/sezioni/").content.decode()
+        assert "Crea gli organi" in pagina
+        r = c.post(f"/soci/sezioni/{avigliano.pk}/crea-organi/")
+        assert r.status_code == 302
+        cd = Organo.objects.get(sezione=avigliano, tipo="consiglio")
+        servizi.nomina(cd, _persona("Santoro"), "presidente", date(2025, 1, 1), segretario)
+        assert "Organigramma" in c.get("/soci/sezioni/").content.decode()
+        r = c.get(f"/soci/sezioni/{avigliano.pk}/organigramma/")
+        assert r.status_code == 200 and r.content.startswith(b"%PDF")
+        assert client_ruolo("Consigliere", username="x").post(
+            f"/soci/sezioni/{avigliano.pk}/crea-organi/").status_code == 403  # fmt: skip

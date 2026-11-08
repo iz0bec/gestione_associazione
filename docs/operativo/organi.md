@@ -31,6 +31,13 @@ Le **regole** di ogni organo (pulsante *Regole*, solo amministratore) vanno alli
 
 ## Cariche
 
+**Organi dell'associazione e delle sezioni.** Ogni organo è dell'associazione (o federazione) oppure
+di una **sezione** (campo *Sezione*): l'elenco li raggruppa così. L'assemblea di una sezione è formata
+dai soci di quella sezione. Lo stesso socio può avere cariche in organi diversi, ad esempio
+presidente della propria sezione e consigliere dell'associazione. **Nuovo organo** (Amministratore di
+sistema) ne crea uno; per una sezione si fa prima con *Crea gli organi* in **Sistema → Sezioni**, che
+ne prepara consiglio e assemblea.
+
 Nella pagina di un organo (non dell'assemblea, che è formata da tutti i soci): **Nomina** con persona,
 ruolo (presidente, vicepresidente, segretario, tesoriere, consigliere, componente, supplente), data di
 inizio e atto di nomina. **Fine carica** registra la data di cessazione e il motivo: **da quel giorno** la persona non è più

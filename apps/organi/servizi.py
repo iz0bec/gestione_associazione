@@ -157,6 +157,8 @@ def aventi_diritto(riunione):
     organo = riunione.organo
     if organo.e_assemblea:
         soci = Socio.objects.attivi().filter(data_ammissione__lte=giorno)
+        if organo.sezione_id:  # assemblea di sezione: i soci di quella sezione
+            soci = soci.filter(sezione_id=organo.sezione_id)
         in_regola = set()
         if organo.solo_soci_in_regola:
             in_regola = set(soci.in_regola(giorno.year).values_list("pk", flat=True))
@@ -548,14 +550,57 @@ def organigramma(organo, giorno=None):
     return livelli
 
 
-def pdf_organigramma(organo, utente):
+def _pdf_schede(organi, oggi):
     from apps.core.pdf import genera_pdf
 
-    oggi = timezone.localdate()
-    pdf = genera_pdf(
+    schede = [(o, organigramma(o, oggi)) for o in organi]
+    return genera_pdf(
         "organi/pdf/organigramma.html",
-        {"organo": organo, "livelli": organigramma(organo, oggi), "oggi": oggi,
-         "organizzazione": Organizzazione.corrente()},
-    )  # fmt: skip
+        {"schede": schede, "oggi": oggi, "organizzazione": Organizzazione.corrente()},
+    )
+
+
+def pdf_organigramma(organo, utente):
+    oggi = timezone.localdate()
+    pdf = _pdf_schede([organo], oggi)
     registra(Azione.ESPORTAZIONE, organo, utente=utente, documento="organigramma")
     return pdf
+
+
+def organi_con_cariche(sezione):
+    """Organi della sezione (None = dell'associazione) che hanno componenti: niente assemblee."""
+    return Organo.objects.filter(sezione=sezione, attivo=True).exclude(tipo=Organo.Tipo.ASSEMBLEA)
+
+
+def pdf_organigramma_sezione(sezione, utente):
+    """Un PDF con l'organigramma di ogni organo della sezione (una pagina per organo)."""
+    organi = list(organi_con_cariche(sezione))
+    if not organi:
+        raise OperazioneNonValida(f"La sezione {sezione} non ha organi con cariche.")
+    oggi = timezone.localdate()
+    pdf = _pdf_schede(organi, oggi)
+    registra(Azione.ESPORTAZIONE, sezione, utente=utente, documento="organigramma della sezione")
+    return pdf
+
+
+ORGANI_DI_SEZIONE = [
+    ("Consiglio direttivo", "CD", Organo.Tipo.CONSIGLIO),
+    ("Assemblea dei soci", "ASS", Organo.Tipo.ASSEMBLEA),
+]
+
+
+@transaction.atomic
+def crea_organi_sezione(sezione, utente):
+    """Consiglio direttivo e assemblea della sezione, con le regole degli organi omologhi
+    dell'associazione. Quelli già presenti non vengono duplicati."""
+    creati = []
+    regole = ("quorum_prima", "quorum_seconda", "max_deleghe", "solo_soci_in_regola", "ordine")
+    for nome, sigla, tipo in ORGANI_DI_SEZIONE:
+        if Organo.objects.filter(sezione=sezione, tipo=tipo).exists():
+            continue
+        modello = Organo.objects.filter(sezione__isnull=True, tipo=tipo).first()
+        dati = {r: getattr(modello, r) for r in regole} if modello else {}
+        organo = Organo.objects.create(nome=nome, sigla=sigla, tipo=tipo, sezione=sezione, **dati)
+        registra(Azione.CREAZIONE, organo, utente=utente, sezione=str(sezione))
+        creati.append(organo)
+    return creati

@@ -28,6 +28,12 @@ def _aiuto(request):
     return url_per(request)
 
 
+def _documenti_pubblici():
+    from .pubblici import pubblicati
+
+    return list(pubblicati())
+
+
 def applicazione(request):
     return {
         "multisezione": SimpleLazyObject(_multisezione),
@@ -36,5 +42,6 @@ def applicazione(request):
         "APP_AUTORE": settings.APP_AUTORE,
         "AIUTO_URL": SimpleLazyObject(lambda: _aiuto(request)),
         "organizzazione": SimpleLazyObject(Organizzazione.corrente),  # 1 query, solo se usata
+        "documenti_pubblici": SimpleLazyObject(_documenti_pubblici),
         "MODULI_IN_ARRIVO": MODULI_IN_ARRIVO,
     }

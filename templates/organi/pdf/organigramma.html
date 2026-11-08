@@ -1,10 +1,10 @@
 {% extends "pdf/base.html" %}
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
-  Descrizione: Organigramma di un organo: componenti in carica per livello, con foto o iniziali
+  Descrizione: Organigramma di uno o più organi (una pagina ciascuno): componenti in carica per livello
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
 {% endcomment %}
-{% block titolo %}Organigramma {{ organo.nome }}{% endblock %}
+{% block titolo %}Organigramma{% if schede|length == 1 %} {{ schede.0.0 }}{% endif %}{% endblock %}
 {% block formato %}A4 landscape{% endblock %}
 {% block stile %}
   h1 { text-align: center; margin-bottom: 2pt; }
@@ -19,9 +19,14 @@
   .nome { font-size: 10pt; font-weight: bold; margin-top: 2pt; }
   .dal { font-size: 7.5pt; color: #666; margin-top: 2pt; }
   .vuoto { text-align: center; color: #666; margin-top: 30pt; }
+  .scheda { page-break-after: always; }
+  .scheda:last-child { page-break-after: auto; }
+  h1 .sezione { font-weight: normal; color: #555; }
 {% endblock %}
 {% block contenuto %}
-<h1>{{ organo.nome }}</h1>
+{% for organo, livelli in schede %}
+<div class="scheda">
+<h1>{{ organo.nome }}{% if organo.sezione %} <span class="sezione">· Sezione di {{ organo.sezione.nome }}</span>{% endif %}</h1>
 <div class="sottotitolo">Componenti in carica al {{ oggi|date:"d/m/Y" }}</div>
 {% for livello in livelli %}
   {% if not forloop.first %}<div class="collegamento"></div>{% endif %}
@@ -37,5 +42,7 @@
   </div>
 {% empty %}
 <div class="vuoto">Nessun componente in carica registrato.</div>
+{% endfor %}
+</div>
 {% endfor %}
 {% endblock %}

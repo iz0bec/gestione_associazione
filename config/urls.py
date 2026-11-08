@@ -13,7 +13,7 @@ from django.urls import include, path
 
 from apps.core.aspetto import aspetto_css, logo
 from apps.core.configurazione import ConfigurazioneView
-from apps.core.views import salute
+from apps.core.views import DocumentiPubbliciView, DocumentoPubblicoView, salute
 from apps.core.viste_backup import StatoRipristinoView
 from apps.patrimonio.views import BenePubblicoView, FotoPubblicaView
 from apps.soci.pubblico import DomandaInviataView, DomandaPubblicaView
@@ -42,6 +42,12 @@ urlpatterns = [
     path("beni/<str:token>/", BenePubblicoView.as_view(), name="bene_pubblico"),
     path("beni/<str:token>/foto/", FotoPubblicaView.as_view(), name="bene_pubblico_foto"),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
+    path("documenti-pubblici/", DocumentiPubbliciView.as_view(), name="documenti_pubblici"),
+    path(
+        "documenti-pubblici/<int:pk>/<slug:slug>.pdf",
+        DocumentoPubblicoView.as_view(),
+        name="documento_pubblico",
+    ),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
     path("configurazione-iniziale/", ConfigurazioneView.as_view(), name="configurazione_inizio"),
     path(

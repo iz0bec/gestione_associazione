@@ -18,7 +18,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.cache import never_cache
-from django.views.generic import ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from .audit import Azione, campi_modificati, registra
 from .forms import AspettoForm, OrganizzazioneCompletaForm, ServiziPostaForm
@@ -245,6 +245,89 @@ class VerificaSmtpView(PermessoMixin, View):
             messages.success(request, f"Server di invio {stato['host']}:{stato['porta']}: accesso "
                                       "riuscito (nessuna email spedita).")  # fmt: skip
         return redirect("core:servizi_posta")
+
+
+class DocumentiPubbliciView(TemplateView):
+    """Pagina pubblica (senza accesso) con statuto, regolamento e altri documenti pubblicati."""
+
+    template_name = "core/pubblici/elenco.html"
+
+    def get_context_data(self, **kwargs):
+        from . import pubblici
+
+        ctx = super().get_context_data(**kwargs)
+        ctx["documenti"] = pubblici.pubblicati()
+        return ctx
+
+
+class DocumentoPubblicoView(View):
+    """Il PDF di un documento pubblicato: nel browser, o da scaricare con ?scarica=1."""
+
+    def get(self, request, pk, slug=None):
+        from django.http import FileResponse, Http404
+
+        from . import pubblici
+
+        doc = pubblici.pubblicati().filter(pk=pk).first()
+        if doc is None or not doc.file:
+            raise Http404
+        try:
+            contenuto = doc.file.open("rb")
+        except FileNotFoundError:
+            raise Http404 from None
+        risposta = FileResponse(
+            contenuto, as_attachment=request.GET.get("scarica") == "1",
+            filename=doc.nome_file or "documento.pdf", content_type="application/pdf",
+        )  # fmt: skip
+        risposta["X-Content-Type-Options"] = "nosniff"
+        risposta["Cache-Control"] = "public, max-age=3600"
+        return risposta
+
+
+class GestioneDocumentiPubbliciView(PermessoMixin, ListView):
+    permission_required = "core.gestisci_organizzazione"
+    template_name = "core/pubblici/gestione.html"
+    context_object_name = "documenti"
+
+    def get_queryset(self):
+        from .models import DocumentoPubblico
+
+        return DocumentoPubblico.objects.all()
+
+
+class _DocumentoPubblicoMixin:
+    template_name = "core/pubblici/modulo.html"
+    success_url = reverse_lazy("core:documenti_pubblici_gestione")
+
+    def get_form_class(self):
+        from .forms import DocumentoPubblicoForm
+
+        return DocumentoPubblicoForm
+
+    def form_valid(self, form):
+        from . import pubblici
+
+        try:
+            self.object = pubblici.salva(form, self.request.user,
+                                         form.cleaned_data.get("nuovo_file"))  # fmt: skip
+        except pubblici.FileNonValido as e:
+            form.add_error("nuovo_file", e)
+            return self.form_invalid(form)
+        messages.success(self.request, f"«{self.object}» salvato.")
+        return redirect(self.success_url)
+
+
+class DocumentoPubblicoNuovoView(PermessoMixin, _DocumentoPubblicoMixin, CreateView):
+    permission_required = "core.gestisci_organizzazione"
+
+
+class DocumentoPubblicoModificaView(PermessoMixin, _DocumentoPubblicoMixin, UpdateView):
+    permission_required = "core.gestisci_organizzazione"
+
+    def get_queryset(self):
+        from .models import DocumentoPubblico
+
+        return DocumentoPubblico.objects.all()
 
 
 class AspettoView(PermessoMixin, UpdateView):

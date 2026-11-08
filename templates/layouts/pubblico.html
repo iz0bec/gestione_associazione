@@ -27,6 +27,7 @@
     <footer class="text-center text-secondary small mt-4">
       {% if organizzazione.email %}<a href="mailto:{{ organizzazione.email }}">{{ organizzazione.email }}</a>{% endif %}
       {% if organizzazione.sito_web %} · <a href="{{ organizzazione.sito_web }}" rel="noopener">{{ organizzazione.sito_web }}</a>{% endif %}
+      {% if documenti_pubblici %}<div class="mt-1"><a href="{% url 'documenti_pubblici' %}">Statuto e regolamento</a></div>{% endif %}
     </footer>
   </main>
 </div>

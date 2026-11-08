@@ -29,7 +29,15 @@ class Organo(models.Model):
         CONTROLLO = "controllo", "Organo di controllo"
         ALTRO = "altro", "Altro"
 
-    nome = models.CharField(max_length=100, unique=True)
+    nome = models.CharField(max_length=100)
+    sezione = models.ForeignKey(
+        "soci.Sezione",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="organi",
+        help_text="Vuota = organo dell'associazione (federazione); altrimenti della sezione.",
+    )
     sigla = models.CharField(max_length=10, help_text="Usata nei numeri, es. CD, ASS.")
     tipo = models.CharField(max_length=10, choices=Tipo.choices)
     quorum_prima = models.PositiveSmallIntegerField(
@@ -61,11 +69,16 @@ class Organo(models.Model):
     class Meta:
         verbose_name = "organo"
         verbose_name_plural = "organi"
-        ordering = ["ordine", "nome"]
+        ordering = [models.F("sezione__nome").asc(nulls_first=True), "ordine", "nome"]
         permissions = [("gestisci_cariche", "Può registrare nomine e cessazioni dalle cariche")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["nome", "sezione"], nulls_distinct=False, name="organo_nome_per_sezione"
+            )
+        ]
 
     def __str__(self):
-        return self.nome
+        return f"{self.nome} · {self.sezione.nome}" if self.sezione_id else self.nome
 
     def get_absolute_url(self):
         return reverse("organi:organo", args=[self.pk])

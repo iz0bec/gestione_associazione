@@ -48,6 +48,7 @@
     {% if SOCIALACCOUNT_ENABLED %}
         {% include "socialaccount/snippets/login.html" with page_layout="entrance" %}
     {% endif %}
+    {% if documenti_pubblici %}<p class="text-center small mt-3 mb-0"><a href="{% url 'documenti_pubblici' %}">Statuto e regolamento</a></p>{% endif %}
 {% endblock content %}
 {% block extra_body %}
     {{ block.super }}

@@ -30,9 +30,23 @@ class OrganoForm(StileMixin, forms.ModelForm):
     class Meta:
         model = Organo
         fields = [
-            "nome", "sigla", "tipo", "quorum_prima", "quorum_seconda", "max_deleghe",
+            "nome", "sezione", "sigla", "tipo", "quorum_prima", "quorum_seconda", "max_deleghe",
             "solo_soci_in_regola", "ordine", "attivo",
         ]  # fmt: skip
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sezione"].empty_label = "— dell'associazione (federazione) —"
+
+    def validate_unique(self):
+        super().validate_unique()
+        # stesso nome con maiuscole diverse nella stessa sezione
+        nome, sezione = self.cleaned_data.get("nome"), self.cleaned_data.get("sezione")
+        doppio = Organo.objects.filter(nome__iexact=nome or "", sezione=sezione).exclude(
+            pk=self.instance.pk
+        )
+        if nome and doppio.exists():
+            self.add_error("nome", "Esiste già un organo con questo nome per la stessa sezione.")
 
 
 class CaricaForm(StileMixin, forms.Form):

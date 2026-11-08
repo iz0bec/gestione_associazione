@@ -5,20 +5,25 @@
 <div class="btn-list">
   <a class="btn" href="{% url 'organi:riunioni' %}"><i class="ti ti-calendar-event me-1"></i>Tutte le riunioni</a>
   {% if perms.organi.view_delibera %}<a class="btn" href="{% url 'organi:delibere' %}"><i class="ti ti-gavel me-1"></i>Registro delibere</a>{% endif %}
+  {% if perms.organi.add_organo %}<a class="btn" href="{% url 'organi:organo_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo organo</a>{% endif %}
   {% if perms.organi.add_riunione %}<a class="btn btn-primary" href="{% url 'organi:riunione_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova riunione</a>{% endif %}
 </div>
 {% endblock %}
 {% block contenuto %}
 <div class="row row-cards">
-  {% for o in organi %}
+  {% regroup organi by sezione as gruppi %}
+  {% for gruppo in gruppi %}
+  {% if gruppi|length > 1 %}<div class="col-12"><h2 class="h3 mb-0 mt-2">{% if gruppo.grouper %}Sezione di {{ gruppo.grouper.nome }}{% else %}Associazione{% endif %}</h2></div>{% endif %}
+  {% for o in gruppo.list %}
   <div class="col-md-4">
     <a class="card card-link" href="{{ o.get_absolute_url }}">
       <div class="card-body">
         <div class="d-flex align-items-center mb-2"><span class="avatar bg-primary-lt me-3"><i class="ti ti-{% if o.e_assemblea %}users-group{% elif o.tipo == 'controllo' %}shield-check{% else %}building-bank{% endif %}"></i></span><div class="h3 mb-0">{{ o.nome }}</div></div>
-        <div class="text-secondary">{% if o.e_assemblea %}tutti i soci{% if o.solo_soci_in_regola %} in regola con la quota{% endif %}{% else %}{{ o.componenti }} componenti in carica{% endif %}</div>
+        <div class="text-secondary">{% if o.e_assemblea %}tutti i soci{% if o.sezione %} della sezione{% endif %}{% if o.solo_soci_in_regola %} in regola con la quota{% endif %}{% else %}{{ o.componenti }} componenti in carica{% endif %}</div>
       </div>
     </a>
   </div>
+  {% endfor %}
   {% endfor %}
   <div class="col-lg-6">
     <div class="card">

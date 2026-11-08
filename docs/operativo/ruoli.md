@@ -25,6 +25,20 @@ dove si sceglie anche per quali ruoli il secondo fattore è obbligatorio.
 | Consigliere | consulta | - | - | - | - | - |
 | Revisore | consulta | - | - | - | consulta | - |
 
+### Presidente di sezione
+
+Per chi guida una **sezione** in un'associazione con più sezioni (es. una federazione provinciale).
+Va sempre assegnato insieme alla sua sezione (*Sistema → Utenti e ruoli → Sezioni*):
+
+- **anagrafica**: consulta, inserisce, modifica, archivia;
+- **soci, tesseramento e domande di iscrizione della sola propria sezione**: ammissioni, modifiche,
+  cessazioni, tesseramenti, tessere fisiche, valutazione delle domande, libro soci;
+- **calendario** e **stampa dei documenti** dai modelli;
+- **non** accede a protocollo, organi sociali, comunicazioni, tesoreria, patrimonio, né alle
+  configurazioni (tipologie, listino, sezioni, utenti). Non registra incassi (vanno in prima nota).
+
+Chi guida l'intera associazione o federazione ha il ruolo **Presidente**.
+
 ### Soci e tesseramento
 
 | Ruolo | Libro soci | Tesseramento e attribuzione | Carico tessere dalla sede centrale | Incassi e annullamenti | Listino (costi e quote) | Domande | Stampe ed elenco tesserati | Tipologie | Importazione dal registro nazionale | Sezioni |

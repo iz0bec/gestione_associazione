@@ -90,6 +90,21 @@ class ServiziPostaForm(StileMixin, forms.ModelForm):
         fields = ["invio_email", "ricezione_posta"]
 
 
+class DocumentoPubblicoForm(StileMixin, forms.ModelForm):
+    nuovo_file = forms.FileField(
+        label="File PDF",
+        required=False,
+        help_text="Per un documento già caricato, solo se va sostituito.",
+        widget=forms.FileInput(attrs={"accept": "application/pdf,.pdf"}),
+    )
+
+    class Meta:
+        from .models import DocumentoPubblico
+
+        model = DocumentoPubblico
+        fields = ["titolo", "descrizione", "ordine", "pubblicato"]
+
+
 class AspettoForm(StileMixin, forms.ModelForm):
     nuovo_logo = forms.ImageField(
         label="Logo",

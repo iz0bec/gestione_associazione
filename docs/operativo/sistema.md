@@ -100,6 +100,24 @@ vedi [Utenti e ruoli](utenti.md)). Senza sezioni assegnate l'utente vede tutto.
 La casella **Domande di iscrizione online** pubblica il modulo di iscrizione all'indirizzo
 `/iscrizione/` (vedi [Soci e tesseramento](soci.md#domande-di-iscrizione)).
 
+**Organi della sezione.** Nella colonna *Organi*, **Crea gli organi** prepara il *Consiglio
+direttivo* e l'*Assemblea dei soci* della sezione, con le stesse regole (quorum, deleghe) degli
+organi dell'associazione; poi se ne nominano i componenti in *Organi sociali*. Quando la sezione ha
+organi con componenti, **Organigramma** apre il PDF con una pagina per ogni organo. Lo stesso socio
+può avere cariche nella propria sezione e nell'associazione (vedi [Organi sociali](organi.md)).
+
+## Documenti pubblici
+
+**Sistema → Documenti pubblici** (Amministratore di sistema, Segretario): si caricano i PDF da
+rendere consultabili **da chiunque, senza accesso**, ad esempio **statuto** e **regolamento**:
+titolo, descrizione (es. *in vigore dal 21/06/2021*), ordine nell'elenco e *Pubblicato*. Sono
+accettati solo file PDF fino a 30 MB.
+
+La pagina pubblica è `/documenti-pubblici/`, collegata dalla pagina di accesso, dal modulo di
+iscrizione online e dalle altre pagine pubbliche: ogni documento si legge nel browser o si scarica.
+Per una nuova versione si apre il documento e si carica il nuovo file (il precedente è sostituito);
+togliendo *Pubblicato* il documento non è più consultabile. Ogni caricamento è nel registro attività.
+
 ## Registro attività
 
 **Sistema → Registro attività** (amministratore, presidente, revisore). Elenca, dal più recente:

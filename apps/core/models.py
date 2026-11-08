@@ -295,3 +295,41 @@ class EventoAudit(models.Model):
 
     def delete(self, *args, **kwargs):
         raise PermissionDenied("Gli eventi del registro attività non si eliminano.")
+
+
+def percorso_documento_pubblico(istanza, nome):
+    from .immagini import nome_casuale
+
+    return nome_casuale("pubblici", "pdf")
+
+
+class DocumentoPubblico(ModelloBase):
+    """Documento consultabile da chiunque (es. statuto e regolamento), caricato dal gestore."""
+
+    titolo = models.CharField(max_length=150, help_text="Es. «Statuto sociale».")
+    descrizione = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Es. «approvato il 17/12/2020, in vigore dal 21/06/2021».",
+    )
+    file = models.FileField(upload_to=percorso_documento_pubblico, max_length=255, editable=False)
+    nome_file = models.CharField(max_length=200, editable=False)
+    dimensione = models.PositiveIntegerField(default=0, editable=False)
+    pubblicato = models.BooleanField(
+        default=True, help_text="Tolta la spunta, il documento non è più consultabile."
+    )
+    ordine = models.PositiveSmallIntegerField(default=0, help_text="Ordine nell'elenco pubblico.")
+
+    class Meta:
+        verbose_name = "documento pubblico"
+        verbose_name_plural = "documenti pubblici"
+        ordering = ["ordine", "titolo"]
+
+    def __str__(self):
+        return self.titolo
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        from django.utils.text import slugify
+
+        return reverse("documento_pubblico", args=[self.pk, slugify(self.titolo) or "documento"])
