@@ -21,7 +21,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import ListView, TemplateView, UpdateView
 
 from .audit import Azione, campi_modificati, registra
-from .forms import AspettoForm, OrganizzazioneCompletaForm
+from .forms import AspettoForm, OrganizzazioneCompletaForm, ServiziPostaForm
 from .models import EventoAudit, Organizzazione
 
 
@@ -138,6 +138,62 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
             registra(Azione.MODIFICA, org, logo_modulo=bool(nuovo) or None, **dettagli)
         messages.success(self.request, "Dati dell'organizzazione salvati.")
         return redirect(self.success_url)
+
+
+def _stato_smtp():
+    """Configurazione dell'invio presa dalle impostazioni (mai la password)."""
+    from django.conf import settings
+
+    mailer = settings.MAILERS.get("default", {})
+    backend = mailer.get("BACKEND", "")
+    opzioni = mailer.get("OPTIONS", {})
+    smtp = backend.endswith("smtp.EmailBackend")
+    host = opzioni.get("host", "")
+    return {
+        "smtp": smtp,
+        "backend": backend.rsplit(".", 2)[-2] if "." in backend else backend,
+        "host": host,
+        "porta": opzioni.get("port", ""),
+        "utente": opzioni.get("username", ""),
+        "configurato": smtp and host not in ("", "localhost", "127.0.0.1"),
+        "mittente": settings.DEFAULT_FROM_EMAIL,
+    }
+
+
+class ServiziPostaView(PermessoMixin, UpdateView):
+    """Interruttori generali dell'invio delle email e della lettura delle caselle IMAP."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    form_class = ServiziPostaForm
+    template_name = "core/servizi_posta.html"
+    success_url = reverse_lazy("core:servizi_posta")
+
+    def get_object(self, queryset=None):
+        return Organizzazione.corrente()
+
+    def form_valid(self, form):
+        dettagli = campi_modificati(form)
+        risposta = super().form_valid(form)
+        if dettagli.get("campi"):
+            registra(Azione.MODIFICA, self.object, descrizione="Servizi di posta",
+                     invio_email=self.object.invio_email,
+                     ricezione_posta=self.object.ricezione_posta, **dettagli)  # fmt: skip
+        messages.success(self.request, "Servizi di posta aggiornati.")
+        return risposta
+
+    def get_context_data(self, **kwargs):
+        from apps.comunicazioni.models import Destinatario, Invio
+        from apps.protocollo.models import CasellaPosta
+
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(
+            smtp=_stato_smtp(),
+            in_coda=Destinatario.objects.filter(
+                invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
+            ).count(),
+            caselle=CasellaPosta.objects.all(),
+        )
+        return ctx
 
 
 class AspettoView(PermessoMixin, UpdateView):

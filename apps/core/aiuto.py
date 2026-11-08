@@ -39,6 +39,7 @@ PAGINE_PER_SEZIONE = {
     "documenti": "documenti",
     "calendario": "calendario",
     "utenti": "utenti",
+    "core:servizi_posta": "sistema#servizi-di-posta",
     "core:cruscotto": "primi-passi",
     "core:aiuto": INDICE,
     "core:aiuto_pagina": INDICE,

@@ -58,6 +58,27 @@ Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante
 e su richiesta, da scaricare e conservare fuori dal server; ripristino con conferma. Vedi il
 [manuale di sistema](../sistema/backup.md).
 
+## Servizi di posta
+
+**Sistema → Servizi di posta**, solo per l'Amministratore di sistema. Due interruttori generali:
+
+- **Invio delle email**: spento, **nessuna email parte**. Le comunicazioni si possono ancora scrivere
+  e confermare: restano *in coda* e partono quando l'invio viene riattivato. Gli **auguri** e i
+  **promemoria di rinnovo** automatici non vengono nemmeno preparati, così alla riattivazione non
+  partono messaggi ormai fuori tempo; anche le email dell'accesso (recupero della password) non
+  vengono spedite.
+- **Lettura delle caselle di posta (IMAP)**: spento, la posta da protocollare non viene scaricata,
+  né dal pianificatore né con il pulsante *Scarica ora*.
+
+Quando un servizio è spento, le pagine interessate (Comunicazioni, Promemoria di rinnovo, Posta da
+protocollare) lo segnalano con un avviso. La pagina mostra anche lo **stato**: server SMTP
+configurato (la password non è mai mostrata), mittente, messaggi in coda e caselle IMAP con
+l'ultimo controllo ed eventuali errori. Ogni modifica è annotata nel registro attività.
+
+Utile durante il collaudo, quando il server di posta non è ancora configurato, o per fermare
+tutto in caso di problemi. Il server SMTP si configura nel file `.env` (manuale di sistema), le
+caselle IMAP in *Protocollo → Posta da protocollare*.
+
 ## Sezioni
 
 **Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Ogni

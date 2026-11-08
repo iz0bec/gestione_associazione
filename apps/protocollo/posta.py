@@ -179,7 +179,11 @@ def scarica_casella(casella):
 
 def scarica_tutte():
     """Per il comando pianificato: scarica da ogni casella attiva, registrando gli errori."""
+    from apps.core.models import Organizzazione
+
     risultati = {}
+    if not Organizzazione.corrente().ricezione_posta:
+        return risultati  # lettura della posta disattivata (Sistema -> Servizi di posta)
     for casella in CasellaPosta.objects.filter(attiva=True):
         try:
             risultati[casella.nome] = scarica_casella(casella)

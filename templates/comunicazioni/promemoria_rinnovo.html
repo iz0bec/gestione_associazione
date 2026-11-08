@@ -8,6 +8,7 @@
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere' %}">Tesseramento</a></div>{% endblock %}
 {% block titolo_pagina %}Promemoria di rinnovo della quota{% endblock %}
 {% block contenuto %}
+{% if not organizzazione.invio_email %}<div class="alert alert-warning"><i class="ti ti-mail-off me-1"></i><strong>Invio delle email disattivato</strong>: i messaggi confermati restano in coda e partiranno quando l'invio sarà riattivato{% if perms.core.gestisci_servizi_posta %} (<a href="{% url 'core:servizi_posta' %}">Servizi di posta</a>){% endif %}; auguri e promemoria automatici non vengono preparati.</div>{% endif %}
 <div class="row g-3">
   <div class="col-lg-7">
     <form method="post" class="card" novalidate>{% csrf_token %}

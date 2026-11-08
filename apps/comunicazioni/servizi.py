@@ -335,8 +335,15 @@ def messaggio(invio, destinatario, org=None):
     return email
 
 
+def invio_attivo():
+    """Interruttore generale dell'invio delle email (Sistema -> Servizi di posta)."""
+    return Organizzazione.corrente().invio_email
+
+
 def elabora_coda(limite=None, invio=None):
     """Invia i messaggi in attesa degli invii in coda. Restituisce (inviati, errori)."""
+    if not invio_attivo():
+        return 0, 0  # i messaggi restano in coda fino alla riattivazione
     limite = limite or settings.COMUNICAZIONI_LOTTO
     adesso = timezone.now()
     invii = Invio.objects.filter(stato=Invio.Stato.IN_CODA).exclude(programmato_il__gt=adesso)
@@ -440,6 +447,8 @@ def auguri_del_giorno(oggi=None, adesso=None):
     """Prepara e mette in coda gli auguri automatici di oggi (rieseguibile senza doppioni)."""
     from apps.soci.models import Socio
 
+    if not invio_attivo():
+        return []  # niente auguri preparati: partirebbero in ritardo alla riattivazione
     oggi = oggi or timezone.localdate()
     ora = (adesso or timezone.localtime()).hour
     creati = []
@@ -524,6 +533,8 @@ def promemoria_rinnovo(oggi=None, adesso=None, *, utente=None, subito=False):
     """Promemoria ai soci non in regola. Dal pianificatore (subito=False) parte solo nelle date
     impostate, dopo l'ora indicata, una volta al giorno, ed è confermato; con `subito` prepara
     un invio in bozza da controllare. Nessuno lo riceve due volte nello stesso giorno."""
+    if not subito and not invio_attivo():
+        return None
     conf = PromemoriaRinnovo.corrente()
     oggi = oggi or timezone.localdate()
     ora = (adesso or timezone.localtime()).hour

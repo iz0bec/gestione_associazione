@@ -19,6 +19,7 @@ urlpatterns = [
     path("organizzazione/aspetto/", views.AspettoView.as_view(), name="aspetto"),
     path("organizzazione/logo-modulo/", views.LogoModuloView.as_view(), name="logo_modulo"),
     path("sistema/backup/", viste_backup.BackupView.as_view(), name="backup"),
+    path("sistema/posta/", views.ServiziPostaView.as_view(), name="servizi_posta"),
     path(
         "sistema/backup/<str:nome>/scarica/",
         viste_backup.ScaricaBackupView.as_view(),

@@ -15,7 +15,7 @@ Ogni utente ha uno o più **ruoli**; il ruolo decide cosa si vede e cosa si può
 I ruoli li assegna l'amministratore da **Sistema → Utenti e ruoli** (vedi [Utenti e ruoli](utenti.md)),
 dove si sceglie anche per quali ruoli il secondo fattore è obbligatorio.
 
-| Ruolo | Anagrafica | Esporta anagrafica (CSV, rubrica) | Importa da rubrica | Dati organizzazione, aspetto, configurazione guidata | Registro attività | Utenti e ruoli |
+| Ruolo | Anagrafica | Esporta anagrafica (CSV, rubrica) | Importa da rubrica | Dati organizzazione, aspetto, configurazione guidata | Registro attività | Utenti e ruoli, servizi di posta |
 |---|---|---|---|---|---|---|
 | Amministratore di sistema | consulta, inserisce, modifica, archivia | sì | sì | modifica | consulta | **gestisce** |
 | Presidente | consulta, inserisce, modifica, archivia | sì | - | - | consulta | - |

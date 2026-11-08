@@ -9,6 +9,7 @@
 </div>
 {% endblock %}
 {% block contenuto %}
+{% if not organizzazione.ricezione_posta %}<div class="alert alert-warning"><i class="ti ti-mail-off me-1"></i><strong>Lettura della posta disattivata</strong>: i nuovi messaggi non vengono scaricati dalle caselle{% if perms.core.gestisci_servizi_posta %} (<a href="{% url 'core:servizi_posta' %}">Servizi di posta</a>){% endif %}.</div>{% endif %}
 {% if not caselle %}<div class="alert alert-info">Nessuna casella di posta configurata{% if perms.protocollo.add_casellaposta %}: <a href="{% url 'protocollo:casella_nuova' %}">aggiungine una</a>{% endif %}.</div>{% endif %}
 {% for c in caselle %}{% if c.ultimo_errore %}<div class="alert alert-warning">Casella «{{ c.nome }}»: {{ c.ultimo_errore }}</div>{% endif %}{% endfor %}
 <div class="card">

@@ -82,6 +82,14 @@ class EnteForm(OrganizzazioneForm):
         fields = CAMPI_ENTE
 
 
+class ServiziPostaForm(StileMixin, forms.ModelForm):
+    class Meta:
+        from .models import Organizzazione
+
+        model = Organizzazione
+        fields = ["invio_email", "ricezione_posta"]
+
+
 class AspettoForm(StileMixin, forms.ModelForm):
     nuovo_logo = forms.ImageField(
         label="Logo",

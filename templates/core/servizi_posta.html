@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Servizi di posta: interruttori dell'invio delle email e della lettura IMAP, con lo stato
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Servizi di posta{% endblock %}
+{% block titolo_pagina %}Servizi di posta{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-header"><h3 class="card-title">Interruttori</h3></div>
+      <div class="card-body">
+        {{ form.invio_email.as_field_group }}
+        {{ form.ricezione_posta.as_field_group }}
+      </div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+    </form>
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-send me-1"></i>Invio (SMTP)</h3>
+        <div class="card-actions"><span class="badge {% if object.invio_email %}bg-green-lt{% else %}bg-red-lt{% endif %}">{% if object.invio_email %}attivo{% else %}disattivato{% endif %}</span></div>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5">Server</dt>
+          <dd class="col-7">{% if smtp.configurato %}{{ smtp.host }}:{{ smtp.porta }}{% if smtp.utente %} ({{ smtp.utente }}){% endif %}{% elif smtp.smtp %}<span class="text-orange">non configurato</span>{% else %}{{ smtp.backend }} (nessun invio reale){% endif %}</dd>
+          <dt class="col-5">Mittente</dt><dd class="col-7">{{ smtp.mittente }}</dd>
+          <dt class="col-5">Messaggi in coda</dt><dd class="col-7">{{ in_coda }}{% if in_coda and not object.invio_email %} <span class="text-secondary">(partiranno alla riattivazione)</span>{% endif %}</dd>
+        </dl>
+      </div>
+      <div class="card-footer small text-secondary">Il server SMTP si configura nel file <code>.env</code> sul server (manuale di sistema); la password non è mai mostrata.</div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-inbox me-1"></i>Lettura (IMAP)</h3>
+        <div class="card-actions"><span class="badge {% if object.ricezione_posta %}bg-green-lt{% else %}bg-red-lt{% endif %}">{% if object.ricezione_posta %}attiva{% else %}disattivata{% endif %}</span></div>
+      </div>
+      {% if caselle %}
+      <div class="list-group list-group-flush">
+        {% for c in caselle %}
+        <div class="list-group-item small">
+          <div class="d-flex"><strong class="flex-fill">{{ c.nome }}</strong><span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.attiva %}attiva{% else %}spenta{% endif %}</span></div>
+          <div class="text-secondary">ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body small text-secondary">Nessuna casella di posta configurata (Protocollo → Posta da protocollare → Caselle).</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

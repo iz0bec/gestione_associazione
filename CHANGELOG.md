@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Sistema → Servizi di posta** (solo Amministratore di sistema): interruttori generali
+  dell'**invio delle email** (spento: nulla parte, i messaggi confermati restano in coda, auguri e
+  promemoria automatici non vengono preparati, niente email di recupero password) e della
+  **lettura delle caselle IMAP**; stato del server SMTP, coda e caselle; avvisi nelle pagine.
+
 ## [0.0.1-rc.10] - 2026-11-08
 
 Calendario completo (appuntamenti, scadenze, vista mensile) e promemoria di rinnovo della quota.

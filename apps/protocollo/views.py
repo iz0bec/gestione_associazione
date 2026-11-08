@@ -364,8 +364,14 @@ class PostaView(PermessoMixin, ListView):
         """Scarica subito la posta (oltre al comando pianificato)."""
         if not request.user.has_perm("protocollo.gestisci_posta"):
             return self.handle_no_permission()
+        from apps.core.models import Organizzazione
+
         from .posta import scarica_tutte
 
+        if not Organizzazione.corrente().ricezione_posta:
+            messages.warning(request, "La lettura della posta è disattivata (Sistema → Servizi "
+                                      "di posta).")  # fmt: skip
+            return redirect("protocollo:posta")
         for casella, esito in scarica_tutte().items():
             if isinstance(esito, int):
                 messages.info(request, f"{casella}: {esito} nuovi messaggi.")

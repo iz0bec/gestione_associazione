@@ -146,6 +146,18 @@ class Organizzazione(models.Model):
         default=False,
         help_text="Pubblica il modulo di domanda di iscrizione all'indirizzo /iscrizione/.",
     )
+    # interruttori dei servizi di posta (Sistema -> Servizi di posta)
+    invio_email = models.BooleanField(
+        "invio delle email",
+        default=True,
+        help_text="Spento: nessuna email parte (comunicazioni, auguri, promemoria, recupero "
+        "password); i messaggi già confermati restano in coda.",
+    )
+    ricezione_posta = models.BooleanField(
+        "lettura delle caselle di posta (IMAP)",
+        default=True,
+        help_text="Spento: la posta da protocollare non viene scaricata dalle caselle.",
+    )
     modificato_il = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -155,6 +167,10 @@ class Organizzazione(models.Model):
             ("gestisci_organizzazione", "Può modificare i dati dell'organizzazione"),
             ("gestisci_backup", "Può creare, scaricare ed eliminare i backup"),
             ("ripristina_backup", "Può ripristinare un backup (sostituisce tutti i dati)"),
+            (
+                "gestisci_servizi_posta",
+                "Può attivare e disattivare l'invio e la lettura della posta",
+            ),
         ]
 
     def __str__(self):

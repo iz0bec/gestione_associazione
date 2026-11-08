@@ -9,6 +9,7 @@
 </div>
 {% endblock %}
 {% block contenuto %}
+{% if not organizzazione.invio_email %}<div class="alert alert-warning"><i class="ti ti-mail-off me-1"></i><strong>Invio delle email disattivato</strong>: i messaggi confermati restano in coda e partiranno quando l'invio sarà riattivato{% if perms.core.gestisci_servizi_posta %} (<a href="{% url 'core:servizi_posta' %}">Servizi di posta</a>){% endif %}; auguri e promemoria automatici non vengono preparati.</div>{% endif %}
 {% if oggi %}
 <div class="alert alert-info d-flex align-items-center"><i class="ti ti-confetti me-2"></i><span class="flex-fill">Oggi: {% for e in oggi %}{{ e.titolo }} ({{ e.etichetta|lower }}){% if not forloop.last %}, {% endif %}{% endfor %}.</span><a class="btn btn-sm" href="{% url 'comunicazioni:anniversari' %}">Anniversari</a></div>
 {% endif %}
