@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.10] - 2026-11-08
+
+Calendario completo (appuntamenti, scadenze, vista mensile) e promemoria di rinnovo della quota.
+
 ### Aggiunto
 - **Promemoria di rinnovo della quota** (*Tesseramento → Promemoria di rinnovo*): email automatiche
   nelle date scelte ai soci non in regola, con l'importo dovuto; mai due volte nello stesso giorno;
