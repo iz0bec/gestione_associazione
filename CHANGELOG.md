@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.12] - 2026-11-08
+
+Verifica dei servizi di posta e azioni in blocco sulla posta da protocollare.
+
 ### Aggiunto
 - *Posta da protocollare*: **azioni in blocco** sui messaggi selezionati (con «seleziona tutti»):
   scarto con un motivo comune (motivi frequenti proposti) e ripristino degli scartati; ripristino
