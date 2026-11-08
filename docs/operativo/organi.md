@@ -37,6 +37,13 @@ inizio e atto di nomina. **Fine carica** registra la data di cessazione e il mot
 in carica (con la data di oggi esce subito dai componenti e passa allo storico). Lo storico resta
 consultabile: chi ha avuto quale carica e quando. I **supplenti** non contano tra gli aventi diritto al voto.
 
+**Modifica** (accanto a ogni componente e a ogni riga dello storico) corregge le **date** di inizio e
+di cessazione, l'atto di nomina e le note di una carica registrata male. Svuotando la data di
+cessazione la persona torna in carica. Il programma impedisce una cessazione prima dell'inizio e due
+cariche della stessa persona che si sovrappongono nello stesso organo (una carica può iniziare il
+giorno stesso in cui finisce la precedente). Ogni modifica è annotata nel registro attività con i
+valori prima e dopo; le presenze delle riunioni già aperte non cambiano.
+
 **Organigramma PDF** (pulsante in alto nella pagina dell'organo): i componenti in carica alla data
 di oggi, su carta intestata e in orizzontale. In alto il presidente; sotto vicepresidente, segretario
 e tesoriere; poi i consiglieri, i componenti e i supplenti. Ogni scheda riporta la foto dell'anagrafica

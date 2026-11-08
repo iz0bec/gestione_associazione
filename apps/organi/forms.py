@@ -65,6 +65,23 @@ class FineCaricaForm(StileMixin, forms.Form):
     motivo = forms.CharField(required=False, max_length=200)
 
 
+class ModificaCaricaForm(StileMixin, forms.Form):
+    dal = forms.DateField(label="Inizio", widget=CampoData)
+    al = forms.DateField(
+        label="Data di cessazione",
+        widget=CampoData,
+        required=False,
+        help_text="Vuota = ancora in carica. Da questo giorno la persona non è più in carica.",
+    )
+    atto = forms.CharField(label="Atto di nomina", required=False, max_length=200)
+    note = forms.CharField(required=False, max_length=255)
+
+    @classmethod
+    def per(cls, carica, data=None):
+        iniziali = {"dal": carica.dal, "al": carica.al, "atto": carica.nomina, "note": carica.note}
+        return cls(data, initial=iniziali, prefix=f"carica{carica.pk}")
+
+
 class RiunioneForm(StileMixin, forms.ModelForm):
     punti = forms.CharField(
         label="Ordine del giorno",

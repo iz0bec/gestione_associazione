@@ -22,7 +22,7 @@
         <div class="list-group-item d-flex align-items-center">
           <span class="avatar avatar-sm me-3">{{ c.soggetto.iniziali }}</span>
           <div class="flex-fill"><a href="{{ c.soggetto.get_absolute_url }}" class="fw-medium text-reset">{{ c.soggetto.nome_completo }}</a><div class="small text-secondary">{{ c.get_ruolo_display }} dal {{ c.dal|date:"d/m/Y" }}{% if c.al %} al {{ c.al|date:"d/m/Y" }}{% endif %}{% if c.nomina %} · {{ c.nomina }}{% endif %}</div></div>
-          {% if perms.organi.gestisci_cariche %}<button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#fine-{{ c.pk }}">Fine carica</button>{% endif %}
+          {% if perms.organi.gestisci_cariche %}<div class="btn-list flex-nowrap"><button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modifica-carica-{{ c.pk }}" title="Modifica date, atto di nomina e note"><i class="ti ti-pencil"></i><span class="d-none d-md-inline ms-1">Modifica</span></button><button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#fine-{{ c.pk }}">Fine carica</button></div>{% endif %}
         </div>
         {% empty %}<div class="list-group-item text-secondary">Nessun componente registrato.</div>{% endfor %}
       </div>
@@ -31,8 +31,8 @@
     <div class="card mb-3">
       <div class="card-header"><h2 class="card-title">Storico delle cariche</h2></div>
       <div class="table-responsive"><table class="table table-sm card-table">
-        <thead><tr><th>Persona</th><th>Ruolo</th><th>Periodo</th></tr></thead>
-        <tbody>{% for c in storico %}<tr><td>{{ c.soggetto.nome_completo }}</td><td>{{ c.get_ruolo_display }}</td><td>{{ c.dal|date:"d/m/Y" }} – {{ c.al|date:"d/m/Y"|default:"in carica" }}</td></tr>{% endfor %}</tbody>
+        <thead><tr><th>Persona</th><th>Ruolo</th><th>Periodo</th>{% if perms.organi.gestisci_cariche %}<th></th>{% endif %}</tr></thead>
+        <tbody>{% for c in storico %}<tr><td>{{ c.soggetto.nome_completo }}</td><td>{{ c.get_ruolo_display }}</td><td>{{ c.dal|date:"d/m/Y" }} – {{ c.al|date:"d/m/Y"|default:"in carica" }}</td>{% if perms.organi.gestisci_cariche %}<td class="text-end"><button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modifica-carica-{{ c.pk }}" title="Modifica date, atto di nomina e note"><i class="ti ti-pencil"></i></button></td>{% endif %}</tr>{% endfor %}</tbody>
       </table></div>
     </div>
     {% endif %}
@@ -78,6 +78,22 @@
     </form>
   </div>
 </div>
+{% for c, modulo in moduli_carica %}
+<div class="modal fade" id="modifica-carica-{{ c.pk }}" tabindex="-1" aria-labelledby="titolo-modifica-{{ c.pk }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'organi:modifica_carica' c.pk %}" novalidate>{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-modifica-{{ c.pk }}">{{ c.soggetto.nome_completo }} · {{ c.get_ruolo_display }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <div class="row"><div class="col-sm-6">{{ modulo.dal.as_field_group }}</div><div class="col-sm-6">{{ modulo.al.as_field_group }}</div></div>
+        {{ modulo.atto.as_field_group }}
+        {{ modulo.note.as_field_group }}
+        <p class="small text-secondary mb-0">Per correggere date registrate male. Le presenze delle riunioni già aperte non cambiano.</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Salva</button></div>
+    </form>
+  </div>
+</div>
+{% endfor %}
 {% for c in in_carica %}
 <div class="modal fade" id="fine-{{ c.pk }}" tabindex="-1" aria-labelledby="titolo-fine-{{ c.pk }}" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">

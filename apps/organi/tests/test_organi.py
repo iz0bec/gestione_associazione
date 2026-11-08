@@ -265,3 +265,50 @@ class TestViste:
         assert c.get(reverse("organi:riunione_nuova")).status_code == 403
         assert c.post(reverse("organi:convoca", args=[riunione.pk])).status_code == 403
         assert c.post(reverse("organi:nomina", args=[consiglio.pk])).status_code == 403
+
+
+class TestModificaCarica:
+    def test_date_atto_e_registro(self, consiglio, segretario, client_ruolo):
+        from apps.core.models import EventoAudit
+
+        p = _persona("Bianchi")
+        c = servizi.nomina(consiglio, p, "consigliere", date(2025, 3, 1), segretario)
+        client = client_ruolo("Segretario", username="s2")
+        assert (
+            f'id="modifica-carica-{c.pk}"'
+            in client.get(f"/organi/{consiglio.pk}/").content.decode()
+        )
+        r = client.post(f"/organi/cariche/{c.pk}/modifica/", {
+            f"carica{c.pk}-dal": "2025-01-15", f"carica{c.pk}-al": "2026-01-15",
+            f"carica{c.pk}-atto": "Assemblea del 15/01/2025", f"carica{c.pk}-note": "",
+        })  # fmt: skip
+        assert r.status_code == 302
+        c.refresh_from_db()
+        assert (c.dal, c.al, c.nomina) == (date(2025, 1, 15), date(2026, 1, 15),
+                                           "Assemblea del 15/01/2025")  # fmt: skip
+        evento = EventoAudit.objects.filter(oggetto_id=str(c.pk), azione="modifica").latest("pk")
+        assert evento.dettagli["dal"] == {"prima": "2025-03-01", "dopo": "2025-01-15"}
+        # cessazione svuotata: torna in carica
+        servizi.modifica_carica(c, segretario, dal=c.dal, al=None, atto=c.nomina)
+        c.refresh_from_db()
+        assert c.al is None and c.in_carica
+
+    def test_controlli(self, consiglio, segretario):
+        p = _persona("Verdi")
+        vecchia = servizi.nomina(consiglio, p, "consigliere", date(2020, 1, 1), segretario)
+        servizi.termina_carica(vecchia, date(2023, 1, 1), segretario)
+        nuova = servizi.nomina(consiglio, p, "tesoriere", date(2024, 1, 1), segretario)
+        with pytest.raises(OperazioneNonValida, match="precedere"):
+            servizi.modifica_carica(nuova, segretario, dal=date(2024, 1, 1), al=date(2023, 6, 1))
+        with pytest.raises(OperazioneNonValida, match="si sovrappone"):
+            servizi.modifica_carica(nuova, segretario, dal=date(2022, 6, 1))
+        # contigua (la cessazione è esclusiva): ammessa
+        servizi.modifica_carica(nuova, segretario, dal=date(2023, 1, 1))
+        nuova.refresh_from_db()
+        assert nuova.dal == date(2023, 1, 1)
+
+    def test_permesso(self, consiglio, segretario, client_ruolo):
+        c = servizi.nomina(consiglio, _persona("Neri"), "consigliere", date(2025, 1, 1), segretario)
+        r = client_ruolo("Consigliere", username="c").post(
+            f"/organi/cariche/{c.pk}/modifica/", {f"carica{c.pk}-dal": "2024-01-01"})  # fmt: skip
+        assert r.status_code == 403

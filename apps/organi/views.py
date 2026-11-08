@@ -23,7 +23,15 @@ from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.views import PermessoMixin
 
 from . import servizi
-from .forms import CaricaForm, DeliberaForm, FineCaricaForm, OrganoForm, RiunioneForm, VerbaleForm
+from .forms import (
+    CaricaForm,
+    DeliberaForm,
+    FineCaricaForm,
+    ModificaCaricaForm,
+    OrganoForm,
+    RiunioneForm,
+    VerbaleForm,
+)
 from .models import Carica, Delibera, Organo, Presenza, Riunione, Verbale
 from .servizi import OperazioneNonValida
 
@@ -102,6 +110,9 @@ class OrganoView(PermessoMixin, DetailView):
         )
         ctx["form_carica"] = CaricaForm()
         ctx["form_fine"] = FineCaricaForm()
+        if self.request.user.has_perm("organi.gestisci_cariche"):
+            tutte = [*ctx["in_carica"], *ctx["storico"]]
+            ctx["moduli_carica"] = [(c, ModificaCaricaForm.per(c)) for c in tutte]
         return ctx
 
 
@@ -146,6 +157,27 @@ class NominaView(PermessoMixin, View):
         except OperazioneNonValida as e:
             _errore(request, e)
         return redirect(organo)
+
+
+class ModificaCaricaView(PermessoMixin, View):
+    permission_required = "organi.gestisci_cariche"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        carica = get_object_or_404(Carica, pk=pk)
+        form = ModificaCaricaForm.per(carica, request.POST)
+        if not form.is_valid():
+            errori = "; ".join(e for lista in form.errors.values() for e in lista)
+            messages.error(request, f"Carica non modificata: {errori}")
+            return redirect(carica.organo)
+        d = form.cleaned_data
+        try:
+            servizi.modifica_carica(carica, request.user, dal=d["dal"], al=d["al"],
+                                    atto=d["atto"], note=d["note"])  # fmt: skip
+            messages.success(request, f"Carica di {carica.soggetto.nome_completo} aggiornata.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect(carica.organo)
 
 
 class FineCaricaView(PermessoMixin, View):

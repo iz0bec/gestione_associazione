@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Organi sociali: **modifica delle cariche** (date di inizio e cessazione, atto di nomina, note),
+  anche nello storico, con controllo delle sovrapposizioni e registro dei valori prima e dopo.
+
 ## [0.0.1-rc.12] - 2026-11-08
 
 Verifica dei servizi di posta e azioni in blocco sulla posta da protocollare.

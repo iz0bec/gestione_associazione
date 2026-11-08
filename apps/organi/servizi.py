@@ -67,6 +67,44 @@ def termina_carica(carica, al, utente, motivo=""):
     return carica
 
 
+@transaction.atomic
+def modifica_carica(carica, utente, *, dal, al=None, atto="", note=""):
+    """Corregge le date (inizio e cessazione; vuota = in carica), l'atto di nomina e le note."""
+    from django.db.models import Q
+
+    carica = (
+        Carica.objects.select_for_update().select_related("soggetto", "organo").get(pk=carica.pk)
+    )
+    if al is not None and al < dal:
+        raise OperazioneNonValida("La cessazione non può precedere l'inizio.")
+    # periodi [dal, al) della stessa persona nello stesso organo: non devono sovrapporsi
+    altre = Carica.objects.filter(organo=carica.organo, soggetto=carica.soggetto).exclude(
+        pk=carica.pk
+    )
+    altre = altre.filter(Q(al__isnull=True) | Q(al__gt=dal))
+    if al is not None:
+        altre = altre.filter(dal__lt=al)
+    if altre.exists():
+        a = altre.first()
+        periodo = f"dal {a.dal:%d/%m/%Y}" + (f" al {a.al:%d/%m/%Y}" if a.al else "")
+        raise OperazioneNonValida(
+            f"Il periodo si sovrappone a un'altra carica di {carica.soggetto} in questo organo "
+            f"({a.get_ruolo_display().lower()} {periodo})."
+        )
+    prima = {"dal": str(carica.dal), "al": str(carica.al or ""), "nomina": carica.nomina,
+             "note": carica.note}  # fmt: skip
+    carica.dal, carica.al, carica.nomina, carica.note = dal, al, atto[:200], note[:255]
+    dopo = {"dal": str(carica.dal), "al": str(carica.al or ""), "nomina": carica.nomina,
+            "note": carica.note}  # fmt: skip
+    cambiati = {k: {"prima": prima[k], "dopo": dopo[k]} for k in prima if prima[k] != dopo[k]}
+    if not cambiati:
+        return carica
+    carica.modificato_da = utente
+    carica.save()
+    registra(Azione.MODIFICA, carica, utente=utente, organo=str(carica.organo), **cambiati)
+    return carica
+
+
 # --- riunioni ------------------------------------------------------------------------------
 
 

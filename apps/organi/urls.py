@@ -20,6 +20,7 @@ urlpatterns = [
     path("<int:pk>/regole/", views.OrganoModificaView.as_view(), name="organo_modifica"),
     path("<int:pk>/nomina/", views.NominaView.as_view(), name="nomina"),
     path("cariche/<int:pk>/fine/", views.FineCaricaView.as_view(), name="fine_carica"),
+    path("cariche/<int:pk>/modifica/", views.ModificaCaricaView.as_view(), name="modifica_carica"),
     path("riunioni/", views.RiunioniView.as_view(), name="riunioni"),
     path("riunioni/nuova/", views.RiunioneNuovaView.as_view(), name="riunione_nuova"),
     path("riunioni/<int:pk>/", views.RiunioneView.as_view(), name="riunione"),
