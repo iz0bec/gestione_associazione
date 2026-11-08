@@ -116,18 +116,37 @@ tessera pagata. Si può esportare in CSV dal menu *Stampa ed esporta*. Lo stesso
 
 ## Domande di iscrizione
 
-- **Su carta**: *Domande di iscrizione → Registra domanda*, copiando i dati del modulo firmato.
+La domanda ha **gli stessi campi e le stesse dichiarazioni del modulo di richiesta di adesione e
+consenso (Allegato A)**, nello stesso ordine:
+
+1. dati personali e recapiti: nato/a a, il, residenza, telefono, cellulare, email, codice fiscale;
+2. presa visione dello Statuto e del Regolamento, con gli articoli richiamati;
+3. **chiede** di essere iscritto/a alla sezione indicata;
+4. informazioni particolari, con risposta SI/NO (es. iscrizione all'Associazione Decorati di Medaglia
+   d'Oro);
+5. consensi: trattamento dei dati personali (**obbligatorio**), trattamento dei dati «particolari»,
+   uso dell'immagine. L'informativa si apre sotto i consensi.
+
+I testi del modulo si impostano in *Sistema → Organizzazione → Modulo di richiesta di adesione*:
+intestazione, articoli dello statuto, dichiarazione SI/NO, piè di pagina e informativa.
+
+- **Su carta**: *Domande di iscrizione → Modulo in bianco* stampa l'Allegato A da compilare a mano.
+  Con **Registra domanda** si copiano poi i dati del modulo firmato. Qui l'email è facoltativa, e c'è
+  la tipologia (uso interno).
 - **Dal sito**: se attivato in *Sistema → Organizzazione* (casella *Domande di iscrizione online*),
-  il modulo è pubblico all'indirizzo **`/iscrizione/`** dell'applicazione: si può collegare dal sito
-  dell'associazione. Il richiedente dichiara di accettare lo statuto, di aver letto l'informativa
-  privacy (testo preso dai dati dell'organizzazione) ed esprime i consensi facoltativi.
+  il modulo è pubblico all'indirizzo **`/iscrizione/`** dell'applicazione e si può collegare dal sito
+  dell'associazione. Qui l'email è obbligatoria, per poter rispondere.
+- Dalla domanda, **Modulo da firmare (PDF)** stampa l'Allegato A già compilato con i dati inseriti,
+  da far firmare al richiedente.
 
 Le domande in attesa compaiono sul cruscotto. Nella domanda:
 
 - **Accogli**: si scelgono tipologia, data e delibera. Se in anagrafica esiste già una persona con lo
   stesso codice fiscale viene usata quella scheda (l'avviso lo segnala), altrimenti viene creata.
-  La persona viene iscritta, riceve il numero e, se richiesto, la tessera; i consensi della domanda
-  sono registrati in anagrafica.
+  La persona viene iscritta, riceve il numero e, se richiesto, la tessera. In anagrafica vengono
+  registrati i consensi della domanda: trattamento, dati particolari, immagine e comunicazioni
+  associative, che rientrano nelle finalità dell'informativa. La risposta SI/NO passa sulla scheda
+  del socio.
 - **Respingi**: con la motivazione obbligatoria.
 
 L'esito resta sulla domanda (data, utente, motivazione). Comunicare l'esito al richiedente è per ora
@@ -135,6 +154,22 @@ compito della segreteria; l'invio automatico arriverà con il modulo *Comunicazi
 
 Il modulo pubblico è protetto dagli invii automatici (vedi il manuale di sistema, *Sicurezza*):
 se qualcuno segnala di non riuscire a inviarlo, deve ricaricare la pagina e riprovare dopo qualche minuto.
+
+## Richiesta di adesione firmata
+
+Nella scheda del socio, il riquadro **Richiesta di adesione firmata** mostra il modulo firmato
+direttamente nella pagina. Si può sfogliare, ingrandire, stampare, oppure aprire in un'altra
+scheda con **Apri**.
+
+- **Carica**: un PDF (ad esempio la scansione), oppure le **foto delle pagine** fatte con il telefono
+  (JPEG o PNG, anche più di una), che vengono unite in un unico PDF. Massimo 20 MB.
+- **Sostituisci**: sostituisce il file. Il caricamento e la sostituzione restano nella storia, con
+  l'impronta del file.
+- **Modulo da firmare**: stampa l'Allegato A già compilato con i dati del socio, utile per chi non ha
+  ancora il modulo firmato in archivio, ad esempio i soci importati dal registro nazionale.
+
+Il modulo firmato si vede solo con l'accesso al libro soci (e, in una federazione, solo per le
+proprie sezioni). Ogni consultazione è registrata.
 
 ## Stampe ed esportazioni
 
@@ -183,7 +218,28 @@ nazionale in Excel (`.xlsx`) o CSV. Il formato `.xls` di Excel 97-2003 va prima 
    *invariato* o *errore*, con le note. **Nulla viene modificato.**
 3. Premere **Esegui l'importazione**. Le righe con errori vengono saltate e le altre importate.
 
-Le colonne sono riconosciute dalle intestazioni, anche se il file ha righe di titolo sopra:
+Il file **«Gestione Registro Soci»** esportato dal registro nazionale (di una sezione o di tutta la
+federazione) si carica così com'è. Ecco cosa si ricava:
+
+| Colonna del registro | Cosa diventa |
+|---|---|
+| Sezione | sezione del socio (riconosciuta anche se scritta diversamente, es. «AVIGLIANO» e «ANCR Sezione di Avigliano»; se manca si crea, con l'opzione) |
+| Cognome, Nome, Luogo e Data di nascita, CodiceFiscale, Indirizzo, CAP, Città, PR, Email | scheda anagrafica (nomi e luoghi scritti in maiuscolo diventano «Rionero in Vulture») |
+| Telefono | separato in telefono fisso e cellulare |
+| Data di ammissione a socio | data di ammissione nel libro soci |
+| Numero tessera, Anno sociale, Data tessera | tesseramento dell'anno con la tessera attribuita e la data di rilascio |
+| Numero tessera anno 2025 | tesseramento dell'anno precedente |
+| Data di annullamento iscrizione | cessazione del socio con quella data (con l'opzione, attiva in partenza) |
+| Codice incarico socio ordinario | annotato nelle note del socio (es. «Presidente») |
+| Regione, Federazione, Scheda completa, Valido | ignorate |
+
+Le tessere indicate dal registro e non ancora caricate vengono aggiunte al carico **«Registro soci
+nazionale»** dell'anno e della sezione, con il costo d'acquisto del listino. Le quote dei tesseramenti
+importati risultano **da incassare**. I codici fiscali non validi non vengono usati per riconoscere la
+persona, ma restano nelle note della scheda per poterli correggere.
+
+Per altri formati le colonne sono riconosciute dalle intestazioni, anche se il file ha righe di
+titolo sopra:
 cognome e nome (o nominativo), codice fiscale, matricola, sesso, data e luogo di nascita, indirizzo,
 CAP, comune, provincia, email, telefono, cellulare, sezione (nome o codice), tipologia, data di
 iscrizione, numero di tessera. Le colonne non riconosciute sono elencate e ignorate.

@@ -969,3 +969,84 @@ class ImportaView(PermessoMixin, FormView):
                 nome_file=salvato["nome"],
             )  # fmt: skip
         )
+
+
+# --- modulo di adesione (Allegato A) e richiesta firmata ---------------------------------
+
+
+class DomandaPdfView(PermessoMixin, View):
+    """Modulo compilato con i dati della domanda, da stampare e far firmare."""
+
+    permission_required = "soci.view_domandaiscrizione"
+
+    def get(self, request, pk):
+        from . import modulo
+
+        d = get_object_or_404(_domande(request).select_related("sezione"), pk=pk)
+        risposta = HttpResponse(modulo.pdf(modulo.dati_domanda(d)), content_type="application/pdf")
+        risposta["Content-Disposition"] = f'inline; filename="allegato_a_domanda_{d.pk}.pdf"'
+        return risposta
+
+
+class ModuloVuotoView(PermessoMixin, View):
+    """Modulo in bianco da compilare a mano."""
+
+    permission_required = "soci.view_domandaiscrizione"
+
+    def get(self, request):
+        from . import modulo
+
+        risposta = HttpResponse(modulo.pdf(), content_type="application/pdf")
+        risposta["Content-Disposition"] = 'inline; filename="allegato_a.pdf"'
+        return risposta
+
+
+class ModuloSocioPdfView(PermessoMixin, View):
+    """Modulo precompilato con i dati del socio (per far firmare chi non l'ha ancora fatto)."""
+
+    permission_required = "soci.view_socio"
+
+    def get(self, request, pk):
+        from . import modulo
+
+        socio = get_object_or_404(_soci(request).select_related("soggetto", "sezione"), pk=pk)
+        risposta = HttpResponse(
+            modulo.pdf(modulo.dati_socio(socio)), content_type="application/pdf"
+        )
+        risposta["Content-Disposition"] = f'inline; filename="allegato_a_{socio.numero}.pdf"'
+        return risposta
+
+
+class ModuloFirmatoView(PermessoMixin, View):
+    """La richiesta firmata, mostrata nel browser (anche dentro la scheda del socio)."""
+
+    permission_required = "soci.view_socio"
+
+    def get(self, request, pk):
+        from django.http import FileResponse, Http404
+
+        socio = get_object_or_404(_soci(request), pk=pk)
+        if not socio.modulo_adesione:
+            raise Http404
+        registra(Azione.CONSULTAZIONE, socio, descrizione="Richiesta di adesione firmata")
+        risposta = FileResponse(socio.modulo_adesione.open("rb"), content_type="application/pdf")
+        risposta["Content-Disposition"] = f'inline; filename="richiesta_firmata_{socio.numero}.pdf"'
+        # consultabile solo dalle pagine dell'applicazione (riquadro nella scheda del socio)
+        risposta["X-Frame-Options"] = "SAMEORIGIN"
+        risposta["Content-Security-Policy"] = "frame-ancestors 'self'"
+        risposta["Cache-Control"] = "private, no-store"
+        return risposta
+
+
+class CaricaModuloView(PermessoMixin, View):
+    permission_required = "soci.change_socio"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        socio = get_object_or_404(_soci(request), pk=pk)
+        try:
+            servizi.carica_modulo(socio, request.FILES.getlist("modulo"), request.user)
+            messages.success(request, "Richiesta di adesione firmata salvata.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect(f"{socio.get_absolute_url()}#modulo-adesione")

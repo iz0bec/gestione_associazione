@@ -249,3 +249,17 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   rimanda finché `Organizzazione.configurata` è falso e l'utente può configurare. Le installazioni
   esistenti risultano già configurate (migrazione).
 
+## ADR-025 - Modulo di adesione (Allegato A) e richiesta firmata
+
+- La domanda di iscrizione ha gli stessi campi, dichiarazioni e consensi del modulo nazionale; i testi
+  propri dell'associazione (intestazione, articoli dello statuto, dichiarazione SI/NO, piè di pagina,
+  informativa) sono campi di `Organizzazione`, così il codice resta generico e i testi dell'ANCR non
+  entrano nel repository.
+- Consensi registrati per finalità: trattamento, dati particolari, immagine; le comunicazioni associative
+  seguono il consenso al trattamento perché comprese nelle finalità dell'informativa.
+- Il PDF (WeasyPrint) si compila da domanda o socio, oppure esce in bianco: stessa impaginazione in tre
+  pagine dell'originale.
+- La richiesta firmata è un file per socio (non un allegato generico) mostrato in un riquadro della scheda:
+  la risposta che serve il file sovrascrive per sé sola `X-Frame-Options`/`frame-ancestors` con
+  `SAMEORIGIN`/`'self'`; tutte le altre pagine restano `DENY`.
+

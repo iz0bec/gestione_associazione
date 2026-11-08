@@ -112,6 +112,12 @@ class SocioQuerySet(models.QuerySet):
         )
 
 
+def percorso_modulo(istanza, nome):
+    from apps.core.immagini import nome_casuale
+
+    return nome_casuale("soci/moduli", "pdf")
+
+
 class Socio(ModelloBase):
     """Iscrizione di un soggetto al libro soci. Il numero non si riusa mai."""
 
@@ -156,6 +162,20 @@ class Socio(ModelloBase):
     causa_cessazione = models.CharField(
         "causa di cessazione", max_length=12, choices=Cessazione.choices, blank=True
     )
+    dichiarazione = models.BooleanField(
+        "dichiarazione SI/NO del modulo di adesione",
+        null=True,
+        blank=True,
+        help_text="La risposta alla dichiarazione richiesta nel modulo (es. decorato).",
+    )
+    modulo_adesione = models.FileField(
+        "richiesta di adesione firmata",
+        upload_to=percorso_modulo,
+        blank=True,
+        max_length=255,
+        editable=False,
+    )
+    modulo_adesione_il = models.DateTimeField(null=True, blank=True, editable=False)
     note = models.TextField(blank=True)
 
     objects = SocioQuerySet.as_manager()
@@ -456,8 +476,9 @@ class DomandaIscrizione(models.Model):
     )
     data_nascita = models.DateField("data di nascita")
     luogo_nascita = models.CharField("luogo di nascita", max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
     telefono = models.CharField(max_length=30, blank=True)
+    cellulare = models.CharField(max_length=30, blank=True)
     indirizzo = models.CharField(max_length=255)
     cap = models.CharField("CAP", max_length=5, validators=[validatore_cap])
     comune = models.CharField(max_length=100)
@@ -478,10 +499,19 @@ class DomandaIscrizione(models.Model):
         related_name="domande",
     )
     motivazione = models.TextField("presentazione", blank=True, max_length=2000)
-    # dichiarazioni
-    accetta_statuto = models.BooleanField("dichiara di accettare lo statuto", default=False)
-    consenso_comunicazioni = models.BooleanField(default=False)
-    consenso_immagini = models.BooleanField(default=False)
+    # dichiarazioni e consensi (come nel modulo di adesione e consenso)
+    accetta_statuto = models.BooleanField(
+        "ha preso visione dello statuto e del regolamento e li condivide", default=False
+    )
+    dichiarazione = models.BooleanField("dichiarazione SI/NO del modulo", null=True, blank=True)
+    consenso_trattamento = models.BooleanField(
+        "consenso al trattamento dei dati personali", default=False
+    )
+    consenso_particolari = models.BooleanField(
+        "consenso al trattamento dei dati particolari", default=False
+    )
+    consenso_comunicazioni = models.BooleanField(default=False)  # compreso nel trattamento
+    consenso_immagini = models.BooleanField("consenso all'uso dell'immagine", default=False)
     # gestione
     origine = models.CharField(max_length=10, choices=Origine.choices, default=Origine.SEGRETERIA)
     ricevuta_il = models.DateTimeField("ricevuta il", auto_now_add=True, db_index=True)

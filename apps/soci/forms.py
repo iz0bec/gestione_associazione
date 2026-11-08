@@ -367,26 +367,62 @@ class TipologiaForm(StileMixin, forms.ModelForm):
 # --- domanda di iscrizione ---------------------------------------------------------------
 
 CAMPI_DOMANDA = [
-    "nome", "cognome", "codice_fiscale", "data_nascita", "luogo_nascita", "email", "telefono",
-    "indirizzo", "cap", "comune", "provincia", "sezione", "tipologia", "motivazione",
-    "accetta_statuto",
-    "consenso_comunicazioni", "consenso_immagini",
+    "cognome", "nome", "luogo_nascita", "data_nascita", "codice_fiscale", "indirizzo", "cap",
+    "comune", "provincia", "telefono", "cellulare", "email", "sezione", "tipologia",
+    "accetta_statuto", "dichiarazione", "consenso_trattamento", "consenso_particolari",
+    "consenso_immagini",
 ]  # fmt: skip
+
+# testi del modulo di consenso al trattamento dei dati (come nell'Allegato A)
+TESTO_TRATTAMENTO = (
+    "al trattamento dei miei dati personali, da svolgersi in conformità a quanto indicato "
+    "nell'informativa e nel rispetto delle disposizioni del GDPR e del D.Lgs. n. 196/03"
+)
+TESTO_PARTICOLARI = (
+    "al trattamento dei miei dati «particolari», da svolgersi in conformità a quanto indicato "
+    "nell'informativa e nel rispetto delle disposizioni del GDPR e del D.Lgs. n. 196/03 e delle "
+    "autorizzazioni/indicazioni della Commissione UE e del Garante per la Protezione dei Dati "
+    "Personali"
+)
+TESTO_IMMAGINI = (
+    "all'uso della mia immagine per le finalità descritte nell'informativa (pubblicazione sul "
+    "sito dell'Associazione, sulla pagina Facebook dell'Associazione o altre similari e affini o "
+    "su materiale di promozione delle attività istituzionali dell'Associazione)"
+)
+
+
+def testo_statuto(org):
+    articoli = (
+        f", in particolare quelli riportati {org.modulo_articoli_statuto} dello Statuto"
+        if (org.modulo_articoli_statuto)
+        else ""
+    )
+    return (
+        "Avendo preso visione dello Statuto e del Regolamento che regola l'Associazione, "
+        f"ne condivido pienamente i contenuti{articoli}"
+    )
 
 
 class DomandaForm(StileMixin, forms.ModelForm):
-    """Domanda inserita dalla segreteria (es. da modulo cartaceo)."""
+    """Domanda inserita dalla segreteria (es. dal modulo cartaceo firmato)."""
+
+    dichiarazione = forms.TypedChoiceField(
+        choices=[(True, "SI"), (False, "NO")],
+        coerce=lambda v: v in (True, "True"),
+        widget=forms.RadioSelect,
+        required=False,
+    )
 
     class Meta:
         model = DomandaIscrizione
         fields = CAMPI_DOMANDA
         labels = {
-            "consenso_comunicazioni": "Acconsente a ricevere comunicazioni associative",
-            "consenso_immagini": "Acconsente alla pubblicazione di foto e video",
+            "luogo_nascita": "Nato/a a",
+            "data_nascita": "il",
+            "indirizzo": "Residente in via",
         }
         widgets = {
             "data_nascita": CampoData,
-            "motivazione": forms.Textarea(attrs={"rows": 3}),
             "codice_fiscale": forms.TextInput(
                 attrs={"class": "text-uppercase", "autocomplete": "off"}
             ),
@@ -394,12 +430,28 @@ class DomandaForm(StileMixin, forms.ModelForm):
         }
 
     def __init__(self, *args, utente=None, **kwargs):
+        from apps.core.models import Organizzazione
+
         super().__init__(*args, **kwargs)
+        org = Organizzazione.corrente()
         self.fields["tipologia"].queryset = TipologiaSocio.objects.filter(attiva=True)
         self.fields["tipologia"].empty_label = "— da stabilire —"
-        self.fields["accetta_statuto"].required = True
         self.fields["sezione"].required = True
+        self.fields["sezione"].label = "Chiede di essere iscritto/a alla sezione di"
         prepara_sezione(self, utente)
+        self.fields["accetta_statuto"].required = True
+        self.fields["accetta_statuto"].label = testo_statuto(org)
+        self.fields["consenso_trattamento"].required = True
+        self.fields["consenso_trattamento"].label = TESTO_TRATTAMENTO
+        self.fields["consenso_particolari"].label = TESTO_PARTICOLARI
+        self.fields["consenso_immagini"].label = TESTO_IMMAGINI
+        if org.modulo_dichiarazione:
+            self.fields[
+                "dichiarazione"
+            ].label = f"Dichiara inoltre di essere {org.modulo_dichiarazione}"
+            self.fields["dichiarazione"].required = True
+        else:
+            del self.fields["dichiarazione"]
 
     def clean_codice_fiscale(self):
         cf = self.cleaned_data["codice_fiscale"].strip().upper()
@@ -420,6 +472,14 @@ class DomandaForm(StileMixin, forms.ModelForm):
             self.add_error("data_nascita", "Data di nascita non plausibile.")
         return dati
 
+    def save(self, commit=True):
+        domanda = super().save(commit=False)
+        # le comunicazioni associative rientrano nelle finalità dell'informativa
+        domanda.consenso_comunicazioni = domanda.consenso_trattamento
+        if commit:
+            domanda.save()
+        return domanda
+
 
 SALE_MODULO = "soci.domanda-pubblica"
 TEMPO_MINIMO = 4  # secondi: un umano non compila il modulo più in fretta
@@ -433,11 +493,8 @@ def _adesso():
 
 
 class DomandaPubblicaForm(DomandaForm):
-    """Modulo pubblico: aggiunge consenso al trattamento e controlli anti-spam."""
+    """Modulo pubblico: come quello della segreteria, con i controlli anti-spam."""
 
-    privacy = forms.BooleanField(
-        label="Ho letto l'informativa sul trattamento dei dati personali", required=True
-    )
     # campo trappola: invisibile alle persone, compilato dai programmi automatici
     sito = forms.CharField(required=False, label="Lasciare vuoto")
     token = forms.CharField(widget=forms.HiddenInput)
@@ -445,15 +502,9 @@ class DomandaPubblicaForm(DomandaForm):
     def __init__(self, *args, ip=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.ip = ip
-        # nel modulo pubblico scrive il richiedente: prima persona
-        self.fields["tipologia"].empty_label = "— scegliere —"
-        etichette = {
-            "accetta_statuto": "Dichiaro di accettare lo statuto dell'associazione",
-            "consenso_comunicazioni": "Acconsento a ricevere comunicazioni associative",
-            "consenso_immagini": "Acconsento alla pubblicazione di foto e video",
-        }
-        for nome, etichetta in etichette.items():
-            self.fields[nome].label = etichetta
+        # il modulo pubblico ricalca quello cartaceo: niente tipologia, email obbligatoria
+        del self.fields["tipologia"]
+        self.fields["email"].required = True
         self.fields["sito"].widget.attrs.update({"tabindex": "-1", "autocomplete": "off"})
         if not self.is_bound:
             self.initial["token"] = signing.dumps(_adesso(), salt=SALE_MODULO)

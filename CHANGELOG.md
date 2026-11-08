@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Modulo di adesione (Allegato A) e registro nazionale
+- Domanda di iscrizione (online e da segreteria) con gli stessi campi, dichiarazioni e consensi del
+  modulo di richiesta di adesione e consenso: cellulare, statuto con articoli richiamati, dichiarazione
+  SI/NO, consenso al trattamento (obbligatorio), dati particolari, immagine; testi configurabili.
+- PDF dell'Allegato A in tre pagine (richiesta, consenso, informativa): in bianco, compilato dalla
+  domanda o dai dati del socio.
+- Richiesta di adesione firmata nella scheda del socio, consultabile nella pagina; caricamento di un
+  PDF o delle foto delle pagine (unite in PDF).
+- Importazione adattata all'estratto «Gestione Registro Soci»: date in italiano, anno sociale, tessera
+  dell'anno precedente, annullamenti come cessazioni, incarichi, telefoni, sezioni riconosciute per nome.
+
 ### Aggiunto - Configurazione, aspetto, sezioni, listino, importazione
 - Configurazione iniziale guidata in sei passi (ente, logo e colori, sezioni, tesseramento, tesoreria,
   riepilogo), proposta al primo accesso e ripetibile; manuale con l'elenco dei dati da preparare.

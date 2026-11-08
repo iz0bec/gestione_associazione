@@ -103,6 +103,36 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Testo riportato nei moduli e nelle comunicazioni.",
     )
+    # modulo di richiesta di adesione (Allegato A) e consenso al trattamento dei dati
+    federazione = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Federazione provinciale di appartenenza, es. «Potenza Matera».",
+    )
+    modulo_intestazione = models.TextField(
+        "intestazione del modulo di adesione",
+        blank=True,
+        help_text="Una riga per voce; la prima in grande (es. il nome dell'associazione "
+        "nazionale). Vuoto = denominazione dell'ente.",
+    )
+    modulo_articoli_statuto = models.CharField(
+        "articoli dello statuto richiamati",
+        max_length=200,
+        blank=True,
+        help_text="Es. «all'art. 2 ed agli articoli 5, 6, 7, 8, 9 e 58».",
+    )
+    modulo_dichiarazione = models.CharField(
+        "dichiarazione con risposta SI/NO",
+        max_length=255,
+        blank=True,
+        help_text="Es. «iscritto all'Associazione Decorati di Medaglia d'Oro al valor Militare e/o "
+        "Valor Civile». Vuoto = non richiesta.",
+    )
+    modulo_piede = models.TextField(
+        "piè di pagina del modulo",
+        blank=True,
+        help_text="Es. sede legale nazionale, partita IVA, recapiti.",
+    )
     iscrizioni_online = models.BooleanField(
         "domande di iscrizione online",
         default=False,
@@ -133,6 +163,24 @@ class Organizzazione(models.Model):
     @property
     def nome_breve(self):
         return self.denominazione_breve or self.denominazione
+
+    @property
+    def righe_intestazione_modulo(self):
+        righe = [r.strip() for r in self.modulo_intestazione.splitlines() if r.strip()]
+        return righe or [self.denominazione]
+
+    @property
+    def nome_modulo(self):
+        """Nome dell'associazione a cui si chiede l'adesione (prima riga dell'intestazione),
+        scritto come nel testo: «Associazione Nazionale Combattenti e Reduci»."""
+        nome = self.righe_intestazione_modulo[0]
+        if not nome.isupper():
+            return nome
+        minuscole = {"e", "di", "del", "della", "dei", "degli", "delle", "per", "a", "in", "ed"}
+        return " ".join(
+            p.lower() if i and p.lower() in minuscole else p.capitalize()
+            for i, p in enumerate(nome.split())
+        )
 
     @property
     def colore_testo_primario(self):

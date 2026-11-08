@@ -255,6 +255,8 @@ class Consenso(models.Model):
     """Consenso al trattamento dei dati per una finalità (GDPR art. 6-7)."""
 
     class Finalita(models.TextChoices):
+        TRATTAMENTO = "trattamento", "Trattamento dei dati personali (adesione)"
+        PARTICOLARI = "particolari", "Trattamento dei dati particolari (art. 9 GDPR)"
         COMUNICAZIONI = "comunicazioni", "Comunicazioni associative (email, posta)"
         AUGURI = "auguri", "Auguri e ricorrenze"
         IMMAGINI = "immagini", "Pubblicazione di foto e video"

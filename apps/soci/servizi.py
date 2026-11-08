@@ -9,6 +9,7 @@
 # ******************************************************
 
 import csv
+import io
 from datetime import date
 from decimal import Decimal
 
@@ -660,7 +661,8 @@ def accogli_domanda(
             data_nascita=domanda.data_nascita,
             luogo_nascita=domanda.luogo_nascita,
             email=domanda.email,
-            cellulare=domanda.telefono,
+            telefono=domanda.telefono if domanda.cellulare else "",
+            cellulare=domanda.cellulare or domanda.telefono,
             indirizzo=domanda.indirizzo,
             cap=domanda.cap,
             comune=domanda.comune,
@@ -676,8 +678,13 @@ def accogli_domanda(
         soggetto, tipologia, utente, data_ammissione=data_ammissione, delibera=delibera,
         sezione=sezione or domanda.sezione,
     )  # fmt: skip
-    modalita = f"domanda di iscrizione del {domanda.ricevuta_il:%d/%m/%Y}"
+    if domanda.dichiarazione is not None:
+        socio.dichiarazione = domanda.dichiarazione
+        socio.save(update_fields=["dichiarazione"])
+    modalita = f"modulo di adesione del {domanda.ricevuta_il:%d/%m/%Y}"
     for finalita, prestato in (
+        (Consenso.Finalita.TRATTAMENTO, domanda.consenso_trattamento),
+        (Consenso.Finalita.PARTICOLARI, domanda.consenso_particolari),
         (Consenso.Finalita.COMUNICAZIONI, domanda.consenso_comunicazioni),
         (Consenso.Finalita.IMMAGINI, domanda.consenso_immagini),
     ):
@@ -714,6 +721,64 @@ def respingi_domanda(domanda, utente, motivo):
     domanda.save()
     registra(Azione.MODIFICA, domanda, utente=utente, esito="respinta", motivo=domanda.esito_note)
     return domanda
+
+
+# --- richiesta di adesione firmata (Allegato A) ---------------------------------------------
+
+MODULO_MAX_MB = 20
+
+
+def modulo_in_pdf(files):
+    """Un PDF così com'è, oppure una o più foto/scansioni (JPEG, PNG) unite in un PDF."""
+    from apps.core.immagini import ImmagineNonValida, ripulisci
+
+    files = [f for f in files if f]
+    if not files:
+        raise OperazioneNonValida("Scegliere il file del modulo firmato.")
+    if sum(f.size for f in files) > MODULO_MAX_MB * 1024 * 1024:
+        raise OperazioneNonValida(f"I file superano {MODULO_MAX_MB} MB.")
+    inizio = files[0].read(5)
+    files[0].seek(0)
+    if inizio == b"%PDF-":
+        if len(files) > 1:
+            raise OperazioneNonValida("Caricare un solo PDF, oppure solo immagini.")
+        return files[0].read()
+    from PIL import Image
+
+    pagine = []
+    for f in files:
+        try:
+            pagina = Image.open(ripulisci(f, lato=2400)).convert("RGB")
+        except ImmagineNonValida:
+            raise OperazioneNonValida(
+                f"«{f.name}» non è un PDF né un'immagine leggibile."
+            ) from None
+        pagine.append(pagina)
+    uscita = io.BytesIO()
+    pagine[0].save(uscita, "PDF", save_all=True, append_images=pagine[1:], resolution=200)
+    return uscita.getvalue()
+
+
+@transaction.atomic
+def carica_modulo(socio, files, utente):
+    import hashlib
+
+    from django.core.files.base import ContentFile
+    from django.utils import timezone
+
+    pdf = modulo_in_pdf(files)
+    socio = Socio.objects.select_for_update().get(pk=socio.pk)
+    sostituito = bool(socio.modulo_adesione)
+    if sostituito:
+        socio.modulo_adesione.delete(save=False)
+    socio.modulo_adesione.save("modulo.pdf", ContentFile(pdf), save=False)
+    socio.modulo_adesione_il = timezone.now()
+    socio.modificato_da = utente
+    socio.save(update_fields=["modulo_adesione", "modulo_adesione_il", "modificato_da",
+                              "modificato_il"])  # fmt: skip
+    registra(Azione.MODIFICA, socio, utente=utente, modulo_adesione="sostituito" if sostituito
+             else "caricato", impronta=hashlib.sha256(pdf).hexdigest())  # fmt: skip
+    return socio
 
 
 # --- esportazioni ------------------------------------------------------------------------

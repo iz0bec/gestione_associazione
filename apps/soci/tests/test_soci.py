@@ -260,7 +260,7 @@ class TestDomande:
             "data_nascita": date(1980, 1, 1), "luogo_nascita": "Milano",
             "email": "laura@example.org", "indirizzo": "Via Roma 1", "cap": "20100",
             "comune": "Milano", "provincia": "MI", "accetta_statuto": True,
-            "consenso_comunicazioni": True,
+            "consenso_trattamento": True, "consenso_comunicazioni": True,
         }  # fmt: skip
         return DomandaIscrizione.objects.create(**{**dati, **extra})
 
@@ -275,7 +275,9 @@ class TestDomande:
         consensi = {
             c.finalita: c.prestato for c in Consenso.objects.filter(soggetto=socio.soggetto)
         }
-        assert consensi == {"comunicazioni": True, "immagini": False}
+        assert consensi == {
+            "trattamento": True, "particolari": False, "comunicazioni": True, "immagini": False,
+        }  # fmt: skip
         with pytest.raises(OperazioneNonValida):
             servizi.accogli_domanda(
                 d, admin_utente, tipologia=ordinario, data_ammissione=date.today()
@@ -302,7 +304,7 @@ class TestModuloPubblico:
         "nome": "Laura", "cognome": "Bianchi", "codice_fiscale": CF_BIANCHI.lower(),
         "data_nascita": "1980-01-01", "luogo_nascita": "Milano", "email": "laura@example.org",
         "indirizzo": "Via Roma 1", "cap": "20100", "comune": "Milano", "provincia": "mi",
-        "accetta_statuto": "on", "privacy": "on",
+        "accetta_statuto": "on", "consenso_trattamento": "on",
     }  # fmt: skip
 
     @pytest.fixture(autouse=True)
@@ -353,7 +355,7 @@ class TestModuloPubblico:
         assert DomandaIscrizione.objects.count() == 3
 
     def test_privacy_obbligatoria(self, client):
-        dati = {k: v for k, v in self.DATI.items() if k != "privacy"}
+        dati = {k: v for k, v in self.DATI.items() if k != "consenso_trattamento"}
         self.DATI, salvati = dati, self.DATI
         try:
             self._invia(client)

@@ -1,0 +1,113 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modulo di richiesta di adesione e consenso al trattamento dei dati (Allegato A):
+               richiesta, consenso, informativa. Compilato dai dati della domanda o del socio,
+               oppure in bianco da compilare a mano.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Allegato A - {{ m.nominativo|default:"modulo di adesione" }}</title>
+<style>
+  @page { size: A4; margin: 14mm 18mm 18mm 18mm;
+    @top-right { content: "ALLEGATO A"; font-family: "Times New Roman", "Liberation Serif", "DejaVu Serif", serif; font-weight: bold; font-size: 12pt; }
+    @bottom-left { content: element(piede); } }
+  body { font-family: "Times New Roman", "Liberation Serif", "DejaVu Serif", serif; font-size: 11.5pt; color: #000; line-height: 1.75; }
+  .piede { position: running(piede); font-size: 7.5pt; line-height: 1.3; border-top: .6pt solid #000; padding-top: 2pt; white-space: pre-line; }
+  .testata { text-align: center; line-height: 1.3; margin-bottom: 10pt; }
+  .testata .r0 { font-size: 16pt; font-weight: bold; }
+  .testata .r1 { font-size: 10.5pt; }
+  .testata .r2 { font-size: 10.5pt; font-weight: bold; text-decoration: underline; margin-top: 8pt; }
+  .testata img { height: 26mm; margin: 8pt 0 4pt; }
+  h1 { font-size: 12.5pt; text-align: center; margin: 8pt 0 10pt; }
+  .destra { text-align: right; }
+  .campo { font-weight: bold; border-bottom: .6pt solid #000; padding: 0 4pt; }
+  .vuoto { display: inline-block; border-bottom: .6pt solid #000; min-width: 45mm; }
+  .vuoto.lungo { min-width: 80mm; }
+  .vuoto.corto { min-width: 25mm; }
+  .giustificato { text-align: justify; }
+  .chiede { text-align: center; font-weight: bold; letter-spacing: .5em; margin: 4pt 0; }
+  .firma { margin-top: 18pt; }
+  .firma .linea { display: inline-block; border-bottom: .6pt solid #000; width: 60mm; height: 14pt; }
+  .casella { display: inline-block; border: .8pt solid #000; padding: 0 3pt; line-height: 1.2; margin: 0 2pt; }
+  .casella.si { font-weight: bold; background: #eee; }
+  ul.consensi { list-style: none; padding-left: 0; }
+  ul.consensi li { padding-left: 16pt; text-indent: -16pt; text-align: justify; margin-bottom: 2pt; }
+  .informativa { font-size: 9.6pt; line-height: 1.35; text-align: justify; }
+  .informativa p { margin: 0; }
+  .pagina { page-break-after: always; }
+  .pagina:last-child { page-break-after: auto; }
+</style>
+</head>
+<body>
+<div class="piede">{{ org.modulo_piede }}</div>
+{% with righe=org.righe_intestazione_modulo %}
+
+{# --- 1. richiesta di adesione --- #}
+<div class="pagina">
+  <div class="testata">
+    {% for r in righe %}<div class="r{% if forloop.first %}0{% elif forloop.counter == 2 %}1{% else %}2{% endif %}">{{ r }}</div>{% endfor %}
+    {% if org.logo %}<img src="risorsa:media/{{ org.logo.name }}" alt="">{% endif %}
+  </div>
+  <h1>MODULO DI RICHIESTA DI ADESIONE</h1>
+  <div class="destra" style="line-height:1.9">
+    All'{{ org.nome_modulo }}<br>
+    {% if org.federazione %}FEDERAZIONE di <span class="campo">{{ org.federazione }}</span><br>{% endif %}
+    Sezione di {% if m.sezione %}<span class="campo">{{ m.sezione }}</span>{% else %}<span class="vuoto"></span>{% endif %}
+  </div>
+  <p class="giustificato" style="margin-top:14pt">
+    Il/La sottoscritto/a {% if m.nominativo %}<span class="campo"><i>{{ m.nominativo }}</i></span>{% else %}<span class="vuoto lungo"></span>{% endif %}
+    nato/a {% if m.luogo_nascita %}<span class="campo">{{ m.luogo_nascita }}</span>{% else %}<span class="vuoto"></span>{% endif %}
+    il {% if m.data_nascita %}<span class="campo">{{ m.data_nascita|date:"j F Y" }}</span>{% else %}<span class="vuoto corto"></span>{% endif %}
+    e residente in Via {% if m.indirizzo %}<span class="campo">{{ m.indirizzo }}</span>{% else %}<span class="vuoto lungo"></span>{% endif %}
+    {% if m.comune %}<span class="campo">{{ m.cap }} - {{ m.comune|upper }}{% if m.provincia %} ({{ m.provincia }}){% endif %}</span>{% else %}<span class="vuoto"></span>{% endif %},
+    Telefono {% if m.telefono %}<span class="campo">{{ m.telefono }}</span>{% else %}<span class="vuoto"></span>{% endif %}
+    Cell. {% if m.cellulare %}<span class="campo">{{ m.cellulare }}</span>{% else %}<span class="vuoto corto"></span>{% endif %}
+    indirizzo di Posta Elettronica {% if m.email %}<span class="campo">{{ m.email }}</span>{% else %}<span class="vuoto"></span>@<span class="vuoto"></span>{% endif %},
+    C.F. {% if m.codice_fiscale %}<span class="campo">{{ m.codice_fiscale }}</span>{% else %}<span class="vuoto"></span>{% endif %},
+    avendo preso visione dello Statuto e del Regolamento che regola l'Associazione e condividendone pienamente i contenuti{% if org.modulo_articoli_statuto %}, in particolare quelli riportati {{ org.modulo_articoli_statuto }} dello Statuto{% endif %},
+  </p>
+  <div class="chiede">CHIEDE</div>
+  <p>di essere iscritto/a all'{{ org.nome_modulo }} - Sezione di<br>
+    {% if m.sezione %}<span class="campo">{{ m.sezione }}</span>{% else %}<span class="vuoto lungo"></span>{% endif %}</p>
+  <p style="margin-left:10mm">Distinti saluti</p>
+  <p>{% if m.luogo %}<span class="campo">{{ m.luogo }}</span>{% else %}<span class="vuoto"></span>{% endif %}, lì {% if m.data %}<span class="campo">{{ m.data|date:"d/m/Y" }}</span>{% else %}<span class="vuoto corto"></span>{% endif %}</p>
+  <div class="firma destra">FIRMA<br><span class="linea"></span></div>
+  {% if org.modulo_dichiarazione %}
+  <p class="giustificato" style="margin-top:22pt">Informazioni particolari: Dichiara inoltre di essere
+    <span class="casella{% if m.dichiarazione is True %} si{% endif %}">SI</span>
+    <span class="casella{% if m.dichiarazione is False %} si{% endif %}">NO</span>
+    {{ org.modulo_dichiarazione }}.</p>
+  {% endif %}
+</div>
+
+{# --- 2. consenso al trattamento --- #}
+<div class="pagina">
+  <div class="testata">
+    {% for r in righe %}<div class="r{% if forloop.first %}0{% elif forloop.counter == 2 %}1{% else %}2{% endif %}">{{ r }}</div>{% endfor %}
+  </div>
+  <h1>CONSENSO AL TRATTAMENTO DEI DATI PERSONALI</h1>
+  <p class="giustificato">Io sottoscritto/a, {% if m.nominativo %}<span class="campo">{{ m.nominativo }}</span>{% else %}<span class="vuoto lungo"></span>{% endif %}, nella qualità di interessato, letta l'allegata informativa resa ai sensi dell'art. 13 GDPR, autorizzo/do il consenso:</p>
+  <ul class="consensi">
+    <li>{% if m.consensi.trattamento %}☑{% else %}☐{% endif %}&nbsp; {{ testi.trattamento }};</li>
+    <li>{% if m.consensi.particolari %}☑{% else %}☐{% endif %}&nbsp; {{ testi.particolari }};</li>
+    <li>{% if m.consensi.immagini %}☑{% else %}☐{% endif %}&nbsp; {{ testi.immagini }}.</li>
+  </ul>
+  <p>{% if m.luogo %}<span class="campo">{{ m.luogo }}</span>{% else %}<span class="vuoto"></span>{% endif %}, lì {% if m.data %}<span class="campo">{{ m.data|date:"d/m/Y" }}</span>{% else %}<span class="vuoto corto"></span>{% endif %}</p>
+  <div class="firma destra">L'INTERESSATO<br><span class="linea"></span></div>
+  <div style="margin-top:40pt">VISTO PER ACCETTAZIONE:<br>&nbsp;&nbsp;Il Presidente della Sezione<br><br><span class="vuoto lungo"></span></div>
+</div>
+
+{# --- 3. informativa --- #}
+<div class="pagina">
+  <div class="testata">
+    {% for r in righe %}<div class="r{% if forloop.first %}0{% elif forloop.counter == 2 %}1{% else %}2{% endif %}">{{ r }}</div>{% endfor %}
+  </div>
+  <h1>INFORMATIVA EX ART. 13 REGOLAMENTO UE 2016/679 («GDPR»)</h1>
+  <p style="line-height:1.3">(Allegata alla domanda di Richiesta Adesione all'{{ org.nome_modulo }} Sezione di {% if m.sezione %}<b>{{ m.sezione }}</b>{% else %}<span class="vuoto"></span>{% endif %})</p>
+  <div class="informativa">{% for titolo, testo in informativa %}<p>{% if titolo %}<b>{{ titolo }}</b> {% endif %}{{ testo }}</p>{% empty %}<p>Informativa sul trattamento dei dati personali non ancora inserita (Sistema → Organizzazione).</p>{% endfor %}</div>
+</div>
+{% endwith %}
+</body>
+</html>

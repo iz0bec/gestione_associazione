@@ -36,6 +36,10 @@ class StileMixin:
 CAMPI_ENTE = [
     "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva", "iscrizione_runts",
     "indirizzo", "cap", "comune", "provincia", "telefono", "email", "pec", "sito_web",
+    "federazione",
+]  # fmt: skip
+CAMPI_MODULO = [
+    "modulo_intestazione", "modulo_articoli_statuto", "modulo_dichiarazione", "modulo_piede",
 ]  # fmt: skip
 
 
@@ -44,9 +48,11 @@ class OrganizzazioneForm(StileMixin, forms.ModelForm):
         from .models import Organizzazione
 
         model = Organizzazione
-        fields = [*CAMPI_ENTE, "informativa_privacy", "iscrizioni_online"]
+        fields = [*CAMPI_ENTE, *CAMPI_MODULO, "informativa_privacy", "iscrizioni_online"]
         widgets = {
-            "informativa_privacy": forms.Textarea(attrs={"rows": 6}),
+            "informativa_privacy": forms.Textarea(attrs={"rows": 10}),
+            "modulo_intestazione": forms.Textarea(attrs={"rows": 3}),
+            "modulo_piede": forms.Textarea(attrs={"rows": 3}),
             "provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"}),
         }
 

@@ -33,6 +33,12 @@ se si ha tutto a portata di mano.
 | Indirizzo della sede, CAP, comune, provincia | consigliato | | intestazioni, lettere |
 | Telefono, email, PEC | consigliati | | intestazioni, pagine pubbliche, risposte alle email |
 | Sito web | no | | pagine pubbliche |
+| Federazione provinciale | se c'è | es. «Potenza Matera» | modulo di adesione (Allegato A) |
+
+Dopo la configurazione, in *Sistema → Organizzazione*, si completano i testi del **modulo di
+richiesta di adesione** e l'**informativa privacy** (vedi
+[Organizzazione](sistema.md#modulo-di-richiesta-di-adesione-allegato-a)). Conviene tenere a portata
+di mano un Allegato A in Word o PDF da cui copiarli.
 
 ### 2. Logo e colori
 

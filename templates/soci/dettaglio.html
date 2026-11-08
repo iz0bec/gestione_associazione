@@ -27,6 +27,7 @@
           {% if multisezione %}<div class="datagrid-item"><div class="datagrid-title">Sezione</div><div class="datagrid-content">{{ socio.sezione }}</div></div>{% endif %}
           <div class="datagrid-item"><div class="datagrid-title">Matricola nazionale</div><div class="datagrid-content">{{ socio.matricola|default:"—" }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Tipologia</div><div class="datagrid-content">{{ socio.tipologia }}</div></div>
+          {% if organizzazione.modulo_dichiarazione and socio.dichiarazione is not None %}<div class="datagrid-item"><div class="datagrid-title">Dichiara di essere {{ organizzazione.modulo_dichiarazione }}</div><div class="datagrid-content">{{ socio.dichiarazione|yesno:"SI,NO" }}</div></div>{% endif %}
           <div class="datagrid-item"><div class="datagrid-title">Ammissione</div><div class="datagrid-content">{{ socio.data_ammissione|date:"d/m/Y" }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Delibera</div><div class="datagrid-content">{{ socio.delibera_ammissione|default:"—" }}</div></div>
           {% if socio.stato == "cessato" %}
@@ -40,6 +41,29 @@
         {% if socio.note %}<hr><div class="text-secondary">{{ socio.note|linebreaksbr }}</div>{% endif %}
       </div>
       <div class="card-footer"><a href="{{ socio.soggetto.get_absolute_url }}"><i class="ti ti-address-book me-1"></i>Scheda anagrafica completa</a></div>
+    </div>
+
+    <div class="card mt-3" id="modulo-adesione">
+      <div class="card-header">
+        <h2 class="card-title"><i class="ti ti-signature me-2"></i>Richiesta di adesione firmata</h2>
+        <div class="card-actions btn-list">
+          {% if socio.modulo_adesione %}<a class="btn btn-sm" href="{% url 'soci:modulo_firmato' socio.pk %}" target="_blank" rel="noopener"><i class="ti ti-external-link me-1"></i>Apri</a>{% endif %}
+          <a class="btn btn-sm" href="{% url 'soci:modulo_socio' socio.pk %}" target="_blank" rel="noopener" title="Allegato A con i dati del socio, da stampare e far firmare"><i class="ti ti-printer me-1"></i>Modulo da firmare</a>
+        </div>
+      </div>
+      {% if socio.modulo_adesione %}
+      <iframe class="anteprima-pdf" src="{% url 'soci:modulo_firmato' socio.pk %}#view=FitH" title="Richiesta di adesione firmata"></iframe>
+      <div class="card-footer small text-secondary">Caricata il {{ socio.modulo_adesione_il|date:"d/m/Y H:i" }}</div>
+      {% else %}
+      <div class="card-body text-secondary">Nessuna richiesta firmata caricata.</div>
+      {% endif %}
+      {% if perms.soci.change_socio %}
+      <form class="card-footer d-flex flex-wrap gap-2 align-items-center" method="post" action="{% url 'soci:carica_modulo' socio.pk %}" enctype="multipart/form-data">{% csrf_token %}
+        <input class="form-control form-control-sm w-auto flex-fill" type="file" name="modulo" accept="application/pdf,image/jpeg,image/png" multiple required aria-label="File della richiesta firmata">
+        <button class="btn btn-sm btn-primary" type="submit"><i class="ti ti-upload me-1"></i>{% if socio.modulo_adesione %}Sostituisci{% else %}Carica{% endif %}</button>
+        <div class="w-100 form-hint">Un PDF, oppure le foto/scansioni delle pagine (vengono unite in un PDF).</div>
+      </form>
+      {% endif %}
     </div>
 
     <div class="card mt-3">

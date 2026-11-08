@@ -2,6 +2,7 @@
 {% block titolo %}Domanda di {{ domanda.cognome }} {{ domanda.nome }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:domande' %}">Domande di iscrizione</a> · {{ domanda.get_origine_display|lower }}</div>{% endblock %}
 {% block titolo_pagina %}{{ domanda.cognome }} {{ domanda.nome }} <span class="badge fs-5 align-middle {% if domanda.stato == 'accolta' %}bg-green-lt{% elif domanda.stato == 'respinta' %}bg-red-lt{% else %}bg-yellow-lt{% endif %}">{{ domanda.get_stato_display|lower }}</span>{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'soci:domanda_pdf' domanda.pk %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Modulo da firmare (PDF)</a>{% endblock %}
 {% block contenuto %}
 <div class="row row-cards">
   <div class="col-lg-7">
@@ -10,15 +11,18 @@
         <div class="datagrid">
           <div class="datagrid-item"><div class="datagrid-title">Codice fiscale</div><div class="datagrid-content">{{ domanda.codice_fiscale }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Nascita</div><div class="datagrid-content">{{ domanda.data_nascita|date:"d/m/Y" }}, {{ domanda.luogo_nascita }}</div></div>
-          <div class="datagrid-item"><div class="datagrid-title">Email</div><div class="datagrid-content">{{ domanda.email }}</div></div>
-          <div class="datagrid-item"><div class="datagrid-title">Telefono</div><div class="datagrid-content">{{ domanda.telefono|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Email</div><div class="datagrid-content">{{ domanda.email|default:"—" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Telefono</div><div class="datagrid-content">{{ domanda.telefono|default:"—" }}{% if domanda.cellulare %}<div>cell. {{ domanda.cellulare }}</div>{% endif %}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Indirizzo</div><div class="datagrid-content">{{ domanda.indirizzo }}, {{ domanda.cap }} {{ domanda.comune }} ({{ domanda.provincia }})</div></div>
+          {% if multisezione %}<div class="datagrid-item"><div class="datagrid-title">Sezione</div><div class="datagrid-content">{{ domanda.sezione|default:"—" }}</div></div>{% endif %}
           <div class="datagrid-item"><div class="datagrid-title">Tipologia richiesta</div><div class="datagrid-content">{{ domanda.tipologia|default:"—" }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Ricevuta il</div><div class="datagrid-content">{{ domanda.ricevuta_il|date:"d/m/Y H:i" }}</div></div>
-          <div class="datagrid-item"><div class="datagrid-title">Dichiarazioni</div><div class="datagrid-content">
-            <div>{% if domanda.accetta_statuto %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} accetta lo statuto</div>
-            <div>{% if domanda.consenso_comunicazioni %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} comunicazioni associative</div>
-            <div>{% if domanda.consenso_immagini %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} foto e video</div>
+          {% if organizzazione.modulo_dichiarazione %}<div class="datagrid-item"><div class="datagrid-title">Dichiara di essere {{ organizzazione.modulo_dichiarazione }}</div><div class="datagrid-content">{{ domanda.dichiarazione|yesno:"SI,NO,—" }}</div></div>{% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Dichiarazioni e consensi</div><div class="datagrid-content">
+            <div>{% if domanda.accetta_statuto %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} statuto e regolamento</div>
+            <div>{% if domanda.consenso_trattamento %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} trattamento dei dati</div>
+            <div>{% if domanda.consenso_particolari %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} dati particolari</div>
+            <div>{% if domanda.consenso_immagini %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} uso dell'immagine</div>
           </div></div>
         </div>
         {% if domanda.motivazione %}<hr><div class="text-secondary">{{ domanda.motivazione|linebreaksbr }}</div>{% endif %}

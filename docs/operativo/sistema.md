@@ -20,6 +20,24 @@ breve compare in alto nel menu. Ogni modifica è registrata.
 
 Questi dati si inseriscono la prima volta con la [configurazione guidata](configurazione-iniziale.md).
 
+### Modulo di richiesta di adesione (Allegato A)
+
+Nella stessa pagina si impostano i testi del modulo di adesione e consenso, usati sia per il modulo
+online sia per il PDF da stampare e far firmare:
+
+| Campo | Esempio ANCR |
+|---|---|
+| Federazione | Potenza Matera |
+| Intestazione (una riga per voce; la prima è il nome dell'associazione) | ASSOCIAZIONE NAZIONALE COMBATTENTI E REDUCI / (Eretta in ente morale con decreto 24 giugno 1923 n.1371) / PRESIDENZA NAZIONALE |
+| Articoli dello statuto richiamati | all'art. 2 ed agli articoli 5, 6, 7, 8, 9 e 58 |
+| Dichiarazione SI/NO | iscritto all'Associazione Decorati di Medaglia d'Oro al valor Militare e/o Valor Civile |
+| Piè di pagina | sede legale nazionale, partita IVA, codice fiscale, recapiti |
+| Informativa privacy | il testo dell'informativa ex art. 13 GDPR; i titoletti («Diritti dell'interessato.») vengono stampati in grassetto |
+
+Il PDF ha tre pagine, come l'originale: richiesta di adesione, consenso al trattamento dei dati,
+informativa. Nel testo dei consensi il riferimento normativo è al D.Lgs. n. 196/03 (Codice della
+privacy).
+
 ## Aspetto
 
 **Sistema → Aspetto** (amministratore e segretario):
