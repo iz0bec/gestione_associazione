@@ -22,6 +22,17 @@ from django.utils import timezone
 log = logging.getLogger("pianificatore")
 
 
+def backup_di_oggi(oggi):
+    from apps.core import backup
+
+    try:
+        return any(
+            b.automatico and b.creato_il and b.creato_il.date() == oggi for b in backup.elenco()
+        )
+    except OSError:
+        return False
+
+
 class Command(BaseCommand):
     help = "Lavori periodici: invia_coda, scarica_posta, registro_giornaliero, backup notturno."
 
@@ -56,7 +67,9 @@ class Command(BaseCommand):
                 and not opzioni["una_volta"]
                 and (adesso.hour >= settings.BACKUP_ORA and ultimo_backup != adesso.date())
             ):
-                self._esegui("backup", automatico=True)
+                # uno al giorno, anche se il pianificatore viene riavviato
+                if not backup_di_oggi(adesso.date()):
+                    self._esegui("backup", automatico=True)
                 ultimo_backup = adesso.date()
             if opzioni["una_volta"]:
                 return

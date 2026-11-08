@@ -20,6 +20,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--automatico", action="store_true", help="Backup pianificato")
         parser.add_argument("--elenco", action="store_true", help="Elenca i backup e esce")
+        parser.add_argument("--motivo", default="manuale", help="Es. «prima dell'aggiornamento»")
 
     def handle(self, *args, **opzioni):
         if opzioni["elenco"]:
@@ -30,7 +31,7 @@ class Command(BaseCommand):
                 )
             return
         try:
-            p = backup.crea(motivo="automatico" if opzioni["automatico"] else "manuale")
+            p = backup.crea(motivo="automatico" if opzioni["automatico"] else opzioni["motivo"])
         except backup.BackupNonValido as e:
             raise CommandError(" ".join(e.messages)) from None
         self.stdout.write(self.style.SUCCESS(f"Backup creato: {p}"))

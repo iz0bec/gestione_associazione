@@ -164,7 +164,7 @@ gestisci() { runuser -u "$UTENTE" -- "${DIR_APP}/.venv/bin/python" "${DIR_APP}/m
 
 if [[ $AGGIORNAMENTO -eq 1 ]] && systemctl is-active --quiet "$NOME"; then
   passo "Backup prima dell'aggiornamento"
-  gestisci backup || errore "backup non riuscito: aggiornamento interrotto."
+  gestisci backup --motivo "prima dell'aggiornamento" || errore "backup non riuscito: aggiornamento interrotto."
 fi
 
 passo "Migrazioni e file statici"

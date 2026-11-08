@@ -144,3 +144,18 @@ class TestInterfaccia:
     def test_permessi(self, client_ruolo):
         c = client_ruolo("Segretario")
         assert c.get(reverse("core:backup")).status_code == 403
+
+
+@richiede_pg
+@pytest.mark.django_db
+def test_un_backup_automatico_al_giorno():
+    from django.utils import timezone
+
+    from apps.core.management.commands.pianificatore import backup_di_oggi
+
+    oggi = timezone.localdate()
+    assert not backup_di_oggi(oggi)
+    call_command("backup", automatico=True, stdout=io.StringIO())
+    assert backup_di_oggi(oggi)
+    call_command("backup", motivo="prima dell'aggiornamento", stdout=io.StringIO())
+    assert {b.motivo for b in backup.elenco()} == {"automatico", "prima dell'aggiornamento"}
