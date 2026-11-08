@@ -46,6 +46,7 @@ PAGINE_PER_SEZIONE = {
     "utenti": "utenti",
     "core:servizi_posta": "sistema#servizi-di-posta",
     "core:cruscotto": "primi-passi",
+    "core:cerca": "primi-passi",
     "core:aiuto": INDICE,
     "core:aiuto_pagina": INDICE,
     "core:informazioni": INDICE,

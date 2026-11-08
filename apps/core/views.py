@@ -439,6 +439,22 @@ class AiutoView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class CercaView(LoginRequiredMixin, TemplateView):
+    """Ricerca globale nei moduli che l'utente può consultare."""
+
+    template_name = "core/cerca.html"
+
+    def get_context_data(self, **kwargs):
+        from . import ricerca
+
+        ctx = super().get_context_data(**kwargs)
+        testo = self.request.GET.get("q", "").strip()
+        gruppi = ricerca.cerca(self.request.user, testo)
+        ctx.update(q=testo, gruppi=gruppi, troppo_corto=ricerca.troppo_corto(testo),
+                   totale=sum(g.totale for g in gruppi))  # fmt: skip
+        return ctx
+
+
 class ManualePdfView(LoginRequiredMixin, View):
     """Il manuale operativo completo in PDF, con le immagini."""
 

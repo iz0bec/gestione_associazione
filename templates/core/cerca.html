@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Risultati della ricerca globale, raggruppati per modulo
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Cerca{% if q %}: {{ q }}{% endif %}{% endblock %}
+{% block titolo_pagina %}Cerca{% endblock %}
+{% block contenuto %}
+<form method="get" class="mb-3" role="search">
+  <div class="input-group input-group-flat">
+    <span class="input-group-text"><i class="ti ti-search"></i></span>
+    <input type="search" name="q" class="form-control form-control-lg" value="{{ q }}" placeholder="Nome, cognome, numero di socio o di protocollo, oggetto, bene…" aria-label="Testo da cercare" autofocus>
+    <button class="btn btn-primary" type="submit">Cerca</button>
+  </div>
+  <div class="small text-secondary mt-1">Si cerca in tutti i moduli che puoi consultare; più parole devono comparire tutte.</div>
+</form>
+{% if troppo_corto %}
+<div class="alert alert-info">Scrivi almeno due caratteri.</div>
+{% elif q and not gruppi %}
+<div class="card"><div class="card-body text-secondary">Nessun risultato per «{{ q }}».</div></div>
+{% elif gruppi %}
+<p class="text-secondary">{{ totale }} risultat{{ totale|pluralize:"o,i" }} per «{{ q }}».</p>
+<div class="row row-cards">
+  {% for g in gruppi %}
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title"><i class="ti ti-{{ g.icona }} me-2"></i>{{ g.titolo }} <span class="badge bg-secondary-lt ms-1">{{ g.totale }}</span></h2>
+        {% if g.tutti and g.totale > g.voci|length %}<div class="card-actions"><a href="{{ g.tutti }}">Vedi tutti</a></div>{% endif %}
+      </div>
+      <div class="list-group list-group-flush">
+        {% for v in g.voci %}
+        <a class="list-group-item list-group-item-action" href="{{ v.url }}"><div class="fw-medium text-truncate">{{ v.titolo }}</div>{% if v.dettaglio %}<div class="small text-secondary text-truncate">{{ v.dettaglio }}</div>{% endif %}</a>
+        {% endfor %}
+      </div>
+      {% if g.totale > g.voci|length and not g.tutti %}<div class="card-footer small text-secondary">Mostrati i primi {{ g.voci|length }}: precisa la ricerca per vedere gli altri.</div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

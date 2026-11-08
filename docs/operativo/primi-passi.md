@@ -44,7 +44,10 @@ Protegge l'account anche se qualcuno scopre la password.
 
 - **Menu a sinistra**: i moduli. Si vedono solo quelli consentiti dal proprio ruolo.
   Su smartphone il menu si apre con il pulsante ☰.
-- **Barra in alto**: ricerca rapida in anagrafica; nome e **versione** del programma (un clic apre
+- **Barra in alto**: **ricerca globale** (persone ed enti, soci, protocolli, riunioni, delibere,
+  beni, appuntamenti e comunicazioni, solo nei moduli che si possono consultare: soci della propria
+  sezione, protocolli riservati solo con il permesso; più parole devono comparire tutte, i numeri di
+  socio e di protocollo si cercano direttamente); nome e **versione** del programma (un clic apre
   *Informazioni*: autore, licenza, componenti di terze parti); pulsante **?** dell'aiuto; tema
   chiaro/scuro (🌙/☀); menu utente (cambio password, verifica in due passaggi, manuale,
   informazioni, esci).

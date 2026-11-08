@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Ricerca globale** dalla barra in alto: persone ed enti, soci, protocolli, riunioni, delibere, beni,
+  appuntamenti e comunicazioni, raggruppati per modulo, secondo i permessi (soci della propria
+  sezione, riservati solo con il permesso).
+
 ## [0.0.1-rc.16] - 2026-11-08
 
 Pagina pubblica di presentazione.

@@ -56,6 +56,7 @@ urlpatterns = [
         viste_backup.RipristinoView.as_view(),
         name="ripristino",
     ),
+    path("cerca/", views.CercaView.as_view(), name="cerca"),
     path("aiuto/", views.AiutoView.as_view(), name="aiuto"),
     path("aiuto/manuale.pdf", views.ManualePdfView.as_view(), name="manuale_pdf"),
     path("aiuto/<slug:pagina>/", views.AiutoView.as_view(), name="aiuto_pagina"),
