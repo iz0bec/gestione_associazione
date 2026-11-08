@@ -968,6 +968,7 @@ class ImportaView(PermessoMixin, FormView):
             and utente.has_perm("soci.gestisci_tessere_fisiche"),
             "cessazioni": bool(d.get("cessazioni")),
             "quote_pagate": d.get("quote") == "pagate",
+            "valido": bool(d.get("valido")),
             "anno_tessere": d.get("anno_tessere"),
             "sezioni_consentite": sorted(consentite) if consentite is not None else None,
         }

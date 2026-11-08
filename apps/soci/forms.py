@@ -364,6 +364,12 @@ class ImportaForm(StileMixin, forms.Form):
         required=False,
         widget=forms.RadioSelect,
     )
+    valido = forms.BooleanField(
+        label="Tieni conto della colonna «Valido» (socio validato: attivo e in regola)",
+        required=False,
+        help_text="Validato = quota dell'anno sociale incassata; non validato = da incassare; "
+        "se la cella è vuota vale la scelta qui sopra.",
+    )
     cessazioni = forms.BooleanField(
         label="Registra le cessazioni (data di annullamento dell'iscrizione)",
         required=False,

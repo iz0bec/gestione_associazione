@@ -93,6 +93,7 @@
         {{ form.tessere.as_field_group }}
         {% if perms.soci.gestisci_tessere_fisiche %}{{ form.crea_tessere.as_field_group }}{% endif %}
         {{ form.quote.as_field_group }}
+        {{ form.valido.as_field_group }}
         {{ form.anno_tessere.as_field_group }}
       </div>
       <div class="card-footer d-flex">

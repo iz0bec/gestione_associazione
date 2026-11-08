@@ -253,7 +253,21 @@ Per le **quote** dei tesseramenti importati si sceglie al momento dell'importazi
 
 - **da incassare**: compaiono tra i morosi finché non si registra l'incasso, con ricevuta e prima nota;
 - **già incassate**: risultano pagate alla data della tessera, *incassate fuori dall'applicazione*.
-  Non hanno ricevuta e non vanno in prima nota, perché gli incassi sono avvenuti prima. I codici fiscali non validi non vengono usati per riconoscere la
+  Non hanno ricevuta e non vanno in prima nota, perché gli incassi sono avvenuti prima.
+
+**Colonna «Valido».** Nel registro nazionale indica il socio **validato**, cioè attivo e in regola.
+Spuntando *Tieni conto della colonna «Valido»* la scelta sulle quote vale riga per riga per l'anno
+sociale del file:
+
+- **validato** (sì, X, 1, vero): la quota risulta già incassata, anche se la tessera era già stata
+  importata in precedenza;
+- **non validato** (no, 0, falso): la quota resta da incassare, con l'annotazione *non validato nel
+  registro* nel rapporto;
+- **cella vuota**: vale la scelta generale (da incassare o già incassate).
+
+Senza la spunta la colonna è ignorata. Non riguarda la tessera dell'anno precedente.
+
+I codici fiscali non validi non vengono usati per riconoscere la
 persona, ma restano nelle note della scheda per poterli correggere.
 
 **Come si riconosce la sezione.** Il valore della colonna «Sezione» del file (es. «RIONERO IN

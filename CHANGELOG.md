@@ -6,6 +6,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- Importazione dal registro nazionale: opzione **«Tieni conto della colonna Valido»** (socio
+  validato = attivo e in regola): validato → quota dell'anno incassata, non validato → da
+  incassare, vuota → scelta generale.
 - **Calendario** (nuova voce di menu): prossimi impegni da riunioni, ricorrenze, restituzioni dei
   prestiti e, a scelta, compleanni dei soci, secondo i permessi; esportazione **iCal** in un file
   `.ics` o con un **collegamento personale** segreto a cui abbonare i calendari di telefono e

@@ -68,6 +68,7 @@ COLONNE = {
         "data di cessazione",
     ],
     "incarico": ["codice incarico socio ordinario", "incarico", "carica"],
+    "valido": ["valido", "validato", "socio validato", "valida"],
 }
 # colonne con l'anno nell'intestazione, es. «Numero Tessera Anno 2025»
 COLONNE_CON_ANNO = {"tessera_precedente": re.compile(r"^(?:numero |n |nr )?tessera anno (\d{4})$")}
@@ -202,6 +203,16 @@ MESI = {m: i for i, m in enumerate(
      "settembre", "ottobre", "novembre", "dicembre"], start=1)}  # fmt: skip
 
 
+SI = {"si", "sì", "s", "x", "1", "true", "vero", "yes", "y", "ok", "valido", "validato", "v"}
+NO = {"no", "n", "0", "false", "falso", "non valido", "non validato"}
+
+
+def _si_no(v):
+    """True, False o None (vuoto o non riconosciuto) da una cella sì/no."""
+    testo = _testo(v).lower()
+    return True if testo in SI else False if testo in NO else None
+
+
 def _data(v):
     if isinstance(v, datetime):
         return v.date()
@@ -274,6 +285,7 @@ def _pulisci(riga):
     for campo in ("tessera", "tessera_precedente"):
         d[campo] = d.get(campo, "").lstrip("0") if d.get(campo, "").isdigit() else d.get(campo, "")
     d["anno_tessera"] = int(d["anno_tessera"]) if d.get("anno_tessera", "").isdigit() else None
+    d["valido"] = _si_no(riga.get("valido"))
     if d.get("incarico", "").lower() in ("socio", "socio ordinario"):
         d["incarico"] = ""
     d["provincia"] = d.get("provincia", "").upper()[:2]
@@ -304,6 +316,8 @@ class Opzioni:
     crea_tessere: bool = True  # crea le tessere fisiche non ancora caricate (lotto «registro»)
     cessazioni: bool = True  # registra le cessazioni (data di annullamento dell'iscrizione)
     quote_pagate: bool = False  # le quote dei tesseramenti importati risultano già incassate
+    valido: bool = False  # colonna «Valido» (socio validato = in regola): sì -> quota incassata,
+    # no -> quota da incassare; vuota -> vale `quote_pagate`
     sezioni_consentite: set | None = None  # utente limitato a queste sezioni
 
 
@@ -599,22 +613,38 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
         anno = d.get("anno_tessera") or opzioni.anno_tessere
         tessere = []
         if d.get("tessera_precedente") and d.get("_anno_tessera_precedente"):
-            tessere.append((d["_anno_tessera_precedente"], d["tessera_precedente"], None))
+            tessere.append((d["_anno_tessera_precedente"], d["tessera_precedente"], None,
+                            opzioni.quote_pagate))  # fmt: skip
+        pagata = opzioni.quote_pagate
+        if opzioni.valido and d.get("valido") is not None:
+            pagata = d["valido"]
+            if not d["valido"]:
+                note.append("non validato nel registro: quota da incassare")
         if d.get("tessera") and anno:
-            tessere.append((anno, d["tessera"], d.get("data_tessera")))
-        for a, codice, rilascio in tessere:
-            esito = _tessera(socio, codice, a, rilascio, opzioni, utente)
+            tessere.append((anno, d["tessera"], d.get("data_tessera"), pagata))
+        for a, codice, rilascio, quota_pagata in tessere:
+            esito = _tessera(socio, codice, a, rilascio, opzioni, utente, pagata=quota_pagata)
             note += esito
-            if stato == "invariato" and any("attribuita" in n for n in esito):
+            if stato == "invariato" and any("attribuita" in n or "incassata" in n for n in esito):
                 stato = "aggiornato"
     return stato, note, socio
 
 
-def _tessera(socio, codice, anno, rilascio, opzioni, utente):
+def _incassa_esterno(tessera, utente):
+    servizi.segna_incasso_esterno(
+        tessera, utente, pagata_il=tessera.data_rilascio, nota="Registro soci nazionale"
+    )
+
+
+def _tessera(socio, codice, anno, rilascio, opzioni, utente, *, pagata=None):
+    pagata = opzioni.quote_pagate if pagata is None else pagata
     tessera = socio.tessere.valide().filter(anno=anno).first()
     if tessera and tessera.carta_id:
         if tessera.carta.codice != codice and str(tessera.carta.numero) != codice.lstrip("0"):
             return [f"tessera {anno}: locale {tessera.carta.codice}, nel registro {codice}"]
+        if pagata and opzioni.valido and not tessera.pagata and tessera.importo > 0:
+            _incassa_esterno(tessera, utente)
+            return [f"quota {anno} segnata incassata (validato nel registro)"]
         return []
     if socio.stato != Socio.Stato.ATTIVO:
         return []
@@ -627,11 +657,8 @@ def _tessera(socio, codice, anno, rilascio, opzioni, utente):
                     socio, anno, utente, data_rilascio=rilascio or date(anno, 1, 1)
                 )
             tessera = servizi.attribuisci_carta(tessera, utente, codice)
-            if opzioni.quote_pagate:
-                servizi.segna_incasso_esterno(
-                    tessera, utente, pagata_il=tessera.data_rilascio,
-                    nota="Registro soci nazionale",
-                )  # fmt: skip
+            if pagata:
+                _incassa_esterno(tessera, utente)
     except ValidationError as e:
         return [f"tessera {anno} n. {codice} non attribuita: {' '.join(e.messages)}"]
     return [f"tessera {tessera.codice} attribuita per il {anno}"]

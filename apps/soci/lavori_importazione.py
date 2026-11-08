@@ -93,6 +93,7 @@ def opzioni_da_dict(d):
         anno_tessere=d.get("anno_tessere"),
         cessazioni=d.get("cessazioni", True),
         quote_pagate=d.get("quote_pagate", False),
+        valido=d.get("valido", False),
         sezioni_consentite=set(consentite) if consentite is not None else None,
     )
 

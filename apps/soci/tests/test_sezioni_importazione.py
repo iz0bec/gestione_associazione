@@ -20,7 +20,7 @@ from PIL import Image
 
 from apps.anagrafica.models import Soggetto
 from apps.soci import importazione, servizi
-from apps.soci.models import CartaTessera, Sezione, Socio, TipologiaSocio
+from apps.soci.models import CartaTessera, Sezione, Socio, Tessera, TipologiaSocio
 
 pytestmark = pytest.mark.django_db
 ANNO = date.today().year
@@ -354,6 +354,54 @@ class TestQuoteImportate:
         e = tesoreria.apri_esercizio(2026, capo)
         assert not tesoreria.quote_da_registrare(e).exists()
         assert tesoreria.registra_quota(t, capo)[0] is None
+
+
+class TestColonnaValido:
+    """«Valido» = socio validato (attivo e in regola): se richiesto decide se la quota è pagata."""
+
+    def file(self):
+        return xlsx([
+            ["Cognome", "Nome", "Data di nascita", "Sezione", "Numero Tessera", "Anno Sociale",
+             "Valido"],
+            ["Rossi", "Mario", "15/03/1950", "Nord", "101", 2026, "Sì"],
+            ["Verdi", "Ugo", "01/01/1960", "Nord", "102", 2026, "NO"],
+            ["Neri", "Ada", "02/02/1970", "Nord", "103", 2026, None],
+        ])  # fmt: skip
+
+    def _pagate(self):
+        return {t.socio.soggetto.cognome: t.pagata
+                for t in Tessera.objects.filter(anno=2026).select_related("socio__soggetto")}  # fmt: skip
+
+    @pytest.mark.parametrize(("valido", "quote_pagate", "attese"), [
+        (False, False, {"Rossi": False, "Verdi": False, "Neri": False}),  # colonna ignorata
+        (False, True, {"Rossi": True, "Verdi": True, "Neri": True}),
+        (True, False, {"Rossi": True, "Verdi": False, "Neri": False}),
+        (True, True, {"Rossi": True, "Verdi": False, "Neri": True}),  # vuota: scelta generale
+    ])  # fmt: skip
+    def test_scelte(self, capo, ordinario, nord, valido, quote_pagate, attese):
+        ordinario.quota_annua = 25
+        ordinario.save()
+        mappa, righe, _ = importazione.leggi("r.xlsx", self.file())
+        assert "valido" in mappa.values()
+        assert [r["valido"] for r in map(importazione._pulisci, righe)] == [True, False, None]
+        opzioni = importazione.Opzioni(tipologia=ordinario, sezione=nord, valido=valido,
+                                       quote_pagate=quote_pagate, abbina="nome")  # fmt: skip
+        r = importazione.elabora(righe, opzioni, capo, esegui=True)
+        assert r.riepilogo["errore"] == 0, [e.note for e in r.esiti]
+        assert self._pagate() == attese
+
+    def test_validato_dopo_su_tessera_esistente(self, capo, ordinario, nord):
+        ordinario.quota_annua = 25
+        ordinario.save()
+        _, righe, _ = importazione.leggi("r.xlsx", self.file())
+        base = {"tipologia": ordinario, "sezione": nord, "abbina": "nome"}
+        importazione.elabora(righe, importazione.Opzioni(**base), capo, esegui=True)
+        assert not any(self._pagate().values())
+        r = importazione.elabora(righe, importazione.Opzioni(**base, valido=True), capo,
+                                 esegui=True)  # fmt: skip
+        assert self._pagate() == {"Rossi": True, "Verdi": False, "Neri": False}
+        rossi = next(e for e in r.esiti if "Rossi" in e.nome)
+        assert rossi.stato == "aggiornato" and any("validato" in n for n in rossi.note)
 
 
 class TestAbbinamentoSezioni:
