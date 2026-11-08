@@ -39,7 +39,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 1. ✅ **Soci e tesseramento** - libro soci, numero socio, domande di iscrizione (anche pubbliche
    con anti-spam), tessere annuali con numerazione, quote, ricevute PDF, rinnovi massivi, morosi.
    *Rimandati*: invio delle ricevute e dell'esito delle domande per email (con Comunicazioni),
-   collegamento degli incassi alla prima nota (con Tesoreria), foto del socio.
+   collegamento degli incassi alla prima nota (con Tesoreria), foto del socio (fatti).
 2. ✅ **Protocollo** - registro in entrata/uscita/interno (numerazione annuale), allegati privati,
    annullamento motivato, registro giornaliero PDF, ricezione email/PEC da protocollare.
    *Rimandati*: invio dei protocolli in uscita per email/PEC (con Comunicazioni), liste di
@@ -56,6 +56,11 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. ✅ **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,
    passaggio di consegne con fotografia immutabile, schede QR pubbliche (dati minimi).
+6b. ✅ **Configurazione e federazione** - configurazione guidata al primo accesso, aspetto
+   personalizzabile (logo, colori, menu), foto in anagrafica e soci, **sezioni** con utenti limitati
+   alle proprie, matricola nazionale, **listino annuale** (costo d'acquisto e quote per tipologia),
+   **importazione dal registro soci nazionale** (Excel/CSV) con anteprima. *Da completare*: adattare le
+   colonne all'estratto reale del registro quando disponibile (`tmp/`, non versionato).
 7. **Documenti PDF** - modelli di stampa HTML con intestazione dell'ente (WeasyPrint).
 8. **Import** - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione
    Assemblee (SQLite), con deduplica dell'anagrafica per codice fiscale/email e rapporto finale.

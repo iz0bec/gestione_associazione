@@ -39,7 +39,6 @@ permessi `600`, mai nel repository.
 | `MFA_TOTP_ISSUER` | | `Gestione Associazione` | nome mostrato nell'app di autenticazione |
 | `LOG_LEVEL` | | `INFO` | livello dei log su console |
 | `DB_CONN_MAX_AGE` | | `60` | riuso delle connessioni al database (secondi) |
-
 | `URL_PUBBLICO` | | - | indirizzo pubblico dell'app, usato nei QR stampati delle schede dei beni (altrimenti quello della richiesta) |
 | `COMUNICAZIONI_LOTTO` | | `30` | email spedite a ogni giro della coda (ogni minuto): adattarlo ai limiti del proprio server SMTP |
 | `CHIAVE_CIFRATURA` | per le caselle di posta | - | chiave Fernet per le password salvate nel database; generarla con `manage.py genera_chiave_cifratura`. Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
@@ -60,3 +59,17 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 
 Con Docker il pianificatore è il servizio `pianificatore` di `compose.yaml`; senza Docker vedi
 [Installazione](installazione.md).
+
+## Comandi
+
+| Comando | Cosa fa |
+|---|---|
+| `manage.py importa_registro_soci FILE [opzioni]` | importa i soci dall'estratto `.xlsx`/`.csv` del registro nazionale. **Senza `--esegui` mostra solo l'anteprima.** Opzioni: `--sezione CODICE` (righe senza sezione), `--tipologia NOME` (predefinita `Ordinario`), `--crea-sezioni`, `--allinea-sezione`, `--anno-tessere ANNO`, `--utente USERNAME` (autore nel registro attività), `--dettagli` (una riga per socio) |
+| `manage.py configura_ruoli` | riallinea i permessi dei ruoli predefiniti (eseguito anche dalle migrazioni) |
+
+Esempio, con l'estratto in `tmp/` (cartella esclusa dal versionamento: contiene dati personali):
+
+```bash
+uv run python manage.py importa_registro_soci tmp/registro_soci.xlsx --sezione 085 --dettagli
+uv run python manage.py importa_registro_soci tmp/registro_soci.xlsx --sezione 085 --esegui --utente admin
+```

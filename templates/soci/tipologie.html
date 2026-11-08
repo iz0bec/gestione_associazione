@@ -7,7 +7,7 @@
 <div class="card">
   <div class="table-responsive">
     <table class="table table-vcenter card-table">
-      <thead><tr><th>Tipologia</th><th class="text-end">Quota annua</th><th class="text-end">Soci attivi</th><th></th></tr></thead>
+      <thead><tr><th>Tipologia</th><th class="text-end">Quota di riferimento</th><th class="text-end">Soci attivi</th><th></th></tr></thead>
       <tbody>
       {% for t in tipologie %}
         <tr class="{% if not t.attiva %}text-secondary{% endif %}">
@@ -20,6 +20,6 @@
       </tbody>
     </table>
   </div>
-  <div class="card-footer text-secondary small">La quota è proposta al rilascio delle nuove tessere; cambiarla non modifica le tessere già rilasciate.</div>
+  <div class="card-footer text-secondary small">La quota di ogni anno si fissa nel <a href="{% url 'soci:listino' %}">listino del tesseramento</a>; quella di riferimento è proposta per i listini nuovi. Cambiarla non modifica le tessere già rilasciate.</div>
 </div>
 {% endblock %}

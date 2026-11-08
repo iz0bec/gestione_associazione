@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="{% static 'vendor/tabler/css/tabler.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/tabler-icons/tabler-icons.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  {% include "includes/testa_aspetto.html" %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 <a class="visually-hidden-focusable" href="#contenuto">Vai al contenuto</a>

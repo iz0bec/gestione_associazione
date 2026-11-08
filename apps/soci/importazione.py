@@ -1,0 +1,472 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Importazione dei soci dall'estratto Excel (o CSV) del registro soci nazionale:
+# *              riconoscimento delle colonne, abbinamento per codice fiscale / matricola,
+# *              anteprima esatta (simulazione annullata) ed esecuzione riga per riga.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+import csv
+import io
+import re
+import unicodedata
+from dataclasses import dataclass, field
+from datetime import date, datetime
+
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+
+from apps.anagrafica.models import Soggetto
+from apps.anagrafica.validatori import dati_da_codice_fiscale, valida_codice_fiscale
+from apps.core.audit import Azione, registra
+
+from . import servizi
+from .models import Sezione, Socio, TipologiaSocio
+
+MAX_MB = 10
+MAX_RIGHE = 20_000
+
+# campo -> intestazioni riconosciute (già normalizzate: minuscole, senza accenti e punteggiatura)
+COLONNE = {
+    "cognome": ["cognome"],
+    "nome": ["nome"],
+    "nominativo": ["nominativo", "cognome e nome", "cognome nome", "socio"],
+    "codice_fiscale": ["codice fiscale", "cf", "cod fiscale", "codfiscale", "c f"],
+    "sesso": ["sesso", "genere"],
+    "data_nascita": ["data nascita", "data di nascita", "nato il", "nata il", "nascita"],
+    "luogo_nascita": ["luogo nascita", "luogo di nascita", "comune di nascita", "nato a"],
+    "indirizzo": ["indirizzo", "via", "indirizzo residenza", "residenza"],
+    "cap": ["cap", "c a p"],
+    "comune": ["comune", "citta", "comune residenza", "localita", "comune di residenza"],
+    "provincia": ["provincia", "prov", "pr", "sigla provincia"],
+    "email": ["email", "e mail", "mail", "posta elettronica", "indirizzo email"],
+    "telefono": ["telefono", "tel", "telefono fisso"],
+    "cellulare": ["cellulare", "cell", "mobile", "telefono cellulare"],
+    "sezione": ["sezione", "nome sezione", "sezione di appartenenza", "denominazione sezione"],
+    "codice_sezione": ["codice sezione", "cod sezione", "id sezione", "n sezione"],
+    "matricola": ["matricola", "numero socio", "n socio", "id socio", "codice socio"],
+    "tessera": ["tessera", "numero tessera", "n tessera", "nr tessera", "codice tessera"],
+    "tipologia": ["tipologia", "categoria", "tipo socio", "tipologia socio", "qualifica"],
+    "data_iscrizione": ["data iscrizione", "data ammissione", "iscritto dal", "data adesione"],
+}
+CAMPI_ANAGRAFICI = [
+    "sesso", "data_nascita", "luogo_nascita", "indirizzo", "cap", "comune", "provincia",
+    "email", "telefono", "cellulare",
+]  # fmt: skip
+
+
+class FileNonValido(ValidationError):
+    pass
+
+
+def normalizza(testo):
+    testo = unicodedata.normalize("NFKD", str(testo or "")).encode("ascii", "ignore").decode()
+    testo = re.sub(r"[^a-z0-9]+", " ", testo.lower())
+    return " ".join(testo.split())
+
+
+_ALIAS = {alias: campo for campo, nomi in COLONNE.items() for alias in nomi}
+
+
+# --- lettura del file --------------------------------------------------------------------
+
+
+def _celle_xlsx(contenuto):
+    from openpyxl import load_workbook
+
+    try:
+        wb = load_workbook(io.BytesIO(contenuto), read_only=True, data_only=True)
+    except Exception:  # file corrotto o non xlsx: il messaggio per l'utente basta
+        raise FileNonValido("Il file non è un foglio Excel .xlsx leggibile.") from None
+    try:
+        foglio = wb.worksheets[0]
+        for riga in foglio.iter_rows(values_only=True):
+            yield list(riga)
+    finally:
+        wb.close()
+
+
+class _PuntoEVirgola(csv.excel):
+    delimiter = ";"
+
+
+def _celle_csv(contenuto):
+    try:
+        testo = contenuto.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        testo = contenuto.decode("cp1252", errors="replace")  # CSV salvati da Excel italiano
+    try:
+        dialetto = csv.Sniffer().sniff(testo[:4096], delimiters=";,\t")
+    except csv.Error:
+        dialetto = _PuntoEVirgola
+    yield from csv.reader(io.StringIO(testo), dialetto)
+
+
+def leggi(nome_file, contenuto):
+    """Restituisce (intestazioni riconosciute {indice: campo}, righe come dizionari, ignorate)."""
+    if len(contenuto) > MAX_MB * 1024 * 1024:
+        raise FileNonValido(f"Il file supera {MAX_MB} MB.")
+    nome = nome_file.lower()
+    if nome.endswith(".xlsx"):
+        celle = _celle_xlsx(contenuto)
+    elif nome.endswith((".csv", ".txt")):
+        celle = _celle_csv(contenuto)
+    elif nome.endswith(".xls"):
+        raise FileNonValido(
+            "Il formato .xls (Excel 97-2003) non è supportato: "
+            "aprire il file e salvarlo come .xlsx."
+        )
+    else:
+        raise FileNonValido("Caricare un file .xlsx o .csv.")
+
+    mappa, ignorate, righe = None, [], []
+    for n, valori in enumerate(celle, start=1):
+        if mappa is None:
+            if n > 20:
+                raise FileNonValido(
+                    "Intestazioni non trovate: servono almeno le colonne cognome (o nominativo) "
+                    "e codice fiscale nelle prime 20 righe."
+                )
+            candidata = {
+                i: _ALIAS[normalizza(v)] for i, v in enumerate(valori) if normalizza(v) in _ALIAS
+            }
+            campi = set(candidata.values())
+            if ("cognome" in campi or "nominativo" in campi) and len(campi) >= 2:
+                mappa = candidata
+                ignorate = [str(v) for i, v in enumerate(valori) if v and i not in candidata]
+            continue
+        if not any(v not in (None, "") for v in valori):
+            continue
+        if len(righe) >= MAX_RIGHE:
+            raise FileNonValido(f"Il file ha più di {MAX_RIGHE} righe.")
+        riga = {"_riga": n}
+        for i, campo in mappa.items():
+            if i < len(valori) and campo not in riga:
+                riga[campo] = valori[i]
+        righe.append(riga)
+    if mappa is None:
+        raise FileNonValido("Il file è vuoto o senza intestazioni riconoscibili.")
+    return mappa, righe, ignorate
+
+
+# --- conversione dei valori --------------------------------------------------------------
+
+
+def _testo(v):
+    if v is None:
+        return ""
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)
+    return " ".join(str(v).split())
+
+
+def _data(v):
+    if isinstance(v, datetime):
+        return v.date()
+    if isinstance(v, date):
+        return v
+    testo = _testo(v)
+    for formato in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d.%m.%Y", "%d/%m/%y"):
+        try:
+            return datetime.strptime(testo, formato).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _nome_proprio(testo):
+    """MARIO ROSSI -> Mario Rossi; le maiuscole/minuscole già curate restano come sono."""
+    testo = _testo(testo)
+    if testo.isupper() or testo.islower():
+        return " ".join(p.capitalize() if "'" not in p else p.title() for p in testo.split())
+    return testo
+
+
+def _pulisci(riga):
+    d = {k: (v if k in ("data_nascita", "data_iscrizione") else _testo(v)) for k, v in riga.items()}
+    if not d.get("cognome") and d.get("nominativo"):
+        parti = d["nominativo"].split()
+        d["cognome"], d["nome"] = (parti[0], " ".join(parti[1:])) if parti else ("", "")
+    d["cognome"] = _nome_proprio(d.get("cognome", ""))
+    d["nome"] = _nome_proprio(d.get("nome", ""))
+    d["codice_fiscale"] = d.get("codice_fiscale", "").replace(" ", "").upper()
+    d["data_nascita"] = _data(d.get("data_nascita"))
+    d["data_iscrizione"] = _data(d.get("data_iscrizione"))
+    d["provincia"] = d.get("provincia", "").upper()[:2]
+    d["cap"] = d.get("cap", "").zfill(5) if d.get("cap", "").isdigit() else d.get("cap", "")
+    d["email"] = d.get("email", "").lower()
+    for campo in ("comune", "luogo_nascita", "indirizzo"):
+        if d.get(campo):
+            d[campo] = _nome_proprio(d[campo])
+    return d
+
+
+# --- elaborazione ------------------------------------------------------------------------
+
+
+@dataclass
+class Opzioni:
+    sezione: Sezione | None = None  # se il file non ha la colonna sezione
+    tipologia: TipologiaSocio | None = None  # se la tipologia manca o non è riconosciuta
+    crea_sezioni: bool = False
+    allinea_sezione: bool = False  # sposta i soci esistenti nella sezione del registro
+    anno_tessere: int | None = None  # attribuisce i numeri di tessera del file per l'anno
+    sezioni_consentite: set | None = None  # utente limitato a queste sezioni
+
+
+@dataclass
+class Esito:
+    riga: int
+    nome: str
+    stato: str  # nuovo, aggiornato, invariato, errore
+    note: list = field(default_factory=list)
+    socio_id: int | None = None
+
+
+@dataclass
+class Rapporto:
+    esiti: list = field(default_factory=list)
+    sezioni_nuove: list = field(default_factory=list)
+    assenti: list = field(default_factory=list)  # soci attivi locali non presenti nel file
+    eseguito: bool = False
+
+    def conta(self, stato):
+        return sum(1 for e in self.esiti if e.stato == stato)
+
+    @property
+    def riepilogo(self):
+        return {s: self.conta(s) for s in ("nuovo", "aggiornato", "invariato", "errore")}
+
+
+class _Errore(Exception):
+    pass
+
+
+def _sezione(d, opzioni, cache, rapporto):
+    codice, nome = d.get("codice_sezione", ""), d.get("sezione", "")
+    chiave = (codice.lower(), nome.lower())
+    if chiave in cache:
+        return cache[chiave]
+    sezione = None
+    if codice:
+        sezione = Sezione.objects.filter(codice__iexact=codice).first()
+    if sezione is None and nome:
+        sezione = Sezione.objects.filter(nome__iexact=nome).first()
+    if sezione is None and (codice or nome):
+        if not opzioni.crea_sezioni:
+            raise _Errore(f"sezione «{nome or codice}» non presente (abilitare la creazione)")
+        try:
+            with transaction.atomic():
+                sezione = Sezione.objects.create(codice=codice or nome[:20], nome=nome or codice)
+        except IntegrityError:
+            raise _Errore(f"sezione «{nome or codice}»: codice o nome già usati") from None
+        rapporto.sezioni_nuove.append(sezione.nome)
+    if sezione is None:
+        sezione = opzioni.sezione
+    if sezione is None:
+        raise _Errore("sezione non indicata")
+    if opzioni.sezioni_consentite is not None and sezione.pk not in opzioni.sezioni_consentite:
+        raise _Errore(f"sezione «{sezione}» non consentita all'utente")
+    cache[chiave] = sezione
+    return sezione
+
+
+def _tipologia(d, opzioni):
+    if nome := d.get("tipologia"):
+        t = TipologiaSocio.objects.filter(nome__iexact=nome).first()
+        if t:
+            return t, []
+        if opzioni.tipologia:
+            return opzioni.tipologia, [f"tipologia «{nome}» non riconosciuta: {opzioni.tipologia}"]
+    if opzioni.tipologia:
+        return opzioni.tipologia, []
+    raise _Errore("tipologia non riconosciuta e nessuna predefinita")
+
+
+def _trova_soggetto(d):
+    if d["codice_fiscale"]:
+        s = Soggetto.objects.filter(codice_fiscale__iexact=d["codice_fiscale"]).first()
+        if s:
+            return s
+    if d.get("matricola"):
+        socio = Socio.objects.filter(matricola=d["matricola"]).select_related("soggetto").first()
+        if socio:
+            return socio.soggetto
+    if d["data_nascita"]:
+        omonimi = list(
+            Soggetto.objects.filter(
+                tipo=Soggetto.Tipo.PERSONA,
+                cognome__iexact=d["cognome"],
+                nome__iexact=d["nome"],
+                data_nascita=d["data_nascita"],
+            )[:2]
+        )
+        if len(omonimi) == 1:
+            return omonimi[0]
+    return None
+
+
+def _riga(d, sezione, opzioni, utente):
+    note = []
+    if not d["cognome"]:
+        raise _Errore("cognome mancante")
+    if d["codice_fiscale"]:
+        try:
+            valida_codice_fiscale(d["codice_fiscale"])
+        except ValidationError:
+            note.append(f"codice fiscale {d['codice_fiscale']} non valido: ignorato")
+            d["codice_fiscale"] = ""
+    da_cf = dati_da_codice_fiscale(d["codice_fiscale"]) if d["codice_fiscale"] else None
+    if da_cf:
+        d.setdefault("sesso", "")
+        d["sesso"] = d["sesso"][:1].upper() if d["sesso"] else da_cf["sesso"]
+        d["data_nascita"] = d["data_nascita"] or da_cf["data_nascita"]
+        d["luogo_nascita"] = d.get("luogo_nascita") or da_cf["luogo_nascita"]
+    tipologia, avvisi = _tipologia(d, opzioni)
+    note += avvisi
+
+    soggetto = _trova_soggetto(d)
+    stato = "invariato"
+    if soggetto is None:
+        soggetto = Soggetto.objects.create(
+            tipo=Soggetto.Tipo.PERSONA, cognome=d["cognome"], nome=d["nome"],
+            codice_fiscale=d["codice_fiscale"] or None, creato_da=utente, modificato_da=utente,
+            **{c: d[c] for c in CAMPI_ANAGRAFICI if d.get(c)},
+        )  # fmt: skip
+        registra(Azione.CREAZIONE, soggetto, utente=utente, origine="registro nazionale")
+        stato = "nuovo"
+    else:
+        completati = [c for c in CAMPI_ANAGRAFICI if d.get(c) and not getattr(soggetto, c)]
+        if d["codice_fiscale"] and not soggetto.codice_fiscale:
+            completati.append("codice_fiscale")
+        for c in completati:
+            setattr(soggetto, c, d[c])
+        diversi = [
+            c for c in ("email", "comune", "indirizzo")
+            if d.get(c) and getattr(soggetto, c)
+            and normalizza(getattr(soggetto, c)) != normalizza(d[c])
+        ]  # fmt: skip
+        if diversi:
+            note.append("dati locali diversi, non sovrascritti: " + ", ".join(diversi))
+        if completati:
+            soggetto.modificato_da = utente
+            soggetto.save()
+            registra(Azione.MODIFICA, soggetto, utente=utente, completati=completati,
+                     origine="registro nazionale")  # fmt: skip
+            note.append("completati: " + ", ".join(completati))
+            stato = "aggiornato"
+        if not soggetto.attivo:
+            raise _Errore(f"{soggetto} è archiviato in anagrafica")
+
+    socio = getattr(soggetto, "socio", None)
+    if socio is None:
+        socio = servizi.ammetti_socio(
+            soggetto, tipologia, utente, data_ammissione=d["data_iscrizione"] or date.today(),
+            delibera="Importato dal registro soci nazionale", sezione=sezione,
+            matricola=d.get("matricola", ""),
+        )  # fmt: skip
+        if stato == "invariato":
+            stato = "aggiornato"
+        note.append(f"iscritto al libro soci con il n. {socio.numero}")
+    else:
+        cambi = []
+        if d.get("matricola") and not socio.matricola:
+            if Socio.objects.filter(matricola=d["matricola"]).exclude(pk=socio.pk).exists():
+                raise _Errore(f"matricola {d['matricola']} già di un altro socio")
+            socio.matricola = d["matricola"]
+            cambi.append("matricola")
+        elif d.get("matricola") and socio.matricola != d["matricola"]:
+            note.append(f"matricola locale {socio.matricola}, nel registro {d['matricola']}")
+        if socio.sezione_id != sezione.pk:
+            if opzioni.allinea_sezione:
+                socio.sezione = sezione
+                cambi.append("sezione")
+            else:
+                note.append(f"sezione locale «{socio.sezione}», nel registro «{sezione}»")
+        if socio.stato != Socio.Stato.ATTIVO:
+            note.append(f"socio {socio.get_stato_display().lower()} in locale")
+        if cambi:
+            socio.modificato_da = utente
+            socio.save()
+            registra(
+                Azione.MODIFICA, socio, utente=utente, campi=cambi, origine="registro nazionale"
+            )
+            stato = "aggiornato" if stato != "nuovo" else stato
+            note.append("aggiornati: " + ", ".join(cambi))
+
+    if opzioni.anno_tessere and d.get("tessera"):
+        note += _tessera(socio, d["tessera"], opzioni.anno_tessere, utente)
+        if stato == "invariato" and any(
+            n.startswith("tessera ") and "attribuita" in n for n in note
+        ):
+            stato = "aggiornato"
+    return stato, note, socio
+
+
+def _tessera(socio, codice, anno, utente):
+    tessera = socio.tessere.valide().filter(anno=anno).first()
+    if tessera and tessera.carta_id:
+        if tessera.carta.codice != codice and str(tessera.carta.numero) != codice.lstrip("0"):
+            return [f"tessera locale {tessera.carta.codice}, nel registro {codice}"]
+        return []
+    if socio.stato != Socio.Stato.ATTIVO:
+        return []
+    try:
+        with transaction.atomic():
+            if tessera is None:
+                tessera = servizi.rilascia_tessera(socio, anno, utente)
+            tessera = servizi.attribuisci_carta(tessera, utente, codice)
+    except ValidationError as e:
+        return [f"tessera {codice} non attribuita: {' '.join(e.messages)}"]
+    return [f"tessera {tessera.codice} attribuita per il {anno}"]
+
+
+def _assenti(sezioni_file, matricole, codici_fiscali):
+    """Soci attivi delle sezioni presenti nel file che nel file non compaiono."""
+    qs = Socio.objects.attivi().filter(sezione__in=sezioni_file).select_related("soggetto")
+    return [
+        s for s in qs.order_by("numero")
+        if not ((s.matricola and s.matricola in matricole)
+                or (s.soggetto.codice_fiscale and s.soggetto.codice_fiscale in codici_fiscali))
+    ]  # fmt: skip
+
+
+def elabora(righe, opzioni, utente, *, esegui=False):
+    """Importa le righe. Senza `esegui` tutto avviene in una transazione poi annullata:
+    l'anteprima mostra esattamente ciò che accadrà, senza modificare nulla."""
+    rapporto = Rapporto(eseguito=esegui)
+    with transaction.atomic():
+        cache = {}
+        for grezza in righe:
+            d = _pulisci(grezza)
+            nome = f"{d['cognome']} {d['nome']}".strip() or "(senza nome)"
+            try:
+                # la sezione si risolve (o si crea) fuori dal punto di ripristino della riga:
+                # resta valida per le righe successive anche se questa fallisce
+                sezione = _sezione(d, opzioni, cache, rapporto)
+                with transaction.atomic():
+                    stato, note, socio = _riga(d, sezione, opzioni, utente)
+                rapporto.esiti.append(Esito(grezza["_riga"], nome, stato, note, socio.pk))
+            except _Errore as e:
+                rapporto.esiti.append(Esito(grezza["_riga"], nome, "errore", [str(e)]))
+            except ValidationError as e:
+                rapporto.esiti.append(Esito(grezza["_riga"], nome, "errore", e.messages))
+        sezioni_file = {s.pk for s in cache.values()}
+        matricole = {_testo(r.get("matricola")) for r in righe if r.get("matricola")}
+        cf = {_testo(r.get("codice_fiscale")).upper() for r in righe if r.get("codice_fiscale")}
+        rapporto.assenti = [(s.numero, s.soggetto.nome_completo, s.sezione_id)
+                            for s in _assenti(sezioni_file, matricole, cf)]  # fmt: skip
+        if esegui:
+            registra(
+                Azione.CREAZIONE,
+                utente=utente,
+                descrizione="Importazione dal registro soci nazionale",
+                **rapporto.riepilogo,
+                sezioni_create=rapporto.sezioni_nuove,
+            )
+        else:
+            transaction.set_rollback(True)
+    return rapporto

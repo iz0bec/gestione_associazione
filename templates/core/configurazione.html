@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Configurazione iniziale guidata: un passo per pagina, riepilogo finale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Configurazione iniziale{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Configurazione iniziale · passo {{ indice|add:1 }} di {{ passi|length }}</div>{% endblock %}
+{% block titolo_pagina %}{{ titolo_passo }}{% endblock %}
+{% block contenuto %}
+<ul class="steps steps-counter mb-4 d-none d-md-flex">
+  {% for chiave, nome, icona in passi %}
+  <li class="step-item{% if chiave == passo %} active{% endif %}">{% if forloop.counter0 < indice %}<a href="{% url 'configurazione' chiave %}">{{ nome }}</a>{% else %}{{ nome }}{% endif %}</li>
+  {% endfor %}
+</ul>
+
+{% if passo == "riepilogo" %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="datagrid">
+          <div class="datagrid-item"><div class="datagrid-title">Ente</div><div class="datagrid-content">{{ org.denominazione }}{% if org.codice_fiscale %}<div class="small text-secondary">C.F. {{ org.codice_fiscale }}</div>{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Sede</div><div class="datagrid-content">{% if org.indirizzo %}{{ org.indirizzo }}, {{ org.cap }} {{ org.comune }} {% if org.provincia %}({{ org.provincia }}){% endif %}{% else %}<span class="text-warning">non indicata</span>{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Contatti</div><div class="datagrid-content">{{ org.email|default:"—" }}{% if org.pec %}<div class="small">PEC {{ org.pec }}</div>{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Aspetto</div><div class="datagrid-content">{% include "includes/marchio.html" %} <span class="campione-colore ms-1"></span> {{ org.colore_primario }} · menu {{ org.get_stile_menu_display|lower }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Sezioni</div><div class="datagrid-content">{% for s in sezioni %}{{ s.codice }} {{ s.nome }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Tesseramento</div><div class="datagrid-content">{% if listino %}{{ listino.anno }}: acquisto {{ listino.costo_acquisto|floatformat:"2g" }} €<div class="small">{% for q in listino.quote.all %}{{ q.tipologia.nome }} {{ q.importo|floatformat:"2g" }} €{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% else %}<span class="text-warning">listino non fissato</span>{% endif %}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Tesoreria</div><div class="datagrid-content">{% if esercizio %}Esercizio {{ esercizio.anno }}<div class="small">{% for s in esercizio.saldi.all %}{{ s.conto.nome }} {{ s.iniziale|floatformat:"2g" }} €{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% else %}<span class="text-warning">nessun esercizio aperto</span>{% endif %}</div></div>
+        </div>
+      </div>
+      <div class="card-footer d-flex">
+        <a class="btn btn-link" href="{{ precedente }}">Indietro</a>
+        <form method="post" class="ms-auto">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-check me-1"></i>Concludi la configurazione</button></form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h3 class="card-title">Da fare in seguito</h3>
+      <ul class="list-unstyled small mb-0">
+        <li class="mb-2"><i class="ti ti-users me-1"></i>Creare gli account degli altri operatori e assegnare i ruoli (e, in una federazione, le sezioni).</li>
+        <li class="mb-2"><i class="ti ti-file-import me-1"></i><a href="{% url 'soci:importa' %}">Importare i soci</a> dall'estratto Excel del registro nazionale.</li>
+        <li class="mb-2"><i class="ti ti-package me-1"></i><a href="{% url 'soci:lotto_nuovo' %}">Caricare le tessere</a> ricevute dalla sede centrale.</li>
+        <li class="mb-2"><i class="ti ti-inbox me-1"></i>Collegare le caselle di posta e PEC da cui protocollare.</li>
+        <li class="mb-2"><i class="ti ti-mail me-1"></i>Invio email: {% if email_configurata %}<span class="text-green">configurato</span>{% else %}<span class="text-warning">non configurato</span> (parametri EMAIL_* nel file .env){% endif %}.</li>
+        <li><i class="ti ti-world me-1"></i>Indirizzo pubblico per i QR: {% if url_pubblico %}<span class="text-green">{{ url_pubblico }}</span>{% else %}<span class="text-warning">non impostato</span> (URL_PUBBLICO nel file .env){% endif %}.</li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% else %}
+<form method="post" class="card" novalidate{% if passo == "aspetto" %} enctype="multipart/form-data"{% endif %}>{% csrf_token %}
+  <div class="card-body">
+    {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+    {% if passo == "ente" %}
+      <p class="text-secondary">Questi dati compaiono nelle intestazioni dei documenti, nelle ricevute, nelle comunicazioni e nelle pagine pubbliche.</p>
+      <div class="row">
+        <div class="col-lg-8">{{ form.denominazione.as_field_group }}</div>
+        <div class="col-lg-4">{{ form.denominazione_breve.as_field_group }}</div>
+        <div class="col-md-4">{{ form.codice_fiscale.as_field_group }}</div>
+        <div class="col-md-4">{{ form.partita_iva.as_field_group }}</div>
+        <div class="col-md-4">{{ form.iscrizione_runts.as_field_group }}</div>
+        <div class="col-md-6">{{ form.indirizzo.as_field_group }}</div>
+        <div class="col-md-2">{{ form.cap.as_field_group }}</div>
+        <div class="col-md-3">{{ form.comune.as_field_group }}</div>
+        <div class="col-md-1">{{ form.provincia.as_field_group }}</div>
+        <div class="col-md-4">{{ form.telefono.as_field_group }}</div>
+        <div class="col-md-4">{{ form.email.as_field_group }}</div>
+        <div class="col-md-4">{{ form.pec.as_field_group }}</div>
+        <div class="col-md-6">{{ form.sito_web.as_field_group }}</div>
+      </div>
+    {% elif passo == "aspetto" %}
+      {% include "core/_campi_aspetto.html" %}
+    {% elif passo == "sezioni" %}
+      <div data-mostra-secondo="struttura">
+        {{ form.struttura.as_field_group }}
+        <div class="row" data-valori="singola">
+          <div class="col-md-3">{{ form.codice.as_field_group }}</div>
+          <div class="col-md-9">{{ form.nome.as_field_group }}</div>
+          <p class="form-hint">Con una sola sezione la scelta della sezione non compare nei moduli.</p>
+        </div>
+        <div data-valori="federazione">{{ form.elenco.as_field_group }}
+          <p class="form-hint">Ogni utente potrà essere limitato ai soci e alle tessere delle proprie sezioni.</p>
+        </div>
+      </div>
+    {% elif passo == "tesseramento" %}
+      <p class="text-secondary">Il costo d'acquisto è quanto si paga alla sede centrale per ogni tessera; la quota è il prezzo chiesto al socio, per tipologia. Si rivedono ogni anno all'apertura dell'esercizio (Tesseramento › Listino).</p>
+      <div class="row">
+        <div class="col-md-4">{{ form.anno.as_field_group }}</div>
+        <div class="col-md-8">{{ form.costo_acquisto.as_field_group }}</div>
+      </div>
+      <fieldset><legend class="h3">Quote annuali per tipologia</legend>
+        <div class="row">{% for campo in form.campi_quota %}<div class="col-sm-6 col-lg-4">{{ campo.as_field_group }}</div>{% endfor %}</div>
+        <p class="form-hint">Le tipologie (ordinario, sostenitore, onorario…) si aggiungono o modificano in Tesseramento › Tipologie.</p>
+      </fieldset>
+      {{ form.note.as_field_group }}
+    {% elif passo == "tesoreria" %}
+      <p class="text-secondary">Il primo esercizio parte dai saldi reali di cassa e banca a quella data (es. 1° gennaio). Gli esercizi successivi riportano i saldi da soli alla chiusura.</p>
+      <div class="row"><div class="col-md-4">{{ form.anno.as_field_group }}</div></div>
+      {% for conto, saldo, iban in form.righe_conti %}
+      <div class="row">
+        <div class="col-md-5">{{ saldo.as_field_group }}</div>
+        {% if iban %}<div class="col-md-7">{{ iban.as_field_group }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <p class="form-hint">Altri conti (postale, carta prepagata) si aggiungono in Tesoreria › Conti.</p>
+    {% endif %}
+  </div>
+  <div class="card-footer d-flex gap-2">
+    {% if precedente %}<a class="btn btn-link" href="{{ precedente }}">Indietro</a>{% endif %}
+    <button class="btn btn-ghost-secondary ms-auto" type="submit" name="salta" value="1" formnovalidate>Salta</button>
+    <button class="btn btn-primary" type="submit">Salva e continua<i class="ti ti-arrow-right ms-1"></i></button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

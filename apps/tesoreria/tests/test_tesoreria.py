@@ -111,10 +111,10 @@ class TestPrimaNota:
 
 class TestQuote:
     def test_incasso_va_in_prima_nota(self, tesoriere, cassa, banca):
-        servizi.apri_esercizio(ANNO, tesoriere)
         ordinario = TipologiaSocio.objects.get(nome="Ordinario")
         ordinario.quota_annua = D("20")
         ordinario.save()
+        servizi.apri_esercizio(ANNO, tesoriere)  # il listino dell'anno prende la quota
         s1 = soci.ammetti_socio(Soggetto.objects.create(cognome="Uno"), ordinario, tesoriere)
         s2 = soci.ammetti_socio(Soggetto.objects.create(cognome="Due"), ordinario, tesoriere)
         t1 = soci.rilascia_tessera(s1, ANNO, tesoriere, pagata_il=date.today())  # contanti

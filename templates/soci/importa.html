@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Importazione dei soci dal registro nazionale: caricamento, anteprima, esito
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Importa soci{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a></div>{% endblock %}
+{% block titolo_pagina %}Importazione dal registro soci nazionale{% endblock %}
+{% block contenuto %}
+{% if rapporto %}
+<div class="card mb-3">
+  <div class="card-header">
+    <h2 class="card-title">{% if rapporto.eseguito %}Esito dell'importazione{% else %}Anteprima: nulla è stato ancora modificato{% endif %} · {{ nome_file }}</h2>
+  </div>
+  <div class="card-body">
+    <div class="row row-cards mb-3">
+      <div class="col-6 col-md-3"><div class="subheader">Nuovi</div><div class="h1 mb-0 text-green">{{ rapporto.riepilogo.nuovo }}</div></div>
+      <div class="col-6 col-md-3"><div class="subheader">Aggiornati</div><div class="h1 mb-0 text-blue">{{ rapporto.riepilogo.aggiornato }}</div></div>
+      <div class="col-6 col-md-3"><div class="subheader">Invariati</div><div class="h1 mb-0">{{ rapporto.riepilogo.invariato }}</div></div>
+      <div class="col-6 col-md-3"><div class="subheader">Con errori</div><div class="h1 mb-0{% if rapporto.riepilogo.errore %} text-red{% endif %}">{{ rapporto.riepilogo.errore }}</div></div>
+    </div>
+    {% if colonne %}<p class="small text-secondary mb-1"><strong>Colonne riconosciute:</strong> {{ colonne|join:", " }}.</p>{% endif %}
+    {% if ignorate %}<p class="small text-secondary mb-1"><strong>Colonne ignorate:</strong> {{ ignorate|join:", " }}.</p>{% endif %}
+    {% if rapporto.sezioni_nuove %}<p class="small mb-1"><strong>Sezioni {% if rapporto.eseguito %}create{% else %}da creare{% endif %}:</strong> {{ rapporto.sezioni_nuove|join:", " }}.</p>{% endif %}
+    <p class="small text-secondary mb-0">Le schede anagrafiche esistenti sono solo completate nei dati mancanti: ciò che è già registrato qui non viene sovrascritto (le differenze sono segnalate nelle note).</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-sm">
+      <thead><tr><th class="w-1">Riga</th><th>Nominativo</th><th>Esito</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for e in rapporto.esiti %}{% if e.stato != "invariato" or e.note %}
+        <tr>
+          <td class="text-secondary">{{ e.riga }}</td>
+          <td>{% if e.socio_id and rapporto.eseguito %}<a href="{% url 'soci:dettaglio' e.socio_id %}">{{ e.nome }}</a>{% else %}{{ e.nome }}{% endif %}</td>
+          <td><span class="badge {% if e.stato == 'nuovo' %}bg-green-lt{% elif e.stato == 'aggiornato' %}bg-blue-lt{% elif e.stato == 'errore' %}bg-red-lt{% else %}bg-secondary-lt{% endif %}">{{ e.stato }}</span></td>
+          <td class="small">{{ e.note|join:"; " }}</td>
+        </tr>
+      {% endif %}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if rapporto.assenti %}
+  <div class="card-body border-top">
+    <h3 class="h4">Soci attivi qui ma assenti dal file ({{ rapporto.assenti|length }})</h3>
+    <p class="small text-secondary">Non vengono toccati: verificare se sono cessati o se mancano nel registro nazionale.</p>
+    <div class="small">{% for numero, nome, sez in rapporto.assenti %}<a href="{% url 'soci:elenco' %}?q={{ numero }}&amp;stato=tutti">n. {{ numero }} {{ nome }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  {% endif %}
+  {% if not rapporto.eseguito %}
+  <div class="card-footer d-flex">
+    <a class="btn btn-link" href="{% url 'soci:importa' %}">Annulla</a>
+    <form method="post" class="ms-auto" data-conferma="Eseguire l'importazione? Le righe con errori saranno saltate.">{% csrf_token %}
+      <input type="hidden" name="azione" value="esegui">
+      <button class="btn btn-primary" type="submit"{% if not rapporto.riepilogo.nuovo and not rapporto.riepilogo.aggiornato %} disabled{% endif %}><i class="ti ti-check me-1"></i>Esegui l'importazione</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% if not rapporto or rapporto.eseguito %}
+<div class="row row-cards">
+  <div class="col-lg-7">
+    <form method="post" class="card" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      <div class="card-body">
+        {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+        {{ form.file.as_field_group }}
+        <div class="row">
+          <div class="col-md-6">{{ form.sezione.as_field_group }}</div>
+          <div class="col-md-6">{{ form.tipologia.as_field_group }}</div>
+        </div>
+        {% if perms.soci.add_sezione %}{{ form.crea_sezioni.as_field_group }}{% endif %}
+        {{ form.allinea_sezione.as_field_group }}
+        {{ form.anno_tessere.as_field_group }}
+      </div>
+      <div class="card-footer d-flex">
+        <button class="btn btn-primary ms-auto" type="submit" name="azione" value="anteprima"><i class="ti ti-eye me-1"></i>Anteprima</button>
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h3 class="card-title">Come funziona</h3>
+      <ol class="small mb-0">
+        <li>Scaricare dal registro nazionale l'elenco dei soci in Excel.</li>
+        <li>Caricarlo qui e premere <em>Anteprima</em>: si vede cosa succederà, riga per riga, senza modificare nulla.</li>
+        <li>Le persone sono riconosciute per codice fiscale, poi per matricola, poi per cognome, nome e data di nascita.</li>
+        <li>Chi non c'è viene inserito in anagrafica e iscritto al libro soci; chi c'è già viene solo completato.</li>
+        <li>Si può ripetere l'importazione quando il registro si aggiorna: chi è già presente non viene duplicato.</li>
+      </ol>
+    </div></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

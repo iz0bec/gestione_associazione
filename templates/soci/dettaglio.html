@@ -21,8 +21,11 @@
   <div class="col-lg-8">
     <div class="card">
       <div class="card-body">
+        {% if socio.soggetto.foto %}<img class="foto-scheda float-end ms-3 mb-2" src="{% url 'anagrafica:foto' socio.soggetto.pk %}?v={{ socio.soggetto.modificato_il|date:'U' }}" alt="Foto di {{ socio.soggetto.nome_completo }}">{% endif %}
         <div class="datagrid">
           <div class="datagrid-item"><div class="datagrid-title">Numero di iscrizione</div><div class="datagrid-content fw-bold">{{ socio.numero }}</div></div>
+          {% if multisezione %}<div class="datagrid-item"><div class="datagrid-title">Sezione</div><div class="datagrid-content">{{ socio.sezione }}</div></div>{% endif %}
+          <div class="datagrid-item"><div class="datagrid-title">Matricola nazionale</div><div class="datagrid-content">{{ socio.matricola|default:"—" }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Tipologia</div><div class="datagrid-content">{{ socio.tipologia }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Ammissione</div><div class="datagrid-content">{{ socio.data_ammissione|date:"d/m/Y" }}</div></div>
           <div class="datagrid-item"><div class="datagrid-title">Delibera</div><div class="datagrid-content">{{ socio.delibera_ammissione|default:"—" }}</div></div>

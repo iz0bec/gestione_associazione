@@ -80,6 +80,11 @@ class EsercizioNuovoView(PermessoMixin, View):
             anno = int(request.POST.get("anno", ""))
             e = servizi.apri_esercizio(anno, request.user)
             messages.success(request, f"Esercizio {e.anno} aperto.")
+            messages.info(
+                request,
+                f"Fissare i costi del tesseramento {e.anno} (acquisto delle tessere e quote "
+                "per tipologia) in Tesseramento › Listino.",
+            )
             return redirect(f"{reverse('tesoreria:cruscotto')}?anno={e.anno}")
         except ValueError:
             messages.error(request, "Anno non valido.")

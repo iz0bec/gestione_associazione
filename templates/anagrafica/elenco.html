@@ -34,7 +34,7 @@
           <tr class="{% if not s.attivo %}text-secondary{% endif %}">
             <td>
               <div class="d-flex align-items-center">
-                <span class="avatar avatar-sm me-2 {% if s.is_persona %}bg-blue-lt{% else %}bg-green-lt{% endif %}">{% if s.is_persona %}{{ s.iniziali }}{% else %}<i class="ti ti-building"></i>{% endif %}</span>
+                {% include "includes/avatar.html" with s=s classe="avatar-sm me-2" %}
                 <div>
                   <a href="{{ s.get_absolute_url }}" class="text-reset fw-medium">{{ s.nome_completo }}</a>
                   {% if s.deceduto %}<span class="badge bg-dark-lt ms-1" title="Deceduto">†</span>{% endif %}

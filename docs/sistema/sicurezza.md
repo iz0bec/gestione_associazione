@@ -47,6 +47,11 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 | Dati | **Patrimonio**: inventario numerato, beni usciti mai cancellati, passaggi di consegne immutabili con PDF e impronta | `apps/patrimonio/servizi.py` |
 | Privacy | **Foto dei beni** ridimensionate e senza metadati EXIF (posizione GPS, dispositivo); servite solo con permesso | `servizi.foto_ripulita` |
 | Web | **Schede pubbliche dei beni**: indirizzo con codice casuale (96 bit), solo dati scelti per la pubblicazione, disattivabili; QR generato in SVG senza servizi esterni | `apps/patrimonio` |
+| Privacy | **Foto di persone ed enti** e **logo**: verificati e ricodificati con Pillow (JPEG 600 px / PNG 512 px), senza metadati, con nome casuale; le foto si vedono solo con il permesso di anagrafica o del libro soci, il logo è pubblico. SVG mai accettati (potrebbero contenere script) | `apps/core/immagini.py` |
+| Web | **Aspetto personalizzato** servito come foglio di stile (`/aspetto.css`) generato dai soli valori validati (colore `#RRGGBB`, scelte fisse): la CSP resta senza stili inline | `apps/core/aspetto.py` |
+| Permessi | **Sezioni**: un utente con sezioni assegnate vede e modifica solo soci, tessere, carichi e domande di quelle sezioni (le altre rispondono 404); i filtri sono applicati in tutte le viste e nelle esportazioni | `apps/soci/sezioni.py` |
+| Dati | **Importazione dal registro nazionale**: file al massimo 10 MB e 20.000 righe, Excel letto con `defusedxml` (niente attacchi XML), nessuna formula valutata; anteprima eseguita in una transazione annullata; file tenuto tra anteprima e conferma con nome casuale fuori dalle cartelle servite ed eliminato dopo l'uso (o dopo 24 ore); i dati locali non vengono mai sovrascritti; importazione registrata | `apps/soci/importazione.py` |
+| Privacy | Gli estratti del registro soci vanno tenuti fuori dal repository: la cartella `tmp/` è esclusa dal versionamento | `.gitignore` |
 | Privacy | Consensi per finalità con data e modalità; persone decedute escluse da auguri e comunicazioni | anagrafica |
 | Codice | Test automatici sui controlli di sicurezza (permessi, blocco, CSP, CSV); lint con regole di sicurezza (`ruff` S) | `apps/*/tests` |
 

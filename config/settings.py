@@ -177,7 +177,8 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 20
 # Chiavi Fernet (separate da virgola, la prima cifra) per i segreti nel database, es. password IMAP
 CHIAVE_CIFRATURA = env("CHIAVE_CIFRATURA", default="")
 
-# Indirizzo pubblico dell'applicazione (es. https://gestione.miassociazione.it), usato nei QR stampati
+# Indirizzo pubblico dell'applicazione (es. https://gestione.miassociazione.it),
+# usato nei QR stampati
 URL_PUBBLICO = env("URL_PUBBLICO", default="").rstrip("/")
 
 # Comunicazioni: messaggi spediti a ogni giro della coda (il pianificatore gira ogni minuto)

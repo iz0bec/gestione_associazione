@@ -20,21 +20,38 @@ CAMPI_ESPORTAZIONE = [
 ]  # fmt: skip
 
 
+FOTO_LATO = 600
+
+
+def imposta_foto(soggetto, foto=None, *, togli=False):
+    """Sostituisce (o toglie) la foto, ripulita dai metadati. Non salva il soggetto."""
+    from apps.core.immagini import ripulisci
+
+    if foto:
+        nuova = ripulisci(foto, lato=FOTO_LATO)
+        if soggetto.foto:
+            soggetto.foto.delete(save=False)
+        soggetto.foto.save("foto.jpg", nuova, save=False)
+    elif togli and soggetto.foto:
+        soggetto.foto.delete(save=False)
+
+
 @transaction.atomic
-def salva_soggetto(form, utente):
+def salva_soggetto(form, utente, *, foto=None, togli_foto=False):
     """Crea o aggiorna un soggetto dal form validato."""
     nuovo = form.instance.pk is None
     dettagli = {} if nuovo else campi_modificati(form)
     soggetto = form.save(commit=False)
     if nuovo:
         soggetto.creato_da = utente
+    imposta_foto(soggetto, foto, togli=togli_foto)
     soggetto.modificato_da = utente
     soggetto.save()
     form.save_m2m()
     if nuovo:
-        registra(Azione.CREAZIONE, soggetto, utente=utente)
-    elif dettagli.get("campi"):
-        registra(Azione.MODIFICA, soggetto, utente=utente, **dettagli)
+        registra(Azione.CREAZIONE, soggetto, utente=utente, foto=bool(foto))
+    elif dettagli.get("campi") or foto or togli_foto:
+        registra(Azione.MODIFICA, soggetto, utente=utente, foto=bool(foto) or None, **dettagli)
     return soggetto
 
 

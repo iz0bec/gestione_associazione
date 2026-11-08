@@ -29,6 +29,8 @@ SOCI_LETTURA = [
     "soci.view_domandaiscrizione",
     "soci.view_lottotessere",
     "soci.view_cartatessera",
+    "soci.view_sezione",
+    "soci.view_listinotessere",
 ]
 SOCI_SEGRETERIA = [
     *SOCI_LETTURA,
@@ -48,6 +50,8 @@ SOCI_TESORERIA = [
     "soci.incassa_quota",
     "soci.annulla_tessera",
     "soci.gestisci_tessere_fisiche",
+    "soci.add_listinotessere",
+    "soci.change_listinotessere",
 ]
 
 PROTOCOLLO_LETTURA = ["protocollo.view_protocollo", "protocollo.view_classificazione"]
@@ -165,6 +169,9 @@ RUOLI = {
         *SOCI_SEGRETERIA,
         *SOCI_TESORERIA,
         "soci.valuta_domanda",
+        "soci.add_sezione",
+        "soci.change_sezione",
+        "soci.importa_soci",
         *PROTOCOLLO_RESPONSABILE,
         *ORGANI_SEGRETERIA,
         "organi.change_organo",
@@ -202,6 +209,7 @@ RUOLI = {
         "core.gestisci_organizzazione",
         *SOCI_SEGRETERIA,
         "soci.valuta_domanda",
+        "soci.importa_soci",
         *PROTOCOLLO_RESPONSABILE,
         *ORGANI_SEGRETERIA,
         *COMUNICAZIONI_GESTIONE,

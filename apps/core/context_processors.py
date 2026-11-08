@@ -16,8 +16,15 @@ from .models import Organizzazione
 MODULI_IN_ARRIVO = []
 
 
+def _multisezione():
+    from apps.soci.sezioni import multisezione
+
+    return multisezione()
+
+
 def applicazione(request):
     return {
+        "multisezione": SimpleLazyObject(_multisezione),
         "APP_NOME": settings.APP_NOME,
         "APP_VERSIONE": settings.APP_VERSIONE,
         "organizzazione": SimpleLazyObject(Organizzazione.corrente),  # 1 query, solo se usata

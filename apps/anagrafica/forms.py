@@ -22,7 +22,19 @@ class CampoData(forms.DateInput):
         super().__init__(attrs=attrs, format="%Y-%m-%d")
 
 
-class SoggettoForm(StileMixin, forms.ModelForm):
+class CampiFotoMixin(forms.Form):
+    """Caricamento e rimozione della foto (il file è ripulito dal servizio)."""
+
+    nuova_foto = forms.ImageField(
+        label="Foto",
+        required=False,
+        help_text="JPEG o PNG; viene ridotta e privata dei dati nascosti (posizione, dispositivo).",
+        widget=forms.FileInput(attrs={"accept": "image/jpeg,image/png,image/webp"}),
+    )
+    togli_foto = forms.BooleanField(label="Togli la foto attuale", required=False)
+
+
+class SoggettoForm(StileMixin, CampiFotoMixin, forms.ModelForm):
     class Meta:
         model = Soggetto
         fields = [

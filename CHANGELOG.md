@@ -5,6 +5,20 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Configurazione, aspetto, sezioni, listino, importazione
+- Configurazione iniziale guidata in sei passi (ente, logo e colori, sezioni, tesseramento, tesoreria,
+  riepilogo), proposta al primo accesso e ripetibile; manuale con l'elenco dei dati da preparare.
+- Personalizzazione dell'interfaccia: logo (anche nei PDF e come icona), colore principale con testo
+  leggibile calcolato, menu scuro, chiaro o colorato.
+- Foto nelle schede di anagrafica e soci, ripulite dai metadati e visibili solo agli autorizzati.
+- Sezioni: soci, tessere fisiche e domande divise per sezione, utenti limitabili alle proprie sezioni,
+  matricola nazionale del socio, gestione delle sezioni.
+- Listino annuale del tesseramento: costo d'acquisto delle tessere e quote per tipologia, creato
+  all'apertura dell'esercizio.
+- Importazione dei soci dall'estratto Excel/CSV del registro nazionale con anteprima esatta, abbinamento
+  per codice fiscale/matricola, completamento senza sovrascritture, creazione delle sezioni,
+  attribuzione delle tessere; comando `importa_registro_soci`.
+
 ### Aggiunto - Patrimonio
 - Inventario numerato con categorie, quantità, ubicazione, conservazione, provenienza, valore e foto
   (ridimensionata e senza metadati); valutazioni con storico.

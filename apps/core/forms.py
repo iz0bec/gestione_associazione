@@ -29,3 +29,61 @@ class StileMixin:
         for campo in self.fields.values():
             if isinstance(campo.widget, forms.CheckboxSelectMultiple | forms.RadioSelect):
                 campo.widget.attrs.setdefault("class", "form-check-input")
+
+
+# --- organizzazione e aspetto ------------------------------------------------------------
+
+CAMPI_ENTE = [
+    "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva", "iscrizione_runts",
+    "indirizzo", "cap", "comune", "provincia", "telefono", "email", "pec", "sito_web",
+]  # fmt: skip
+
+
+class OrganizzazioneForm(StileMixin, forms.ModelForm):
+    class Meta:
+        from .models import Organizzazione
+
+        model = Organizzazione
+        fields = [*CAMPI_ENTE, "informativa_privacy", "iscrizioni_online"]
+        widgets = {
+            "informativa_privacy": forms.Textarea(attrs={"rows": 6}),
+            "provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"}),
+        }
+
+    def clean_provincia(self):
+        return self.cleaned_data["provincia"].strip().upper()
+
+    def clean_codice_fiscale(self):
+        return self.cleaned_data["codice_fiscale"].strip().upper()
+
+
+class EnteForm(OrganizzazioneForm):
+    """Solo i dati dell'ente (primo passo della configurazione iniziale)."""
+
+    class Meta(OrganizzazioneForm.Meta):
+        fields = CAMPI_ENTE
+
+
+class AspettoForm(StileMixin, forms.ModelForm):
+    nuovo_logo = forms.ImageField(
+        label="Logo",
+        required=False,
+        help_text="PNG o JPEG, meglio quadrato e con sfondo trasparente; ridotto a 512 pixel.",
+        widget=forms.FileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+    )
+    togli_logo = forms.BooleanField(label="Togli il logo attuale", required=False)
+
+    class Meta:
+        from .models import Organizzazione
+
+        model = Organizzazione
+        fields = ["colore_primario", "stile_menu"]
+        widgets = {
+            "colore_primario": forms.TextInput(
+                attrs={"type": "color", "class": "form-control-color"}
+            ),
+            "stile_menu": forms.RadioSelect,
+        }
+
+    def clean_colore_primario(self):
+        return self.cleaned_data["colore_primario"].lower()

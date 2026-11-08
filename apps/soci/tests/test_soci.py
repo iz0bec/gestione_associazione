@@ -459,7 +459,7 @@ class TestViste:
                     reverse("soci:tessere") + "?stato=da_attribuire"]:  # fmt: skip
             assert client.get(url).status_code == 200, url
         r = client.get(reverse("soci:esporta_tesserati"), {"anno": ANNO})
-        assert "103;1;Rossi" in r.content.decode("utf-8-sig")
+        assert "103;Sezione principale;001;1;;Rossi" in r.content.decode("utf-8-sig")
         client.logout()
         c = client_ruolo("Consigliere")
         assert c.get(reverse("soci:tessere_fisiche")).status_code == 200

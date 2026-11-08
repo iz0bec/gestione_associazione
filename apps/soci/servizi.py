@@ -25,7 +25,10 @@ from .models import (
     SEQ_RICEVUTA,
     CartaTessera,
     DomandaIscrizione,
+    ListinoTessere,
     LottoTessere,
+    QuotaListino,
+    Sezione,
     Socio,
     Tessera,
     TipologiaSocio,
@@ -43,11 +46,17 @@ def _categoria_soci():
     return categoria
 
 
+def _per_sezioni(queryset, sezioni, campo="sezione"):
+    """Limita a un insieme di id di sezione (None = tutte)."""
+    return queryset if sezioni is None else queryset.filter(**{f"{campo}__in": sezioni})
+
+
 # --- ammissione e cessazione -------------------------------------------------------------
 
 
 @transaction.atomic
-def ammetti_socio(soggetto, tipologia, utente, *, data_ammissione=None, delibera="", note=""):
+def ammetti_socio(soggetto, tipologia, utente, *, data_ammissione=None, delibera="", note="",
+                  sezione=None, matricola=""):  # fmt: skip
     """Iscrive il soggetto al libro soci con il primo numero libero e la categoria «Socio»."""
     soggetto = Soggetto.objects.select_for_update().get(pk=soggetto.pk)
     if not soggetto.is_persona:
@@ -58,8 +67,13 @@ def ammetti_socio(soggetto, tipologia, utente, *, data_ammissione=None, delibera
         raise OperazioneNonValida("Il soggetto risulta deceduto.")
     if Socio.objects.filter(soggetto=soggetto).exists():
         raise OperazioneNonValida("Il soggetto è già iscritto al libro soci.")
+    matricola = (matricola or "").strip()
+    if matricola and Socio.objects.filter(matricola=matricola).exists():
+        raise OperazioneNonValida(f"La matricola {matricola} è già di un altro socio.")
     socio = Socio.objects.create(
         soggetto=soggetto,
+        sezione=sezione or Sezione.predefinita(),
+        matricola=matricola,
         numero=prossimo_numero(SEQ_LIBRO_SOCI),
         tipologia=tipologia,
         data_ammissione=data_ammissione or date.today(),
@@ -69,17 +83,27 @@ def ammetti_socio(soggetto, tipologia, utente, *, data_ammissione=None, delibera
         modificato_da=utente,
     )
     soggetto.categorie.add(_categoria_soci())
-    registra(Azione.CREAZIONE, socio, utente=utente, numero=socio.numero)
+    registra(
+        Azione.CREAZIONE, socio, utente=utente, numero=socio.numero, sezione=socio.sezione.nome
+    )
     return socio
 
 
 @transaction.atomic
-def salva_socio(form, utente):
-    """Modifica dei dati di iscrizione (tipologia, delibera, note)."""
+def salva_socio(form, utente, *, foto=None, togli_foto=False):
+    """Modifica dei dati di iscrizione (sezione, tipologia, delibera, note) e della foto."""
+    from apps.anagrafica.servizi import imposta_foto
+
     dettagli = campi_modificati(form)
     socio = form.save(commit=False)
     socio.modificato_da = utente
     socio.save()
+    if foto or togli_foto:
+        soggetto = socio.soggetto
+        imposta_foto(soggetto, foto, togli=togli_foto)
+        soggetto.modificato_da = utente
+        soggetto.save()
+        registra(Azione.MODIFICA, soggetto, utente=utente, foto=bool(foto))
     if dettagli.get("campi"):
         registra(Azione.MODIFICA, socio, utente=utente, **dettagli)
     return socio
@@ -165,21 +189,91 @@ def _assegna_ricevuta(tessera):
     tessera.ricevuta_numero = prossimo_numero(SEQ_RICEVUTA, tessera.ricevuta_anno)
 
 
+# --- listino annuale: costo d'acquisto e prezzi di distribuzione ---------------------------
+
+
+def listino(anno):
+    return ListinoTessere.objects.filter(anno=anno).prefetch_related("quote").first()
+
+
+def quota_per(tipologia, anno):
+    """Prezzo di distribuzione dell'anno per la tipologia (dal listino, se definito)."""
+    q = QuotaListino.objects.filter(listino__anno=anno, tipologia=tipologia).first()
+    return q.importo if q else tipologia.quota_annua
+
+
+def costo_acquisto(anno):
+    lst = ListinoTessere.objects.filter(anno=anno).first()
+    return lst.costo_acquisto if lst else None
+
+
+@transaction.atomic
+def prepara_listino(anno, utente=None):
+    """Crea il listino dell'anno copiando quello precedente (o le quote di riferimento)."""
+    esistente = listino(anno)
+    if esistente:
+        return esistente
+    precedente = ListinoTessere.objects.filter(anno__lt=anno).order_by("-anno").first()
+    nuovo = ListinoTessere.objects.create(
+        anno=anno,
+        costo_acquisto=precedente.costo_acquisto if precedente else Decimal("0"),
+        creato_da=utente,
+        modificato_da=utente,
+    )
+    da_copiare = {q.tipologia_id: q.importo for q in precedente.quote.all()} if precedente else {}
+    for t in TipologiaSocio.objects.filter(attiva=True):
+        QuotaListino.objects.create(
+            listino=nuovo, tipologia=t, importo=da_copiare.get(t.pk, t.quota_annua)
+        )
+    registra(Azione.CREAZIONE, nuovo, utente=utente, da=precedente.anno if precedente else None)
+    return nuovo
+
+
+@transaction.atomic
+def salva_listino(anno, utente, *, costo_acquisto, quote, note=""):
+    """`quote`: {tipologia: importo}. Le tessere già rilasciate conservano la loro quota."""
+    lst = prepara_listino(anno, utente)
+    prima = {
+        "costo": str(lst.costo_acquisto),
+        **{q.tipologia.nome: str(q.importo) for q in lst.quote.select_related("tipologia")},
+    }
+    lst.costo_acquisto = costo_acquisto
+    lst.note = note
+    lst.modificato_da = utente
+    lst.save()
+    for tipologia, importo in quote.items():
+        QuotaListino.objects.update_or_create(
+            listino=lst, tipologia=tipologia, defaults={"importo": importo}
+        )
+    dopo = {"costo": str(costo_acquisto), **{t.nome: str(v) for t, v in quote.items()}}
+    cambiati = {k: {"prima": prima.get(k), "dopo": v} for k, v in dopo.items() if prima.get(k) != v}
+    if cambiati:
+        registra(Azione.MODIFICA, lst, utente=utente, valori=cambiati)
+    return lst
+
+
 # --- tessere fisiche dalla sede centrale ---------------------------------------------------
 
 MASSIMO_PER_LOTTO = 10_000
 
 
 @transaction.atomic
-def carica_lotto(utente, *, anno, numero_da, numero_a, serie="", cifre=0, **dati):
-    """Registra un carico di tessere prestampate e crea una riga per ogni tessera fisica."""
+def carica_lotto(utente, *, anno, numero_da, numero_a, serie="", cifre=0, costo_unitario=None,
+                 sezione=None, **dati):  # fmt: skip
+    """Registra un carico di tessere prestampate e crea una riga per ogni tessera fisica.
+
+    Senza `costo_unitario` vale il costo d'acquisto del listino dell'anno.
+    """
     serie = serie.strip().upper()
+    if costo_unitario is None:
+        costo_unitario = costo_acquisto(anno) or Decimal("0")
     if numero_a < numero_da:
         raise OperazioneNonValida("Il numero finale precede quello iniziale.")
     if numero_a - numero_da + 1 > MASSIMO_PER_LOTTO:
         raise OperazioneNonValida(f"Un lotto può contenere al massimo {MASSIMO_PER_LOTTO} tessere.")
     lotto = LottoTessere(
         anno=anno, serie=serie, numero_da=numero_da, numero_a=numero_a, cifre=cifre,
+        costo_unitario=costo_unitario, sezione=sezione or Sezione.predefinita(),
         creato_da=utente, modificato_da=utente, **dati,
     )  # fmt: skip
     codici = [lotto.formatta(n) for n in range(numero_da, numero_a + 1)]
@@ -208,17 +302,17 @@ def carica_lotto(utente, *, anno, numero_da, numero_a, serie="", cifre=0, **dati
     return lotto
 
 
-def prossima_carta(anno):
-    """Prima tessera disponibile dell'anno (lotti più vecchi prima, numeri in ordine)."""
+def prossima_carta(anno, sezione_id):
+    """Prima tessera disponibile dell'anno per la sezione (lotti più vecchi, numeri in ordine)."""
     return (
         CartaTessera.objects.select_for_update(skip_locked=True, of=("self",))
-        .filter(anno=anno, stato=CartaTessera.Stato.DISPONIBILE)
+        .filter(anno=anno, lotto__sezione_id=sezione_id, stato=CartaTessera.Stato.DISPONIBILE)
         .order_by("lotto__data_acquisizione", "lotto_id", "numero")
         .first()
     )
 
 
-def carta_per_codice(anno, codice):
+def carta_per_codice(anno, codice, sezione_id=None):
     codice = " ".join(codice.strip().upper().split())
     carta = CartaTessera.objects.select_for_update().filter(anno=anno, codice=codice).first()
     if carta is None and codice.isdigit():
@@ -230,6 +324,10 @@ def carta_per_codice(anno, codice):
     if carta is None:
         raise OperazioneNonValida(
             f"La tessera {codice} non risulta tra quelle caricate per il {anno}."
+        )
+    if sezione_id and carta.lotto.sezione_id != sezione_id:
+        raise OperazioneNonValida(
+            f"La tessera {carta.codice} è stata caricata per la sezione {carta.lotto.sezione}."
         )
     return carta
 
@@ -244,10 +342,16 @@ def attribuisci_carta(tessera, utente, codice=None):
         raise OperazioneNonValida("Il tesseramento è annullato.")
     if tessera.carta_id:
         raise OperazioneNonValida(f"Tessera già attribuita: {tessera.carta.codice}.")
-    carta = carta_per_codice(tessera.anno, codice) if codice else prossima_carta(tessera.anno)
+    sezione_id = tessera.socio.sezione_id
+    carta = (
+        carta_per_codice(tessera.anno, codice, sezione_id)
+        if codice
+        else prossima_carta(tessera.anno, sezione_id)
+    )
     if carta is None:
         raise OperazioneNonValida(
-            f"Nessuna tessera {tessera.anno} disponibile: caricare un lotto dalla sede centrale."
+            f"Nessuna tessera {tessera.anno} disponibile per la sezione {tessera.socio.sezione}: "
+            "caricare un lotto dalla sede centrale."
         )
     if carta.stato != CartaTessera.Stato.DISPONIBILE:
         raise OperazioneNonValida(
@@ -262,11 +366,12 @@ def attribuisci_carta(tessera, utente, codice=None):
     return tessera
 
 
-def da_attribuire(anno):
-    return Tessera.objects.valide().filter(anno=anno, carta__isnull=True)
+def da_attribuire(anno, sezioni=None):
+    qs = Tessera.objects.valide().filter(anno=anno, carta__isnull=True)
+    return _per_sezioni(qs, sezioni, "socio__sezione")
 
 
-def attribuzione_massiva(anno, utente, ordine="numero"):
+def attribuzione_massiva(anno, utente, ordine="numero", sezioni=None):
     """Attribuisce le tessere disponibili ai tesseramenti dell'anno che ne sono privi.
 
     `ordine`: "numero" (numero di iscrizione) o "cognome". Si ferma quando le tessere finiscono.
@@ -277,7 +382,7 @@ def attribuzione_massiva(anno, utente, ordine="numero"):
         else ["socio__soggetto__cognome", "socio__soggetto__nome"]
     )
     fatte, mancanti = [], 0
-    for tessera in da_attribuire(anno).order_by(*campi):
+    for tessera in da_attribuire(anno, sezioni).order_by(*campi):
         try:
             fatte.append(attribuisci_carta(tessera, utente))
         except OperazioneNonValida:
@@ -320,11 +425,11 @@ def cambia_stato_carta(carta, stato, utente, motivo):
     return carta
 
 
-def giacenza(anno):
+def giacenza(anno, sezioni=None):
     """Riepilogo delle tessere fisiche dell'anno per stato, con costo verso la sede centrale."""
     from django.db.models import Count, Q
 
-    carte = CartaTessera.objects.filter(anno=anno)
+    carte = _per_sezioni(CartaTessera.objects.filter(anno=anno), sezioni, "lotto__sezione")
     conteggi = carte.aggregate(
         totale=Count("id"),
         **{s: Count("id", filter=Q(stato=s)) for s in CartaTessera.Stato.values},
@@ -333,7 +438,7 @@ def giacenza(anno):
     costo = sum(
         (
             lotto.costo_unitario * lotto.carte.exclude(stato=CartaTessera.Stato.RESTITUITA).count()
-            for lotto in LottoTessere.objects.filter(anno=anno)
+            for lotto in _per_sezioni(LottoTessere.objects.filter(anno=anno), sezioni)
         ),
         start=Decimal("0"),
     )
@@ -370,7 +475,7 @@ def rilascia_tessera(
         socio=socio,
         anno=anno,
         data_rilascio=data_rilascio or date.today(),
-        importo=socio.tipologia.quota_annua if importo is None else importo,
+        importo=quota_per(socio.tipologia, anno) if importo is None else importo,
         creato_da=utente,
         modificato_da=utente,
     )
@@ -391,7 +496,11 @@ def rilascia_tessera(
         ricevuta=tessera.codice_ricevuta,
     )
     if carta == "prossima":
-        if CartaTessera.objects.filter(anno=anno, stato=CartaTessera.Stato.DISPONIBILE).exists():
+        if (
+            CartaTessera.objects.disponibili()
+            .filter(anno=anno, lotto__sezione_id=socio.sezione_id)
+            .exists()
+        ):
             tessera = attribuisci_carta(tessera, utente)
     elif carta:
         tessera = attribuisci_carta(tessera, utente, carta)
@@ -466,22 +575,21 @@ def annulla_tessera(tessera, utente, motivo, *, libera_carta=False):
     return tessera
 
 
-def soci_da_rinnovare(anno):
+def soci_da_rinnovare(anno, sezioni=None):
     """Soci attivi che non hanno ancora una tessera valida per l'anno."""
     con_tessera = Tessera.objects.valide().filter(anno=anno).values("socio_id")
-    return (
-        Socio.objects.attivi().exclude(pk__in=con_tessera).select_related("soggetto", "tipologia")
-    )
+    qs = Socio.objects.attivi().exclude(pk__in=con_tessera)
+    return _per_sezioni(qs, sezioni).select_related("soggetto", "tipologia", "sezione")
 
 
-def rinnovo_massivo(anno, utente, *, attribuisci=False):
+def rinnovo_massivo(anno, utente, *, attribuisci=False, sezioni=None):
     """Crea il tesseramento dell'anno (da pagare) per tutti i soci attivi che non l'hanno;
     con `attribuisci` assegna anche le tessere fisiche disponibili, in ordine di numero socio.
 
     Una transazione per socio: un errore su un socio non blocca gli altri.
     """
     rilasciate, errori = [], []
-    for socio in soci_da_rinnovare(anno).order_by("numero"):
+    for socio in soci_da_rinnovare(anno, sezioni).order_by("numero"):
         try:
             rilasciate.append(
                 rilascia_tessera(socio, anno, utente, carta="prossima" if attribuisci else None)
@@ -509,8 +617,9 @@ def soggetto_per_domanda(domanda):
 
 @transaction.atomic
 def accogli_domanda(
-    domanda, utente, *, tipologia, data_ammissione, delibera="", tessera_anno=None, note_esito=""
-):
+    domanda, utente, *, tipologia, data_ammissione, delibera="", tessera_anno=None, note_esito="",
+    sezione=None,
+):  # fmt: skip
     """Crea (o collega) la scheda anagrafica, iscrive il socio e registra i consensi."""
     domanda = DomandaIscrizione.objects.select_for_update().get(pk=domanda.pk)
     if domanda.stato != DomandaIscrizione.Stato.IN_ATTESA:
@@ -538,8 +647,9 @@ def accogli_domanda(
         soggetto.attivo = True
         soggetto.save(update_fields=["attivo"])
     socio = ammetti_socio(
-        soggetto, tipologia, utente, data_ammissione=data_ammissione, delibera=delibera
-    )
+        soggetto, tipologia, utente, data_ammissione=data_ammissione, delibera=delibera,
+        sezione=sezione or domanda.sezione,
+    )  # fmt: skip
     modalita = f"domanda di iscrizione del {domanda.ricevuta_il:%d/%m/%Y}"
     for finalita, prestato in (
         (Consenso.Finalita.COMUNICAZIONI, domanda.consenso_comunicazioni),
@@ -583,9 +693,10 @@ def respingi_domanda(domanda, utente, motivo):
 # --- esportazioni ------------------------------------------------------------------------
 
 INTESTAZIONE_LIBRO = [
-    "numero", "cognome", "nome", "codice_fiscale", "data_nascita", "luogo_nascita", "indirizzo",
-    "cap", "comune", "provincia", "email", "telefono", "tipologia", "data_ammissione",
-    "delibera_ammissione", "stato", "data_cessazione", "causa_cessazione",
+    "numero", "sezione", "matricola", "cognome", "nome", "codice_fiscale", "data_nascita",
+    "luogo_nascita", "indirizzo", "cap", "comune", "provincia", "email", "telefono",
+    "tipologia", "data_ammissione", "delibera_ammissione", "stato", "data_cessazione",
+    "causa_cessazione",
 ]  # fmt: skip
 
 
@@ -593,13 +704,14 @@ def esporta_libro_csv(queryset, destinazione, utente):
     writer = csv.writer(destinazione, delimiter=";")
     writer.writerow(INTESTAZIONE_LIBRO)
     n = 0
-    for s in queryset.select_related("soggetto", "tipologia"):
+    for s in queryset.select_related("soggetto", "tipologia", "sezione"):
         p = s.soggetto
         riga = [
-            s.numero, p.cognome, p.nome, p.codice_fiscale, p.data_nascita, p.luogo_nascita,
-            p.indirizzo, p.cap, p.comune, p.provincia, p.email, p.cellulare or p.telefono,
-            s.tipologia.nome, s.data_ammissione, s.delibera_ammissione, s.get_stato_display(),
-            s.data_cessazione, s.get_causa_cessazione_display(),
+            s.numero, s.sezione.nome, s.matricola, p.cognome, p.nome, p.codice_fiscale,
+            p.data_nascita, p.luogo_nascita, p.indirizzo, p.cap, p.comune, p.provincia,
+            p.email, p.cellulare or p.telefono, s.tipologia.nome, s.data_ammissione,
+            s.delibera_ammissione, s.get_stato_display(), s.data_cessazione,
+            s.get_causa_cessazione_display(),
         ]  # fmt: skip
         writer.writerow([cella_sicura(v) for v in riga])
         n += 1
@@ -608,27 +720,28 @@ def esporta_libro_csv(queryset, destinazione, utente):
 
 
 INTESTAZIONE_TESSERATI = [
-    "tessera", "numero_socio", "cognome", "nome", "codice_fiscale", "data_nascita",
-    "luogo_nascita", "indirizzo", "cap", "comune", "provincia", "tipologia", "data_rilascio",
-    "quota", "pagata_il",
+    "tessera", "sezione", "codice_sezione", "numero_socio", "matricola", "cognome", "nome",
+    "codice_fiscale", "data_nascita", "luogo_nascita", "indirizzo", "cap", "comune",
+    "provincia", "tipologia", "data_rilascio", "quota", "pagata_il",
 ]  # fmt: skip
 
 
-def esporta_tesserati_csv(anno, destinazione, utente):
+def esporta_tesserati_csv(anno, destinazione, utente, sezioni=None):
     """Elenco dei tesserati dell'anno con il numero di tessera (per la sede centrale)."""
     writer = csv.writer(destinazione, delimiter=";")
     writer.writerow(INTESTAZIONE_TESSERATI)
     n = 0
     tessere = (
-        Tessera.objects.valide()
+        _per_sezioni(Tessera.objects.valide(), sezioni, "socio__sezione")
         .filter(anno=anno, carta__isnull=False)
-        .select_related("carta", "socio__soggetto", "socio__tipologia")
-        .order_by("carta__lotto__serie", "carta__numero")
+        .select_related("carta", "socio__soggetto", "socio__tipologia", "socio__sezione")
+        .order_by("socio__sezione__ordine", "carta__lotto__serie", "carta__numero")
     )
     for t in tessere:
         p = t.socio.soggetto
         riga = [
-            t.carta.codice, t.socio.numero, p.cognome, p.nome, p.codice_fiscale, p.data_nascita,
+            t.carta.codice, t.socio.sezione.nome, t.socio.sezione.codice, t.socio.numero,
+            t.socio.matricola, p.cognome, p.nome, p.codice_fiscale, p.data_nascita,
             p.luogo_nascita, p.indirizzo, p.cap, p.comune, p.provincia, t.socio.tipologia.nome,
             t.data_rilascio, t.importo, t.pagata_il,
         ]  # fmt: skip

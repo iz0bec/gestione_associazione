@@ -10,11 +10,18 @@
     <noscript><button class="btn" type="submit">Vai</button></noscript>
   </form>
   {% if perms.soci.view_lottotessere %}<a class="btn" href="{% url 'soci:tessere_fisiche' %}?anno={{ anno }}"><i class="ti ti-package me-1"></i>Tessere dalla sede centrale</a>{% endif %}
-  {% if perms.soci.view_tipologiasocio %}<a class="btn" href="{% url 'soci:tipologie' %}"><i class="ti ti-tags me-1"></i>Tipologie e quote</a>{% endif %}
+  {% if perms.soci.change_listinotessere %}<a class="btn" href="{% url 'soci:listino' %}?anno={{ anno }}"><i class="ti ti-receipt-2 me-1"></i>Listino {{ anno }}</a>{% endif %}
+  {% if perms.soci.view_tipologiasocio %}<a class="btn" href="{% url 'soci:tipologie' %}"><i class="ti ti-tags me-1"></i>Tipologie</a>{% endif %}
   {% if perms.soci.add_tessera %}<a class="btn btn-primary" href="{% url 'soci:rinnovo' %}?anno={{ anno }}"><i class="ti ti-refresh me-1"></i>Rinnovo annuale</a>{% endif %}
 </div>
 {% endblock %}
 {% block contenuto %}
+{% if not listino %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2">
+  <span class="flex-fill">Il listino {{ anno }} (costo d'acquisto delle tessere e quote per tipologia) non è ancora stato fissato: si usano le quote di riferimento delle tipologie.</span>
+  {% if perms.soci.change_listinotessere %}<a class="btn btn-sm" href="{% url 'soci:listino' %}?anno={{ anno }}">Fissa il listino</a>{% endif %}
+</div>
+{% endif %}
 {% if da_attribuire %}
 <div class="alert alert-info d-flex flex-wrap align-items-center gap-2">
   <span class="flex-fill"><strong>{{ da_attribuire }}</strong> soci rinnovati per il {{ anno }} non hanno ancora la tessera fisica; tessere disponibili: <strong>{{ disponibili }}</strong>.</span>

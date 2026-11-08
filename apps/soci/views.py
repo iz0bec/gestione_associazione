@@ -34,28 +34,60 @@ from apps.core.models import EventoAudit, Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
 
-from . import servizi
+from . import importazione, servizi, sezioni
+from . import temporanei as servizi_file
 from .filtri import SocioFilter
 from .forms import (
     AccoglimentoForm,
     AmmissioneForm,
     CessazioneForm,
     DomandaForm,
+    ImportaForm,
+    ListinoForm,
     LottoForm,
     MotivoForm,
     PagamentoForm,
     RinnovoForm,
+    SezioneForm,
     SocioForm,
     StatoCartaForm,
     TesseraForm,
     TipologiaForm,
 )
-from .models import CartaTessera, DomandaIscrizione, LottoTessere, Socio, Tessera, TipologiaSocio
+from .models import (
+    CartaTessera,
+    DomandaIscrizione,
+    ListinoTessere,
+    LottoTessere,
+    Sezione,
+    Socio,
+    Tessera,
+    TipologiaSocio,
+)
 from .servizi import OperazioneNonValida
 
 
 def _errore(request, eccezione):
     messages.error(request, " ".join(eccezione.messages))
+
+
+def _soci(request):
+    """Soci delle sezioni visibili all'utente."""
+    return sezioni.filtra(Socio.objects.all(), request.user)
+
+
+def _tessere(request):
+    return sezioni.filtra(Tessera.objects.all(), request.user, "socio__sezione")
+
+
+def _carte(request):
+    return sezioni.filtra(CartaTessera.objects.all(), request.user, "lotto__sezione")
+
+
+def _domande(request):
+    ids = sezioni.id_sezioni(request.user)
+    qs = DomandaIscrizione.objects.all()
+    return qs if ids is None else qs.filter(Q(sezione__in=ids) | Q(sezione__isnull=True))
 
 
 # --- libro soci --------------------------------------------------------------------------
@@ -68,7 +100,7 @@ class ElencoView(PermessoMixin, FilterView):
     template_name = "soci/elenco.html"
 
     def get_queryset(self):
-        return Socio.objects.select_related("soggetto", "tipologia")
+        return _soci(self.request).select_related("soggetto", "tipologia", "sezione")
 
     def get_template_names(self):
         if self.request.htmx and not self.request.htmx.boosted:
@@ -93,7 +125,7 @@ class DettaglioView(PermessoMixin, DetailView):
     context_object_name = "socio"
 
     def get_queryset(self):
-        return Socio.objects.select_related("soggetto", "tipologia")
+        return _soci(self.request).select_related("soggetto", "tipologia", "sezione")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -102,7 +134,7 @@ class DettaglioView(PermessoMixin, DetailView):
         ctx["tessere"] = self.object.tessere.all()
         ctx["tessera_corrente"] = self.object.tessera_anno(anno)
         ctx["form_tessera"] = TesseraForm(
-            initial={"importo": self.object.tipologia.quota_annua}, prefix="tessera"
+            initial={"importo": servizi.quota_per(self.object.tipologia, anno)}, prefix="tessera"
         )
         ctx["form_pagamento"] = PagamentoForm(prefix="pagamento")
         ctx["form_cessazione"] = CessazioneForm(prefix="cessazione")
@@ -159,6 +191,9 @@ class AmmissioneView(PermessoMixin, FormView):
     def get_context_data(self, **kwargs):
         return super().get_context_data(soggetto=self.soggetto, **kwargs)
 
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
+
     def form_valid(self, form):
         d = form.cleaned_data
         try:
@@ -169,6 +204,8 @@ class AmmissioneView(PermessoMixin, FormView):
                 data_ammissione=d["data_ammissione"],
                 delibera=d["delibera"],
                 note=d["note"],
+                sezione=d["sezione"],
+                matricola=d["matricola"],
             )
             if d["tessera"]:
                 servizi.rilascia_tessera(
@@ -190,8 +227,25 @@ class ModificaView(PermessoMixin, UpdateView):
     template_name = "soci/modifica.html"
     context_object_name = "socio"
 
+    def get_queryset(self):
+        return _soci(self.request)
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
+
     def form_valid(self, form):
-        self.object = servizi.salva_socio(form, self.request.user)
+        from apps.core.immagini import ImmagineNonValida
+
+        try:
+            self.object = servizi.salva_socio(
+                form,
+                self.request.user,
+                foto=form.cleaned_data.get("nuova_foto"),
+                togli_foto=form.cleaned_data.get("togli_foto"),
+            )
+        except ImmagineNonValida as e:
+            form.add_error("nuova_foto", e)
+            return self.form_invalid(form)
         messages.success(self.request, "Dati di iscrizione salvati.")
         return redirect(self.object)
 
@@ -200,7 +254,7 @@ class _AzioneSocioView(PermessoMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
-        socio = get_object_or_404(Socio, pk=pk)
+        socio = get_object_or_404(_soci(request), pk=pk)
         try:
             self.esegui(request, socio)
         except OperazioneNonValida as e:
@@ -270,7 +324,7 @@ class _AzioneTesseraView(PermessoMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
-        tessera = get_object_or_404(Tessera.objects.select_related("socio"), pk=pk)
+        tessera = get_object_or_404(_tessere(request).select_related("socio"), pk=pk)
         try:
             self.esegui(request, tessera)
         except OperazioneNonValida as e:
@@ -319,7 +373,7 @@ class RicevutaView(PermessoMixin, View):
 
     def get(self, request, pk):
         tessera = get_object_or_404(
-            Tessera.objects.select_related("socio__soggetto", "socio__tipologia"),
+            _tessere(request).select_related("socio__soggetto", "socio__tipologia"),
             pk=pk,
             pagata_il__isnull=False,
         )
@@ -346,7 +400,11 @@ class TessereView(PermessoMixin, ListView):
             return date.today().year
 
     def get_queryset(self):
-        qs = Tessera.objects.filter(anno=self.get_anno()).select_related("socio__soggetto", "carta")
+        qs = (
+            _tessere(self.request)
+            .filter(anno=self.get_anno())
+            .select_related("socio__soggetto", "socio__sezione", "carta")
+        )
         filtro = self.request.GET.get("stato")
         if filtro == "da_attribuire":
             qs = qs.valide().filter(carta__isnull=True)
@@ -361,8 +419,10 @@ class TessereView(PermessoMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         anno = self.get_anno()
-        valide = Tessera.objects.valide().filter(anno=anno)
+        valide = _tessere(self.request).valide().filter(anno=anno)
+        ids = sezioni.id_sezioni(self.request.user)
         ctx["anno"] = anno
+        ctx["listino"] = servizi.listino(anno)
         ctx["anni"] = range(date.today().year + 1, date.today().year - 6, -1)
         ctx["stato"] = self.request.GET.get("stato", "")
         ctx["riepilogo"] = valide.aggregate(
@@ -371,10 +431,10 @@ class TessereView(PermessoMixin, ListView):
             incassato=Sum("importo", filter=Q(pagata_il__isnull=False), default=0),
             da_incassare=Sum("importo", filter=Q(pagata_il__isnull=True), default=0),
         )
-        ctx["da_rinnovare"] = servizi.soci_da_rinnovare(anno).count()
-        ctx["morosi"] = Socio.objects.morosi(anno).count()
-        ctx["da_attribuire"] = servizi.da_attribuire(anno).count()
-        ctx["disponibili"] = CartaTessera.objects.disponibili().filter(anno=anno).count()
+        ctx["da_rinnovare"] = servizi.soci_da_rinnovare(anno, ids).count()
+        ctx["morosi"] = _soci(self.request).morosi(anno).count()
+        ctx["da_attribuire"] = servizi.da_attribuire(anno, ids).count()
+        ctx["disponibili"] = _carte(self.request).disponibili().filter(anno=anno).count()
         ctx["form_pagamento"] = PagamentoForm(prefix="pagamento")
         return ctx
 
@@ -395,8 +455,11 @@ class RinnovoView(PermessoMixin, FormView):
         form = ctx["form"]
         anno = form.cleaned_data["anno"] if form.is_bound and form.is_valid() else date.today().year
         ctx["anno"] = anno
-        ctx["da_rinnovare"] = servizi.soci_da_rinnovare(anno).order_by("numero")
-        ctx["disponibili"] = CartaTessera.objects.disponibili().filter(anno=anno).count()
+        ctx["da_rinnovare"] = servizi.soci_da_rinnovare(
+            anno, sezioni.id_sezioni(self.request.user)
+        ).order_by("numero")
+        ctx["disponibili"] = _carte(self.request).disponibili().filter(anno=anno).count()
+        ctx["listino"] = servizi.listino(anno)
         return ctx
 
     def form_valid(self, form):
@@ -404,7 +467,10 @@ class RinnovoView(PermessoMixin, FormView):
             return self.render_to_response(self.get_context_data(form=form))
         anno = form.cleaned_data["anno"]
         rilasciate, errori = servizi.rinnovo_massivo(
-            anno, self.request.user, attribuisci=form.cleaned_data["attribuisci"]
+            anno,
+            self.request.user,
+            attribuisci=form.cleaned_data["attribuisci"],
+            sezioni=sezioni.id_sezioni(self.request.user),
         )
         senza = sum(1 for t in rilasciate if not t.attribuita)
         messages.success(
@@ -441,7 +507,9 @@ class AttribuzioneMassivaView(PermessoMixin, View):
         except (TypeError, ValueError):
             anno = date.today().year
         ordine = "cognome" if request.POST.get("ordine") == "cognome" else "numero"
-        fatte, mancanti = servizi.attribuzione_massiva(anno, request.user, ordine)
+        fatte, mancanti = servizi.attribuzione_massiva(
+            anno, request.user, ordine, sezioni.id_sezioni(request.user)
+        )
         messages.success(request, f"Attribuite {len(fatte)} tessere.")
         if mancanti:
             messages.warning(
@@ -466,8 +534,10 @@ class TessereFisicheView(PermessoMixin, ListView):
             return date.today().year
 
     def get_queryset(self):
-        qs = CartaTessera.objects.filter(anno=self.get_anno()).select_related(
-            "lotto", "tessera__socio__soggetto"
+        qs = (
+            _carte(self.request)
+            .filter(anno=self.get_anno())
+            .select_related("lotto__sezione", "tessera__socio__soggetto")
         )
         if stato := self.request.GET.get("stato"):
             qs = qs.filter(stato=stato)
@@ -484,11 +554,14 @@ class TessereFisicheView(PermessoMixin, ListView):
         anno = self.get_anno()
         ctx["anno"] = anno
         ctx["anni"] = range(date.today().year + 1, date.today().year - 6, -1)
-        ctx["lotti"] = LottoTessere.objects.filter(anno=anno).annotate(
+        ctx["lotti"] = sezioni.filtra(
+            LottoTessere.objects.filter(anno=anno).select_related("sezione"), self.request.user
+        ).annotate(
             disponibili=Count("carte", filter=Q(carte__stato=CartaTessera.Stato.DISPONIBILE)),
             attribuite=Count("carte", filter=Q(carte__stato=CartaTessera.Stato.ATTRIBUITA)),
         )
-        ctx["giacenza"] = servizi.giacenza(anno)
+        ctx["giacenza"] = servizi.giacenza(anno, sezioni.id_sezioni(self.request.user))
+        ctx["listino"] = servizi.listino(anno)
         ctx["stati"] = CartaTessera.Stato.choices
         ctx["stato"] = self.request.GET.get("stato", "")
         ctx["q"] = self.request.GET.get("q", "")
@@ -500,6 +573,9 @@ class LottoNuovoView(PermessoMixin, FormView):
     permission_required = "soci.gestisci_tessere_fisiche"
     form_class = LottoForm
     template_name = "soci/lotto_modulo.html"
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
 
     def form_valid(self, form):
         d = form.cleaned_data
@@ -517,7 +593,7 @@ class StatoCartaView(PermessoMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
-        carta = get_object_or_404(CartaTessera, pk=pk)
+        carta = get_object_or_404(_carte(request), pk=pk)
         form = StatoCartaForm(request.POST)
         try:
             if not form.is_valid():
@@ -540,7 +616,7 @@ class EsportaTesseratiView(PermessoMixin, View):
         except ValueError:
             anno = date.today().year
         buffer = io.StringIO()
-        servizi.esporta_tesserati_csv(anno, buffer, request.user)
+        servizi.esporta_tesserati_csv(anno, buffer, request.user, sezioni.id_sezioni(request.user))
         risposta = HttpResponse(
             "\ufeff" + buffer.getvalue(), content_type="text/csv; charset=utf-8"
         )
@@ -555,7 +631,10 @@ class LibroSociPdfView(PermessoMixin, View):
     permission_required = "soci.esporta_libro_soci"
 
     def get(self, request):
-        soci = Socio.objects.select_related("soggetto", "tipologia").order_by("numero")
+        soci = _soci(request).select_related("soggetto", "tipologia", "sezione")
+        if (sezione := request.GET.get("sezione", "")).isdigit():
+            soci = soci.filter(sezione_id=int(sezione))
+        soci = soci.order_by("numero")
         registra(Azione.ESPORTAZIONE, descrizione=f"Libro soci PDF ({soci.count()} iscritti)")
         return risposta_pdf(
             "soci/pdf/libro_soci.html",
@@ -568,7 +647,7 @@ class LibroSociCsvView(PermessoMixin, View):
     permission_required = "soci.esporta_libro_soci"
 
     def get(self, request):
-        filtro = SocioFilter(request.GET, queryset=Socio.objects.all())
+        filtro = SocioFilter(request.GET, queryset=_soci(request), request=request)
         buffer = io.StringIO()
         servizi.esporta_libro_csv(filtro.qs.order_by("numero"), buffer, request.user)
         risposta = HttpResponse("﻿" + buffer.getvalue(), content_type="text/csv; charset=utf-8")
@@ -587,7 +666,7 @@ class DomandeView(PermessoMixin, ListView):
 
     def get_queryset(self):
         stato = self.request.GET.get("stato", DomandaIscrizione.Stato.IN_ATTESA)
-        qs = DomandaIscrizione.objects.select_related("socio")
+        qs = _domande(self.request).select_related("socio", "sezione")
         return qs if stato == "tutte" else qs.filter(stato=stato)
 
     def get_context_data(self, **kwargs):
@@ -603,11 +682,16 @@ class DomandaView(PermessoMixin, DetailView):
     template_name = "soci/domanda.html"
     context_object_name = "domanda"
 
+    def get_queryset(self):
+        return _domande(self.request)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["esistente"] = servizi.soggetto_per_domanda(self.object)
         ctx["form_accoglimento"] = AccoglimentoForm(
-            initial={"tipologia": self.object.tipologia}, prefix="accogli"
+            initial={"tipologia": self.object.tipologia, "sezione": self.object.sezione},
+            prefix="accogli",
+            utente=self.request.user,
         )
         ctx["form_rigetto"] = MotivoForm(prefix="respingi")
         return ctx
@@ -618,6 +702,9 @@ class NuovaDomandaView(PermessoMixin, CreateView):
     model = DomandaIscrizione
     form_class = DomandaForm
     template_name = "soci/domanda_modulo.html"
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
 
     def form_valid(self, form):
         form.instance.origine = DomandaIscrizione.Origine.SEGRETERIA
@@ -632,8 +719,8 @@ class AccogliView(PermessoMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
-        domanda = get_object_or_404(DomandaIscrizione, pk=pk)
-        form = AccoglimentoForm(request.POST, prefix="accogli")
+        domanda = get_object_or_404(_domande(request), pk=pk)
+        form = AccoglimentoForm(request.POST, prefix="accogli", utente=request.user)
         if not form.is_valid():
             messages.error(
                 request, "Dati dell'accoglimento non validi: controllare tipologia e data."
@@ -648,6 +735,7 @@ class AccogliView(PermessoMixin, View):
                 data_ammissione=d["data_ammissione"],
                 delibera=d["delibera"],
                 tessera_anno=date.today().year if d["tessera"] else None,
+                sezione=d["sezione"],
             )
         except OperazioneNonValida as e:
             _errore(request, e)
@@ -663,13 +751,95 @@ class RespingiView(PermessoMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
-        domanda = get_object_or_404(DomandaIscrizione, pk=pk)
+        domanda = get_object_or_404(_domande(request), pk=pk)
         try:
             servizi.respingi_domanda(domanda, request.user, request.POST.get("respingi-motivo", ""))
             messages.success(request, "Domanda respinta.")
         except OperazioneNonValida as e:
             _errore(request, e)
         return redirect(domanda)
+
+
+# --- listino del tesseramento ------------------------------------------------------------
+
+
+class ListinoView(PermessoMixin, FormView):
+    """Costo d'acquisto delle tessere e prezzi di distribuzione per tipologia di un anno."""
+
+    permission_required = "soci.change_listinotessere"
+    form_class = ListinoForm
+    template_name = "soci/listino.html"
+
+    def get_anno(self):
+        try:
+            return int(self.request.GET.get("anno") or date.today().year)
+        except ValueError:
+            return date.today().year
+
+    def get_form_kwargs(self):
+        self.anno = self.get_anno()
+        self.listino = servizi.listino(self.anno)
+        return {**super().get_form_kwargs(), "listino": self.listino}
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["anno"] = self.anno
+        ctx["listino"] = self.listino
+        ctx["anni"] = range(date.today().year + 1, date.today().year - 6, -1)
+        ctx["storico"] = ListinoTessere.objects.prefetch_related("quote__tipologia")[:6]
+        return ctx
+
+    def form_valid(self, form):
+        servizi.salva_listino(
+            self.anno,
+            self.request.user,
+            costo_acquisto=form.cleaned_data["costo_acquisto"],
+            quote=form.quote(),
+            note=form.cleaned_data["note"],
+        )
+        messages.success(self.request, f"Listino {self.anno} salvato.")
+        return redirect(f"{reverse('soci:tessere')}?anno={self.anno}")
+
+
+# --- sezioni -----------------------------------------------------------------------------
+
+
+class SezioniView(PermessoMixin, ListView):
+    permission_required = "soci.view_sezione"
+    template_name = "soci/sezioni.html"
+    context_object_name = "sezioni"
+
+    def get_queryset(self):
+        return Sezione.objects.annotate(
+            n_soci=Count("soci", filter=Q(soci__stato=Socio.Stato.ATTIVO)),
+            n_utenti=Count("utenti", distinct=True),
+        )
+
+
+class _SezioneMixin:
+    model = Sezione
+    form_class = SezioneForm
+    template_name = "soci/sezione_modulo.html"
+    success_url = reverse_lazy("soci:sezioni")
+
+    def form_valid(self, form):
+        nuova = form.instance.pk is None
+        dettagli = {} if nuova else campi_modificati(form)
+        risposta = super().form_valid(form)
+        if nuova:
+            registra(Azione.CREAZIONE, self.object)
+        elif dettagli.get("campi"):
+            registra(Azione.MODIFICA, self.object, **dettagli)
+        messages.success(self.request, f"Sezione «{self.object}» salvata.")
+        return risposta
+
+
+class SezioneNuovaView(PermessoMixin, _SezioneMixin, CreateView):
+    permission_required = "soci.add_sezione"
+
+
+class SezioneModificaView(PermessoMixin, _SezioneMixin, UpdateView):
+    permission_required = "soci.change_sezione"
 
 
 # --- tipologie ---------------------------------------------------------------------------
@@ -710,3 +880,86 @@ class TipologiaNuovaView(PermessoMixin, _TipologiaMixin, CreateView):
 
 class TipologiaModificaView(PermessoMixin, _TipologiaMixin, UpdateView):
     permission_required = "soci.change_tipologiasocio"
+
+
+# --- importazione dal registro soci nazionale --------------------------------------------
+
+
+class ImportaView(PermessoMixin, FormView):
+    """Caricamento del file, anteprima esatta (simulazione) e conferma dell'importazione."""
+
+    permission_required = "soci.importa_soci"
+    form_class = ImportaForm
+    template_name = "soci/importa.html"
+    CHIAVE = "importazione_soci"
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
+
+    def _opzioni(self, dati):
+        return importazione.Opzioni(
+            sezione=dati.get("sezione"),
+            tipologia=dati.get("tipologia"),
+            crea_sezioni=bool(dati.get("crea_sezioni"))
+            and self.request.user.has_perm("soci.add_sezione"),
+            allinea_sezione=bool(dati.get("allinea_sezione")),
+            anno_tessere=dati.get("anno_tessere"),
+            sezioni_consentite=sezioni.id_sezioni(self.request.user),
+        )
+
+    def form_valid(self, form):
+        f = form.cleaned_data["file"]
+        contenuto = f.read()
+        try:
+            mappa, righe, ignorate = importazione.leggi(f.name, contenuto)
+        except importazione.FileNonValido as e:
+            form.add_error("file", e)
+            return self.form_invalid(form)
+        rapporto = importazione.elabora(righe, self._opzioni(form.cleaned_data), self.request.user)
+        percorso = servizi_file.salva_temporaneo(contenuto, f.name)
+        d = form.cleaned_data
+        self.request.session[self.CHIAVE] = {
+            "percorso": percorso, "nome": f.name,
+            "sezione": d["sezione"].pk if d["sezione"] else None,
+            "tipologia": d["tipologia"].pk, "crea_sezioni": d["crea_sezioni"],
+            "allinea_sezione": d["allinea_sezione"], "anno_tessere": d["anno_tessere"],
+        }  # fmt: skip
+        return self.render_to_response(
+            self.get_context_data(
+                form=form,
+                rapporto=rapporto,
+                colonne=sorted(set(mappa.values())),
+                ignorate=ignorate,
+                nome_file=f.name,
+            )  # fmt: skip
+        )
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("azione") != "esegui":
+            return super().post(request, *args, **kwargs)
+        salvato = request.session.pop(self.CHIAVE, None)
+        contenuto = servizi_file.leggi_temporaneo(salvato["percorso"]) if salvato else None
+        if contenuto is None:
+            messages.error(request, "Anteprima scaduta: caricare di nuovo il file.")
+            return redirect("soci:importa")
+        servizi_file.elimina_temporaneo(salvato["percorso"])
+        _, righe, _ = importazione.leggi(salvato["nome"], contenuto)
+        dati = {
+            **salvato,
+            "sezione": Sezione.objects.filter(pk=salvato["sezione"]).first(),
+            "tipologia": TipologiaSocio.objects.get(pk=salvato["tipologia"]),
+        }
+        rapporto = importazione.elabora(righe, self._opzioni(dati), request.user, esegui=True)
+        r = rapporto.riepilogo
+        messages.success(
+            request,
+            f"Importazione completata: {r['nuovo']} nuovi, {r['aggiornato']} aggiornati, "
+            f"{r['invariato']} invariati, {r['errore']} con errori.",
+        )
+        return self.render_to_response(
+            self.get_context_data(
+                form=self.get_form_class()(utente=request.user),
+                rapporto=rapporto,
+                nome_file=salvato["nome"],
+            )  # fmt: skip
+        )

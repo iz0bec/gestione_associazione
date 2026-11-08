@@ -90,5 +90,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 
 Fase 0 completata (fondamenta + anagrafica). Fase 1: **Soci e tesseramento** completato
 (`apps/soci`), **Protocollo** (`apps/protocollo`), **Organi sociali** (`apps/organi`), **Comunicazioni e
-anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`), **Patrimonio** (`apps/patrimonio`). Prossimo (roadmap punto 7-10):
+anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`), **Patrimonio** (`apps/patrimonio`), configurazione guidata (`apps/core/configurazione.py`), aspetto
+(`apps/core/aspetto.py`, CSS servito da `/aspetto.css`), sezioni (`apps/soci/sezioni.py`: filtrare
+sempre soci/tessere/carte/domande con `sezioni.filtra()` nelle viste), listino annuale, importazione dal
+registro nazionale (`apps/soci/importazione.py`; gli estratti reali stanno in `tmp/`, mai versionati).
+Prossimo (roadmap punto 7-10):
 modelli di stampa, import dai tre gestionali, installer su host, gestione utenti dall'interfaccia.

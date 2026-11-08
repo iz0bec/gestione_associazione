@@ -59,6 +59,10 @@ def apri_esercizio(anno, utente):
             esercizio=esercizio, conto=conto, iniziale=finali.get(conto.pk) or ZERO
         )
     registra(Azione.CREAZIONE, esercizio, utente=utente, riporto=bool(precedente))
+    # all'apertura dell'anno contabile si fissano anche i costi del tesseramento
+    from apps.soci.servizi import prepara_listino
+
+    prepara_listino(anno, utente)
     return esercizio
 
 

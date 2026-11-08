@@ -19,6 +19,7 @@ urlpatterns = [
     path("esporta.csv", views.EsportaView.as_view(), name="esporta"),
     path("<int:pk>/", views.DettaglioView.as_view(), name="dettaglio"),
     path("<int:pk>/modifica/", views.ModificaView.as_view(), name="modifica"),
+    path("<int:pk>/foto/", views.FotoView.as_view(), name="foto"),
     path("<int:pk>/archivia/", views.ArchiviaView.as_view(), name="archivia"),
     path("<int:pk>/consenso/", views.ConsensoView.as_view(), name="consenso"),
 ]

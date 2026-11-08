@@ -43,6 +43,20 @@ Mostra dati, recapiti, categorie, note, chi l'ha inserita e modificata. Chi ha a
 registro attività vede anche la **storia delle modifiche** (passando il mouse sul nome di un campo
 compaiono il valore precedente e quello nuovo).
 
+## Foto
+
+Nel modulo di inserimento e modifica, alla voce **Foto**, si carica la foto della persona o il logo
+dell'ente (JPEG, PNG o WebP, fino a 15 MB). La foto:
+
+- viene **ridotta** (600 pixel di lato) e **ripulita dai dati nascosti** (posizione GPS,
+  modello del telefono, data dello scatto);
+- prende un nome casuale e si vede **solo da chi accede** all'anagrafica o al libro soci. Non è
+  mai raggiungibile da un indirizzo pubblico;
+- compare negli elenchi (al posto delle iniziali) e nelle schede di anagrafica e soci.
+
+Per toglierla basta spuntare **Togli la foto attuale**. Prima di pubblicare o usare la foto di una
+persona fuori dall'archivio serve il suo consenso (finalità *Pubblicazione di foto e video*).
+
 ## Consensi privacy
 
 Nel riquadro **Consensi privacy** della scheda si registra, per ogni finalità (comunicazioni

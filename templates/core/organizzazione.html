@@ -3,7 +3,7 @@
 {% block sopratitolo %}<div class="page-pretitle">Sistema</div>{% endblock %}
 {% block titolo_pagina %}Dati dell'organizzazione{% endblock %}
 {% block contenuto %}
-<form method="post" enctype="multipart/form-data" class="card" novalidate>
+<form method="post" class="card" novalidate>
   {% csrf_token %}
   <div class="card-body">
     <p class="text-secondary">Questi dati compaiono nelle intestazioni dei documenti, nelle comunicazioni e nei moduli.</p>
@@ -21,7 +21,7 @@
       <div class="col-md-4">{{ form.email.as_field_group }}</div>
       <div class="col-md-4">{{ form.pec.as_field_group }}</div>
       <div class="col-md-6">{{ form.sito_web.as_field_group }}</div>
-      <div class="col-md-6">{{ form.logo.as_field_group }}</div>
+      <div class="col-md-6 d-flex align-items-center"><a href="{% url 'core:aspetto' %}"><i class="ti ti-palette me-1"></i>Logo e colori dell'interfaccia</a></div>
       <div class="col-12">{{ form.informativa_privacy.as_field_group }}</div>
       <div class="col-12">{{ form.iscrizioni_online.as_field_group }}</div>
     </div>

@@ -1,0 +1,13 @@
+{% comment %}Campi dell'aspetto (pagina Aspetto e configurazione iniziale).{% endcomment %}
+{% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+<div class="row align-items-center">
+  <div class="col-auto">{% include "includes/marchio.html" with grande=True %}</div>
+  <div class="col">{{ form.nuovo_logo.as_field_group }}{% if organizzazione.logo %}{{ form.togli_logo.as_field_group }}{% endif %}</div>
+</div>
+<div class="row">
+  <div class="col-sm-5">{{ form.colore_primario.as_field_group }}</div>
+  <div class="col-sm-7">{{ form.stile_menu.as_field_group }}</div>
+</div>
+<div class="d-flex flex-wrap gap-2 align-items-center small text-secondary">
+  Anteprima del colore attuale: <button type="button" class="btn btn-primary btn-sm" tabindex="-1">Pulsante</button> <a href="#" tabindex="-1">collegamento</a> <span class="badge bg-primary">etichetta</span>
+</div>

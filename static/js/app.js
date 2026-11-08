@@ -49,7 +49,7 @@
     });
   }
 
-  // Sezioni visibili secondo una scelta: <form data-mostra-secondo="tipo"> e <div data-valori="a b">
+  // Sezioni visibili secondo una scelta: <form o div data-mostra-secondo="tipo"> e <div data-valori="a b">
   function aggiornaSecondo(modulo) {
     var nome = modulo.getAttribute("data-mostra-secondo");
     var scelta = modulo.querySelector("input[name='" + nome + "']:checked");
@@ -67,7 +67,7 @@
     modulo.querySelectorAll(".solo-ente").forEach(function (el) { el.classList.toggle("nascosto", tipo !== "ente"); });
   }
   function inizializza(radice) {
-    radice.querySelectorAll("form[data-mostra-secondo]").forEach(function (modulo) {
+    radice.querySelectorAll("[data-mostra-secondo]").forEach(function (modulo) {
       aggiornaSecondo(modulo);
       modulo.addEventListener("change", function (ev) {
         if (ev.target.name === modulo.getAttribute("data-mostra-secondo")) aggiornaSecondo(modulo);

@@ -19,6 +19,12 @@ from apps.core.models import ModelloBase, validatore_cap, validatore_provincia
 from .validatori import valida_codice_fiscale, valida_partita_iva
 
 
+def percorso_foto(istanza, nome):
+    from apps.core.immagini import nome_casuale
+
+    return nome_casuale("anagrafica/foto")
+
+
 class Categoria(models.Model):
     """Categoria di soggetti (Socio, Autorità, Amico della sezione, ...)."""
 
@@ -126,6 +132,13 @@ class Soggetto(ModelloBase):
     provincia = models.CharField(max_length=2, blank=True, validators=[validatore_provincia])
     nazione = models.CharField(max_length=2, default="IT", help_text="Codice ISO a 2 lettere")
     categorie = models.ManyToManyField(Categoria, blank=True, related_name="soggetti")
+    foto = models.ImageField(
+        upload_to=percorso_foto,
+        blank=True,
+        max_length=255,
+        editable=False,
+        help_text="Foto della persona o logo dell'ente; visibile solo a chi accede all'anagrafica.",
+    )
     note = models.TextField(blank=True)
     attivo = models.BooleanField(
         default=True, help_text="I soggetti archiviati restano nei documenti ma non nelle liste."

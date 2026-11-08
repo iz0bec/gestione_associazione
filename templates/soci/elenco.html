@@ -20,6 +20,7 @@
   <div class="card-header">
     <form method="get" class="row g-2 w-100" hx-get="{% url 'soci:elenco' %}" hx-target="#tabella-soci" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, change from:input[name=anno], submit">
       <div class="col-lg-4"><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>{{ filter.form.q }}</div></div>
+      {% if multisezione %}<div class="col-sm-6 col-lg-2">{{ filter.form.sezione }}</div>{% endif %}
       <div class="col-sm-6 col-lg-2">{{ filter.form.stato }}</div>
       <div class="col-sm-6 col-lg-2">{{ filter.form.tipologia }}</div>
       <div class="col-sm-8 col-lg-3">{{ filter.form.quota }}</div>
@@ -37,9 +38,14 @@
           <tr>
             <td class="text-secondary">{{ s.numero }}</td>
             <td>
-              <a href="{{ s.get_absolute_url }}" class="text-reset fw-medium">{{ s.soggetto.nome_completo }}</a>
-              {% if s.stato != "attivo" %}<span class="badge {% if s.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %} ms-1">{{ s.get_stato_display|lower }}</span>{% endif %}
-              <div class="small text-secondary">{{ s.soggetto.comune }}</div>
+              <div class="d-flex align-items-center">
+                {% include "includes/avatar.html" with s=s.soggetto classe="avatar-sm me-2" %}
+                <div>
+                  <a href="{{ s.get_absolute_url }}" class="text-reset fw-medium">{{ s.soggetto.nome_completo }}</a>
+                  {% if s.stato != "attivo" %}<span class="badge {% if s.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %} ms-1">{{ s.get_stato_display|lower }}</span>{% endif %}
+                  <div class="small text-secondary">{% if multisezione %}{{ s.sezione.nome }} · {% endif %}{{ s.soggetto.comune }}</div>
+                </div>
+              </div>
             </td>
             <td class="d-none d-md-table-cell">{{ s.tipologia }}</td>
             <td class="d-none d-lg-table-cell">{{ s.data_ammissione|date:"d/m/Y" }}</td>

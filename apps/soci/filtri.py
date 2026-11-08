@@ -13,7 +13,8 @@ import django_filters
 from django import forms
 from django.db.models import Q
 
-from .models import Socio, TipologiaSocio
+from .models import Sezione, Socio, TipologiaSocio
+from .sezioni import sezioni_di
 
 
 class SocioFilter(django_filters.FilterSet):
@@ -26,6 +27,9 @@ class SocioFilter(django_filters.FilterSet):
     tipologia = django_filters.ModelChoiceFilter(
         queryset=TipologiaSocio.objects.all(), empty_label="Ogni tipologia"
     )
+    sezione = django_filters.ModelChoiceFilter(
+        queryset=Sezione.objects.all(), empty_label="Ogni sezione"
+    )
     quota = django_filters.ChoiceFilter(
         choices=[("in_regola", "Quota: in regola"), ("morosi", "Quota: non in regola")],
         method="filtra_quota",
@@ -35,7 +39,7 @@ class SocioFilter(django_filters.FilterSet):
 
     class Meta:
         model = Socio
-        fields = ["q", "stato", "tipologia", "quota", "anno"]
+        fields = ["q", "stato", "sezione", "tipologia", "quota", "anno"]
 
     def __init__(self, data=None, *args, **kwargs):
         data = data.copy() if data is not None else {}
@@ -43,6 +47,8 @@ class SocioFilter(django_filters.FilterSet):
         if not data.get("anno"):
             data["anno"] = date.today().year
         super().__init__(data, *args, **kwargs)
+        utente = getattr(self.request, "user", None)
+        self.filters["sezione"].queryset = sezioni_di(utente) if utente else Sezione.objects.all()
         for campo in self.form.fields.values():
             classe = "form-select" if isinstance(campo.widget, forms.Select) else "form-control"
             campo.widget.attrs["class"] = classe
@@ -65,6 +71,7 @@ class SocioFilter(django_filters.FilterSet):
                 | Q(soggetto__nome__icontains=parola)
                 | Q(soggetto__codice_fiscale__iexact=parola)
                 | Q(soggetto__comune__icontains=parola)
+                | Q(matricola__iexact=parola)
             )
             if parola.isdigit():
                 condizione |= Q(numero=int(parola))

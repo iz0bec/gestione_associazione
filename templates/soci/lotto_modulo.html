@@ -8,7 +8,9 @@
     <p class="text-secondary">Registrare le tessere ricevute indicando il primo e l'ultimo numero stampati. Se i numeri non sono consecutivi, registrare un carico per ogni blocco.</p>
     {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
     <div class="row">
+      {% for campo in form.hidden_fields %}{{ campo }}{% endfor %}
       <div class="col-md-3">{{ form.anno.as_field_group }}</div>
+      {% if not form.sezione.is_hidden %}<div class="col-md-9">{{ form.sezione.as_field_group }}</div>{% endif %}
       <div class="col-md-2">{{ form.serie.as_field_group }}</div>
       <div class="col-md-3">{{ form.numero_da.as_field_group }}</div>
       <div class="col-md-3">{{ form.numero_a.as_field_group }}</div>

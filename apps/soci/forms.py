@@ -16,7 +16,7 @@ from django import forms
 from django.core import signing
 from django.utils import timezone
 
-from apps.anagrafica.forms import CampoData
+from apps.anagrafica.forms import CampiFotoMixin, CampoData
 from apps.anagrafica.validatori import dati_da_codice_fiscale
 from apps.core.forms import StileMixin
 
@@ -24,10 +24,12 @@ from .models import (
     CartaTessera,
     DomandaIscrizione,
     LottoTessere,
+    Sezione,
     Socio,
     Tessera,
     TipologiaSocio,
 )
+from .sezioni import sezioni_di
 
 
 def _anni_proposti():
@@ -41,18 +43,44 @@ def _non_futura(valore, campo="La data"):
     return valore
 
 
+def prepara_sezione(form, utente, nome="sezione"):
+    """Sezioni consentite all'utente; con una sola scelta il campo è nascosto e precompilato."""
+    campo = form.fields.get(nome)
+    if campo is None:
+        return
+    qs = sezioni_di(utente) if utente is not None else Sezione.objects.filter(attiva=True)
+    campo.queryset = qs
+    campo.empty_label = None if qs.count() == 1 else "— scegliere —"
+    if qs.count() == 1:
+        campo.widget = forms.HiddenInput()
+        campo.initial = qs.first().pk
+        if form.is_bound:
+            form.data = form.data.copy()
+            form.data[form.add_prefix(nome)] = qs.first().pk
+
+
 class TipologiaField(forms.ModelChoiceField):
     def __init__(self, **kwargs):
         super().__init__(queryset=TipologiaSocio.objects.filter(attiva=True), **kwargs)
 
     def label_from_instance(self, obj):
-        if not obj.quota_annua:
+        from .servizi import quota_per
+
+        quota = quota_per(obj, date.today().year)
+        if not quota:
             return f"{obj.nome} (esente)"
-        return f"{obj.nome} (quota {obj.quota_annua:.2f} €)".replace(".", ",")
+        return f"{obj.nome} (quota {quota:.2f} €)".replace(".", ",")
 
 
 class AmmissioneForm(StileMixin, forms.Form):
+    sezione = forms.ModelChoiceField(queryset=Sezione.objects.none(), label="Sezione")
     tipologia = TipologiaField(label="Tipologia di socio")
+    matricola = forms.CharField(
+        label="Matricola nazionale",
+        required=False,
+        max_length=30,
+        help_text="Numero nel registro nazionale, se già assegnato.",
+    )
     data_ammissione = forms.DateField(
         label="Data di ammissione", widget=CampoData, initial=date.today
     )
@@ -69,15 +97,31 @@ class AmmissioneForm(StileMixin, forms.Form):
         initial=True,
     )
 
+    def __init__(self, *args, utente=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        prepara_sezione(self, utente)
+
     def clean_data_ammissione(self):
         return _non_futura(self.cleaned_data["data_ammissione"], "La data di ammissione")
 
 
-class SocioForm(StileMixin, forms.ModelForm):
+class SocioForm(StileMixin, CampiFotoMixin, forms.ModelForm):
     class Meta:
         model = Socio
-        fields = ["tipologia", "data_ammissione", "delibera_ammissione", "note"]
+        fields = [
+            "sezione", "matricola", "tipologia", "data_ammissione", "delibera_ammissione", "note",
+        ]  # fmt: skip
         widgets = {"data_ammissione": CampoData, "note": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, utente=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        prepara_sezione(self, utente)
+
+    def clean_matricola(self):
+        matricola = self.cleaned_data["matricola"].strip()
+        if matricola and Socio.objects.filter(matricola=matricola).exclude(pk=self.instance.pk):
+            raise forms.ValidationError("Matricola già assegnata a un altro socio.")
+        return matricola
 
     def clean_data_ammissione(self):
         return _non_futura(self.cleaned_data["data_ammissione"], "La data di ammissione")
@@ -102,7 +146,7 @@ class TesseraForm(StileMixin, forms.Form):
     )
     importo = forms.DecimalField(
         label="Quota (€)", max_digits=8, decimal_places=2, min_value=0, required=False,
-        help_text="Vuoto = quota della tipologia del socio.",
+        help_text="Vuoto = prezzo del listino dell'anno per la tipologia del socio.",
     )  # fmt: skip
     data_rilascio = forms.DateField(label="Data di rilascio", widget=CampoData, initial=date.today)
     attribuzione = forms.ChoiceField(
@@ -169,14 +213,19 @@ class LottoForm(StileMixin, forms.ModelForm):
     class Meta:
         model = LottoTessere
         fields = [
-            "anno", "serie", "numero_da", "numero_a", "cifre", "data_acquisizione", "fornitore",
-            "riferimento", "costo_unitario", "note",
+            "anno", "sezione", "serie", "numero_da", "numero_a", "cifre", "data_acquisizione",
+            "fornitore", "riferimento", "costo_unitario", "note",
         ]  # fmt: skip
         widgets = {"data_acquisizione": CampoData}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, utente=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["anno"].initial = date.today().year
+        prepara_sezione(self, utente)
+        costo = self.fields["costo_unitario"]
+        costo.required = False
+        costo.initial = None
+        costo.help_text = "Vuoto = costo d'acquisto del listino dell'anno."
 
     def clean(self):
         dati = super().clean()
@@ -197,6 +246,101 @@ class AccoglimentoForm(AmmissioneForm):
     pass
 
 
+class ListinoForm(StileMixin, forms.Form):
+    """Costo d'acquisto e un prezzo di distribuzione per ogni tipologia attiva."""
+
+    costo_acquisto = forms.DecimalField(
+        label="Costo d'acquisto per tessera (€)",
+        max_digits=8,
+        decimal_places=2,
+        min_value=0,
+        help_text="Quanto si paga alla sede centrale per ogni tessera fisica.",
+    )
+    note = forms.CharField(required=False, max_length=255)
+
+    def __init__(self, *args, listino=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        attuali = {q.tipologia_id: q.importo for q in listino.quote.all()} if listino else {}
+        if listino:
+            self.fields["costo_acquisto"].initial = listino.costo_acquisto
+            self.fields["note"].initial = listino.note
+        self.tipologie = list(TipologiaSocio.objects.filter(attiva=True))
+        for t in self.tipologie:
+            self.fields[f"quota_{t.pk}"] = forms.DecimalField(
+                label=f"{t.nome} (€)",
+                max_digits=8,
+                decimal_places=2,
+                min_value=0,
+                initial=attuali.get(t.pk, t.quota_annua),
+                help_text="0 = esente",
+            )
+
+    def campi_quota(self):
+        return [self[f"quota_{t.pk}"] for t in self.tipologie]
+
+    def quote(self):
+        return {t: self.cleaned_data[f"quota_{t.pk}"] for t in self.tipologie}
+
+
+class ImportaForm(StileMixin, forms.Form):
+    """Estratto del registro soci nazionale e scelte per i dati che il file non contiene."""
+
+    file = forms.FileField(
+        label="File del registro nazionale",
+        help_text="Excel (.xlsx) o CSV; la riga delle intestazioni è riconosciuta da sola.",
+        widget=forms.FileInput(attrs={"accept": ".xlsx,.csv"}),
+    )
+    sezione = forms.ModelChoiceField(
+        queryset=Sezione.objects.none(),
+        label="Sezione",
+        required=False,
+        help_text="Per le righe senza colonna sezione.",
+    )
+    tipologia = forms.ModelChoiceField(
+        queryset=TipologiaSocio.objects.filter(attiva=True),
+        label="Tipologia predefinita",
+        help_text="Per le righe senza tipologia o con una tipologia non riconosciuta.",
+    )
+    crea_sezioni = forms.BooleanField(
+        label="Crea le sezioni presenti nel file e non ancora registrate", required=False
+    )
+    allinea_sezione = forms.BooleanField(
+        label="Sposta i soci già presenti nella sezione indicata dal registro", required=False
+    )
+    anno_tessere = forms.TypedChoiceField(
+        label="Numeri di tessera del file",
+        coerce=int,
+        empty_value=None,
+        required=False,
+        choices=lambda: [("", "— non attribuire —"), *_anni_proposti()],
+        help_text="Attribuisce ai soci le tessere fisiche già caricate con quel numero.",
+    )
+
+    def __init__(self, *args, utente=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sezione"].queryset = sezioni_di(utente)
+        self.fields["sezione"].empty_label = "— dalla colonna del file —"
+        if self.fields["sezione"].queryset.count() == 1:
+            self.fields["sezione"].initial = self.fields["sezione"].queryset.first().pk
+        self.fields["tipologia"].initial = TipologiaSocio.objects.filter(attiva=True).first()
+
+
+class SezioneForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Sezione
+        fields = ["codice", "nome", "comune", "provincia", "email", "attiva", "ordine"]
+        widgets = {"provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"})}
+
+    def clean_provincia(self):
+        return self.cleaned_data["provincia"].strip().upper()
+
+    def clean_attiva(self):
+        attiva = self.cleaned_data["attiva"]
+        if not attiva and self.instance.pk and self.instance.soci.filter(stato="attivo").exists():
+            raise forms.ValidationError("La sezione ha soci attivi: trasferirli prima.")
+        return attiva
+
+
 class TipologiaForm(StileMixin, forms.ModelForm):
     class Meta:
         model = TipologiaSocio
@@ -207,7 +351,8 @@ class TipologiaForm(StileMixin, forms.ModelForm):
 
 CAMPI_DOMANDA = [
     "nome", "cognome", "codice_fiscale", "data_nascita", "luogo_nascita", "email", "telefono",
-    "indirizzo", "cap", "comune", "provincia", "tipologia", "motivazione", "accetta_statuto",
+    "indirizzo", "cap", "comune", "provincia", "sezione", "tipologia", "motivazione",
+    "accetta_statuto",
     "consenso_comunicazioni", "consenso_immagini",
 ]  # fmt: skip
 
@@ -231,11 +376,13 @@ class DomandaForm(StileMixin, forms.ModelForm):
             "provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, utente=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["tipologia"].queryset = TipologiaSocio.objects.filter(attiva=True)
         self.fields["tipologia"].empty_label = "— da stabilire —"
         self.fields["accetta_statuto"].required = True
+        self.fields["sezione"].required = True
+        prepara_sezione(self, utente)
 
     def clean_codice_fiscale(self):
         cf = self.cleaned_data["codice_fiscale"].strip().upper()

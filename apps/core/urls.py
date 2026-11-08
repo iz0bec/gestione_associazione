@@ -16,5 +16,6 @@ app_name = "core"
 urlpatterns = [
     path("", views.CruscottoView.as_view(), name="cruscotto"),
     path("organizzazione/", views.OrganizzazioneView.as_view(), name="organizzazione"),
+    path("organizzazione/aspetto/", views.AspettoView.as_view(), name="aspetto"),
     path("registro-attivita/", views.RegistroAttivitaView.as_view(), name="registro_attivita"),
 ]

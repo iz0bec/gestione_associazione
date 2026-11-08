@@ -11,6 +11,16 @@ import pytest
 from django.contrib.auth.models import Group
 
 
+@pytest.fixture(autouse=True)
+def _organizzazione_configurata(request):
+    """Nei test l'ente risulta già configurato (niente rinvio alla configurazione guidata)."""
+    if request.node.get_closest_marker("django_db") or "db" in request.fixturenames:
+        request.getfixturevalue("db")
+        from apps.core.models import Organizzazione
+
+        Organizzazione.objects.update_or_create(pk=1, defaults={"configurata": True})
+
+
 @pytest.fixture
 def crea_utente(db, django_user_model):
     def _crea(username="mario", ruoli=(), **extra):

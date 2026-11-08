@@ -10,17 +10,17 @@
 
 from datetime import date
 
-from django import forms
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import connection
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import ListView, TemplateView, UpdateView
 
 from .audit import Azione, campi_modificati, registra
-from .forms import StileMixin
+from .forms import AspettoForm, OrganizzazioneForm
 from .models import EventoAudit, Organizzazione
 
 
@@ -37,6 +37,13 @@ class PermessoMixin(LoginRequiredMixin, PermissionRequiredMixin):
 
 class CruscottoView(LoginRequiredMixin, TemplateView):
     template_name = "core/cruscotto.html"
+
+    def get(self, request, *args, **kwargs):
+        from .configurazione import da_configurare
+
+        if da_configurare(request.user):  # primo accesso: configurazione guidata
+            return redirect("configurazione", passo="ente")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         from apps.anagrafica.models import Soggetto
@@ -102,17 +109,6 @@ def _riepilogo_protocollo(utente):
     }
 
 
-class OrganizzazioneForm(StileMixin, forms.ModelForm):
-    class Meta:
-        model = Organizzazione
-        fields = [
-            "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva",
-            "iscrizione_runts", "indirizzo", "cap", "comune", "provincia", "telefono",
-            "email", "pec", "sito_web", "logo", "informativa_privacy", "iscrizioni_online",
-        ]  # fmt: skip
-        widgets = {"informativa_privacy": forms.Textarea(attrs={"rows": 6})}
-
-
 class OrganizzazioneView(PermessoMixin, UpdateView):
     permission_required = "core.gestisci_organizzazione"
     form_class = OrganizzazioneForm
@@ -129,6 +125,33 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
             registra(Azione.MODIFICA, self.object, **dettagli)
         messages.success(self.request, "Dati dell'organizzazione salvati.")
         return risposta
+
+
+class AspettoView(PermessoMixin, UpdateView):
+    permission_required = "core.gestisci_organizzazione"
+    form_class = AspettoForm
+    template_name = "core/aspetto.html"
+    success_url = reverse_lazy("core:aspetto")
+
+    def get_object(self, queryset=None):
+        return Organizzazione.corrente()
+
+    def form_valid(self, form):
+        from .aspetto import salva_aspetto
+        from .immagini import ImmagineNonValida
+
+        try:
+            salva_aspetto(
+                form,
+                self.request.user,
+                logo=form.cleaned_data.get("nuovo_logo"),
+                togli_logo=form.cleaned_data.get("togli_logo"),
+            )
+        except ImmagineNonValida as e:
+            form.add_error("nuovo_logo", e)
+            return self.form_invalid(form)
+        messages.success(self.request, "Aspetto dell'interfaccia salvato.")
+        return redirect(self.success_url)
 
 
 class RegistroAttivitaView(PermessoMixin, ListView):

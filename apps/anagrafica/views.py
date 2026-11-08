@@ -12,13 +12,16 @@ import io
 from datetime import date
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import CreateView, DetailView, UpdateView
 from django_filters.views import FilterView
 
+from apps.core.immagini import ImmagineNonValida, risposta_immagine
 from apps.core.models import EventoAudit
 from apps.core.views import PermessoMixin
 
@@ -82,7 +85,16 @@ class _SalvaMixin:
     context_object_name = "soggetto"
 
     def form_valid(self, form):
-        self.object = servizi.salva_soggetto(form, self.request.user)
+        try:
+            self.object = servizi.salva_soggetto(
+                form,
+                self.request.user,
+                foto=form.cleaned_data.get("nuova_foto"),
+                togli_foto=form.cleaned_data.get("togli_foto"),
+            )
+        except ImmagineNonValida as e:
+            form.add_error("nuova_foto", e)
+            return self.form_invalid(form)
         messages.success(self.request, f"«{self.object}» salvato.")
         return redirect(self.object)
 
@@ -99,6 +111,20 @@ class CreaView(PermessoMixin, _SalvaMixin, CreateView):
 
 class ModificaView(PermessoMixin, _SalvaMixin, UpdateView):
     permission_required = "anagrafica.change_soggetto"
+
+
+class FotoView(LoginRequiredMixin, View):
+    """Foto del soggetto: per chi vede l'anagrafica o, se è un socio, il libro soci."""
+
+    def get(self, request, pk):
+        soggetto = get_object_or_404(Soggetto, pk=pk)
+        utente = request.user
+        if not (
+            utente.has_perm("anagrafica.view_soggetto")
+            or (utente.has_perm("soci.view_socio") and hasattr(soggetto, "socio"))
+        ):
+            raise PermissionDenied
+        return risposta_immagine(soggetto.foto)
 
 
 class ArchiviaView(PermessoMixin, View):

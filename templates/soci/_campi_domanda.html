@@ -21,6 +21,7 @@
   </div>
 </fieldset>
 <fieldset><legend class="h3">Domanda</legend>
+  {% if form.sezione and not form.sezione.is_hidden %}{{ form.sezione.as_field_group }}{% endif %}
   {{ form.tipologia.as_field_group }}
   {{ form.motivazione.as_field_group }}
   {{ form.accetta_statuto.as_field_group }}

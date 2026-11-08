@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Personalizzazione dell'interfaccia: logo, colore principale, menu laterale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Aspetto{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Sistema</div>{% endblock %}
+{% block titolo_pagina %}Aspetto dell'interfaccia{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-7">
+    <form method="post" enctype="multipart/form-data" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">
+        {% include "core/_campi_aspetto.html" %}
+      </div>
+      <div class="card-footer text-end"><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h3 class="card-title">Dove compaiono</h3>
+      <ul class="small mb-0">
+        <li>Il <strong>logo</strong> è nel menu, nella pagina di accesso, nelle pagine pubbliche (domanda di iscrizione, schede dei cimeli), come icona della scheda del browser e nell'intestazione di tutti i PDF.</li>
+        <li>Il <strong>colore principale</strong> si usa per pulsanti, collegamenti, elementi attivi e per l'intestazione dei PDF. Il colore del testo sopra (bianco o scuro) è scelto da solo per restare leggibile.</li>
+        <li>Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante in alto.</li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

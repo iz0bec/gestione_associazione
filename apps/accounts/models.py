@@ -25,6 +25,12 @@ class Utente(AbstractUser):
         related_name="utente",
         help_text="Collega l'account alla persona in anagrafica (facoltativo).",
     )
+    sezioni = models.ManyToManyField(
+        "soci.Sezione",
+        blank=True,
+        related_name="utenti",
+        help_text="Limita soci e tessere visibili a queste sezioni. Vuoto = tutte le sezioni.",
+    )
 
     class Meta:
         verbose_name = "utente"

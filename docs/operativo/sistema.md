@@ -14,9 +14,34 @@
 ## Dati dell'organizzazione
 
 **Sistema → Organizzazione** (amministratore e segretario). Denominazione, codice fiscale,
-eventuale iscrizione al RUNTS, sede, recapiti, PEC, logo e testo dell'**informativa privacy**.
+eventuale iscrizione al RUNTS, sede, recapiti, PEC e testo dell'**informativa privacy**.
 Sono usati nelle intestazioni dei documenti, nelle comunicazioni e nei moduli; la denominazione
 breve compare in alto nel menu. Ogni modifica è registrata.
+
+Questi dati si inseriscono la prima volta con la [configurazione guidata](configurazione-iniziale.md).
+
+## Aspetto
+
+**Sistema → Aspetto** (amministratore e segretario):
+
+- **logo**: PNG o JPEG, meglio quadrato e con sfondo trasparente. Viene ridotto a 512 pixel e
+  ricodificato. Compare nel menu, nella pagina di accesso, nelle pagine pubbliche, come icona del
+  browser e nell'intestazione dei PDF;
+- **colore principale**: pulsanti, collegamenti, voci attive, intestazioni dei PDF. Il testo sopra
+  il colore diventa bianco o scuro da solo, per restare leggibile;
+- **menu laterale**: scuro, chiaro o nel colore principale.
+
+Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante in alto.
+
+## Sezioni
+
+**Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Con
+una sola sezione l'applicazione si comporta come per un'associazione singola. Con più sezioni
+compaiono il filtro e la scelta della sezione in soci, tessere e domande di iscrizione. Una
+sezione con soci attivi non si può disattivare.
+
+Le sezioni visibili a un utente si assegnano nella sua scheda (**Amministrazione tecnica →
+Utenti → Sezioni**). Senza sezioni assegnate l'utente vede tutto.
 
 La casella **Domande di iscrizione online** pubblica il modulo di iscrizione all'indirizzo
 `/iscrizione/` (vedi [Soci e tesseramento](soci.md#domande-di-iscrizione)).

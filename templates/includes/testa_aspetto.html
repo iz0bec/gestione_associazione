@@ -1,0 +1,2 @@
+{% load static %}<link rel="stylesheet" href="{% url 'aspetto_css' %}?v={{ organizzazione.versione_aspetto }}">
+{% if organizzazione.logo %}<link rel="icon" href="{% url 'logo' %}?v={{ organizzazione.versione_aspetto }}" type="image/png">{% else %}<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">{% endif %}

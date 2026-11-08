@@ -13,9 +13,9 @@
     @bottom-left { content: element(piede); }
     @bottom-right { content: "pagina " counter(page) " di " counter(pages); font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 8pt; color: #666; } }
   body { font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 10pt; color: #111; }
-  .intestazione { display: flex; align-items: center; border-bottom: 1.5pt solid #1d4e89; padding-bottom: 6pt; margin-bottom: 14pt; }
+  .intestazione { display: flex; align-items: center; border-bottom: 1.5pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; padding-bottom: 6pt; margin-bottom: 14pt; }
   .intestazione img { height: 16mm; margin-right: 10pt; }
-  .intestazione .nome { font-size: 14pt; font-weight: bold; color: #1d4e89; }
+  .intestazione .nome { font-size: 14pt; font-weight: bold; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
   .intestazione .dati { font-size: 8pt; color: #444; }
   h1 { font-size: 15pt; margin: 0 0 10pt; }
   table { width: 100%; border-collapse: collapse; }

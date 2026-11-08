@@ -203,3 +203,49 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   mostra i soli campi pubblici. QR generato con `segno` (BSD) in SVG, senza servizi esterni; l'indirizzo
   usa `URL_PUBBLICO` se impostato, per le etichette stampate.
 - **Foto**: ricodificate in JPEG con Pillow (massimo 1600 px), che elimina i metadati.
+
+## ADR-021 - Sezioni per soci e tessere
+
+- L'applicazione può servire una federazione: soci, lotti di tessere (e quindi le tessere fisiche) e
+  domande di iscrizione appartengono a una **sezione**. Protocollo, organi, tesoreria e patrimonio restano
+  dell'ente che installa l'applicazione (scelta dell'utente: multisezione solo per soci e tessere).
+- Una sezione predefinita è creata dalle migrazioni: un'associazione singola non vede mai la scelta della
+  sezione (campo nascosto e precompilato quando le sezioni attive sono una).
+- Visibilità: `Utente.sezioni` (vuoto = tutte). Il filtro è applicato nelle viste tramite
+  `apps.soci.sezioni.filtra()` e passato ai servizi massivi come insieme di id (`sezioni=`); i servizi non
+  conoscono l'utente.
+- Il numero del libro soci resta unico per tutta l'installazione; la matricola del registro nazionale è un
+  campo a parte (unico se valorizzato). Le tessere fisiche si attribuiscono solo ai soci della sezione del
+  lotto.
+
+## ADR-022 - Listino annuale del tesseramento
+
+- Costo d'acquisto (verso la sede centrale) e prezzo di distribuzione (quota per tipologia) cambiano ogni
+  anno: `ListinoTessere` per anno + `QuotaListino` per tipologia. La quota della tipologia resta solo come
+  valore di riferimento per i listini nuovi.
+- Il listino si crea all'apertura dell'esercizio in tesoreria copiando l'anno precedente; le tessere e i
+  carichi già registrati conservano i propri importi (nessun ricalcolo retroattivo).
+
+## ADR-023 - Importazione dal registro nazionale con anteprima esatta
+
+- Il formato dell'estratto nazionale non è fisso: colonne riconosciute per **intestazione** (sinonimi
+  normalizzati), con ricerca della riga d'intestazione nelle prime 20.
+- L'anteprima esegue **lo stesso codice** dell'importazione dentro una transazione poi annullata
+  (`transaction.set_rollback`): ciò che si vede è ciò che accadrà. Ogni riga ha il suo punto di ripristino,
+  così un errore salta la riga e non l'importazione.
+- Abbinamento: codice fiscale, poi matricola, poi cognome+nome+data di nascita se univoci. Dei dati
+  esistenti si completano solo i campi vuoti.
+- `openpyxl` con `defusedxml`; `.xls` non supportato (richiederebbe un'altra libreria per un formato
+  obsoleto).
+
+## ADR-024 - Personalizzazione dell'interfaccia e configurazione guidata
+
+- Colore e stile del menu sono campi di `Organizzazione`; il CSS è generato da una vista (`/aspetto.css`,
+  versione nell'indirizzo per la cache) invece che con stili inline, per mantenere la CSP rigorosa. Il
+  colore del testo sui pulsanti è calcolato con la luminanza WCAG.
+- Logo ricodificato in PNG (trasparenza conservata), servito pubblicamente perché compare nella pagina di
+  accesso; SVG esclusi.
+- Configurazione guidata in sei passi che salvano subito (nessuno stato in sessione); il cruscotto vi
+  rimanda finché `Organizzazione.configurata` è falso e l'utente può configurare. Le installazioni
+  esistenti risultano già configurate (migrazione).
+

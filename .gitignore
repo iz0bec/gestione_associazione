@@ -16,3 +16,6 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# File di lavoro non versionati (es. estratti del registro soci nazionale: dati personali)
+tmp/

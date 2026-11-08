@@ -12,14 +12,14 @@
   <link rel="stylesheet" href="{% static 'vendor/tabler/css/tabler.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/tabler-icons/tabler-icons.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  {% include "includes/testa_aspetto.html" %}
   {% block extra_head %}{% endblock %}
 </head>
 <body class="d-flex flex-column">
 <div class="page page-center">
   <main class="container container-tight py-4">
     <div class="text-center mb-4">
-      <span class="marchio marchio-grande"><i class="ti ti-building-community" aria-hidden="true"></i></span>
+      {% include "includes/marchio.html" with grande=True %}
       <div class="h2 mt-2 mb-0">{{ organizzazione.denominazione }}</div>
       <div class="text-secondary">{{ APP_NOME }}</div>
     </div>

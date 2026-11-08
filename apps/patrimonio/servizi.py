@@ -10,7 +10,6 @@
 
 import csv
 import hashlib
-import io
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -25,7 +24,6 @@ from apps.core.numerazione import prossimo_numero
 
 from .models import SEQ_INVENTARIO, Bene, PassaggioConsegne, Uscita, Valutazione
 
-FOTO_MAX_MB = 15
 FOTO_LATO = 1600
 
 
@@ -35,21 +33,12 @@ class OperazioneNonValida(ValidationError):
 
 def foto_ripulita(file):
     """JPEG ridimensionato e senza metadati (EXIF: posizione GPS, dispositivo, data)."""
-    from PIL import Image, ImageOps, UnidentifiedImageError
+    from apps.core.immagini import ImmagineNonValida, ripulisci
 
-    if file.size > FOTO_MAX_MB * 1024 * 1024:
-        raise OperazioneNonValida(f"La foto supera {FOTO_MAX_MB} MB.")
     try:
-        img = Image.open(file)
-        img = ImageOps.exif_transpose(img)
-        img.thumbnail((FOTO_LATO, FOTO_LATO))
-        if img.mode not in ("RGB", "L"):
-            img = img.convert("RGB")
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
-        raise OperazioneNonValida("Il file non è un'immagine valida.") from None
-    uscita = io.BytesIO()
-    img.save(uscita, "JPEG", quality=85, optimize=True)
-    return ContentFile(uscita.getvalue(), name="foto.jpg")
+        return ripulisci(file, lato=FOTO_LATO)
+    except ImmagineNonValida as e:
+        raise OperazioneNonValida(e.messages) from None
 
 
 @transaction.atomic

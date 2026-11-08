@@ -23,7 +23,10 @@ codice fiscale) si modificano dalla scheda anagrafica e valgono ovunque.
 | | |
 |---|---|
 | **Numero di iscrizione** | Progressivo unico del libro soci, assegnato automaticamente all'ammissione. Non si modifica e non si riusa, nemmeno dopo la cessazione. |
-| **Tipologia** | Ordinario, sostenitore, onorario... Ognuna ha una **quota annua** proposta al rilascio della tessera (0 = esente). |
+| **Sezione** | Sezione territoriale del socio. Un'associazione singola ne ha una sola, e la scelta non compare nei moduli. In una federazione soci e tessere fisiche sono divisi per sezione, e ogni utente può essere limitato alle proprie sezioni. |
+| **Matricola nazionale** | Numero del socio nel registro nazionale, se assegnato. È diversa dal numero di iscrizione locale. |
+| **Tipologia** | Ordinario, sostenitore, onorario... La quota di ogni anno è fissata nel **listino** (0 = esente). |
+| **Listino** | Per ogni anno contiene il **costo d'acquisto** di una tessera dalla sede centrale e il **prezzo di distribuzione**, cioè la quota chiesta al socio, per ogni tipologia. Si fissa all'inizio dell'anno contabile. |
 | **Stato** | *Attivo*, *sospeso* (non riceve la tessera, resta nel libro) o *cessato* (con data e causa). |
 | **Tessera fisica** | Tessera prestampata e numerata dalla **sede centrale**, ricevuta a lotti. È *disponibile*, *attribuita* a un socio, *annullata* (deteriorata, errata), *smarrita* o *restituita*. |
 | **Tesseramento** | Uno per socio e per anno, con la quota e la tessera fisica attribuita (il suo numero è quello stampato). La quota può essere *da pagare*, *pagata*, *esente*; il tesseramento può essere *annullato*. |
@@ -34,7 +37,8 @@ codice fiscale) si modificano dalla scheda anagrafica e valgono ovunque.
 
 1. **Soci → Nuovo socio**, cercare la persona per cognome, nome o codice fiscale.
 2. Se non c'è, crearla prima in **Anagrafica** (dalla scheda si usa poi **Iscrivi**).
-3. Nella pagina di ammissione indicare **tipologia**, **data** e, se c'è, la **delibera**
+3. Nella pagina di ammissione indicare la **sezione** (solo con più sezioni), la **tipologia**, la
+   **matricola nazionale** se già assegnata, la **data** e, se c'è, la **delibera**
    (es. «Consiglio direttivo del 12/01/2026, verbale n. 3»). Con la casella *Rilascia subito la
    tessera* viene creata anche la tessera dell'anno, da pagare.
 
@@ -46,7 +50,8 @@ enti, persone archiviate o decedute, né chi è già nel libro soci.
 Mostra i dati di iscrizione, le tessere di tutti gli anni, la situazione della quota corrente e
 la storia delle operazioni. Dai pulsanti in alto:
 
-- **Modifica**: tipologia, data e delibera di ammissione, note (ogni cambio è registrato);
+- **Modifica**: sezione, matricola, tipologia, data e delibera di ammissione, note, **foto** (ogni
+  cambio è registrato);
 - **Sospendi / Riattiva**;
 - **Cessazione**: data, causa (dimissioni, decesso, esclusione, morosità, altro) e note.
   Il socio resta nel libro con il suo numero; perde la categoria *Socio*. Per il **decesso** la data
@@ -136,13 +141,65 @@ se qualcuno segnala di non riuscire a inviarlo, deve ricaricare la pagina e ripr
 | Stampa | Dove | Chi |
 |---|---|---|
 | **Libro soci** (PDF, A4 orizzontale, tutti gli iscritti compresi i cessati) | Soci → Stampa ed esporta | presidente, segretario, amministratore |
-| **Elenco filtrato** (CSV per Excel) | Soci → Stampa ed esporta | come sopra |
+| **Elenco filtrato** (CSV per Excel, con sezione e matricola) | Soci → Stampa ed esporta | come sopra |
 | **Ricevuta** (PDF) | tessera pagata | tutti i ruoli che vedono le tessere |
 
 Ogni stampa ed esportazione è registrata nel registro attività.
 
-## Tipologie e quote
+## Tipologie
 
-**Tesseramento → Tipologie e quote**. Alla prima installazione ci sono *Ordinario*, *Sostenitore*
-e *Onorario* con quota 0: **impostare le quote** prima del primo rinnovo. Cambiare la quota non
-modifica le tessere già rilasciate. Una tipologia non più usata si disattiva (non si cancella).
+**Tesseramento → Tipologie**. Alla prima installazione ci sono *Ordinario*, *Sostenitore* e
+*Onorario*. La **quota di riferimento** di ogni tipologia serve solo come proposta per i nuovi
+listini. La quota effettiva di un anno è quella del listino. Una tipologia non più usata si
+disattiva (non si cancella).
+
+## Listino del tesseramento
+
+**Tesseramento → Listino {anno}** (tesoriere, amministratore). Per ogni anno si fissano:
+
+- il **costo d'acquisto** di una tessera dalla sede centrale. Viene proposto quando si registra un
+  carico di tessere: si può lasciare vuoto e il carico prende quello del listino;
+- il **prezzo di distribuzione** (la quota annuale) per ogni tipologia. Viene proposto al rilascio
+  delle tessere e nel rinnovo annuale.
+
+Il listino si crea da solo all'**apertura dell'esercizio** in tesoreria, copiando l'anno precedente,
+e va confermato o corretto. Finché non è fissato, la pagina del tesseramento lo segnala. Cambiare il
+listino non modifica le tessere già rilasciate né i carichi già registrati.
+
+## Importare dal registro nazionale
+
+**Sistema → Importa soci** (amministratore, segretario). Carica l'estratto del registro soci
+nazionale in Excel (`.xlsx`) o CSV. Il formato `.xls` di Excel 97-2003 va prima salvato come
+`.xlsx`.
+
+1. Caricare il file e scegliere:
+   - la **sezione** per le righe senza colonna sezione (con una sola sezione è già scelta);
+   - la **tipologia predefinita** per le righe senza tipologia o con una tipologia sconosciuta;
+   - se **creare le sezioni** del file non ancora registrate;
+   - se **spostare** nella sezione del registro i soci già presenti in un'altra sezione;
+   - l'**anno** per cui attribuire i numeri di tessera del file (facoltativo; vale solo per le
+     tessere fisiche già caricate).
+2. Premere **Anteprima**. Si vede, riga per riga, cosa succederà: *nuovo*, *aggiornato*,
+   *invariato* o *errore*, con le note. **Nulla viene modificato.**
+3. Premere **Esegui l'importazione**. Le righe con errori vengono saltate e le altre importate.
+
+Le colonne sono riconosciute dalle intestazioni, anche se il file ha righe di titolo sopra:
+cognome e nome (o nominativo), codice fiscale, matricola, sesso, data e luogo di nascita, indirizzo,
+CAP, comune, provincia, email, telefono, cellulare, sezione (nome o codice), tipologia, data di
+iscrizione, numero di tessera. Le colonne non riconosciute sono elencate e ignorate.
+
+Regole:
+
+- la persona si riconosce per **codice fiscale**, poi per **matricola**, poi per **cognome, nome e
+  data di nascita**. Chi non c'è viene inserito in anagrafica e iscritto al libro soci;
+- delle schede già presenti si **completano solo i dati mancanti**. Ciò che è già registrato qui
+  non viene sovrascritto, e le differenze (email, comune, indirizzo, sezione, matricola) sono
+  segnalate nelle note;
+- un codice fiscale non valido viene ignorato, con una nota;
+- si può **ripetere** l'importazione a ogni aggiornamento del registro, senza creare doppioni;
+- l'esito elenca anche i **soci attivi assenti dal file**. Non vengono toccati: verificare se sono
+  cessati;
+- un utente limitato ad alcune sezioni importa solo i soci di quelle sezioni.
+
+Per file molto grandi l'amministratore di sistema può usare il comando
+`importa_registro_soci` (vedi [Configurazione](../sistema/configurazione.md#comandi)).

@@ -3,7 +3,7 @@
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · n. {{ socio.numero }}</div>{% endblock %}
 {% block titolo_pagina %}{{ socio.soggetto.nome_completo }}{% endblock %}
 {% block contenuto %}
-<form method="post" class="card" novalidate>{% csrf_token %}
+<form method="post" class="card" novalidate enctype="multipart/form-data">{% csrf_token %}
   <div class="card-body">
     <p class="text-secondary">I dati anagrafici (indirizzo, recapiti...) si modificano dalla <a href="{% url 'anagrafica:modifica' socio.soggetto.pk %}">scheda anagrafica</a>.</p>
     {{ form }}

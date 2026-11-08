@@ -11,6 +11,8 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.core.aspetto import aspetto_css, logo
+from apps.core.configurazione import ConfigurazioneView
 from apps.core.views import salute
 from apps.patrimonio.views import BenePubblicoView, FotoPubblicaView
 from apps.soci.pubblico import DomandaInviataView, DomandaPubblicaView
@@ -21,6 +23,8 @@ admin.site.index_title = "Amministrazione tecnica"
 
 urlpatterns = [
     path("salute/", salute, name="salute"),
+    path("aspetto.css", aspetto_css, name="aspetto_css"),
+    path("logo.png", logo, name="logo"),
     path("account/", include("allauth.urls")),
     path("amministrazione-tecnica/", admin.site.urls),
     path("anagrafica/", include("apps.anagrafica.urls")),
@@ -34,6 +38,10 @@ urlpatterns = [
     path("beni/<str:token>/foto/", FotoPubblicaView.as_view(), name="bene_pubblico_foto"),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
+    path("configurazione-iniziale/", ConfigurazioneView.as_view(), name="configurazione_inizio"),
+    path(
+        "configurazione-iniziale/<str:passo>/", ConfigurazioneView.as_view(), name="configurazione"
+    ),
     path("", include("apps.core.urls")),
 ]
 

@@ -30,9 +30,12 @@ soggette alle proprie licenze, tutte compatibili con l'uso e la ridistribuzione.
 | WeasyPrint | 70.0 | BSD |
 | WhiteNoise | 6.12.0 | MIT |
 | argon2-cffi | 25.1.0 | MIT |
-| cryptography | 50.0.2 13.0.0 | Apache-2.0 / BSD |
-| Pillow |  | MIT-CMU (HPND) |
+| cryptography | 50.0.2 | Apache-2.0 / BSD |
+| Pillow | 13.0.0 | MIT-CMU (HPND) |
 | segno | 1.6.6 | BSD |
+| openpyxl | 3.1.5 | MIT |
+| et-xmlfile (usata da openpyxl) | 2.0.0 | MIT |
+| defusedxml | 0.7.1 | PSF-2.0 |
 
 Versioni esatte di tutte le dipendenze (anche indirette) in `uv.lock`.
 

@@ -14,7 +14,7 @@
 Ogni utente ha uno o più **ruoli**; il ruolo decide cosa si vede e cosa si può fare.
 I ruoli li assegna l'amministratore.
 
-| Ruolo | Anagrafica | Esporta anagrafica | Dati organizzazione | Registro attività |
+| Ruolo | Anagrafica | Esporta anagrafica | Dati organizzazione, aspetto, configurazione guidata | Registro attività |
 |---|---|---|---|---|
 | Amministratore di sistema | consulta, inserisce, modifica, archivia | sì | modifica | consulta |
 | Presidente | consulta, inserisce, modifica, archivia | sì | - | consulta |
@@ -26,14 +26,18 @@ I ruoli li assegna l'amministratore.
 
 ### Soci e tesseramento
 
-| Ruolo | Libro soci | Tesseramento e attribuzione | Carico tessere dalla sede centrale | Incassi e annullamenti | Domande | Stampe ed elenco tesserati | Tipologie |
-|---|---|---|---|---|---|---|---|
-| Amministratore di sistema | consulta, iscrive, modifica, cessa | sì | sì | sì | registra, accoglie/respinge | sì | modifica |
-| Presidente | consulta | consulta | consulta | - | accoglie/respinge | sì | consulta |
-| Segretario | consulta, iscrive, modifica, cessa | sì | sì | - | registra, accoglie/respinge | sì | modifica |
-| Tesoriere | consulta | sì | sì | **sì** | consulta | - | consulta |
-| Consigliere, Revisore | consulta | consulta | consulta | - | consulta | - | consulta |
-| Addetto protocollo | - | - | - | - | - | - |
+| Ruolo | Libro soci | Tesseramento e attribuzione | Carico tessere dalla sede centrale | Incassi e annullamenti | Listino (costi e quote) | Domande | Stampe ed elenco tesserati | Tipologie | Importazione dal registro nazionale | Sezioni |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Amministratore di sistema | consulta, iscrive, modifica, cessa | sì | sì | sì | modifica | registra, accoglie/respinge | sì | modifica | sì | modifica |
+| Presidente | consulta | consulta | consulta | - | consulta | accoglie/respinge | sì | consulta | - | consulta |
+| Segretario | consulta, iscrive, modifica, cessa | sì | sì | - | consulta | registra, accoglie/respinge | sì | modifica | sì | consulta |
+| Tesoriere | consulta | sì | sì | **sì** | **modifica** | consulta | - | consulta | - | consulta |
+| Consigliere, Revisore | consulta | consulta | consulta | - | consulta | consulta | - | consulta | - | consulta |
+| Addetto protocollo | - | - | - | - | - | - | - | - | - | - |
+
+**Sezioni.** In una federazione a un utente si possono assegnare una o più sezioni: con qualunque
+ruolo, vedrà e gestirà solo soci, tessere, carichi e domande di quelle sezioni. Gli utenti senza
+sezioni assegnate, e l'amministratore tecnico, vedono tutto.
 
 Incassi e segreteria sono separati di proposito: chi iscrive i soci non registra i pagamenti.
 In un'associazione piccola la stessa persona può avere entrambi i ruoli.

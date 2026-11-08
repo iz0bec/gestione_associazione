@@ -26,18 +26,52 @@ SEQ_LIBRO_SOCI = "libro_soci"  # progressivo unico, mai riavviato
 SEQ_RICEVUTA = "ricevuta_quota"  # annuale, per anno di incasso
 
 
+class Sezione(models.Model):
+    """Sezione territoriale a cui appartengono i soci e le tessere fisiche.
+
+    Un'associazione singola ha una sola sezione (creata in automatico); una federazione ne ha
+    molte e può limitare ogni utente alle proprie (Utente.sezioni).
+    """
+
+    codice = models.CharField(
+        max_length=20, unique=True, help_text="Codice della sezione nel registro nazionale."
+    )
+    nome = models.CharField(max_length=150, unique=True)
+    comune = models.CharField(max_length=100, blank=True)
+    provincia = models.CharField(max_length=2, blank=True, validators=[validatore_provincia])
+    email = models.EmailField(blank=True)
+    attiva = models.BooleanField(default=True)
+    ordine = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "sezione"
+        verbose_name_plural = "sezioni"
+        ordering = ["ordine", "nome"]
+
+    def __str__(self):
+        return self.nome
+
+    @classmethod
+    def predefinita(cls):
+        per_ordine = cls.objects.order_by("ordine", "pk")
+        sezione = per_ordine.filter(attiva=True).first() or per_ordine.first()
+        if sezione is None:
+            sezione = cls.objects.create(codice="001", nome="Sezione principale")
+        return sezione
+
+
 class TipologiaSocio(models.Model):
     """Categoria statutaria del socio (ordinario, sostenitore, onorario...) con quota annua."""
 
     nome = models.CharField(max_length=60, unique=True)
     descrizione = models.CharField(max_length=255, blank=True)
     quota_annua = models.DecimalField(
-        "quota annua",
+        "quota di riferimento",
         max_digits=8,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0"))],
-        help_text="Proposta al rilascio della tessera; 0 = esente.",
+        help_text="Proposta per i nuovi listini annuali; 0 = esente.",
     )
     attiva = models.BooleanField(
         default=True, help_text="Le tipologie non attive non sono proposte."
@@ -100,6 +134,13 @@ class Socio(ModelloBase):
         limit_choices_to={"tipo": "persona"},
     )
     numero = models.PositiveIntegerField("numero di iscrizione", unique=True, editable=False)
+    sezione = models.ForeignKey(Sezione, on_delete=models.PROTECT, related_name="soci")
+    matricola = models.CharField(
+        "matricola nazionale",
+        max_length=30,
+        blank=True,
+        help_text="Numero del socio nel registro nazionale, se assegnato.",
+    )
     tipologia = models.ForeignKey(TipologiaSocio, on_delete=models.PROTECT, related_name="soci")
     data_ammissione = models.DateField("data di ammissione", default=date.today)
     delibera_ammissione = models.CharField(
@@ -126,12 +167,16 @@ class Socio(ModelloBase):
         permissions = [
             ("esporta_libro_soci", "Può stampare ed esportare il libro soci"),
             ("cessa_socio", "Può registrare la cessazione di un socio"),
+            ("importa_soci", "Può importare i soci dal registro nazionale"),
         ]
         constraints = [
             models.CheckConstraint(
                 condition=Q(stato="cessato", data_cessazione__isnull=False) | ~Q(stato="cessato"),
                 name="socio_cessato_con_data",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["matricola"], condition=~Q(matricola=""), name="matricola_unica"
+            ),
         ]
 
     def __str__(self):
@@ -159,10 +204,65 @@ class TesseraQuerySet(models.QuerySet):
         return self.valide().filter(pagata_il__isnull=True, importo__gt=0)
 
 
+class ListinoTessere(ModelloBase):
+    """Costi del tesseramento di un anno, fissati all'apertura dell'anno contabile.
+
+    Costo d'acquisto: quanto si paga alla sede centrale per ogni tessera fisica.
+    Prezzo di distribuzione: la quota chiesta al socio, diversa per tipologia (QuotaListino).
+    """
+
+    anno = models.PositiveIntegerField(unique=True)
+    costo_acquisto = models.DecimalField(
+        "costo d'acquisto per tessera",
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Prezzo pagato alla sede centrale per ogni tessera.",
+    )
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "listino del tesseramento"
+        verbose_name_plural = "listini del tesseramento"
+        ordering = ["-anno"]
+
+    def __str__(self):
+        return f"Listino {self.anno}"
+
+
+class QuotaListino(models.Model):
+    listino = models.ForeignKey(ListinoTessere, on_delete=models.CASCADE, related_name="quote")
+    tipologia = models.ForeignKey(TipologiaSocio, on_delete=models.PROTECT, related_name="+")
+    importo = models.DecimalField(
+        "prezzo di distribuzione",
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+
+    class Meta:
+        verbose_name = "quota del listino"
+        verbose_name_plural = "quote del listino"
+        ordering = ["tipologia__ordine", "tipologia__nome"]
+        constraints = [
+            models.UniqueConstraint(fields=["listino", "tipologia"], name="quota_unica_per_listino")
+        ]
+
+    def __str__(self):
+        return f"{self.listino.anno} {self.tipologia}: {self.importo}"
+
+
 class LottoTessere(ModelloBase):
     """Carico di tessere fisiche ricevute dalla sede centrale, con numerazione prestampata."""
 
     anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
+    sezione = models.ForeignKey(
+        Sezione,
+        on_delete=models.PROTECT,
+        related_name="lotti",
+        help_text="Le tessere del lotto si attribuiscono ai soci di questa sezione.",
+    )
     serie = models.CharField(
         max_length=10,
         blank=True,
@@ -367,6 +467,14 @@ class DomandaIscrizione(models.Model):
         verbose_name="tipologia richiesta",
         null=True,
         blank=True,
+    )
+    sezione = models.ForeignKey(
+        Sezione,
+        on_delete=models.PROTECT,
+        verbose_name="sezione",
+        null=True,
+        blank=True,
+        related_name="domande",
     )
     motivazione = models.TextField("presentazione", blank=True, max_length=2000)
     # dichiarazioni

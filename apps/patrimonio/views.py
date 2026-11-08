@@ -13,12 +13,12 @@ import io
 from datetime import date
 
 import django_filters
-from django.conf import settings
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
@@ -28,6 +28,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 from django_filters.views import FilterView
 
 from apps.core.audit import Azione, registra
+from apps.core.immagini import risposta_immagine
 from apps.core.models import Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
@@ -50,7 +51,8 @@ def _errore(request, e):
 
 def url_pubblico(request, bene):
     percorso = reverse("bene_pubblico", args=[bene.token])
-    if settings.URL_PUBBLICO:  # i QR stampati devono puntare al sito pubblico, non all'indirizzo interno
+    # i QR stampati devono puntare al sito pubblico, non all'indirizzo interno
+    if settings.URL_PUBBLICO:
         return settings.URL_PUBBLICO + percorso
     return request.build_absolute_uri(percorso)
 
@@ -173,10 +175,7 @@ class FotoView(PermessoMixin, View):
     permission_required = "patrimonio.view_bene"
 
     def get(self, request, pk):
-        b = get_object_or_404(Bene, pk=pk)
-        if not b.foto:
-            raise Http404
-        return FileResponse(b.foto.open("rb"), content_type="image/jpeg")
+        return risposta_immagine(get_object_or_404(Bene, pk=pk).foto)
 
 
 class _AzioneBeneView(PermessoMixin, View):
@@ -378,6 +377,4 @@ class BenePubblicoView(TemplateView):
 class FotoPubblicaView(View):
     def get(self, request, token):
         b = get_object_or_404(Bene, token=token, pubblico=True, foto_pubblica=True)
-        if not b.foto:
-            raise Http404
-        return FileResponse(b.foto.open("rb"), content_type="image/jpeg")
+        return risposta_immagine(b.foto, privata=False)

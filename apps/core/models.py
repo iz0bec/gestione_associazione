@@ -44,6 +44,15 @@ class ModelloBase(models.Model):
 
 
 validatore_provincia = RegexValidator(r"^[A-Z]{2}$", "Sigla di due lettere maiuscole (es. PZ).")
+validatore_colore = RegexValidator(r"^#[0-9a-fA-F]{6}$", "Colore nel formato #RRGGBB.")
+
+
+def percorso_logo(istanza, nome):
+    from .immagini import nome_casuale
+
+    return nome_casuale("organizzazione", "png")
+
+
 validatore_cap = RegexValidator(r"^\d{5}$", "Il CAP è di 5 cifre.")
 
 
@@ -68,7 +77,27 @@ class Organizzazione(models.Model):
     email = models.EmailField(blank=True)
     pec = models.EmailField("PEC", blank=True)
     sito_web = models.URLField("sito web", blank=True)
-    logo = models.ImageField(upload_to="organizzazione/", blank=True)
+    logo = models.ImageField(upload_to=percorso_logo, blank=True, max_length=255, editable=False)
+    # aspetto dell'interfaccia
+    colore_primario = models.CharField(
+        "colore principale",
+        max_length=7,
+        default="#1d4e89",
+        validators=[validatore_colore],
+        help_text="Pulsanti, collegamenti, intestazioni dei documenti.",
+    )
+
+    class StileMenu(models.TextChoices):
+        SCURO = "scuro", "Scuro"
+        CHIARO = "chiaro", "Chiaro"
+        COLORATO = "colorato", "Nel colore principale"
+
+    stile_menu = models.CharField(
+        "menu laterale", max_length=10, choices=StileMenu.choices, default=StileMenu.SCURO
+    )
+    configurata = models.BooleanField(
+        "configurazione iniziale completata", default=False, editable=False
+    )
     informativa_privacy = models.TextField(
         "informativa privacy",
         blank=True,
@@ -104,6 +133,25 @@ class Organizzazione(models.Model):
     @property
     def nome_breve(self):
         return self.denominazione_breve or self.denominazione
+
+    @property
+    def colore_testo_primario(self):
+        """Bianco o scuro, quello leggibile sul colore principale (luminanza WCAG)."""
+        r, g, b = (int(self.colore_primario[i : i + 2], 16) / 255 for i in (1, 3, 5))
+
+        def lineare(c):
+            return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+        luminanza = 0.2126 * lineare(r) + 0.7152 * lineare(g) + 0.0722 * lineare(b)
+        return "#ffffff" if luminanza < 0.4 else "#182433"
+
+    @property
+    def colore_rgb(self):
+        return ",".join(str(int(self.colore_primario[i : i + 2], 16)) for i in (1, 3, 5))
+
+    @property
+    def versione_aspetto(self):
+        return int(self.modificato_il.timestamp()) if self.modificato_il else 0
 
 
 class Sequenza(models.Model):
