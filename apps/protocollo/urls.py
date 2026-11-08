@@ -31,6 +31,8 @@ urlpatterns = [
     path("posta/<int:pk>/", views.MessaggioView.as_view(), name="messaggio"),
     path("posta/<int:pk>/protocolla/", views.ProtocollaMessaggioView.as_view(), name="protocolla"),
     path("posta/<int:pk>/scarta/", views.ScartaMessaggioView.as_view(), name="scarta"),
+    path("posta/<int:pk>/ripristina/", views.RipristinaMessaggioView.as_view(), name="ripristina"),
+    path("posta/azione/", views.AzionePostaView.as_view(), name="azione_posta"),
     path("posta/<int:pk>/originale/", views.ScaricaMessaggioView.as_view(), name="messaggio_eml"),
     path(
         "posta/<int:pk>/allegati/<int:indice>/",

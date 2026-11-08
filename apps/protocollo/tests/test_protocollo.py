@@ -385,3 +385,49 @@ class TestViste:
         a = client_ruolo("Addetto protocollo", username="addetto2")
         r = a.post(reverse("protocollo:annulla", args=[p.pk]), {"motivo": "motivo valido"})
         assert r.status_code == 403 and not Protocollo.objects.get().annullato
+
+
+class TestAzioniPostaInBlocco:
+    def _tre(self):
+        c = _casella()
+        return [posta.salva_messaggio(c, _email(oggetto=f"Offerta-{i}", allegato=False).as_bytes())
+                for i in range(3)]  # fmt: skip
+
+    def test_scarto_e_ripristino(self, client_ruolo):
+        from apps.protocollo.models import MessaggioRicevuto
+
+        a, b, c = self._tre()
+        client = client_ruolo("Addetto protocollo")
+        pagina = client.get("/protocollo/posta/").content.decode()
+        assert 'data-seleziona-tutte="messaggi"' in pagina and 'name="messaggi"' in pagina
+        r = client.post("/protocollo/posta/azione/",
+                        {"azione": "scarta", "messaggi": [a.pk, b.pk], "stato": "nuovo"})  # fmt: skip
+        assert r.status_code == 302 and r["Location"].endswith("?stato=nuovo")
+        stati = dict(MessaggioRicevuto.objects.values_list("pk", "stato"))
+        assert stati == {a.pk: "nuovo", b.pk: "nuovo", c.pk: "nuovo"}  # senza motivo: niente
+        r = client.post("/protocollo/posta/azione/", {"azione": "scarta", "motivo": "Pubblicità",
+                        "messaggi": [a.pk, b.pk], "stato": "nuovo"}, follow=True)  # fmt: skip
+        assert "2 messaggi scartati." in r.content.decode()
+        a.refresh_from_db()
+        assert a.stato == "scartato" and a.motivo_scarto == "Pubblicità"
+        assert a.gestito_da == client.utente
+        # già scartato: saltato
+        r = client.post("/protocollo/posta/azione/", {"azione": "scarta", "motivo": "x",
+                        "messaggi": [a.pk, c.pk], "stato": "nuovo"}, follow=True)  # fmt: skip
+        assert "1 messaggi scartati. 1 saltati" in r.content.decode()
+        r = client.post("/protocollo/posta/azione/",
+                        {"azione": "ripristina", "messaggi": [a.pk], "stato": "scartato"})  # fmt: skip
+        a.refresh_from_db()
+        assert a.stato == "nuovo" and a.motivo_scarto == "" and a.gestito_da is None
+        client.post(f"/protocollo/posta/{b.pk}/ripristina/")
+        b.refresh_from_db()
+        assert b.stato == "nuovo"
+
+    def test_permessi(self, client_ruolo):
+        a, _b, _c = self._tre()
+        consigliere = client_ruolo("Consigliere", username="c")
+        r = consigliere.post("/protocollo/posta/azione/",
+                             {"azione": "scarta", "motivo": "x", "messaggi": [a.pk]})  # fmt: skip
+        assert r.status_code == 403
+        pagina = client_ruolo("Presidente", username="p").get("/protocollo/posta/").content
+        assert b'name="messaggi"' not in pagina  # consulta ma non gestisce la posta

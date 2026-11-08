@@ -43,6 +43,7 @@
       <div class="card"><div class="card-body">
         {% if messaggio.stato == "protocollato" %}Protocollato con il n. <a href="{{ messaggio.protocollo.get_absolute_url }}">{{ messaggio.protocollo.segnatura }}</a>{% elif messaggio.stato == "scartato" %}Scartato: {{ messaggio.motivo_scarto }}{% else %}Da esaminare{% endif %}
         {% if messaggio.gestito_da %}<div class="small text-secondary">{{ messaggio.gestito_da }}, {{ messaggio.gestito_il|date:"d/m/Y H:i" }}</div>{% endif %}
+        {% if messaggio.stato == "scartato" and perms.protocollo.gestisci_posta %}<form class="mt-2" method="post" action="{% url 'protocollo:ripristina' messaggio.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-arrow-back-up me-1"></i>Riporta tra quelli da esaminare</button></form>{% endif %}
       </div></div>
     {% endif %}
   </div>

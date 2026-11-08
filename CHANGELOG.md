@@ -6,6 +6,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- *Posta da protocollare*: **azioni in blocco** sui messaggi selezionati (con «seleziona tutti»):
+  scarto con un motivo comune (motivi frequenti proposti) e ripristino degli scartati; ripristino
+  anche dalla scheda del messaggio.
 - *Servizi di posta*: pulsante **Verifica** per ogni casella IMAP (accesso in sola lettura con il
   conteggio dei messaggi, nulla scaricato) e per il server di invio (accesso, nessuna email spedita).
 

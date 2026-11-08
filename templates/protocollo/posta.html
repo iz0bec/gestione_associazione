@@ -18,22 +18,38 @@
       {% for valore, etichetta in stati %}<li class="nav-item"><a class="nav-link{% if stato == valore %} active{% endif %}" href="?stato={{ valore }}">{{ etichetta }}</a></li>{% endfor %}
     </ul>
   </div>
+  {% with selezione=perms.protocollo.gestisci_posta %}{% if selezione and messaggi and stato == "nuovo" or selezione and messaggi and stato == "scartato" %}
+  <form method="post" action="{% url 'protocollo:azione_posta' %}" id="azioni-posta"{% if stato == "nuovo" %} data-conferma="Scartare i messaggi selezionati con il motivo indicato?"{% endif %}>{% csrf_token %}
+    <input type="hidden" name="stato" value="{{ stato }}">
+    <div class="card-body border-bottom py-2 d-flex flex-wrap align-items-center gap-2">
+      <span class="small text-secondary me-1">Selezionati:</span>
+      {% if stato == "nuovo" %}
+      <input class="form-control form-control-sm w-auto flex-fill" name="motivo" maxlength="255" list="motivi-scarto" placeholder="Motivo dello scarto, es. pubblicità" aria-label="Motivo dello scarto" required>
+      <datalist id="motivi-scarto"><option value="Pubblicità o newsletter"><option value="Ricevuta PEC di sistema (accettazione/consegna)"><option value="Già protocollato"><option value="Non pertinente"><option value="Duplicato"></datalist>
+      <button class="btn btn-sm btn-outline-secondary" type="submit" name="azione" value="scarta"><i class="ti ti-trash-x me-1"></i>Scarta</button>
+      {% else %}
+      <button class="btn btn-sm" type="submit" name="azione" value="ripristina"><i class="ti ti-arrow-back-up me-1"></i>Riporta tra quelli da esaminare</button>
+      {% endif %}
+    </div>
+  {% endif %}
   <div class="table-responsive">
     <table class="table table-vcenter card-table table-hover">
-      <thead><tr><th>Data</th><th>Mittente</th><th>Oggetto</th><th class="d-none d-md-table-cell">Casella</th><th>Stato</th></tr></thead>
+      <thead><tr>{% if selezione and stato == "nuovo" or selezione and stato == "scartato" %}<th class="w-1"><input class="form-check-input" type="checkbox" data-seleziona-tutte="messaggi" aria-label="Seleziona tutti"></th>{% endif %}<th>Data</th><th>Mittente</th><th>Oggetto</th><th class="d-none d-md-table-cell">Casella</th><th>Stato</th></tr></thead>
       <tbody>
       {% for m in messaggi %}
         <tr>
+          {% if selezione and stato == "nuovo" or selezione and stato == "scartato" %}<td><input class="form-check-input" type="checkbox" name="messaggi" value="{{ m.pk }}" aria-label="Seleziona {{ m.oggetto|default:'il messaggio' }}"></td>{% endif %}
           <td class="text-nowrap">{{ m.data|date:"d/m/Y H:i"|default:"—" }}</td>
           <td class="text-truncate">{{ m.mittente|truncatechars:50 }}</td>
           <td><a class="text-reset fw-medium" href="{{ m.get_absolute_url }}">{{ m.oggetto|default:"(senza oggetto)"|truncatechars:90 }}</a>{% if m.allegati %} <i class="ti ti-paperclip text-secondary" title="{{ m.allegati|length }} allegati"></i>{% endif %}</td>
           <td class="d-none d-md-table-cell">{{ m.casella }}{% if m.casella.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}</td>
           <td>{% if m.stato == "protocollato" %}<a class="badge bg-green-lt" href="{{ m.protocollo.get_absolute_url }}">{{ m.protocollo.segnatura }}</a>{% elif m.stato == "scartato" %}<span class="badge bg-secondary-lt" title="{{ m.motivo_scarto }}">scartato</span>{% else %}<span class="badge bg-yellow-lt">da esaminare</span>{% endif %}</td>
         </tr>
-      {% empty %}<tr><td colspan="5" class="text-secondary py-4 text-center">Nessun messaggio.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="6" class="text-secondary py-4 text-center">Nessun messaggio.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>
+  {% if selezione and messaggi and stato == "nuovo" or selezione and messaggi and stato == "scartato" %}</form>{% endif %}{% endwith %}
   {% include "includes/paginazione.html" %}
 </div>
 {% endblock %}

@@ -67,7 +67,16 @@ Per ogni messaggio:
 - **Protocolla**: si conferma o si migliora l'oggetto, si sceglie la classificazione; il mittente viene
   riconosciuto se la sua email o PEC è in anagrafica. Il messaggio originale e gli allegati diventano i
   documenti del protocollo;
-- **Scarta** con un motivo (pubblicità, doppione...): il messaggio resta nell'elenco *Scartati*.
+- **Scarta** con un motivo (pubblicità, doppione...): il messaggio resta nell'elenco *Scartati*;
+  dalla sua scheda, **Riporta tra quelli da esaminare** annulla uno scarto sbagliato.
+
+**Azioni in blocco** (per chi gestisce la posta): nell'elenco *Da esaminare* si spuntano i messaggi
+(la casella in testa seleziona tutti quelli della pagina), si scrive o si sceglie il **motivo** (es.
+*Ricevuta PEC di sistema*, *Pubblicità o newsletter*, *Già protocollato*) e si preme **Scarta**:
+tutti ricevono lo stesso motivo. Nell'elenco *Scartati*, **Riporta tra quelli da esaminare** fa il
+contrario. I messaggi già gestiti nel frattempo da un altro utente sono saltati e indicati nel
+messaggio di esito; ogni scarto e ripristino è annotato nel registro attività. La protocollazione
+resta una per messaggio, perché ognuno ha il proprio oggetto e la propria classificazione.
 
 Per le **PEC** vengono mostrati mittente, oggetto e allegati del messaggio originale (quello dentro la
 busta di posta certificata); la busta con le ricevute resta nel file `.eml`.

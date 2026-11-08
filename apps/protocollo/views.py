@@ -18,7 +18,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -426,6 +426,54 @@ class ScartaMessaggioView(PermessoMixin, View):
             _errore(request, e)
             return redirect(m)
         return redirect("protocollo:posta")
+
+
+class AzionePostaView(PermessoMixin, View):
+    """Azioni sui messaggi selezionati nell'elenco: scarto (con motivo) o ripristino."""
+
+    permission_required = "protocollo.gestisci_posta"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        ids = [i for i in request.POST.getlist("messaggi") if i.isdigit()]
+        azione = request.POST.get("azione")
+        torna = request.POST.get("stato", MessaggioRicevuto.Stato.NUOVO)
+        indietro = redirect(f"{reverse('protocollo:posta')}?stato={torna}")
+        if not ids:
+            messages.warning(request, "Nessun messaggio selezionato.")
+            return indietro
+        scelti = MessaggioRicevuto.objects.filter(pk__in=ids).order_by("pk")
+        try:
+            if azione == "scarta":
+                motivo = request.POST.get("motivo", "")
+                fatti, saltati = servizi.scarta_messaggi(scelti, request.user, motivo)
+                testo = f"{fatti} messaggi scartati."
+            elif azione == "ripristina":
+                fatti, saltati = servizi.ripristina_messaggi(scelti, request.user)
+                testo = f"{fatti} messaggi riportati tra quelli da esaminare."
+            else:
+                return indietro
+        except OperazioneNonValida as e:
+            _errore(request, e)
+            return indietro
+        if saltati:
+            testo += f" {saltati} saltati perché già gestiti da altri o non nello stato giusto."
+        messages.success(request, testo)
+        return indietro
+
+
+class RipristinaMessaggioView(PermessoMixin, View):
+    permission_required = "protocollo.gestisci_posta"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        m = get_object_or_404(MessaggioRicevuto, pk=pk)
+        try:
+            servizi.ripristina_messaggio(m, request.user)
+            messages.success(request, "Messaggio riportato tra quelli da esaminare.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect(m)
 
 
 class ScaricaMessaggioView(PermessoMixin, View):

@@ -430,6 +430,46 @@ def scarta_messaggio(messaggio, utente, motivo):
     return messaggio
 
 
+@transaction.atomic
+def ripristina_messaggio(messaggio, utente):
+    """Riporta tra quelli da esaminare un messaggio scartato per errore."""
+    messaggio = MessaggioRicevuto.objects.select_for_update().get(pk=messaggio.pk)
+    if messaggio.stato != MessaggioRicevuto.Stato.SCARTATO:
+        raise OperazioneNonValida("Si ripristinano solo i messaggi scartati.")
+    motivo = messaggio.motivo_scarto
+    messaggio.stato = MessaggioRicevuto.Stato.NUOVO
+    messaggio.motivo_scarto = ""
+    messaggio.gestito_da = None
+    messaggio.gestito_il = None
+    messaggio.save()
+    registra(Azione.MODIFICA, messaggio, utente=utente, ripristinato=True, motivo_scarto=motivo)
+    return messaggio
+
+
+def _in_blocco(operazione, messaggi, utente, *argomenti):
+    """Applica l'operazione a ogni messaggio (ognuno nel proprio savepoint): (fatti, saltati)."""
+    fatti = saltati = 0
+    for m in messaggi:
+        try:
+            with transaction.atomic():
+                operazione(m, utente, *argomenti)
+            fatti += 1
+        except OperazioneNonValida:
+            saltati += 1
+    return fatti, saltati
+
+
+def scarta_messaggi(messaggi, utente, motivo):
+    """Scarto in blocco con lo stesso motivo; i messaggi già gestiti sono saltati."""
+    if not (motivo or "").strip():
+        raise OperazioneNonValida("Indicare il motivo (es. pubblicità, già protocollato).")
+    return _in_blocco(scarta_messaggio, messaggi, utente, motivo)
+
+
+def ripristina_messaggi(messaggi, utente):
+    return _in_blocco(ripristina_messaggio, messaggi, utente)
+
+
 # --- esportazione --------------------------------------------------------------------------
 
 
