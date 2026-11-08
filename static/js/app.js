@@ -43,6 +43,75 @@
     if (modale) apriModale(modale);
   });
 
+  // Stampe (collegamenti con data-stampa): invece di una scheda vuota durante la preparazione,
+  // una finestra di attesa; a PDF pronto si apre (o si offrono «Apri» e «Scarica»).
+  var stampaInCorso = null;
+  function faseStampa(modale, fase) {
+    modale.querySelectorAll("[data-stampa-fase]").forEach(function (el) {
+      el.classList.toggle("nascosto", el.getAttribute("data-stampa-fase") !== fase);
+    });
+  }
+  function nomeFile(intestazione) {
+    var m = /filename="?([^";]+)"?/.exec(intestazione || "");
+    return m ? m[1] : "documento.pdf";
+  }
+  function stampa(url) {
+    var modale = document.getElementById("modale-stampa");
+    var bs = window.tabler && window.tabler.bootstrap;
+    if (!modale || !bs || !window.fetch) { window.open(url, "_blank", "noopener"); return; }
+    var finestra = bs.Modal.getOrCreateInstance(modale);
+    var controllo = new AbortController();
+    var inizio = Date.now();
+    var secondi = modale.querySelector("[data-stampa-secondi]");
+    secondi.textContent = "0";
+    faseStampa(modale, "attesa");
+    finestra.show();
+    var timer = window.setInterval(function () {
+      secondi.textContent = String(Math.round((Date.now() - inizio) / 1000));
+    }, 1000);
+    stampaInCorso = { controllo: controllo, timer: timer };
+    fetch(url, { credentials: "same-origin", signal: controllo.signal })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Il server ha risposto con un errore (" + r.status + ").");
+        if ((r.headers.get("Content-Type") || "").indexOf("application/pdf") === -1) {
+          throw new Error("Risposta inattesa: forse la sessione è scaduta. Ricaricare la pagina e riprovare.");
+        }
+        var nome = nomeFile(r.headers.get("Content-Disposition"));
+        return r.blob().then(function (b) { return { blob: b, nome: nome }; });
+      })
+      .then(function (doc) {
+        window.clearInterval(timer);
+        var indirizzo = URL.createObjectURL(doc.blob);
+        window.setTimeout(function () { URL.revokeObjectURL(indirizzo); }, 30 * 60 * 1000);
+        modale.querySelector("[data-stampa-apri]").href = indirizzo;
+        var scarica = modale.querySelector("[data-stampa-scarica]");
+        scarica.href = indirizzo;
+        scarica.setAttribute("download", doc.nome);
+        faseStampa(modale, "pronto");
+        // apertura automatica; se il browser la blocca restano i pulsanti
+        if (window.open(indirizzo, "_blank")) finestra.hide();
+      })
+      .catch(function (errore) {
+        window.clearInterval(timer);
+        if (errore.name === "AbortError") return;
+        modale.querySelector("[data-stampa-errore]").textContent = errore.message;
+        faseStampa(modale, "errore");
+      });
+  }
+  document.addEventListener("click", function (ev) {
+    var chiudi = ev.target.closest("[data-stampa-chiudi]");
+    if (chiudi) {
+      if (stampaInCorso) { stampaInCorso.controllo.abort(); window.clearInterval(stampaInCorso.timer); }
+      var bs = window.tabler && window.tabler.bootstrap;
+      bs.Modal.getOrCreateInstance(document.getElementById("modale-stampa")).hide();
+      return;
+    }
+    var link = ev.target.closest("a[data-stampa]");
+    if (!link || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+    ev.preventDefault();
+    stampa(link.href);
+  });
+
   // Select che inviano il modulo al cambio (es. scelta dell'anno)
   document.addEventListener("change", function (ev) {
     if (ev.target.matches("select[data-invio-automatico]") && ev.target.form) {

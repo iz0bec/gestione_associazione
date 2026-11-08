@@ -2,7 +2,7 @@
 {% block titolo %}Domanda di {{ domanda.cognome }} {{ domanda.nome }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:domande' %}">Domande di iscrizione</a> · {{ domanda.get_origine_display|lower }}</div>{% endblock %}
 {% block titolo_pagina %}{{ domanda.cognome }} {{ domanda.nome }} <span class="badge fs-5 align-middle {% if domanda.stato == 'accolta' %}bg-green-lt{% elif domanda.stato == 'respinta' %}bg-red-lt{% else %}bg-yellow-lt{% endif %}">{{ domanda.get_stato_display|lower }}</span>{% endblock %}
-{% block azioni %}<a class="btn" href="{% url 'soci:domanda_pdf' domanda.pk %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Modulo da firmare (PDF)</a>{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'soci:domanda_pdf' domanda.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-printer me-1"></i>Modulo da firmare (PDF)</a>{% endblock %}
 {% block contenuto %}
 <div class="row row-cards">
   <div class="col-lg-7">

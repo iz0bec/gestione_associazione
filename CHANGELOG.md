@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato - Stampe
+- Le stampe PDF non aprono più una scheda vuota durante la preparazione: una finestra di attesa
+  con il tempo trascorso e la possibilità di annullare; a documento pronto il PDF si apre (o si
+  offrono «Apri» e «Scarica»), e gli errori vengono spiegati.
+- Tempo massimo delle richieste portato a 300 secondi nei servizi creati dall'installatore.
+
 ### Aggiunto - Importazione dai gestionali precedenti
 - Comando `importa_gestionale` (anteprima predefinita, `--esegui` applica, rieseguibile senza
   doppioni) per **Gestione Soci** (soci, tessere con la quota versata, esercizi passati chiusi con la

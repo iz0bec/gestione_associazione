@@ -4,7 +4,7 @@
 {% block titolo_pagina %}Verbale{% if verbale.chiuso %} n. {{ verbale.numero }} <span class="badge bg-green-lt fs-5 align-middle">chiuso</span>{% else %} <span class="badge bg-yellow-lt fs-5 align-middle">in redazione</span>{% endif %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
-  <a class="btn" href="{% url 'organi:verbale_pdf' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>{% if verbale.chiuso %}PDF{% else %}Anteprima PDF{% endif %}</a>
+  <a class="btn" href="{% url 'organi:verbale_pdf' riunione.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>{% if verbale.chiuso %}PDF{% else %}Anteprima PDF{% endif %}</a>
   {% if not verbale.chiuso and perms.organi.verbalizza %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#chiudi"><i class="ti ti-lock me-1"></i>Chiudi il verbale</button>{% endif %}
 </div>
 {% endblock %}

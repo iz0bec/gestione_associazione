@@ -1,0 +1,32 @@
+{% comment %}Finestra di attesa delle stampe (collegamenti con data-stampa): il PDF si prepara in
+sottofondo, poi si apre o si scarica. Gestita da static/js/app.js.{% endcomment %}
+<div class="modal" id="modale-stampa" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modale-stampa-titolo">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4">
+        <div data-stampa-fase="attesa">
+          <div class="spinner-border text-primary mb-3" role="status"></div>
+          <h3 class="mb-1" id="modale-stampa-titolo">Preparazione del documento…</h3>
+          <p class="text-secondary small mb-0">I documenti lunghi (es. il libro soci) richiedono anche qualche decina di secondi.</p>
+          <p class="mt-2 mb-0"><strong data-stampa-secondi>0</strong> s</p>
+        </div>
+        <div data-stampa-fase="pronto" class="nascosto">
+          <div class="text-green mb-2"><i class="ti ti-circle-check icona-grande"></i></div>
+          <h3 class="mb-3">Documento pronto</h3>
+          <div class="btn-list justify-content-center">
+            <a class="btn btn-primary" data-stampa-apri href="#" target="_blank" rel="noopener"><i class="ti ti-external-link me-1"></i>Apri</a>
+            <a class="btn" data-stampa-scarica href="#" download><i class="ti ti-download me-1"></i>Scarica</a>
+          </div>
+        </div>
+        <div data-stampa-fase="errore" class="nascosto">
+          <div class="text-red mb-2"><i class="ti ti-alert-triangle icona-grande"></i></div>
+          <h3 class="mb-1">Stampa non riuscita</h3>
+          <p class="text-secondary small mb-0" data-stampa-errore></p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-link" data-stampa-chiudi>Chiudi</button>
+      </div>
+    </div>
+  </div>
+</div>

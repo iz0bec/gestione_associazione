@@ -60,7 +60,7 @@
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-book me-2"></i>Libro dei verbali</h2></div>
       <div class="list-group list-group-flush">
-        {% for v in verbali %}<a class="list-group-item list-group-item-action" href="{% url 'organi:verbale_pdf' v.riunione_id %}" target="_blank" rel="noopener"><span class="fw-medium">n. {{ v.numero }}</span> · {{ v.riunione.prima_convocazione|date:"d/m/Y" }}<div class="small text-secondary text-truncate">SHA-256 {{ v.impronta|slice:":16" }}…</div></a>
+        {% for v in verbali %}<a class="list-group-item list-group-item-action" href="{% url 'organi:verbale_pdf' v.riunione_id %}" target="_blank" data-stampa rel="noopener"><span class="fw-medium">n. {{ v.numero }}</span> · {{ v.riunione.prima_convocazione|date:"d/m/Y" }}<div class="small text-secondary text-truncate">SHA-256 {{ v.impronta|slice:":16" }}…</div></a>
         {% empty %}<div class="list-group-item text-secondary">Nessun verbale chiuso.</div>{% endfor %}
       </div>
     </div>

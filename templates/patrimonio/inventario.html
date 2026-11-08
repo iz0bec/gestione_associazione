@@ -6,9 +6,9 @@
   <div class="dropdown">
     <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-dots me-1"></i>Altro</button>
     <div class="dropdown-menu dropdown-menu-end">
-      <a class="dropdown-item" href="{% url 'patrimonio:stampa' %}?{{ request.GET.urlencode }}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Stampa l'inventario</a>
+      <a class="dropdown-item" href="{% url 'patrimonio:stampa' %}?{{ request.GET.urlencode }}" target="_blank" data-stampa rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Stampa l'inventario</a>
       <a class="dropdown-item" href="{% url 'patrimonio:stampa' %}?{{ request.GET.urlencode }}&amp;formato=csv"><i class="ti ti-file-spreadsheet me-2"></i>Esporta CSV</a>
-      <a class="dropdown-item" href="{% url 'patrimonio:etichette' %}?{{ request.GET.urlencode }}" target="_blank" rel="noopener"><i class="ti ti-qrcode me-2"></i>Etichette con QR</a>
+      <a class="dropdown-item" href="{% url 'patrimonio:etichette' %}?{{ request.GET.urlencode }}" target="_blank" data-stampa rel="noopener"><i class="ti ti-qrcode me-2"></i>Etichette con QR</a>
       {% if perms.patrimonio.view_passaggioconsegne %}<a class="dropdown-item" href="{% url 'patrimonio:passaggi' %}"><i class="ti ti-arrows-exchange me-2"></i>Passaggi di consegne</a>{% endif %}
       {% if perms.patrimonio.view_categoriabene %}<a class="dropdown-item" href="{% url 'patrimonio:categorie' %}"><i class="ti ti-tags me-2"></i>Categorie</a>{% endif %}
     </div>

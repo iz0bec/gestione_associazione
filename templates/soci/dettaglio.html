@@ -48,7 +48,7 @@
         <h2 class="card-title"><i class="ti ti-signature me-2"></i>Richiesta di adesione firmata</h2>
         <div class="card-actions btn-list">
           {% if socio.modulo_adesione %}<a class="btn btn-sm" href="{% url 'soci:modulo_firmato' socio.pk %}" target="_blank" rel="noopener"><i class="ti ti-external-link me-1"></i>Apri</a>{% endif %}
-          <a class="btn btn-sm" href="{% url 'soci:modulo_socio' socio.pk %}" target="_blank" rel="noopener" title="Allegato A con i dati del socio, da stampare e far firmare"><i class="ti ti-printer me-1"></i>Modulo da firmare</a>
+          <a class="btn btn-sm" href="{% url 'soci:modulo_socio' socio.pk %}" target="_blank" data-stampa rel="noopener" title="Allegato A con i dati del socio, da stampare e far firmare"><i class="ti ti-printer me-1"></i>Modulo da firmare</a>
         </div>
       </div>
       {% if socio.modulo_adesione %}
@@ -84,7 +84,7 @@
               <td class="text-nowrap">
                 {% if not t.annullata %}
                   {% if t.pagata and t.incasso_esterno %}<span class="small text-secondary">incassata fuori dall'applicazione</span>
-                  {% elif t.pagata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta</a>
+                  {% elif t.pagata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta</a>
                   {% if perms.comunicazioni.add_invio and socio.soggetto.email %}<form class="d-inline" method="post" action="{% url 'comunicazioni:da_tessera' t.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Invia la ricevuta per email" aria-label="Invia la ricevuta per email"><i class="ti ti-mail"></i></button></form>{% endif %}
                   {% elif perms.soci.incassa_quota and t.importo > 0 %}<button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#pagamento-{{ t.pk }}"><i class="ti ti-cash me-1"></i>Incassa</button>{% endif %}
                   {% if perms.soci.annulla_tessera %}<button class="btn btn-sm btn-ghost-danger" type="button" data-bs-toggle="modal" data-bs-target="#annulla-{{ t.pk }}" title="Annulla tessera" aria-label="Annulla tessera {{ t.codice }}"><i class="ti ti-x"></i></button>{% endif %}

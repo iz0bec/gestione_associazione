@@ -5,7 +5,7 @@
 {% block azioni %}
 <div class="btn-list">
   {% if organizzazione.iscrizioni_online %}<a class="btn" href="{% url 'iscrizione' %}" target="_blank" rel="noopener"><i class="ti ti-world me-1"></i>Modulo online</a>{% endif %}
-  <a class="btn" href="{% url 'soci:modulo_vuoto' %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Modulo in bianco</a>
+  <a class="btn" href="{% url 'soci:modulo_vuoto' %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-printer me-1"></i>Modulo in bianco</a>
   {% if perms.soci.add_domandaiscrizione %}<a class="btn btn-primary" href="{% url 'soci:domanda_nuova' %}"><i class="ti ti-plus me-1"></i>Registra domanda</a>{% endif %}
 </div>
 {% endblock %}

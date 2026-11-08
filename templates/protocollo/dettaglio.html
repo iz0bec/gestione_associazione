@@ -6,7 +6,7 @@
   {% if protocollo.riservato %}<span class="badge bg-dark-lt fs-5 align-middle"><i class="ti ti-lock me-1"></i>riservato</span>{% endif %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
-  <a class="btn" href="{% url 'protocollo:ricevuta' protocollo.pk %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
+  <a class="btn" href="{% url 'protocollo:ricevuta' protocollo.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
   {% if not protocollo.annullato %}
     {% if perms.protocollo.add_protocollo and protocollo.direzione == "entrata" %}<a class="btn" href="{% url 'protocollo:nuovo' %}?risposta={{ protocollo.pk }}"><i class="ti ti-arrow-back-up me-1"></i>Rispondi</a>{% endif %}
     {% if perms.protocollo.annulla_protocollo %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}

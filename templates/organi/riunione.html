@@ -4,7 +4,7 @@
 {% block titolo_pagina %}{{ riunione.titolo }} {% include "organi/_stato_riunione.html" with r=riunione %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
-  <a class="btn" href="{% url 'organi:convocazione' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Convocazione</a>
+  <a class="btn" href="{% url 'organi:convocazione' riunione.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Convocazione</a>
   {% if riunione.stato == "convocata" and perms.comunicazioni.add_invio %}<form method="post" action="{% url 'comunicazioni:da_riunione' riunione.pk %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-mail me-1"></i>Invia per email</button></form>{% endif %}
   {% if riunione.modificabile and perms.organi.change_riunione %}<a class="btn" href="{% url 'organi:riunione_modifica' riunione.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
   {% if riunione.modificabile and perms.organi.convoca_riunione %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
@@ -51,7 +51,7 @@
       <div class="card-body">
         {% if verbale and verbale.chiuso %}
           <p>Verbale n. <strong>{{ verbale.numero }}</strong>, chiuso il {{ verbale.chiuso_il|date:"d/m/Y" }}.</p>
-          <a class="btn w-100 mb-2" href="{% url 'organi:verbale_pdf' riunione.pk %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>
+          <a class="btn w-100 mb-2" href="{% url 'organi:verbale_pdf' riunione.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>
           <a class="btn btn-link w-100" href="{% url 'organi:verbale' riunione.pk %}">Apri</a>
         {% elif verbale or perms.organi.verbalizza %}
           <p class="text-secondary">{% if verbale %}In redazione.{% else %}Non ancora iniziato.{% endif %}</p>

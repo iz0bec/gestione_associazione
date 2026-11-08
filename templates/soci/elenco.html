@@ -7,7 +7,7 @@
   <div class="dropdown">
     <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-download me-1"></i>Stampa ed esporta</button>
     <div class="dropdown-menu dropdown-menu-end">
-      <a class="dropdown-item" href="{% url 'soci:libro_pdf' %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Libro soci (PDF)</a>
+      <a class="dropdown-item" href="{% url 'soci:libro_pdf' %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Libro soci (PDF)</a>
       <a class="dropdown-item" href="{% url 'soci:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-2"></i>Elenco filtrato (CSV)</a>
     </div>
   </div>

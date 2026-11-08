@@ -32,6 +32,7 @@ dependencies = [
     "segno>=1.6",
     "openpyxl>=3.1.5",
     "defusedxml>=0.7.1",
+    "markdown>=3.7",
 ]
 
 [dependency-groups]

@@ -125,7 +125,7 @@ Per installazioni particolari, i servizi creati dallo script sono:
 [Service]
 User=gestione
 WorkingDirectory=/opt/gestione-associazione
-ExecStart=/opt/gestione-associazione/.venv/bin/gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3 --timeout 120
+ExecStart=/opt/gestione-associazione/.venv/bin/gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3 --timeout 300
 Restart=on-failure
 NoNewPrivileges=true
 PrivateTmp=true
