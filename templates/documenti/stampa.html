@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Stampa di un documento da un modello per una persona, una lista o una categoria
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Stampa documento{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'documenti:modelli' %}">Modelli di stampa</a></div>{% endblock %}
+{% block titolo_pagina %}Stampa documento{% if da_scheda %} per {{ da_scheda.nome_completo }}{% endif %}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  {% if da_scheda %}<input type="hidden" name="da_scheda" value="{{ da_scheda.pk }}">{% endif %}
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    {{ form.modello.as_field_group }}
+    {{ form.destinazione.as_field_group }}
+    <div class="row">
+      <div class="col-md-4">{{ form.soggetto.as_field_group }}</div>
+      <div class="col-md-4">{{ form.lista.as_field_group }}</div>
+      <div class="col-md-4">{{ form.categoria.as_field_group }}</div>
+    </div>
+    <p class="small text-secondary">Con una lista o una categoria si ottiene un unico PDF con una pagina per destinatario; le schede archiviate e le persone decedute sono escluse.</p>
+    {% if perms.protocollo.add_protocollo %}
+    <div class="row">
+      <div class="col-md-6">{{ form.protocolla.as_field_group }}</div>
+      <div class="col-md-6">{{ form.mezzo.as_field_group }}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card-footer d-flex">
+    <a class="btn btn-link" href="{% if da_scheda %}{{ da_scheda.get_absolute_url }}{% else %}{% url 'documenti:modelli' %}{% endif %}">Annulla</a>
+    <button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-printer me-1"></i>Crea il PDF</button>
+  </div>
+</form>
+{% endblock %}

@@ -36,6 +36,7 @@ PAGINE_PER_SEZIONE = {
     "comunicazioni": "comunicazioni",
     "tesoreria": "tesoreria",
     "patrimonio": "patrimonio",
+    "documenti": "documenti",
     "utenti": "utenti",
     "core:cruscotto": "primi-passi",
     "core:aiuto": INDICE,

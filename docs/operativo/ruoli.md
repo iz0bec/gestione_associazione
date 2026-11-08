@@ -92,4 +92,14 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Consigliere, Revisore | sì | - | - |
 | Addetto protocollo | - | - | - |
 
+### Documenti
+
+| Ruolo | Consulta i modelli e stampa | Crea e modifica i modelli |
+|---|---|---|
+| Amministratore di sistema, Segretario | sì | sì |
+| Presidente, Tesoriere, Addetto protocollo | sì | - |
+| Consigliere, Revisore | - | - |
+
+La registrazione a protocollo di un documento stampato richiede anche il permesso di protocollare.
+
 Chi tenta di aprire una pagina non consentita vede il messaggio *Accesso non consentito*.

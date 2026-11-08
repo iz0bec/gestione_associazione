@@ -1,0 +1,51 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Documento da un modello di stampa: una pagina per destinatario su carta intestata
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ modello.nome }}{% endblock %}
+{% block stile %}
+  .pagina { page-break-after: always; }
+  .pagina:last-child { page-break-after: auto; }
+  .riferimenti { display: flex; justify-content: space-between; font-size: 9pt; margin-bottom: 10pt; }
+  .destinatario { margin: 6pt 0 18pt 95mm; min-height: 24mm; font-size: 10.5pt; line-height: 1.35; }
+  .oggetto { font-weight: bold; margin: 8pt 0 12pt; }
+  .testo { font-size: 10.5pt; line-height: 1.5; text-align: justify; }
+  .testo p { margin: 0 0 8pt; }
+  .attestato h1 { text-align: center; font-size: 20pt; letter-spacing: .5pt; margin: 30pt 0 26pt; text-transform: uppercase; }
+  .attestato .testo { font-size: 12pt; line-height: 1.7; text-align: center; margin: 0 12mm; }
+  .attestato .luogo-data { margin-top: 30pt; }
+  .documento h1 { font-size: 15pt; }
+  .luogo-data { margin-top: 16pt; }
+  .firma { margin: 26pt 0 0 105mm; text-align: center; }
+  .firma .spazio { height: 16mm; }
+{% endblock %}
+{% block contenuto %}
+{% for p in pagine %}
+<div class="pagina {{ modello.tipo }}">
+  {% if protocollo %}
+  <div class="riferimenti"><span>Prot. n. {{ protocollo.segnatura }} del {{ protocollo.registrato_il|date:"d/m/Y" }}</span></div>
+  {% endif %}
+  {% if modello.tipo == "lettera" %}
+    <div class="riferimenti"><span></span><span>{{ luogo_data }}</span></div>
+    {% if p.destinatario %}
+    <div class="destinatario">
+      {% if p.destinatario.titolo %}{{ p.destinatario.titolo }} {% endif %}{{ p.destinatario.nome_completo }}<br>
+      {% if p.destinatario.indirizzo %}{{ p.destinatario.indirizzo }}<br>{% endif %}
+      {% if p.destinatario.comune %}{{ p.destinatario.cap }} {{ p.destinatario.comune }}{% if p.destinatario.provincia %} ({{ p.destinatario.provincia }}){% endif %}{% endif %}
+    </div>
+    {% endif %}
+    {% if p.titolo %}<div class="oggetto">Oggetto: {{ p.titolo }}</div>{% endif %}
+    <div class="testo">{{ p.html|safe }}</div>
+  {% else %}
+    {% if p.titolo %}<h1>{{ p.titolo }}</h1>{% endif %}
+    <div class="testo">{{ p.html|safe }}</div>
+    {% if modello.tipo == "attestato" %}<div class="luogo-data">{{ luogo_data }}</div>{% endif %}
+  {% endif %}
+  {% if firma_ruolo or firma_nome %}
+  <div class="firma">{{ firma_ruolo }}<div class="spazio"></div>{{ firma_nome }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

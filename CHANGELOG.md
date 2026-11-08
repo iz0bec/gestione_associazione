@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto - Documenti e modelli di stampa
+- Modelli di lettere, attestati e documenti con segnaposto, grassetto ed elenchi, stampati su
+  carta intestata; firma del presidente in carica; tre modelli pronti.
+- Stampa per una persona (dalla scheda in anagrafica), una lista o una categoria: un PDF con una
+  pagina per destinatario, esclusi archiviati e deceduti.
+- Protocollazione in uscita facoltativa con il numero stampato sul documento e il PDF allegato.
+
+### Modificato
+- Menu *Sistema* compatto ed espandibile.
+
 ## [0.0.1-rc.3] - 2026-11-08
 
 Gestione degli utenti dall'interfaccia, importazione dai tre gestionali precedenti, aiuto in linea.

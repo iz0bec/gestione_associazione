@@ -86,6 +86,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   `protocollo.servizi.registra_storico` (numero originale, sequenza allineata).
 - Aiuto in linea: `apps/core/aiuto.py` mostra `docs/operativo/*.md` (pulsante ? della barra);
   la pagina di ogni sezione si sceglie in `PAGINE_PER_SEZIONE` (namespace o namespace:vista).
+- Documenti: modelli di stampa in `apps/documenti` (testi con segnaposto via `comunicazioni.servizi.componi`,
+  HTML dell'utente neutralizzato prima del Markdown); stampa solo con `documenti.servizi.stampa`.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/` (con voce in `PAGINE_PER_SEZIONE`), aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -106,4 +108,4 @@ anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`), **Patrim
 (`apps/core/aspetto.py`, CSS servito da `/aspetto.css`), sezioni (`apps/soci/sezioni.py`: filtrare
 sempre soci/tessere/carte/domande con `sezioni.filtra()` nelle viste), listino annuale, importazione dal
 registro nazionale (`apps/soci/importazione.py`; gli estratti reali stanno in `tmp/`, mai versionati).
-Prossimo (roadmap punto 7): modelli di stampa. Fatti: import dai tre gestionali (`apps/migrazione`), installer su host, gestione utenti (`apps/accounts`, `/sistema/utenti/`).
+Roadmap fase 1 completata. Fatti: modelli di stampa (`apps/documenti`), import dai tre gestionali (`apps/migrazione`), installer su host, gestione utenti (`apps/accounts`, `/sistema/utenti/`).

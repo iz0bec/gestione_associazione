@@ -155,6 +155,13 @@ PATRIMONIO_GESTIONE = [
     "patrimonio.add_passaggioconsegne",
 ]
 
+DOCUMENTI_STAMPA = ["documenti.view_modellostampa", "documenti.stampa_documento"]
+DOCUMENTI_GESTIONE = [
+    *DOCUMENTI_STAMPA,
+    "documenti.add_modellostampa",
+    "documenti.change_modellostampa",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         *ANAGRAFICA_SCRITTURA,
@@ -180,6 +187,7 @@ RUOLI = {
         *COMUNICAZIONI_GESTIONE,
         *TESORERIA_GESTIONE,
         *PATRIMONIO_GESTIONE,
+        *DOCUMENTI_GESTIONE,
     ],
     "Presidente": [
         *ANAGRAFICA_SCRITTURA,
@@ -202,6 +210,7 @@ RUOLI = {
         *TESORERIA_LETTURA,
         *PATRIMONIO_LETTURA,
         "patrimonio.add_passaggioconsegne",
+        *DOCUMENTI_STAMPA,
     ],
     "Segretario": [
         *ANAGRAFICA_SCRITTURA,
@@ -217,6 +226,7 @@ RUOLI = {
         *COMUNICAZIONI_GESTIONE,
         "tesoreria.view_esercizio",
         *PATRIMONIO_GESTIONE,
+        *DOCUMENTI_GESTIONE,
     ],
     "Tesoriere": [
         *ANAGRAFICA_LETTURA,
@@ -226,12 +236,14 @@ RUOLI = {
         *COMUNICAZIONI_INVIO,
         *TESORERIA_GESTIONE,
         *PATRIMONIO_GESTIONE,
+        *DOCUMENTI_STAMPA,
     ],
     "Addetto protocollo": [
         *ANAGRAFICA_SCRITTURA,
         *PROTOCOLLO_OPERATIVO,
         *ORGANI_LETTURA,
         *COMUNICAZIONI_LETTURA,
+        *DOCUMENTI_STAMPA,
     ],
     "Consigliere": [
         *ANAGRAFICA_LETTURA,

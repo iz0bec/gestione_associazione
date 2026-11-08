@@ -69,6 +69,11 @@
           <a class="nav-link" href="{% url 'patrimonio:inventario' %}"><span class="nav-link-icon"><i class="ti ti-building-warehouse"></i></span><span class="nav-link-title">Patrimonio</span></a>
         </li>
         {% endif %}
+        {% if perms.documenti.view_modellostampa %}
+        <li class="nav-item{% if nome == 'documenti' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'documenti:modelli' %}"><span class="nav-link-icon"><i class="ti ti-printer"></i></span><span class="nav-link-title">Documenti</span></a>
+        </li>
+        {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
         <li class="nav-item">
           <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>

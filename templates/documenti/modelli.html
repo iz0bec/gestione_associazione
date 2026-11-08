@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Elenco dei modelli di stampa
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Documenti{% endblock %}
+{% block titolo_pagina %}Modelli di stampa{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.documenti.stampa_documento %}<a class="btn" href="{% url 'documenti:stampa' %}"><i class="ti ti-printer me-1"></i>Stampa un documento</a>{% endif %}
+  {% if perms.documenti.add_modellostampa %}<a class="btn btn-primary" href="{% url 'documenti:nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo modello</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Modello</th><th class="d-none d-md-table-cell">Tipo</th><th class="d-none d-lg-table-cell">Firma</th><th></th></tr></thead>
+      <tbody>
+      {% for m in modelli %}
+        <tr class="{% if not m.attivo %}text-secondary{% endif %}">
+          <td><span class="fw-medium">{{ m.nome }}</span>{% if not m.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}{% if m.titolo %}<div class="small text-secondary">{{ m.titolo }}</div>{% endif %}</td>
+          <td class="d-none d-md-table-cell">{{ m.get_tipo_display|truncatewords:1 }}</td>
+          <td class="d-none d-lg-table-cell small">{{ m.firma_ruolo }}{% if m.firma_nome %} - {{ m.firma_nome }}{% endif %}</td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm" href="{% url 'documenti:anteprima' m.pk %}" target="_blank" rel="noopener"><i class="ti ti-eye me-1"></i>Anteprima</a>
+            {% if perms.documenti.stampa_documento and m.attivo %}<a class="btn btn-sm" href="{% url 'documenti:stampa' %}?modello={{ m.pk }}"><i class="ti ti-printer me-1"></i>Stampa</a>{% endif %}
+            {% if perms.documenti.change_modellostampa %}<a class="btn btn-sm" href="{% url 'documenti:modifica' m.pk %}">Modifica</a>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-secondary text-center py-4">Nessun modello.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer small text-secondary">
+    I documenti si stampano su carta intestata (logo e dati in <em>Sistema → Organizzazione</em>). Da una scheda dell'anagrafica il pulsante <strong>Stampa documento</strong> prepara il documento per quella persona.
+  </div>
+</div>
+{% endblock %}

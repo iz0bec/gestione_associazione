@@ -37,6 +37,7 @@ urlpatterns = [
     path("comunicazioni/", include("apps.comunicazioni.urls")),
     path("tesoreria/", include("apps.tesoreria.urls")),
     path("patrimonio/", include("apps.patrimonio.urls")),
+    path("documenti/", include("apps.documenti.urls")),
     path("beni/<str:token>/", BenePubblicoView.as_view(), name="bene_pubblico"),
     path("beni/<str:token>/foto/", FotoPubblicaView.as_view(), name="bene_pubblico_foto"),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Nuovo modello di stampa o modifica, con l'elenco dei segnaposto
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Modello di stampa{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'documenti:modelli' %}">Modelli di stampa</a></div>{% endblock %}
+{% block titolo_pagina %}{% if object %}{{ object }}{% else %}Nuovo modello{% endif %}{% endblock %}
+{% block azioni %}{% if object %}<a class="btn" href="{% url 'documenti:anteprima' object.pk %}" target="_blank" rel="noopener"><i class="ti ti-eye me-1"></i>Anteprima</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'documenti:modelli' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Segnaposto</h3></div>
+      <div class="card-body small">
+        <p class="text-secondary">Si scrivono fra doppie graffe, es. <code>{% templatetag openvariable %} nome_completo {% templatetag closevariable %}</code>. Quelli che non hanno un valore per il destinatario restano visibili nel testo.</p>
+        <dl class="mb-0">
+          {% for chiave, descrizione in segnaposto.items %}<dt><code>{% templatetag openvariable %} {{ chiave }} {% templatetag closevariable %}</code></dt><dd class="text-secondary">{{ descrizione }}</dd>{% endfor %}
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

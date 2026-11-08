@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.comunicazioni",
     "apps.tesoreria",
     "apps.patrimonio",
+    "apps.documenti",
     "apps.migrazione",
 ]
 

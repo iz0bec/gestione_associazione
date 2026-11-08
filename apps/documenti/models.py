@@ -1,0 +1,50 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Modelli di stampa: testi con segnaposto stampati su carta intestata
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+from django.db import models
+
+
+class ModelloStampa(models.Model):
+    class Tipo(models.TextChoices):
+        LETTERA = "lettera", "Lettera (destinatario, luogo e data, oggetto, firma)"
+        ATTESTATO = "attestato", "Attestato (titolo centrato, luogo e data, firma)"
+        DOCUMENTO = "documento", "Documento libero (titolo e testo)"
+
+    nome = models.CharField(max_length=100, unique=True)
+    tipo = models.CharField(max_length=10, choices=Tipo.choices, default=Tipo.LETTERA)
+    titolo = models.CharField(
+        "titolo o oggetto",
+        max_length=200,
+        blank=True,
+        help_text="Oggetto della lettera o titolo dell'attestato; ammette i segnaposto.",
+    )
+    corpo = models.TextField(
+        "testo",
+        help_text="Una riga vuota separa i paragrafi; **testo** = grassetto, *testo* = corsivo, "
+        "righe che iniziano con «- » = elenco. Segnaposto come {{ nome_completo }}.",
+    )
+    firma_ruolo = models.CharField(
+        "qualifica del firmatario", max_length=100, blank=True, default="Il Presidente"
+    )
+    firma_nome = models.CharField(
+        "nome del firmatario",
+        max_length=150,
+        blank=True,
+        help_text="Vuoto = il presidente in carica negli Organi sociali.",
+    )
+    attivo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "modello di stampa"
+        verbose_name_plural = "modelli di stampa"
+        ordering = ["nome"]
+        permissions = [("stampa_documento", "Può stampare documenti dai modelli")]
+
+    def __str__(self):
+        return self.nome
