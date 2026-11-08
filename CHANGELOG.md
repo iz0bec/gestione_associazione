@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.15] - 2026-11-08
+
+Manuale con immagini e in PDF, password impostata dall'amministratore, sezione del socio.
+
 ### Aggiunto
 - **Manuale con immagini**: 22 schermate (con dati di esempio) nelle pagine del manuale in linea e
   **Manuale in PDF** scaricabile dalla pagina del Manuale (copertina, indice, un capitolo per

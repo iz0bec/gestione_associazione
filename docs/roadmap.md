@@ -29,6 +29,7 @@
 | **0.0.1-rc.12** ✅ | verifica di caselle IMAP e server di invio, azioni in blocco sulla posta | GitLab, GitHub |
 | **0.0.1-rc.13** ✅ | modifica delle date delle cariche negli organi sociali | GitLab, GitHub |
 | **0.0.1-rc.14** ✅ | organi delle sezioni, ruolo Presidente di sezione, documenti pubblici (statuto e regolamento) | GitLab, GitHub |
+| **0.0.1-rc.15** ✅ | manuale con immagini e in PDF, password impostata dall'amministratore, sezione del socio | GitLab, GitHub |
 | 0.x | collaudo presso la sezione, correzioni, funzionalità della fase 2 | GitLab |
 | **1.0** | prima release stabile, documentazione completa, Django 6.2 LTS | GitHub |
 
