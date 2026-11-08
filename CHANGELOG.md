@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.11] - 2026-11-08
+
+Interruttori dei servizi di posta.
+
 ### Aggiunto
 - **Sistema → Servizi di posta** (solo Amministratore di sistema): interruttori generali
   dell'**invio delle email** (spento: nulla parte, i messaggi confermati restano in coda, auguri e
