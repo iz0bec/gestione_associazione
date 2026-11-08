@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Calendario: vista del mese (griglia su schermi larghi, elenco sul telefono)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Calendario {{ primo|date:"F Y" }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'calendario:calendario' %}">Calendario</a></div>{% endblock %}
+{% block titolo_pagina %}{{ primo|date:"F Y"|capfirst }}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <div class="btn-group">
+    <a class="btn" href="?m={{ precedente }}{% if compleanni %}&amp;compleanni=1{% endif %}" aria-label="Mese precedente"><i class="ti ti-chevron-left"></i></a>
+    <a class="btn" href="?{% if compleanni %}compleanni=1{% endif %}">Oggi</a>
+    <a class="btn" href="?m={{ successivo }}{% if compleanni %}&amp;compleanni=1{% endif %}" aria-label="Mese successivo"><i class="ti ti-chevron-right"></i></a>
+  </div>
+  {% if puo_compleanni %}<a class="btn" href="?m={{ primo|date:'Y-m' }}{% if not compleanni %}&amp;compleanni=1{% endif %}"><i class="ti ti-cake me-1"></i>{% if compleanni %}Nascondi{% else %}Mostra{% endif %} compleanni</a>{% endif %}
+  {% if perms.calendario.add_appuntamento %}<a class="btn btn-primary" href="{% url 'calendario:appuntamento_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card d-none d-md-block">
+  <div class="table-responsive">
+    <table class="table table-bordered mb-0 mese-griglia">
+      <thead><tr>{% for g in settimane.0 %}<th class="text-center text-secondary small">{{ g.giorno|date:"l"|capfirst }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for settimana in settimane %}
+        <tr>
+        {% for c in settimana %}
+          <td class="{% if not c.nel_mese %}fuori-mese{% endif %}{% if c.giorno == oggi %} oggi{% endif %}">
+            <div class="d-flex align-items-center">
+              <span class="mese-numero">{{ c.giorno|date:"j" }}</span>
+              {% if perms.calendario.add_appuntamento %}<a class="ms-auto text-secondary mese-aggiungi" href="{% url 'calendario:appuntamento_nuovo' %}?giorno={{ c.giorno|date:'Y-m-d' }}" title="Nuovo il {{ c.giorno|date:'j F' }}" aria-label="Nuovo il {{ c.giorno|date:'j F' }}"><i class="ti ti-plus"></i></a>{% endif %}
+            </div>
+            {% for e in c.eventi %}
+              {% include "calendario/_voce_mese.html" %}
+            {% endfor %}
+          </td>
+        {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card d-md-none">
+  {% if giorni_mese %}
+  <div class="list-group list-group-flush">
+    {% for c in giorni_mese %}
+    <div class="list-group-item">
+      <div class="fw-bold mb-1{% if c.giorno == oggi %} text-green{% endif %}">{{ c.giorno|date:"l j F"|capfirst }}</div>
+      {% for e in c.eventi %}{% include "calendario/_voce_mese.html" %}{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card-body text-secondary">Nessun impegno in {{ primo|date:"F" }}.</div>
+  {% endif %}
+</div>
+{% endblock %}

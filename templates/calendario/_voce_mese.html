@@ -1,0 +1,9 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Un impegno nella vista del mese (variabile «e»)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<div class="mese-voce{% if e.stato == 'fatto' %} fatto{% elif e.stato == 'scaduto' %} scaduto{% endif %}" title="{{ e.titolo }}{% if e.luogo %} - {{ e.luogo }}{% endif %}">
+  <i class="ti ti-{% if e.stato == 'fatto' %}circle-check{% else %}{{ e.icona }}{% endif %}"></i>
+  {% if not e.tutto_il_giorno %}<span class="text-secondary">{{ e.inizio|time:"H:i" }}</span>{% endif %}
+  {% if e.percorso %}<a href="{{ e.percorso }}">{{ e.titolo }}</a>{% else %}{{ e.titolo }}{% endif %}
+</div>

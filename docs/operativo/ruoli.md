@@ -106,6 +106,11 @@ Il **Calendario** è aperto a tutti gli utenti, ma ognuno vede (e riceve sul tel
 impegni dei moduli che può consultare: riunioni degli organi, ricorrenze, restituzioni dei beni
 in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 
+| Ruolo | Consulta appuntamenti e scadenze | Inserisce, modifica, segna fatte, annulla |
+|---|---|---|
+| Amministratore di sistema, Presidente, Segretario, Tesoriere | sì | sì |
+| Addetto protocollo, Consigliere, Revisore | sì | - |
+
 ## Funzioni che coinvolgono più moduli
 
 Un'operazione che scrive in un altro modulo richiede anche il permesso di quel modulo:

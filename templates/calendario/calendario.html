@@ -7,7 +7,11 @@
 {% block titolo %}Calendario{% endblock %}
 {% block titolo_pagina %}Calendario{% endblock %}
 {% block azioni %}
-<a class="btn" href="{% url 'calendario:scarica' %}{% if compleanni %}?compleanni=1{% endif %}"><i class="ti ti-download me-1"></i>Scarica .ics</a>
+<div class="btn-list">
+  <a class="btn" href="{% url 'calendario:mese' %}{% if compleanni %}?compleanni=1{% endif %}"><i class="ti ti-calendar-month me-1"></i>Mese</a>
+  <a class="btn" href="{% url 'calendario:scarica' %}{% if compleanni %}?compleanni=1{% endif %}"><i class="ti ti-download me-1"></i>Scarica .ics</a>
+  {% if perms.calendario.add_appuntamento %}<a class="btn btn-primary" href="{% url 'calendario:appuntamento_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo</a>{% endif %}
+</div>
 {% endblock %}
 {% block contenuto %}
 <div class="row g-3">
@@ -33,7 +37,7 @@
               <div class="small text-secondary">{{ giorno|date:"M" }}</div>
             </div>
             <div class="col">
-              <div><i class="ti ti-{{ e.icona }} text-secondary me-1"></i>{% if e.percorso %}<a href="{{ e.percorso }}">{{ e.titolo }}</a>{% else %}{{ e.titolo }}{% endif %}{% if giorno == oggi %} <span class="badge bg-green-lt">oggi</span>{% endif %}</div>
+              <div{% if e.stato == "fatto" %} class="text-secondary text-decoration-line-through"{% endif %}><i class="ti ti-{% if e.stato == 'fatto' %}circle-check{% else %}{{ e.icona }}{% endif %} text-secondary me-1"></i>{% if e.percorso %}<a href="{{ e.percorso }}">{{ e.titolo }}</a>{% else %}{{ e.titolo }}{% endif %}{% if giorno == oggi %} <span class="badge bg-green-lt">oggi</span>{% endif %}{% if e.stato == "fatto" %} <span class="badge bg-secondary-lt">fatta</span>{% endif %}</div>
               <div class="small text-secondary">
                 {% if not e.tutto_il_giorno %}ore {{ e.inizio|time:"H:i" }}{% if e.luogo %} · {% endif %}{% endif %}{{ e.luogo }}
                 {% if e.annuale %}<span class="ms-1">· ogni anno</span>{% endif %}
@@ -46,10 +50,29 @@
       {% else %}
       <div class="card-body text-secondary">Nessun impegno nei prossimi 60 giorni.</div>
       {% endif %}
-      <div class="card-footer small text-secondary">Riunioni convocate degli organi, ricorrenze, restituzioni previste dei beni in prestito{% if puo_compleanni %} e, a scelta, compleanni dei soci{% endif %}: ognuno vede ciò che i propri permessi consentono.</div>
+      <div class="card-footer small text-secondary">Riunioni convocate degli organi, ricorrenze, restituzioni previste dei beni in prestito, appuntamenti e scadenze{% if puo_compleanni %} e, a scelta, compleanni dei soci{% endif %}: ognuno vede ciò che i propri permessi consentono.</div>
     </div>
   </div>
   <div class="col-lg-5">
+    {% if perms.calendario.view_appuntamento %}
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-alarm me-1"></i>Scadenze da fare</h3>{% if perms.calendario.add_appuntamento %}<div class="card-actions"><a href="{% url 'calendario:appuntamento_nuovo' %}?tipo=scadenza">Nuova scadenza</a></div>{% endif %}</div>
+      {% if scadenze %}
+      <div class="list-group list-group-flush">
+        {% for s in scadenze %}
+        <div class="list-group-item d-flex align-items-center gap-2">
+          <span class="flex-fill"><a href="{{ s.get_absolute_url }}">{{ s.titolo }}</a><div class="small {% if s.scaduto %}text-danger{% else %}text-secondary{% endif %}">{% if s.scaduto %}scaduta il {% else %}entro il {% endif %}{{ s.prossima|date:"j F Y" }}</div></span>
+          {% if perms.calendario.change_appuntamento %}
+          <form method="post" action="{% url 'calendario:appuntamento_azione' s.pk %}">{% csrf_token %}<input type="hidden" name="torna" value="{{ request.get_full_path }}"><button class="btn btn-sm" type="submit" name="azione" value="fatto" title="Segna come fatta"><i class="ti ti-check"></i></button></form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body text-secondary small">Nessuna scadenza superata o nei prossimi 30 giorni.</div>
+      {% endif %}
+    </div>
+    {% endif %}
     <div class="card">
       <div class="card-header"><h3 class="card-title"><i class="ti ti-device-mobile me-1"></i>Sul telefono e sul computer</h3></div>
       <div class="card-body">

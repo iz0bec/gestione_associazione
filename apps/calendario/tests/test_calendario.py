@@ -134,3 +134,95 @@ class TestCollegamento:
         client.force_login(u)
         client.post("/calendario/collegamento/", {"azione": "crea", "compleanni": "1"})
         assert not FeedCalendario.objects.get(utente=u).compleanni
+
+
+def _app(**extra):
+    from apps.calendario.models import Appuntamento
+
+    dati = {"titolo": "Cerimonia al monumento", "tipo": "cerimonia",
+            "giorno": timezone.localdate() + timedelta(days=3)}  # fmt: skip
+    return Appuntamento.objects.create(**{**dati, **extra})
+
+
+class TestAppuntamenti:
+    def test_nel_calendario_e_nell_ics(self, crea_utente):
+        from datetime import time
+
+        oggi = timezone.localdate()
+        _app(ora=time(10, 30), luogo="Piazza")
+        _app(titolo="Annullato", annullato=True)
+        _app(titolo="Rendiconto", tipo="scadenza", giorno=oggi - timedelta(days=2))
+        _app(titolo="Festa", giorno=oggi + timedelta(days=5), fine_giorno=oggi + timedelta(days=7))
+        u = crea_utente("c", ruoli=["Consigliere"])
+        righe = servizi.occorrenze(u, oggi - timedelta(days=5), oggi + timedelta(days=10))
+        titoli = [e.titolo for _g, e in righe]
+        assert "Cerimonia al monumento" in titoli and "Annullato" not in titoli
+        assert titoli.count("Festa") == 3  # tre giorni
+        scadenza = next(e for _g, e in righe if e.titolo == "Scadenza: Rendiconto")
+        assert scadenza.stato == "scaduto"
+        testo = servizi.calendario_di(u).replace("\r\n ", "")
+        assert "SUMMARY:Cerimonia al monumento" in testo and "LOCATION:Piazza" in testo
+        assert f"DTEND;VALUE=DATE:{oggi + timedelta(days=8):%Y%m%d}" in testo
+        assert servizi.eventi(crea_utente("x"), dal=oggi, al=oggi) == []  # senza permessi
+
+    def test_scadenza_annuale(self, crea_utente):
+        oggi = timezone.localdate()
+        a = _app(titolo="Assicurazione", tipo="scadenza", annuale=True,
+                 giorno=(oggi - timedelta(days=1)).replace(year=2020))  # fmt: skip
+        assert a.prossima == (oggi - timedelta(days=1)).replace(year=oggi.year) and a.scaduto
+        u = crea_utente("s", ruoli=["Segretario"])
+        assert servizi.scadenze_aperte(u) == [a]
+        servizi.segna_fatto(a, u)
+        assert a.fatto and not a.scaduto and servizi.scadenze_aperte(u) == []
+        a.completato_il = oggi.replace(year=oggi.year - 1)  # fatta l'anno scorso
+        assert not a.fatto and a.scaduto
+
+    def test_mese(self, crea_utente):
+        oggi = timezone.localdate()
+        _app(giorno=oggi)
+        settimane = servizi.mese(crea_utente("c", ruoli=["Consigliere"]), oggi.year, oggi.month)
+        assert all(len(s) == 7 for s in settimane) and settimane[0][0]["giorno"].weekday() == 0
+        cella = next(c for s in settimane for c in s if c["giorno"] == oggi)
+        assert [e.titolo for e in cella["eventi"]] == ["Cerimonia al monumento"]
+
+
+class TestVisteAppuntamenti:
+    def test_permessi(self, client_ruolo):
+        a = _app()
+        c = client_ruolo("Consigliere", username="c")
+        assert c.get(f"/calendario/appuntamenti/{a.pk}/").status_code == 200
+        assert c.get("/calendario/appuntamenti/nuovo/").status_code == 403
+        assert c.post(f"/calendario/appuntamenti/{a.pk}/azione/",
+                      {"azione": "annulla"}).status_code == 403  # fmt: skip
+        assert c.get("/calendario/mese/?m=2026-02").status_code == 200
+
+    def test_crea_modifica_fatto_annulla(self, client_ruolo):
+        from apps.calendario.models import Appuntamento
+
+        c = client_ruolo("Tesoriere")
+        giorno = timezone.localdate() + timedelta(days=4)
+        r = c.post("/calendario/appuntamenti/nuovo/", {
+            "titolo": "Invio del rendiconto", "tipo": "scadenza", "giorno": giorno.isoformat(),
+        })  # fmt: skip
+        a = Appuntamento.objects.get(titolo="Invio del rendiconto")
+        assert r.status_code == 302 and a.creato_da == c.utente
+        assert "Invio del rendiconto" in c.get("/").content.decode()  # nel cruscotto
+        assert "Scadenze da fare" in c.get("/calendario/").content.decode()
+        c.post(f"/calendario/appuntamenti/{a.pk}/azione/", {"azione": "fatto"})
+        a.refresh_from_db()
+        assert a.completato_il == timezone.localdate()
+        r = c.post(f"/calendario/appuntamenti/{a.pk}/modifica/", {
+            "titolo": "Invio rendiconto", "tipo": "scadenza", "giorno": giorno.isoformat(),
+            "ora": "10:00", "ora_fine": "09:00",
+        })  # fmt: skip
+        assert r.status_code == 200 and "prima di quella di inizio" in r.content.decode()
+        c.post(f"/calendario/appuntamenti/{a.pk}/azione/", {"azione": "annulla"})
+        a.refresh_from_db()
+        assert a.annullato
+        assert c.get(f"/calendario/appuntamenti/{a.pk}/modifica/").status_code == 404
+
+    def test_mese_mostra_gli_impegni(self, client_ruolo):
+        oggi = timezone.localdate()
+        _app(giorno=oggi, titolo="Deposizione corona")
+        testo = client_ruolo("Segretario").get(f"/calendario/mese/?m={oggi:%Y-%m}").content
+        assert b"Deposizione corona" in testo and b"mese-griglia" in testo

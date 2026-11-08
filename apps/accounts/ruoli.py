@@ -162,8 +162,16 @@ DOCUMENTI_GESTIONE = [
     "documenti.change_modellostampa",
 ]
 
+CALENDARIO_LETTURA = ["calendario.view_appuntamento"]
+CALENDARIO_GESTIONE = [
+    *CALENDARIO_LETTURA,
+    "calendario.add_appuntamento",
+    "calendario.change_appuntamento",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
+        *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
         "anagrafica.importa_soggetti",
@@ -191,6 +199,7 @@ RUOLI = {
         *DOCUMENTI_GESTIONE,
     ],
     "Presidente": [
+        *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
         "core.view_eventoaudit",
@@ -214,6 +223,7 @@ RUOLI = {
         *DOCUMENTI_STAMPA,
     ],
     "Segretario": [
+        *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
         "anagrafica.importa_soggetti",
@@ -231,6 +241,7 @@ RUOLI = {
         *DOCUMENTI_GESTIONE,
     ],
     "Tesoriere": [
+        *CALENDARIO_GESTIONE,
         *ANAGRAFICA_LETTURA,
         *SOCI_TESORERIA,
         *PROTOCOLLO_LETTURA,
@@ -241,6 +252,7 @@ RUOLI = {
         *DOCUMENTI_STAMPA,
     ],
     "Addetto protocollo": [
+        *CALENDARIO_LETTURA,
         *ANAGRAFICA_SCRITTURA,
         *PROTOCOLLO_OPERATIVO,
         *ORGANI_LETTURA,
@@ -248,6 +260,7 @@ RUOLI = {
         *DOCUMENTI_STAMPA,
     ],
     "Consigliere": [
+        *CALENDARIO_LETTURA,
         *ANAGRAFICA_LETTURA,
         *SOCI_LETTURA,
         *PROTOCOLLO_LETTURA,
@@ -257,6 +270,7 @@ RUOLI = {
         *PATRIMONIO_LETTURA,
     ],
     "Revisore": [
+        *CALENDARIO_LETTURA,
         *ANAGRAFICA_LETTURA,
         *SOCI_LETTURA,
         "core.view_eventoaudit",

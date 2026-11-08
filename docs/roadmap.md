@@ -83,8 +83,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 ## Fase 2 - Dopo la RC (proposte)
 
 - Scadenzario e calendario (assemblee, rinnovi, ricorrenze, cerimonie) con esportazione iCal.
-  *Fatti*: pagina Calendario con i prossimi impegni ed esportazione iCal (file e collegamento
-  personale). *Da fare*: vista mensile, appuntamenti e scadenze inseriti a mano.
+  ✅ *Fatti*: prossimi impegni, vista mensile, appuntamenti e scadenze inseriti a mano,
+  riquadro nel cruscotto, esportazione iCal (file e collegamento personale).
 - ✅ Scambio dell'anagrafica con le rubriche (vCard): esportazione e importazione con anteprima.
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.

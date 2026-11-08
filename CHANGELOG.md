@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Calendario: **appuntamenti e scadenze** inseriti a mano (evento, cerimonia, scadenza,
+  promemoria; anche su più giorni o ogni anno), scadenze da segnare come fatte, in rosso se
+  superate; **vista mensile**; riquadro **Prossimi impegni** nel cruscotto (14 giorni e scadenze
+  superate) al posto di *Prossime riunioni*. Gli appuntamenti sono anche nel file iCal.
+
 ## [0.0.1-rc.9] - 2026-11-08
 
 ### Corretto

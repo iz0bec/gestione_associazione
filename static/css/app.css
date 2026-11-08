@@ -87,3 +87,13 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
 .versione-app { white-space: nowrap; }
 
 .calendario-giorno { min-width: 3.25rem; line-height: 1.15; }
+.mese-griglia { table-layout: fixed; }
+.mese-griglia td { height: 7.5rem; vertical-align: top; padding: .35rem; font-size: .8rem; }
+.mese-griglia td.fuori-mese { background: var(--tblr-bg-surface-secondary); color: var(--tblr-secondary); }
+.mese-griglia td.oggi { box-shadow: inset 0 0 0 2px var(--tblr-primary); }
+.mese-numero { font-weight: 600; }
+.mese-aggiungi { visibility: hidden; }
+.mese-griglia td:hover .mese-aggiungi, .mese-aggiungi:focus { visibility: visible; }
+.mese-voce { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
+.mese-voce.fatto, .mese-voce.fatto a { color: var(--tblr-secondary); text-decoration: line-through; }
+.mese-voce.scaduto, .mese-voce.scaduto a { color: var(--tblr-danger); }

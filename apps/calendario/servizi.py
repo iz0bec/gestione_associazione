@@ -11,15 +11,15 @@
 
 import hashlib
 import secrets
-from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from dataclasses import dataclass, replace
+from datetime import UTC, date, datetime, time, timedelta
 
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.audit import Azione, registra
 
-from .models import FeedCalendario
+from .models import Appuntamento, FeedCalendario
 
 DOMINIO_UID = "gestione-associazione"
 DURATA_RIUNIONE = timedelta(hours=2)
@@ -37,6 +37,8 @@ class Evento:
     annuale: bool = False
     categoria: str = ""
     icona: str = "calendar"
+    appuntamento: Appuntamento | None = None  # se inserito a mano
+    stato: str = ""  # per le scadenze: «fatto» o «scaduto» (calcolato per ogni occorrenza)
 
     @property
     def tutto_il_giorno(self):
@@ -144,6 +146,35 @@ def _prestiti(dal, al):
         )  # fmt: skip
 
 
+def _momento(giorno, ora):
+    return timezone.make_aware(datetime.combine(giorno, ora))
+
+
+def _appuntamenti(dal, al):
+    from django.db.models import Q
+
+    qs = Appuntamento.objects.filter(annullato=False).filter(
+        Q(annuale=True) | Q(giorno__range=(dal, al)) | Q(giorno__lte=al, fine_giorno__gte=dal)
+    )
+    for a in qs:
+        titolo = f"Scadenza: {a.titolo}" if a.scadenza else a.titolo
+        if a.ora:
+            inizio = _momento(a.giorno, a.ora)
+            if a.fine_giorno or a.ora_fine:
+                fine = _momento(a.fine_giorno or a.giorno, a.ora_fine or a.ora)
+            else:
+                fine = inizio + timedelta(hours=1)
+            fine = max(fine, inizio)
+        else:
+            inizio = a.giorno
+            fine = (a.fine_giorno + timedelta(days=1)) if a.fine_giorno else None
+        yield Evento(
+            uid=f"appuntamento-{a.pk}", titolo=titolo, inizio=inizio, fine=fine, luogo=a.luogo,
+            descrizione=a.descrizione, percorso=a.get_absolute_url(), annuale=a.annuale,
+            categoria=a.get_tipo_display(), icona=a.icona, appuntamento=a,
+        )  # fmt: skip
+
+
 def eventi(utente, *, dal, al, compleanni=False):
     """Impegni visibili all'utente: quelli singoli nel periodo, quelli annuali tutti."""
     elenco = []
@@ -155,24 +186,118 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _compleanni(utente)
     if utente.has_perm("patrimonio.view_bene"):
         elenco += _prestiti(dal, al)
+    if utente.has_perm("calendario.view_appuntamento"):
+        elenco += _appuntamenti(dal, al)
     return elenco
 
 
-def prossimi(utente, giorni=60, *, compleanni=False):
-    """(giorno, evento) dei prossimi giorni, in ordine, con gli annuali alla loro data."""
-    oggi = timezone.localdate()
-    al = oggi + timedelta(days=giorni)
+def _giorno(e):
+    return e.inizio if e.tutto_il_giorno else timezone.localtime(e.inizio).date()
+
+
+def _con_stato(e, giorno):
+    a = e.appuntamento
+    if a is None or not a.scadenza:
+        return e
+    if a.fatto_per(giorno):
+        stato = "fatto"
+    elif giorno < timezone.localdate():
+        stato = "scaduto"
+    else:
+        stato = ""
+    return replace(e, stato=stato)
+
+
+def occorrenze(utente, dal, al, *, compleanni=False):
+    """(giorno, evento) fra `dal` e `al` compresi, in ordine: gli annuali in ogni anno del
+    periodo, gli impegni di più giorni (tutto il giorno) in ciascun giorno."""
     righe = []
-    for e in eventi(utente, dal=oggi, al=al, compleanni=compleanni):
+    for e in eventi(utente, dal=dal, al=al, compleanni=compleanni):
         if e.annuale:
-            for anno in {oggi.year, al.year}:
-                giorno = e.nel(anno)
-                if oggi <= giorno <= al:
-                    righe.append((giorno, e))
+            giorni = [e.nel(anno) for anno in range(dal.year, al.year + 1)]
+        elif e.tutto_il_giorno and e.fine and (e.fine - e.inizio).days > 1:
+            giorni = [e.inizio + timedelta(days=i) for i in range((e.fine - e.inizio).days)]
         else:
-            giorno = e.inizio if e.tutto_il_giorno else timezone.localtime(e.inizio).date()
-            righe.append((giorno, e))
-    return sorted(righe, key=lambda r: (r[0], r[1].tutto_il_giorno is False, r[1].titolo))
+            giorni = [_giorno(e)]
+        righe += [(g, _con_stato(e, g)) for g in giorni if dal <= g <= al]
+    return sorted(righe, key=_ordine)
+
+
+def _ordine(riga):
+    """Per giorno; prima gli impegni di tutto il giorno, poi gli altri per ora."""
+    g, e = riga
+    ora = time.min if e.tutto_il_giorno else timezone.localtime(e.inizio).time()
+    return (g, not e.tutto_il_giorno, ora, e.titolo)
+
+
+def prossimi(utente, giorni=60, *, compleanni=False):
+    """(giorno, evento) da oggi ai prossimi giorni, in ordine."""
+    oggi = timezone.localdate()
+    return occorrenze(utente, oggi, oggi + timedelta(days=giorni), compleanni=compleanni)
+
+
+def mese(utente, anno, numero, *, compleanni=False):
+    """Settimane (lunedì-domenica) del mese: liste di 7 giorni {giorno, eventi, nel_mese}."""
+    import calendar
+
+    settimane = calendar.Calendar(firstweekday=0).monthdatescalendar(anno, numero)
+    dal, al = settimane[0][0], settimane[-1][-1]
+    per_giorno = {}
+    for g, e in occorrenze(utente, dal, al, compleanni=compleanni):
+        per_giorno.setdefault(g, []).append(e)
+    return [
+        [{"giorno": g, "eventi": per_giorno.get(g, []), "nel_mese": g.month == numero}
+         for g in settimana]
+        for settimana in settimane
+    ]  # fmt: skip
+
+
+def scadenze_aperte(utente, giorni=30):
+    """Scadenze non fatte: quelle superate e quelle dei prossimi giorni, per data."""
+    if not utente.has_perm("calendario.view_appuntamento"):
+        return []
+    limite = timezone.localdate() + timedelta(days=giorni)
+    aperte = [
+        a for a in Appuntamento.objects.filter(tipo=Appuntamento.Tipo.SCADENZA, annullato=False)
+        if not a.fatto and a.prossima <= limite
+    ]  # fmt: skip
+    return sorted(aperte, key=lambda a: a.prossima)
+
+
+# --- appuntamenti inseriti a mano ------------------------------------------------------------
+
+
+def salva_appuntamento(form, utente):
+    nuovo = form.instance.pk is None
+    from apps.core.audit import campi_modificati
+
+    dettagli = {} if nuovo else campi_modificati(form)
+    a = form.save(commit=False)
+    if nuovo:
+        a.creato_da = utente
+    a.modificato_da = utente
+    a.save()
+    if nuovo:
+        registra(Azione.CREAZIONE, a, utente=utente)
+    elif dettagli.get("campi"):
+        registra(Azione.MODIFICA, a, utente=utente, **dettagli)
+    return a
+
+
+def segna_fatto(a, utente, *, fatto=True):
+    a.completato_il = timezone.localdate() if fatto else None
+    a.modificato_da = utente
+    a.save(update_fields=["completato_il", "modificato_da", "modificato_il"])
+    registra(Azione.MODIFICA, a, utente=utente, fatto=fatto)
+    return a
+
+
+def annulla_appuntamento(a, utente):
+    a.annullato = True
+    a.modificato_da = utente
+    a.save(update_fields=["annullato", "modificato_da", "modificato_il"])
+    registra(Azione.ANNULLAMENTO, a, utente=utente)
+    return a
 
 
 # --- iCal -----------------------------------------------------------------------------------

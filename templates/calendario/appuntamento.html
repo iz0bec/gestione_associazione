@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di un appuntamento o di una scadenza, con le azioni
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ appuntamento.titolo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'calendario:calendario' %}">Calendario</a> · {{ appuntamento.get_tipo_display }}</div>{% endblock %}
+{% block titolo_pagina %}{{ appuntamento.titolo }}{% endblock %}
+{% block azioni %}
+{% if perms.calendario.change_appuntamento and not appuntamento.annullato %}
+<div class="btn-list">
+  {% if appuntamento.scadenza %}
+  <form method="post" action="{% url 'calendario:appuntamento_azione' appuntamento.pk %}">{% csrf_token %}
+    {% if appuntamento.fatto %}<button class="btn" type="submit" name="azione" value="riapri"><i class="ti ti-arrow-back-up me-1"></i>Riapri</button>
+    {% else %}<button class="btn btn-success" type="submit" name="azione" value="fatto"><i class="ti ti-circle-check me-1"></i>Segna come fatta</button>{% endif %}
+  </form>
+  {% endif %}
+  <a class="btn btn-primary" href="{% url 'calendario:appuntamento_modifica' appuntamento.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>
+  <form method="post" action="{% url 'calendario:appuntamento_azione' appuntamento.pk %}" data-conferma="Annullare «{{ appuntamento.titolo }}»? Sparisce dal calendario (resta nel registro attività).">{% csrf_token %}
+    <button class="btn btn-outline-danger" type="submit" name="azione" value="annulla"><i class="ti ti-x me-1"></i>Annulla</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        {% if appuntamento.annullato %}<div class="alert alert-danger">Annullato.</div>{% endif %}
+        {% if appuntamento.scadenza %}
+          {% if appuntamento.fatto %}<div class="alert alert-success">Fatta il {{ appuntamento.completato_il|date:"d/m/Y" }}.</div>
+          {% elif appuntamento.scaduto %}<div class="alert alert-danger">Scaduta il {{ appuntamento.prossima|date:"d/m/Y" }} e non ancora fatta.</div>{% endif %}
+        {% endif %}
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Quando</dt>
+          <dd class="col-sm-8">
+            {{ appuntamento.giorno|date:"l j F Y"|capfirst }}{% if appuntamento.ora %}, ore {{ appuntamento.ora|time:"H:i" }}{% endif %}
+            {% if appuntamento.fine_giorno and appuntamento.fine_giorno != appuntamento.giorno %} - {{ appuntamento.fine_giorno|date:"l j F Y" }}{% endif %}{% if appuntamento.ora_fine %}{% if not appuntamento.fine_giorno or appuntamento.fine_giorno == appuntamento.giorno %} -{% else %},{% endif %} ore {{ appuntamento.ora_fine|time:"H:i" }}{% endif %}
+            {% if not appuntamento.ora %}<span class="text-secondary">(tutto il giorno)</span>{% endif %}
+            {% if appuntamento.annuale %}<div class="small text-secondary">Si ripete ogni anno{% if appuntamento.scadenza %}; quest'anno: {{ appuntamento.prossima|date:"j F Y" }}{% endif %}.</div>{% endif %}
+          </dd>
+          {% if appuntamento.luogo %}<dt class="col-sm-4">Luogo</dt><dd class="col-sm-8">{{ appuntamento.luogo }}</dd>{% endif %}
+          {% if appuntamento.descrizione %}<dt class="col-sm-4">Descrizione</dt><dd class="col-sm-8">{{ appuntamento.descrizione|linebreaksbr }}</dd>{% endif %}
+          <dt class="col-sm-4">Inserito</dt><dd class="col-sm-8 text-secondary">{{ appuntamento.creato_il|date:"d/m/Y H:i" }}{% if appuntamento.creato_da %} da {{ appuntamento.creato_da }}{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

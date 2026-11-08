@@ -69,12 +69,13 @@
       {% endif %}
     </div>
   </div>
-  {% if riunioni %}
+  {% if impegni or scadenze %}
   <div class="col-12">
     <div class="card">
-      <div class="card-header"><h2 class="card-title"><i class="ti ti-calendar-event me-2"></i>Prossime riunioni</h2></div>
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-calendar-event me-2"></i>Prossimi impegni</h2><div class="card-actions"><a href="{% url 'calendario:calendario' %}">Calendario</a></div></div>
       <div class="list-group list-group-flush">
-        {% for r in riunioni %}<a class="list-group-item list-group-item-action d-flex" href="{{ r.get_absolute_url }}"><span class="text-secondary me-3 text-nowrap">{{ r.prima_convocazione|date:"D j M, H:i" }}</span><span class="flex-fill text-truncate">{{ r.titolo }}</span><span class="text-secondary ms-3 d-none d-md-inline">{{ r.luogo }}</span></a>{% endfor %}
+        {% for s in scadenze %}{% if s.scaduto %}<a class="list-group-item list-group-item-action d-flex text-danger" href="{{ s.get_absolute_url }}"><span class="me-3 text-nowrap"><i class="ti ti-alarm me-1"></i>scaduta il {{ s.prossima|date:"j M" }}</span><span class="flex-fill text-truncate">{{ s.titolo }}</span></a>{% endif %}{% endfor %}
+        {% for giorno, e in impegni %}<a class="list-group-item list-group-item-action d-flex" href="{{ e.percorso|default:'#' }}"><span class="text-secondary me-3 text-nowrap">{{ giorno|date:"D j M" }}{% if not e.tutto_il_giorno %}, {{ e.inizio|time:"H:i" }}{% endif %}</span><span class="flex-fill text-truncate{% if e.stato == 'fatto' %} text-decoration-line-through text-secondary{% endif %}"><i class="ti ti-{{ e.icona }} text-secondary me-1"></i>{{ e.titolo }}</span><span class="text-secondary ms-3 d-none d-md-inline text-truncate">{{ e.luogo }}</span></a>{% endfor %}
       </div>
     </div>
   </div>
