@@ -19,7 +19,7 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env", overwrite=False)
 
 APP_NOME = "Gestione Associazione"
-APP_VERSIONE = "0.0.1-rc.1"
+APP_VERSIONE = "0.0.1-rc.2"
 
 # ------------------------------------------------------------------ base
 DEBUG = env.bool("DEBUG", default=False)

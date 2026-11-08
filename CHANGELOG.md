@@ -5,11 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.2] - 2026-11-08
+
+Correzioni dal primo collaudo in produzione: installatore su server condivisi, backup automatici,
+importazione dal registro nazionale senza limite di tempo e con le sezioni abbinate per comune.
+
 ### Modificato
 - Importazione dal registro nazionale: anteprima ed esecuzione in un processo separato, con una
   finestra modale di avanzamento («riga N di M») aggiornata ogni secondo; avanzamento anche nel
   comando `importa_registro_soci`.
-
 - Importazione: la sezione del file si riconosce **per comune** (predefinito), per nome o per
   codice, a scelta; solo sezioni attive; l'anteprima mostra l'abbinamento di ogni valore.
 - Un comune può avere una sola sezione attiva (pagina Sezioni e configurazione guidata).
@@ -18,6 +22,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 - Importazioni lunghe dall'interfaccia interrotte dal tempo massimo delle richieste (120 s) e quindi
   annullate per intero: ora girano in un processo separato senza limite di tempo.
 - Configurazione guidata: «Comune, PR» scritto con la virgola viene separato in comune e provincia.
+- Installatore: installa solo i pacchetti mancanti (server condivisi con altri servizi).
+- `collectstatic` in produzione: riferimenti alle mappe sorgente di Tabler.
+- Intestazione COOP inviata solo con HTTPS (in HTTP il browser la ignorava con un avviso).
+- Un solo backup automatico al giorno anche dopo i riavvii del pianificatore; il backup fatto
+  dall'installatore si chiama «prima dell'aggiornamento».
 
 ## [0.0.1-rc.1] - 2026-11-08
 
