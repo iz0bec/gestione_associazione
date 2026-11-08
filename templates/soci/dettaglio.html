@@ -3,6 +3,7 @@
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · socio n. {{ socio.numero }}{% if socio.sezione and multisezione %} · <a href="{% url 'soci:elenco' %}?sezione={{ socio.sezione_id }}">Sezione di {{ socio.sezione.nome }}</a>{% endif %}</div>{% endblock %}
 {% block titolo_pagina %}{{ socio.soggetto.intestazione }}
   <span class="badge fs-5 align-middle {% if socio.stato == 'attivo' %}bg-green-lt{% elif socio.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %}">{{ socio.get_stato_display|lower }}</span>
+  {% if socio.sezione and multisezione %}<span class="badge fs-5 align-middle bg-azure-lt" title="Sezione di appartenenza"><i class="ti ti-map-pin me-1"></i>Sezione di {{ socio.sezione.nome }}</span>{% endif %}
   {% for c in cariche %}{% if c.in_carica %}<span class="badge fs-5 align-middle bg-blue-lt" title="{{ c.organo }}, dal {{ c.dal|date:'d/m/Y' }}">{{ c.get_ruolo_display }} · {{ c.organo.sigla|default:c.organo.nome }}{% if c.organo.sezione %} {{ c.organo.sezione.nome }}{% endif %}</span>{% endif %}{% endfor %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">

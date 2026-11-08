@@ -459,3 +459,5 @@ def test_sezione_nelle_schede(client_ruolo, nord, ordinario):
     socio = servizi.ammetti_socio(s, ordinario, c.utente, sezione=nord)
     assert "Sezione di Sezione Nord" in c.get(f"/soci/{socio.pk}/").content.decode()
     assert "Sezione di Sezione Nord" in c.get(f"/anagrafica/{s.pk}/").content.decode()
+    assert 'title="Sezione di appartenenza' in c.get(f"/soci/{socio.pk}/").content.decode()
+    assert 'title="Sezione di appartenenza' in c.get(f"/anagrafica/{s.pk}/").content.decode()

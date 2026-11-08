@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titolo %}{{ soggetto }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'anagrafica:elenco' %}">Anagrafica</a> · {{ soggetto.get_tipo_display }}</div>{% endblock %}
-{% block titolo_pagina %}{{ soggetto.intestazione }}{% if soggetto.deceduto %} <span class="badge bg-dark-lt">†</span>{% endif %}{% if soggetto.anonimizzato_il %} <span class="badge bg-red-lt">anonimizzata</span>{% elif not soggetto.attivo %} <span class="badge bg-secondary-lt">archiviato</span>{% endif %}{% endblock %}
+{% block titolo_pagina %}{{ soggetto.intestazione }}{% if soggetto.socio and soggetto.socio.sezione and multisezione %} <span class="badge fs-5 align-middle bg-azure-lt" title="Sezione di appartenenza del socio"><i class="ti ti-map-pin me-1"></i>Sezione di {{ soggetto.socio.sezione.nome }}</span>{% endif %}{% if soggetto.deceduto %} <span class="badge bg-dark-lt">†</span>{% endif %}{% if soggetto.anonimizzato_il %} <span class="badge bg-red-lt">anonimizzata</span>{% elif not soggetto.attivo %} <span class="badge bg-secondary-lt">archiviato</span>{% endif %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
   {% if perms.anagrafica.archivia_soggetto %}
