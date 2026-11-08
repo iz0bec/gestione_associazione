@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.6] - 2026-11-08
+
+Attestato solenne / benemerenza.
+
 ### Aggiunto
 - **Attestato solenne / benemerenza** fra i modelli di stampa: A4 orizzontale con cornice dorata
   e angoli ornati, stemmi (logo dell'ente e stemma caricato sul modello), filigrana, titolo in
