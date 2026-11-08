@@ -5,6 +5,24 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- Aggiunte le note della 0.0.1-rc.14, mancanti nella release.
+
+## [0.0.1-rc.14] - 2026-11-08
+
+Organi delle sezioni, ruolo Presidente di sezione, documenti pubblici.
+
+### Aggiunto
+- **Organi delle sezioni**: ogni organo è dell'associazione o di una sezione (assemblea di sezione con
+  i soli soci della sezione); lo stesso socio può avere cariche in sezione e in federazione;
+  **Nuovo organo**; in *Sezioni*, **Crea gli organi** (consiglio e assemblea con le regole
+  dell'associazione) e **Organigramma** in PDF della sezione.
+- Ruolo **Presidente di sezione**: anagrafica, soci, tesseramento e domande della sola propria
+  sezione, calendario e stampa documenti; nessun accesso ai moduli della federazione.
+- **Documenti pubblici** (*Sistema → Documenti pubblici*): statuto, regolamento e altri PDF
+  consultabili da chiunque in `/documenti-pubblici/`, collegati dalla pagina di accesso e dalle
+  pagine pubbliche; caricati e sostituiti dal gestore.
+
 ## [0.0.1-rc.13] - 2026-11-08
 
 Modifica delle cariche negli organi sociali.
