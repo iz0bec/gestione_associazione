@@ -8,6 +8,9 @@
 * SPDX-License-Identifier: CC0-1.0
 ******************************************************
 -->
+<p align="center">
+  <img src="images/banner.png" width="100%">
+</p>
 
 # Gestione Associazione
 
