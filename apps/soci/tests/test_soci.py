@@ -473,3 +473,29 @@ class TestViste:
         r = client.get(reverse("soci:esporta"))
         assert "'=HYPERLINK(1)" in r.content.decode("utf-8-sig")
         assert Tessera.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_ricevuta_su_una_sola_pagina(crea_utente, settings, tmp_path):
+    """La ricevuta (A5 orizzontale) non deve mai finire su due pagine."""
+    from datetime import date
+
+    from django.template.loader import render_to_string
+    from weasyprint import HTML
+
+    from apps.anagrafica.models import Soggetto
+    from apps.core.models import Organizzazione
+    from apps.core.pdf import _fetcher_locale
+    from apps.soci import servizi
+    from apps.soci.models import TipologiaSocio
+
+    settings.MEDIA_ROOT = tmp_path
+    utente = crea_utente("tes", ruoli=["Tesoriere"])
+    s = Soggetto.objects.create(tipo="persona", cognome="Lungonomedicognome", nome="Primo Secondo",
+                                codice_fiscale="RSSMRA50C15A519V")  # fmt: skip
+    socio = servizi.ammetti_socio(s, TipologiaSocio.objects.get(nome="Ordinario"), utente)
+    t = servizi.rilascia_tessera(socio, 2026, utente, pagata_il=date(2026, 3, 1),
+                                 metodo="bonifico", riferimento="CRO 1234567890 " * 4)  # fmt: skip
+    html = render_to_string("soci/pdf/ricevuta.html",
+                            {"tessera": t, "organizzazione": Organizzazione.corrente()})  # fmt: skip
+    assert len(HTML(string=html, url_fetcher=_fetcher_locale()).render().pages) == 1

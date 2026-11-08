@@ -23,6 +23,7 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 - Organi sociali: **organigramma in PDF** dei componenti in carica, per livelli e con le foto.
 
 ### Corretto
+- Ricevuta della quota su una sola pagina A5 (la firma del tesoriere finiva su una seconda pagina).
 - Fine di una carica: la data indicata è quella di cessazione (con la data di oggi la persona esce
   subito dai componenti); una carica chiusa non si chiude due volte; errori del modulo mostrati.
 

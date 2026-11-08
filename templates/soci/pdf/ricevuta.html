@@ -1,10 +1,23 @@
 {% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Ricevuta della quota associativa: una sola pagina A5 orizzontale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
 {% block titolo %}Ricevuta {{ tessera.codice_ricevuta }}{% endblock %}
 {% block formato %}A5 landscape{% endblock %}
 {% block stile %}
-  .riquadro { border: 1pt solid #1d4e89; padding: 10pt 14pt; margin-top: 6pt; }
-  .importo { font-size: 16pt; font-weight: bold; }
-  .firma { margin-top: 24pt; text-align: right; }
+  @page { margin: 10mm 12mm 12mm 12mm; }
+  .intestazione { margin-bottom: 8pt; padding-bottom: 4pt; }
+  .intestazione img { height: 12mm; }
+  .intestazione .nome { font-size: 12pt; }
+  h1 { font-size: 13pt; margin: 0 0 6pt; }
+  .riquadro { border: 1pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; padding: 6pt 10pt; }
+  .riquadro p { margin: 3pt 0; }
+  .importo { font-size: 15pt; font-weight: bold; margin: 4pt 0; }
+  .chiusura { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8pt; }
+  .firma { text-align: center; min-width: 55mm; }
+  .firma .linea { border-top: .6pt solid #333; margin-top: 26pt; }
 {% endblock %}
 {% block contenuto %}
 <h1>Ricevuta n. {{ tessera.codice_ricevuta }}</h1>
@@ -15,6 +28,11 @@
   <p>a titolo di quota associativa per l'anno <strong>{{ tessera.anno }}</strong> (tessera {{ tessera.codice }}, {{ tessera.socio.tipologia|lower }}),
   versata il {{ tessera.pagata_il|date:"d/m/Y" }} tramite {{ tessera.get_metodo_pagamento_display|lower }}{% if tessera.riferimento_pagamento %} (rif. {{ tessera.riferimento_pagamento }}){% endif %}.</p>
 </div>
-<p class="piccolo">Quota associativa non soggetta a IVA. {% if tessera.annullata %}<strong>Tessera annullata: {{ tessera.motivo_annullamento }}</strong>{% endif %}</p>
-<div class="firma">{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ tessera.pagata_il|date:"d/m/Y" }}<br><br>Il Tesoriere<br><br>______________________</div>
+<div class="chiusura">
+  <div>
+    <div class="piccolo">Quota associativa non soggetta a IVA.{% if tessera.annullata %} <strong>Tessera annullata: {{ tessera.motivo_annullamento }}</strong>{% endif %}</div>
+    <div>{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ tessera.pagata_il|date:"d/m/Y" }}</div>
+  </div>
+  <div class="firma">Il Tesoriere<div class="linea"></div></div>
+</div>
 {% endblock %}
