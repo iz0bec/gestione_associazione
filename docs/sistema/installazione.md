@@ -110,7 +110,7 @@ dell'amministratore dell'applicazione. Il container si avvia con l'host (`onboot
 Aggiornamento, con backup automatico prima:
 
 ```bash
-bash crea-lxc.sh --aggiorna --id 120 --versione v0.0.1-rc.7
+bash crea-lxc.sh --aggiorna --id 120 --versione v0.0.1-rc.8
 ```
 
 Per i backup conviene anche il backup del container di Proxmox (snapshot o vzdump), in aggiunta ai
@@ -148,12 +148,23 @@ In produzione l'app va servita **solo in HTTPS**. Dietro un reverse proxy impost
 ```
 HTTPS=true
 PROXY_COUNT=1
+PROXY_FIDATI=192.168.0.26
 CSRF_TRUSTED_ORIGINS=https://gestione.example.it
 ALLOWED_HOSTS=gestione.example.it
 ```
 
-Con `HTTPS=true` i cookie di sessione viaggiano solo su connessioni cifrate. Le passkey
-funzionano solo in HTTPS (o su `localhost`).
+- `HTTPS=true`: i cookie di sessione viaggiano solo su connessioni cifrate e gli indirizzi
+  generati (es. il collegamento al calendario) sono in `https://`. Le passkey funzionano solo in
+  HTTPS (o su `localhost`). **Da quel momento non si entra più dall'indirizzo in chiaro**
+  (`http://server:porta`): anche dalla rete interna si usa il nome in HTTPS.
+- `PROXY_COUNT`: quanti proxy ci sono in catena (di solito 1, es. Nginx Proxy Manager). Serve a
+  ricavare l'**IP reale** del visitatore da `X-Forwarded-For`, usato dal blocco dei tentativi di
+  accesso e dal registro attività: senza, tutte le richieste sembrano arrivare dal proxy e chi
+  sbaglia 5 volte la password di un utente lo blocca per tutti.
+- `PROXY_FIDATI`: IP o reti (separati da virgola) da cui accettare `X-Forwarded-For`; le richieste
+  che arrivano direttamente da altri indirizzi usano il loro IP e non possono spacciarsi per altri.
+  Per conoscere l'IP del proxy: nel log del servizio (`journalctl -u gestione-associazione`) è il
+  primo campo delle richieste che arrivano dal nome pubblico.
 
 ## Primo accesso
 
@@ -176,7 +187,7 @@ git pull && docker compose up -d --build
 Senza Docker, dalla copia del repository usata per l'installazione:
 
 ```bash
-cd /root/gestione-associazione-src && git fetch --tags && git checkout v0.0.1-rc.7
+cd /root/gestione-associazione-src && git fetch --tags && git checkout v0.0.1-rc.8
 ./scripts/installa.sh -y      # backup automatico, migrazioni, riavvio dei servizi
 ```
 

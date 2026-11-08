@@ -19,7 +19,7 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env", overwrite=False)
 
 APP_NOME = "Gestione Associazione"
-APP_VERSIONE = "0.0.1-rc.7"
+APP_VERSIONE = "0.0.1-rc.8"
 APP_AUTORE = "Bartolomeo Santoro aka IZ0BEC"
 APP_EMAIL_AUTORE = "info@iz0bec.info"
 APP_REPOSITORY = "https://mygitlab.iz0bec.info/sbart64/gestione_associazione"
@@ -148,7 +148,11 @@ AXES_COOLOFF_TIME = env.float("AXES_COOLOFF_ORE", default=0.25)
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = "errori/bloccato.html"
-AXES_IPWARE_PROXY_COUNT = env.int("PROXY_COUNT", default=0)
+# dietro reverse proxy: PROXY_COUNT proxy in catena; PROXY_FIDATI = IP o reti da cui accettare
+# X-Forwarded-For (es. 192.168.0.26,192.168.0.34); vuoto = da chiunque
+PROXY_COUNT = env.int("PROXY_COUNT", default=0)
+PROXY_FIDATI = env.list("PROXY_FIDATI", default=[])
+AXES_CLIENT_IP_CALLABLE = "apps.core.rete.ip_client"
 
 # ------------------------------------------------------------------ lingua e orari
 LANGUAGE_CODE = "it"
@@ -237,7 +241,7 @@ SESSION_COOKIE_SECURE = HTTPS
 CSRF_COOKIE_SECURE = HTTPS
 SECURE_SSL_REDIRECT = HTTPS and env.bool("SECURE_SSL_REDIRECT", default=False)
 SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0) if HTTPS else 0
-if env.int("PROXY_COUNT", default=0) > 0:
+if PROXY_COUNT > 0:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"

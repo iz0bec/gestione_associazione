@@ -96,7 +96,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Remote: GitLab personale `https://mygitlab.iz0bec.info/sbart64/gestione_associazione` (pubblico), ramo `main`, tag `vX.Y.Z-rc.N`.
 - Produzione: `192.168.0.34` (Debian 13), installata con `scripts/installa.sh --porta 8003` in
   `/opt/gestione-associazione`, dati in `/var/lib/gestione-associazione`, servizi `gestione-associazione`
-  e `gestione-associazione-pianificatore`. Sullo stesso host gira il Protocollo ANCR (8002) e altri servizi:
+  e `gestione-associazione-pianificatore`. Pubblica su **https://gesfedpzmt.iz0bec.info** tramite il Nginx Proxy Manager
+  di `192.168.0.26` (`.env`: `HTTPS=true`, `PROXY_COUNT=1`, `PROXY_FIDATI=192.168.0.26,192.168.0.34`;
+  l'NPM locale serve `gesfedpzmt.iz0bec.lan` in http, dove con HTTPS=true non si può accedere). Sullo stesso host gira il Protocollo ANCR (8002) e altri servizi:
   non toccarli. È produzione: niente reset o ripristini senza conferma esplicita.
 - **GitHub** (pubblico, copia con la stessa storia): `https://github.com/iz0bec/gestione_associazione`,
   remote `github` (accesso con `gh`, account iz0bec). A ogni release: `git push github main` e il tag,

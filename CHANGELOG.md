@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.8] - 2026-11-08
+
+IP reale dei visitatori dietro reverse proxy.
+
+### Corretto
+- Dietro un reverse proxy il blocco dei tentativi di accesso e il registro attività usano l'**IP
+  reale** del visitatore (`X-Forwarded-For`, solo dai proxy indicati in `PROXY_FIDATI`) invece
+  di quello del proxy: prima `PROXY_COUNT` non aveva effetto.
+
 ## [0.0.1-rc.7] - 2026-11-08
 
 Calendario con esportazione iCal, anagrafica da e verso le rubriche (vCard), colonna «Valido»
