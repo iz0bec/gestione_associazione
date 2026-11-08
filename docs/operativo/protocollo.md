@@ -29,6 +29,8 @@ e la data e l'ora di registrazione, assegnati automaticamente.
 
 ## Registrare un documento
 
+![Il registro di protocollo](immagini/protocollo.jpg)
+
 **Protocollo → Entrata / Uscita / ⇄ (interno)**.
 
 1. **Direzione**: entrata (ricevuto), uscita (spedito), interno (es. comunicazione tra organi).
@@ -56,6 +58,8 @@ destinatario, email; poi direzione, classificazione, stato (validi/annullati), a
 **Esporta CSV** scarica le registrazioni filtrate (operazione registrata).
 
 ## Posta da protocollare
+
+![La posta da protocollare, con la selezione per lo scarto in blocco](immagini/posta.jpg)
 
 Se sono configurate le caselle email o PEC, i messaggi arrivano in **Posta da protocollare**
 (automaticamente ogni 15 minuti, oppure con **Scarica ora**). Le caselle sono lette in **sola lettura**:

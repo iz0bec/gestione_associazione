@@ -411,6 +411,19 @@ class AiutoView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class ManualePdfView(LoginRequiredMixin, View):
+    """Il manuale operativo completo in PDF, con le immagini."""
+
+    def get(self, request):
+        from django.http import FileResponse
+
+        from . import aiuto
+
+        percorso = aiuto.pdf_manuale()
+        return FileResponse(percorso.open("rb"), filename="manuale-operativo.pdf",
+                            content_type="application/pdf")  # fmt: skip
+
+
 class InformazioniView(LoginRequiredMixin, TemplateView):
     """Versione, autore, licenza e componenti di terze parti."""
 

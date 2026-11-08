@@ -17,6 +17,9 @@ from django.urls import reverse
 
 from . import servizi
 
+# Pagine con cui l'utente cambia la propria password (vietate a chi non può farlo)
+PAGINE_PASSWORD = ("/account/password/change/", "/account/password/set/")
+
 # Percorsi sempre consentiti (account, risorse statiche, pagine tecniche)
 CONSENTITI = ("/account/", "/salute/", "/aspetto.css", "/logo.png", "/ripristino/")
 
@@ -27,6 +30,16 @@ class ObblighiAccessoMiddleware:
 
     def __call__(self, request):
         utente = getattr(request, "user", None)
+        if (
+            utente is not None
+            and utente.is_authenticated
+            and not utente.puo_cambiare_password
+            and request.path.startswith(PAGINE_PASSWORD)
+        ):
+            messages.warning(
+                request, "La tua password la imposta l'amministratore: rivolgiti a lui."
+            )
+            return redirect("core:cruscotto")
         if utente is not None and utente.is_authenticated and not self._consentito(request.path):
             destinazione = self._obbligo(request, utente)
             if destinazione:

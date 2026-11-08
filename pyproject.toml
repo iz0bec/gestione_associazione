@@ -38,6 +38,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "factory-boy>=3.3.3",
+    "playwright>=1.50",
     "pytest>=8",
     "pytest-django>=4.14",
     "ruff>=0.17",

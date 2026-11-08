@@ -37,7 +37,7 @@
     </div>
     {% endif %}
     {% else %}
-    <div class="alert alert-info">L'assemblea è formata da tutti i soci attivi{% if organo.solo_soci_in_regola %}; votano quelli in regola con la quota dell'anno{% endif %}. Ogni socio presente può ricevere {{ organo.max_deleghe }} deleg{{ organo.max_deleghe|pluralize:"a,he" }}.</div>
+    <div class="alert alert-info">L'assemblea è formata da tutti i soci attivi{% if organo.sezione %} della sezione di {{ organo.sezione.nome }}{% endif %}{% if organo.solo_soci_in_regola %}; votano quelli in regola con la quota dell'anno{% endif %}. Ogni socio presente può ricevere {{ organo.max_deleghe }} deleg{{ organo.max_deleghe|pluralize:"a,he" }}.</div>
     {% endif %}
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-calendar-event me-2"></i>Riunioni</h2></div>

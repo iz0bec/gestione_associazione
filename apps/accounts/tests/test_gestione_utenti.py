@@ -244,3 +244,54 @@ class TestRuoli:
         p = servizi.password_temporanea()
         assert len(p) == 19 and p.count("-") == 3
         assert not set(p) & set("0O1lI")
+
+
+@pytest.mark.django_db
+class TestPasswordDallAmministratore:
+    def test_imposta_password(self, client_ruolo, crea_utente):
+        bianchi = crea_utente("bianchi", ruoli=["Segretario"])
+        admin = client_ruolo(ADMIN, username="capo")
+        assert "Imposta password" in admin.get(f"/sistema/utenti/{bianchi.pk}/").content.decode()
+        r = admin.post(f"/sistema/utenti/{bianchi.pk}/imposta-password/",
+                       {"password1": "Sezione-Avigliano-2026", "password2": "Diversa-2026-xyz"})  # fmt: skip
+        assert r.status_code == 200 and "non coincidono" in r.content.decode()
+        r = admin.post(f"/sistema/utenti/{bianchi.pk}/imposta-password/",
+                       {"password1": "12345678", "password2": "12345678"})  # fmt: skip
+        assert r.status_code == 200 and "password" in r.content.decode().lower()  # troppo debole
+        r = admin.post(f"/sistema/utenti/{bianchi.pk}/imposta-password/", {
+            "password1": "Sezione-Avigliano-2026", "password2": "Sezione-Avigliano-2026",
+            "obbligo_cambio": "on"})  # fmt: skip
+        assert r.status_code == 302
+        bianchi.refresh_from_db()
+        assert bianchi.check_password("Sezione-Avigliano-2026") and bianchi.deve_cambiare_password
+        evento = EventoAudit.objects.filter(oggetto_id=str(bianchi.pk)).latest("pk")
+        assert "Sezione-Avigliano-2026" not in str(evento.dettagli)
+
+    def test_utente_che_non_puo_cambiarla(self, client, crea_utente, settings):
+        from django.core import mail
+
+        settings.MAILERS = {"default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}}
+        u = crea_utente("rossi", ruoli=["Consigliere"])
+        u.puo_cambiare_password = False
+        u.save()
+        client.force_login(u)
+        assert "Cambia password" not in client.get("/").content.decode()
+        r = client.get("/account/password/change/")
+        assert r.status_code == 302 and r["Location"] == "/"
+        client.logout()
+        client.post("/account/password/reset/", {"email": u.email})
+        assert mail.outbox == []  # niente recupero via email
+
+    def test_obbligo_incompatibile_e_scheda(self, client_ruolo, crea_utente):
+        u = crea_utente("verdi", ruoli=["Consigliere"])
+        servizi.imposta_password(u, crea_utente("capo2", ruoli=[ADMIN]), "Password-Lunga-2026",
+                                 obbligo_cambio=True)  # fmt: skip
+        u.refresh_from_db()
+        assert u.deve_cambiare_password
+        u.puo_cambiare_password = False
+        u.deve_cambiare_password = False
+        u.save()
+        servizi.imposta_password(u, Utente.objects.get(username="capo2"), "Password-Lunga-2027",
+                                 obbligo_cambio=True)  # fmt: skip
+        u.refresh_from_db()
+        assert not u.deve_cambiare_password  # ignorato per chi non può cambiarla

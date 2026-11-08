@@ -13,6 +13,8 @@
 
 ## Accedere
 
+![La pagina di accesso](immagini/accesso.jpg)
+
 1. Aprire l'indirizzo comunicato dall'amministratore.
 2. In **Login** scrivere il nome utente oppure l'email; poi la password.
 3. Se è attiva la verifica in due passaggi, inserire il codice a 6 cifre dell'app di
@@ -38,6 +40,8 @@ Protegge l'account anche se qualcuno scopre la password.
 
 ## Com'è fatta l'interfaccia
 
+![Il cruscotto: menu a sinistra, ricerca e menu dell'utente in alto, riquadri con i numeri e i prossimi impegni](immagini/cruscotto.jpg)
+
 - **Menu a sinistra**: i moduli. Si vedono solo quelli consentiti dal proprio ruolo.
   Su smartphone il menu si apre con il pulsante ☰.
 - **Barra in alto**: ricerca rapida in anagrafica; nome e **versione** del programma (un clic apre
@@ -46,7 +50,8 @@ Protegge l'account anche se qualcuno scopre la password.
   informazioni, esci).
 - **Aiuto in linea**: il pulsante **?** apre la pagina di questo manuale dedicata alla sezione in
   cui ci si trova (es. da *Tesoreria* apre il manuale della tesoreria). Dalla pagina dell'aiuto si
-  passa alle altre con l'indice a destra.
+  passa alle altre con l'indice a destra. **Manuale in PDF** scarica tutto il manuale, con le
+  immagini, per leggerlo o stamparlo (le immagini mostrano dati di esempio).
 - **Cruscotto**: numeri principali, compleanni dei prossimi 14 giorni, le proprie ultime attività.
 
 ## Uscire

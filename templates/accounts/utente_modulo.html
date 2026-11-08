@@ -33,7 +33,7 @@
           <dd class="col-6">{% if utente.soggetto %}<a href="{{ utente.soggetto.get_absolute_url }}">{{ utente.soggetto.nome_completo }}</a>{% if utente.soggetto.socio %}<div><span class="badge bg-green-lt">socio n. {{ utente.soggetto.socio.numero }}</span></div>{% endif %}{% else %}<span class="text-danger">nessuna scheda: collegarla</span>{% endif %}</dd>
           <dt class="col-6">Ultimo accesso</dt><dd class="col-6">{% if utente.last_login %}{{ utente.last_login|date:"d/m/Y H:i" }}{% else %}mai{% endif %}</dd>
           <dt class="col-6">Creato il</dt><dd class="col-6">{{ utente.date_joined|date:"d/m/Y" }}</dd>
-          <dt class="col-6">Password</dt><dd class="col-6">{% if utente.deve_cambiare_password %}<span class="text-warning">temporanea</span>{% elif utente.has_usable_password %}scelta dall'utente{% else %}non impostata{% endif %}</dd>
+          <dt class="col-6">Password</dt><dd class="col-6">{% if utente.deve_cambiare_password %}<span class="text-warning">da cambiare al primo accesso</span>{% elif utente.has_usable_password %}impostata{% else %}non impostata{% endif %}{% if not utente.puo_cambiare_password %}<div class="small text-secondary">l'utente non può cambiarla</div>{% endif %}</dd>
           <dt class="col-6">Secondo fattore</dt>
           <dd class="col-6">
             {% if utente.ha_mfa %}<span class="text-success"><i class="ti ti-shield-check"></i> attivo</span>
@@ -45,6 +45,7 @@
       </div>
       {% if modificabile and not se_stesso %}
       <div class="card-footer d-grid gap-2">
+        <a class="btn w-100" href="{% url 'utenti:imposta_password' utente.pk %}"><i class="ti ti-forms me-1"></i>Imposta password</a>
         <form method="post" action="{% url 'utenti:password' utente.pk %}" data-conferma="Generare una nuova password temporanea? Quella attuale smetterà di funzionare.">{% csrf_token %}
           <button class="btn w-100" type="submit"><i class="ti ti-key me-1"></i>Nuova password temporanea</button>
         </form>

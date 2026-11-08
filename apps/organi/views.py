@@ -11,7 +11,7 @@
 from datetime import timedelta
 
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -60,10 +60,12 @@ class OrganiView(PermessoMixin, ListView):
         in_carica = Q(cariche__dal__lte=oggi) & (
             Q(cariche__al__isnull=True) | Q(cariche__al__gt=oggi)
         )
+        # con l'aggregazione l'ordinamento del modello non si applica: va indicato
         return (
             Organo.objects.filter(attivo=True)
             .select_related("sezione")
             .annotate(componenti=Count("cariche", filter=in_carica))
+            .order_by(F("sezione__nome").asc(nulls_first=True), "ordine", "nome")
         )
 
     def get_context_data(self, **kwargs):

@@ -18,6 +18,8 @@ fornitori. Ogni persona è inserita **una volta sola** e viene riutilizzata da t
 
 ## Cercare
 
+![L'elenco dell'anagrafica con la ricerca istantanea e i filtri](immagini/anagrafica.jpg)
+
 **Anagrafica** nel menu. La casella di ricerca filtra mentre si scrive: nome, cognome,
 denominazione, email, comune, qualifica o codice fiscale completo. Più parole restringono
 la ricerca (es. `rossi avigliano`). Accanto si filtra per tipo, categoria e stato
@@ -38,6 +40,8 @@ la ricerca (es. `rossi avigliano`). Accanto si filtra per tipo, categoria e stat
 8. **Salva**.
 
 ## La scheda
+
+![La scheda di una persona](immagini/scheda-anagrafica.jpg)
 
 Mostra dati, recapiti, categorie, note, chi l'ha inserita e modificata. Chi ha accesso al
 registro attività vede anche la **storia delle modifiche** (passando il mouse sul nome di un campo

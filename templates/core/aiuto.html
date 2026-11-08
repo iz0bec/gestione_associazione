@@ -7,6 +7,7 @@
 {% block titolo %}Aiuto - {{ titolo }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'core:aiuto' %}">Manuale</a></div>{% endblock %}
 {% block titolo_pagina %}{{ titolo }}{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'core:manuale_pdf' %}" data-stampa title="Tutto il manuale, con le immagini"><i class="ti ti-file-type-pdf me-1"></i>Manuale in PDF</a>{% endblock %}
 {% block contenuto %}
 <div class="row g-3">
   <div class="col-lg-3 order-lg-last">

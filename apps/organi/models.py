@@ -95,7 +95,7 @@ class Organo(models.Model):
 
 def cariche_di(soggetto):
     """Cariche di una persona: prima quelle in corso, poi le concluse (più recenti prima)."""
-    cariche = list(soggetto.cariche.select_related("organo").order_by("-dal"))
+    cariche = list(soggetto.cariche.select_related("organo__sezione").order_by("-dal"))
     return sorted(cariche, key=lambda c: not c.in_carica)
 
 

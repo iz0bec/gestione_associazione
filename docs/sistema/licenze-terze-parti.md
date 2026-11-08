@@ -14,6 +14,12 @@
 Il codice del progetto è in pubblico dominio (CC0 1.0). Le componenti seguenti restano
 soggette alle proprie licenze, tutte compatibili con l'uso e la ridistribuzione.
 
+## Strumenti di sviluppo (non installati con l'applicazione)
+
+| Pacchetto | Licenza | Uso |
+|---|---|---|
+| Playwright | Apache-2.0 | schermate del manuale (`scripts/manuale/schermate.py`) |
+
 ## Librerie Python (dipendenze dirette)
 
 | Pacchetto | Versione | Licenza |

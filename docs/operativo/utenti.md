@@ -16,6 +16,8 @@
 
 ## Elenco
 
+![L'elenco degli utenti](immagini/utenti.jpg)
+
 Ricerca per nome, cognome, nome utente o email; filtri per ruolo e stato (attivi, disattivati,
 tutti). Per ogni utente si vedono i ruoli, le sezioni assegnate, il secondo fattore e l'ultimo
 accesso. Il cartellino **password temporanea** indica chi non ha ancora scelto la propria password;
@@ -40,8 +42,19 @@ chiaro e non compare nel registro attività.
 
 ## Scheda dell'utente
 
+Nei dati dell'utente due caselle regolano la password:
+
+- **Può cambiare la propria password** (spuntata per i nuovi utenti): togliendola, la password la
+  imposta solo l'amministratore. L'utente non vede *Cambia password* nel menu, non può aprire le
+  pagine per cambiarla e il recupero della password via email non gli viene spedito;
+- **Deve cambiare la password**: al prossimo accesso l'utente deve sceglierne una nuova prima di
+  fare altro (non si può spuntare per chi non può cambiarla).
+
 Modifica dei dati, dei ruoli e delle sezioni; nel riquadro **Accesso**:
 
+- **Imposta password** - l'amministratore sceglie la password (scritta due volte, con gli stessi
+  controlli di robustezza delle altre) e decide se l'utente **deve cambiarla al primo accesso**; la
+  password non viene mostrata né conservata nel registro attività: va comunicata di persona;
 - **Nuova password temporanea** - per chi ha dimenticato la password: la precedente smette di
   funzionare, la nuova va cambiata al primo accesso;
 - **Azzera il secondo fattore** - per chi ha perso il telefono o la passkey: elimina app di

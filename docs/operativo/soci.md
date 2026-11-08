@@ -20,6 +20,8 @@ codice fiscale) si modificano dalla scheda anagrafica e valgono ovunque.
 
 ## Concetti
 
+![Il libro soci](immagini/soci.jpg)
+
 | | |
 |---|---|
 | **Numero di iscrizione** | Progressivo unico del libro soci, assegnato automaticamente all'ammissione. Non si modifica e non si riusa, nemmeno dopo la cessazione. |
@@ -46,6 +48,8 @@ All'iscrizione la persona riceve la categoria **Socio** in anagrafica. Non si po
 enti, persone archiviate o decedute, né chi è già nel libro soci.
 
 ## Scheda del socio
+
+![La scheda del socio con cariche, tessere e quote](immagini/scheda-socio.jpg)
 
 Mostra i dati di iscrizione, le tessere di tutti gli anni, la situazione della quota corrente e
 la storia delle operazioni. Le **cariche sociali** in corso (es. *Presidente · CD*) compaiono accanto
@@ -92,6 +96,8 @@ dell'anagrafica). Dai pulsanti in alto:
 
 ## Quote e ricevute
 
+![Il tesseramento dell'anno](immagini/tesseramento.jpg)
+
 - **Tesseramento singolo**: dalla scheda del socio, pulsante **Tessera**: anno, quota (proposta
   quella della tipologia, modificabile), tessera fisica (*prima disponibile*, *numero indicato* o
   *da attribuire in seguito*). Chi ha il permesso di incasso può segnare subito *Quota incassata ora*.
@@ -109,6 +115,8 @@ dell'anagrafica). Dai pulsanti in alto:
   annullato e la ricevuta non viene riutilizzata; poi si può rifare il tesseramento.
 
 ## Rinnovo annuale
+
+![L'incasso delle quote in blocco](immagini/incasso-quote.jpg)
 
 **Tesseramento → Rinnovo annuale**: scelto l'anno, mostra i soci attivi non ancora rinnovati e
 le tessere fisiche disponibili; alla conferma crea il tesseramento per tutti (quota da pagare della

@@ -101,7 +101,7 @@ def crea_utente(form, attore) -> tuple[Utente, str]:
     _collega_scheda(utente, form, attore)
     password = password_temporanea()
     utente.set_password(password)
-    utente.deve_cambiare_password = True
+    utente.deve_cambiare_password = utente.puo_cambiare_password
     utente.is_staff = False
     utente.is_superuser = False
     utente.save()
@@ -135,10 +135,26 @@ def reimposta_password(utente, attore) -> str:
         raise OperazioneNonValida("Per la tua password usa la pagina del tuo profilo.")
     password = password_temporanea()
     utente.set_password(password)
-    utente.deve_cambiare_password = True
+    utente.deve_cambiare_password = utente.puo_cambiare_password
     utente.save(update_fields=["password", "deve_cambiare_password"])
     registra(Azione.MODIFICA, utente, operazione="password temporanea")
     return password
+
+
+def imposta_password(utente, attore, password, *, obbligo_cambio=False):
+    """Password scelta dall'amministratore (validata come le altre); mai nel registro."""
+    from django.contrib.auth.password_validation import validate_password
+
+    puo_gestire(attore, utente)
+    if utente.pk == attore.pk:
+        raise OperazioneNonValida("Per la tua password usa la pagina del tuo profilo.")
+    validate_password(password, utente)
+    utente.set_password(password)
+    utente.deve_cambiare_password = obbligo_cambio and utente.puo_cambiare_password
+    utente.save(update_fields=["password", "deve_cambiare_password"])
+    registra(Azione.MODIFICA, utente, operazione="password impostata dall'amministratore",
+             obbligo_cambio=utente.deve_cambiare_password)  # fmt: skip
+    return utente
 
 
 @transaction.atomic

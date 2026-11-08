@@ -57,6 +57,7 @@ urlpatterns = [
         name="ripristino",
     ),
     path("aiuto/", views.AiutoView.as_view(), name="aiuto"),
+    path("aiuto/manuale.pdf", views.ManualePdfView.as_view(), name="manuale_pdf"),
     path("aiuto/<slug:pagina>/", views.AiutoView.as_view(), name="aiuto_pagina"),
     path("informazioni/", views.InformazioniView.as_view(), name="informazioni"),
     path("registro-attivita/", views.RegistroAttivitaView.as_view(), name="registro_attivita"),

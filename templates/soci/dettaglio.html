@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block titolo %}{{ socio.soggetto.nome_completo }}{% endblock %}
-{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · socio n. {{ socio.numero }}</div>{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a> · socio n. {{ socio.numero }}{% if socio.sezione and multisezione %} · <a href="{% url 'soci:elenco' %}?sezione={{ socio.sezione_id }}">Sezione di {{ socio.sezione.nome }}</a>{% endif %}</div>{% endblock %}
 {% block titolo_pagina %}{{ socio.soggetto.intestazione }}
   <span class="badge fs-5 align-middle {% if socio.stato == 'attivo' %}bg-green-lt{% elif socio.stato == 'sospeso' %}bg-yellow-lt{% else %}bg-secondary-lt{% endif %}">{{ socio.get_stato_display|lower }}</span>
-  {% for c in cariche %}{% if c.in_carica %}<span class="badge fs-5 align-middle bg-blue-lt" title="dal {{ c.dal|date:'d/m/Y' }}">{{ c.get_ruolo_display }} · {{ c.organo.sigla|default:c.organo.nome }}</span>{% endif %}{% endfor %}{% endblock %}
+  {% for c in cariche %}{% if c.in_carica %}<span class="badge fs-5 align-middle bg-blue-lt" title="{{ c.organo }}, dal {{ c.dal|date:'d/m/Y' }}">{{ c.get_ruolo_display }} · {{ c.organo.sigla|default:c.organo.nome }}{% if c.organo.sezione %} {{ c.organo.sezione.nome }}{% endif %}</span>{% endif %}{% endfor %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
   {% if perms.soci.change_socio %}

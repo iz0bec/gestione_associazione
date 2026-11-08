@@ -60,6 +60,8 @@ e su richiesta, da scaricare e conservare fuori dal server; ripristino con confe
 
 ## Servizi di posta
 
+![Servizi di posta: interruttori, stato del server di invio e verifica delle caselle](immagini/servizi-posta.jpg)
+
 **Sistema → Servizi di posta**, solo per l'Amministratore di sistema. Due interruttori generali:
 
 - **Invio delle email**: spento, **nessuna email parte**. Le comunicazioni si possono ancora scrivere
@@ -87,6 +89,8 @@ caselle IMAP in *Protocollo → Posta da protocollare*.
 
 ## Sezioni
 
+![Le sezioni, con organigramma e creazione degli organi](immagini/sezioni.jpg)
+
 **Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Ogni
 comune ha **una sola sezione attiva**: il comune serve anche a riconoscere la sezione nell'importazione
 dal registro nazionale, quindi va scritto come nel registro (es. «Rionero in Vulture»). Con
@@ -108,6 +112,8 @@ può avere cariche nella propria sezione e nell'associazione (vedi [Organi socia
 
 ## Documenti pubblici
 
+![La gestione dei documenti pubblici](immagini/documenti-pubblici.jpg)
+
 **Sistema → Documenti pubblici** (Amministratore di sistema, Segretario): si caricano i PDF da
 rendere consultabili **da chiunque, senza accesso**, ad esempio **statuto** e **regolamento**:
 titolo, descrizione (es. *in vigore dal 21/06/2021*), ordine nell'elenco e *Pubblicato*. Sono
@@ -117,6 +123,8 @@ La pagina pubblica è `/documenti-pubblici/`, collegata dalla pagina di accesso,
 iscrizione online e dalle altre pagine pubbliche: ogni documento si legge nel browser o si scarica.
 Per una nuova versione si apre il documento e si carica il nuovo file (il precedente è sostituito);
 togliendo *Pubblicato* il documento non è più consultabile. Ogni caricamento è nel registro attività.
+
+![La pagina pubblica di statuto e regolamento, consultabile senza accesso](immagini/documenti-pubblici-pagina.jpg)
 
 ## Registro attività
 

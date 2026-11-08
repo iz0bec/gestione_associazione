@@ -448,3 +448,14 @@ class TestAbbinamentoSezioni:
         form = SezioneForm({"codice": "A", "nome": "Uno", "comune": "Ruoti", "ordine": 0},
                            instance=a)  # fmt: skip
         assert form.is_valid(), form.errors
+
+
+def test_sezione_nelle_schede(client_ruolo, nord, ordinario):
+    from apps.anagrafica.models import Soggetto
+
+    Sezione.objects.create(codice="S02", nome="Sezione Sud", comune="Sudville", provincia="PZ")
+    c = client_ruolo("Segretario")
+    s = Soggetto.objects.create(cognome="Rossi", nome="Mario")
+    socio = servizi.ammetti_socio(s, ordinario, c.utente, sezione=nord)
+    assert "Sezione di Sezione Nord" in c.get(f"/soci/{socio.pk}/").content.decode()
+    assert "Sezione di Sezione Nord" in c.get(f"/anagrafica/{s.pk}/").content.decode()

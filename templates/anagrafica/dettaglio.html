@@ -82,7 +82,7 @@
       <div class="card-body d-flex align-items-center">
         <span class="avatar bg-primary-lt me-3"><i class="ti ti-users-group"></i></span>
         {% if socio %}
-        <div class="flex-fill"><div class="fw-medium">Socio n. {{ socio.numero }}</div><div class="small text-secondary">{{ socio.tipologia }} · {{ socio.get_stato_display|lower }}</div></div>
+        <div class="flex-fill"><div class="fw-medium">Socio n. {{ socio.numero }}</div><div class="small text-secondary">{% if socio.sezione and multisezione %}Sezione di {{ socio.sezione.nome }} · {% endif %}{{ socio.tipologia }} · {{ socio.get_stato_display|lower }}</div></div>
         <a class="btn btn-sm" href="{{ socio.get_absolute_url }}">Apri</a>
         {% else %}
         <div class="flex-fill text-secondary">Non iscritto al libro soci</div>

@@ -34,6 +34,8 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 
 ## Scrivere una comunicazione
 
+![Il registro delle comunicazioni](immagini/comunicazioni.jpg)
+
 **Comunicazioni → Nuova comunicazione**.
 
 1. Facoltativo: **Parti da un modello** per avere oggetto e testo già pronti.

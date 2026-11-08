@@ -23,6 +23,11 @@ _RE_PAGINA = re.compile(r"^[a-z0-9-]+$")
 _RE_COMMENTO = re.compile(r"<!--.*?-->", re.S)
 _RE_LINK = re.compile(r'href="([^"#]*?)\.md(#[^"]*)?"')
 _RE_LINK_ESTERNO = re.compile(r'<a href="(\.\./[^"]*)">(.*?)</a>', re.S)
+# immagini del manuale: ![didascalia](immagini/nome.jpg) -> static/img/manuale/nome.jpg
+_RE_IMMAGINE = re.compile(
+    r'(?:<p>)?<img alt="([^"]*)" src="immagini/([a-z0-9-]+\.(?:jpg|png))" ?/?>(?:</p>)?'
+)
+CARTELLA_IMMAGINI = "img/manuale/"
 
 # namespace (o namespace:nome della vista) -> pagina[#paragrafo]
 PAGINE_PER_SEZIONE = {
@@ -156,10 +161,83 @@ def novita(quante=5):
     return _novita(percorso, percorso.stat().st_mtime, quante)
 
 
+def _immagini(html, sorgente):
+    """Figure con didascalia; `sorgente(nome)` dà l'indirizzo dell'immagine (web o PDF)."""
+
+    def figura(m):
+        didascalia, nome = m.group(1), m.group(2)
+        return (f'<figure class="figura-manuale"><img src="{sorgente(nome)}" alt="{didascalia}" '
+                f'loading="lazy"><figcaption>{didascalia}</figcaption></figure>')  # fmt: skip
+
+    return _RE_IMMAGINE.sub(figura, html)
+
+
+def _url_immagine(nome):
+    from django.templatetags.static import static
+
+    return static(CARTELLA_IMMAGINI + nome)
+
+
 def pagina(nome):
     """(titolo, html, indice dei paragrafi) di una pagina del manuale operativo."""
     percorso = _percorso(nome)
-    return _rendi(percorso, percorso.stat().st_mtime)
+    titolo, html, indice = _rendi(percorso, percorso.stat().st_mtime)
+    return titolo, _immagini(html, _url_immagine), indice
+
+
+# --- manuale in PDF ---------------------------------------------------------------------------
+
+
+def _firma_manuale():
+    """Cambia quando cambiano testi, immagini o versione: il PDF si rigenera solo allora."""
+    import hashlib
+
+    from django.contrib.staticfiles import finders
+
+    parti = [settings.APP_VERSIONE]
+    for f in sorted(CARTELLA.glob("*.md")):
+        parti.append(f"{f.name}:{f.stat().st_mtime_ns}")
+    cartella = finders.find(CARTELLA_IMMAGINI.rstrip("/"))
+    if cartella:
+        for f in sorted(Path(cartella).iterdir()):
+            parti.append(f"{f.name}:{f.stat().st_mtime_ns}")
+    return hashlib.sha256("|".join(parti).encode()).hexdigest()[:16]
+
+
+def capitoli():
+    """(nome, titolo, html per il PDF) delle pagine nell'ordine dell'indice."""
+    risultato = []
+    for nome, _titolo in elenco():
+        percorso = _percorso(nome)
+        titolo, html, _indice = _rendi(percorso, percorso.stat().st_mtime)
+        html = _immagini(html, lambda n: f"risorsa:static/{CARTELLA_IMMAGINI}{n}")
+        # i collegamenti fra pagine diventano rimandi interni al PDF
+        html = re.sub(r'href="/aiuto/([a-z0-9-]+)/(#[^"]*)?"', r'href="#capitolo-\1"', html)
+        html = html.replace('href="/aiuto/"', 'href="#indice"')
+        risultato.append((nome, titolo, html))
+    return risultato
+
+
+def pdf_manuale():
+    """Percorso del PDF del manuale completo (generato e conservato finché non cambia)."""
+    from django.utils import timezone
+
+    from .models import Organizzazione
+    from .pdf import genera_pdf
+
+    cartella = Path(settings.MEDIA_ROOT) / "manuale"
+    cartella.mkdir(parents=True, exist_ok=True)
+    destinazione = cartella / f"manuale-{_firma_manuale()}.pdf"
+    if not destinazione.is_file():
+        contesto = {"capitoli": capitoli(), "organizzazione": Organizzazione.corrente(),
+                    "versione": settings.APP_VERSIONE, "oggi": timezone.localdate()}  # fmt: skip
+        temporaneo = destinazione.with_suffix(".tmp")
+        temporaneo.write_bytes(genera_pdf("core/pdf/manuale.html", contesto))
+        temporaneo.replace(destinazione)
+        for vecchio in cartella.glob("manuale-*.pdf"):
+            if vecchio != destinazione:
+                vecchio.unlink(missing_ok=True)
+    return destinazione
 
 
 def elenco():

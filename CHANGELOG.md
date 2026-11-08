@@ -5,8 +5,21 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Manuale con immagini**: 22 schermate (con dati di esempio) nelle pagine del manuale in linea e
+  **Manuale in PDF** scaricabile dalla pagina del Manuale (copertina, indice, un capitolo per
+  sezione) o con `manage.py manuale_pdf`.
+- Utenti: **Imposta password** (scelta dall'amministratore, con l'opzione del cambio al primo
+  accesso) e casella **Può cambiare la propria password** (tolta: niente cambio né recupero via
+  email da parte dell'utente).
+- **Sezione del socio** nella scheda del socio e nel riquadro *Socio* della scheda in anagrafica;
+  nelle cariche degli organi di sezione compare il nome della sezione.
+- Menu utente: **Statuto e regolamento** quando sono pubblicati.
+
 ### Corretto
 - Aggiunte le note della 0.0.1-rc.14, mancanti nella release.
+- Organi sociali: elenco ordinato per associazione e sezioni (i gruppi comparivano mescolati) e,
+  per l'assemblea di una sezione, «formata dai soci della sezione».
 
 ## [0.0.1-rc.14] - 2026-11-08
 

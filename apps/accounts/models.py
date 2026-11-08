@@ -36,6 +36,12 @@ class Utente(AbstractUser):
         default=False,
         help_text="Al prossimo accesso l'utente deve scegliere una nuova password.",
     )
+    puo_cambiare_password = models.BooleanField(
+        "può cambiare la propria password",
+        default=True,
+        help_text="Tolta la spunta, la password la imposta solo l'amministratore (niente cambio "
+        "né recupero via email da parte dell'utente).",
+    )
 
     class Meta:
         verbose_name = "utente"

@@ -17,6 +17,8 @@ controllo), le **cariche** con il loro storico, le **riunioni** dalla convocazio
 
 ## Organi e regole
 
+![Gli organi dell'associazione e delle sezioni](immagini/organi.jpg)
+
 **Organi sociali** mostra gli organi, le prossime riunioni e quelle in preparazione. Alla prima
 installazione ci sono *Assemblea dei soci*, *Consiglio direttivo* e *Collegio dei revisori*.
 
@@ -30,6 +32,8 @@ Le **regole** di ogni organo (pulsante *Regole*, solo amministratore) vanno alli
 | Votano solo i soci in regola | per l'assemblea: votano i soci con la quota dell'anno pagata | sì |
 
 ## Cariche
+
+![La pagina di un organo: componenti in carica con le azioni Modifica e Fine carica](immagini/organo.jpg)
 
 **Organi dell'associazione e delle sezioni.** Ogni organo è dell'associazione (o federazione) oppure
 di una **sezione** (campo *Sezione*): l'elenco li raggruppa così. L'assemblea di una sezione è formata

@@ -26,6 +26,8 @@ entra o esce davvero. A fine anno produce il **rendiconto per cassa** degli Enti
 
 ## Il cruscotto
 
+![Il cruscotto della tesoreria](immagini/tesoreria.jpg)
+
 Per l'esercizio scelto mostra entrate, uscite, avanzo o disavanzo, i **saldi** di ogni conto, gli ultimi
 movimenti e il confronto con il preventivo. Un avviso segnala le quote incassate non ancora in prima nota.
 

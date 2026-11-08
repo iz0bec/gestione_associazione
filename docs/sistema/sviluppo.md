@@ -59,3 +59,21 @@ docs/              manuali, analisi, decisioni
 - Numeri progressivi solo con `apps.core.numerazione.prossimo_numero` dentro `transaction.atomic()`.
 - Nessuno script inline nei template (la CSP lo blocca): comportamenti in `static/js/app.js` con attributi `data-*`.
 - Ogni modulo nuovo: test, pagina nel manuale operativo, eventuali variabili nel manuale di sistema, voce nel CHANGELOG.
+
+## Immagini del manuale
+
+Le schermate del manuale (`static/img/manuale/*.jpg`, citate nei testi di `docs/operativo` come
+`![didascalia](immagini/nome.jpg)`) si rifanno con **dati di fantasia**, mai con dati reali:
+
+```bash
+createdb gestione_demo                       # database vuoto, solo per le schermate
+DATABASE_URL=.../gestione_demo uv run python manage.py migrate
+DATABASE_URL=.../gestione_demo uv run python manage.py shell < scripts/manuale/dati_demo.py
+DATABASE_URL=.../gestione_demo uv run python manage.py runserver 127.0.0.1:8010 --noreload
+uv run python scripts/manuale/schermate.py http://127.0.0.1:8010   # Chrome tramite Playwright
+dropdb gestione_demo
+```
+
+`dati_demo.py` si rifiuta di partire su un database che contiene già dati. Il PDF del manuale si
+genera dall'applicazione (*Manuale → Manuale in PDF*) o con `manage.py manuale_pdf --uscita file.pdf`;
+viene conservato in `MEDIA_ROOT/manuale/` e rigenerato solo quando cambiano testi, immagini o versione.

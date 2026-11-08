@@ -85,3 +85,31 @@ class TestMenuSistema:
 
     def test_assente_senza_permessi(self, client_ruolo):
         assert self._menu(client_ruolo("Addetto protocollo"), "/") is None
+
+
+@pytest.mark.django_db
+class TestManualeConImmagini:
+    def test_immagini_nella_pagina(self, client_ruolo):
+        from apps.core import aiuto
+
+        testo = client_ruolo("Consigliere").get("/aiuto/organi/").content.decode()
+        assert '<figure class="figura-manuale">' in testo and "img/manuale/organo" in testo
+        assert "Manuale in PDF" in testo
+        # ogni immagine citata nei manuali esiste davvero
+        from django.contrib.staticfiles import finders
+
+        for nome, _t in aiuto.elenco():
+            testo_md = (aiuto.CARTELLA / f"{nome}.md").read_text()
+            for img in re.findall(r"\(immagini/([a-z0-9-]+\.(?:jpg|png))\)", testo_md):
+                assert finders.find(f"img/manuale/{img}"), img
+
+    def test_pdf_del_manuale(self, client_ruolo, settings, tmp_path):
+        from apps.core import aiuto
+
+        settings.MEDIA_ROOT = tmp_path
+        r = client_ruolo("Consigliere").get("/aiuto/manuale.pdf")
+        contenuto = b"".join(r.streaming_content)
+        assert r.status_code == 200 and contenuto.startswith(b"%PDF")
+        primo = aiuto.pdf_manuale()
+        assert aiuto.pdf_manuale() == primo  # riusato finché nulla cambia
+        assert [p.name for p in (tmp_path / "manuale").glob("*.pdf")] == [primo.name]

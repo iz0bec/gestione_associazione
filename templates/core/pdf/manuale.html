@@ -1,0 +1,45 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Manuale operativo in PDF: copertina, indice e un capitolo per pagina del manuale,
+               con le immagini esplicative (docs/operativo + static/img/manuale)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Manuale operativo - {{ organizzazione.denominazione }}{% endblock %}
+{% block stile %}
+  .copertina { text-align: center; padding-top: 55mm; page-break-after: always; }
+  .copertina h1 { font-size: 30pt; margin-bottom: 6pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .copertina .sotto { font-size: 13pt; color: #444; }
+  .copertina .dati { margin-top: 30mm; font-size: 10pt; color: #555; line-height: 1.6; }
+  .indice { page-break-after: always; }
+  .indice h1 { font-size: 18pt; }
+  .indice ol { font-size: 11pt; line-height: 1.9; }
+  .indice a { color: #111; text-decoration: none; }
+  .indice a::after { content: leader('.') target-counter(attr(href), page); }
+  .capitolo { page-break-before: always; font-size: 10pt; line-height: 1.45; }
+  .capitolo h1 { font-size: 19pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; border-bottom: 1.5pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; padding-bottom: 4pt; }
+  .capitolo h2 { font-size: 13.5pt; margin-top: 14pt; page-break-after: avoid; }
+  .capitolo h3 { font-size: 11.5pt; page-break-after: avoid; }
+  .capitolo code { font-size: 8.5pt; background: #f1f3f5; padding: 0 2pt; }
+  .capitolo pre { background: #f1f3f5; padding: 6pt; font-size: 8.5pt; white-space: pre-wrap; }
+  .capitolo table { font-size: 8.5pt; margin: 6pt 0; }
+  .capitolo a { color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; text-decoration: none; }
+  .figura-manuale { margin: 8pt 0 12pt; text-align: center; page-break-inside: avoid; }
+  .figura-manuale img { max-width: 100%; border: .6pt solid #c9d3e0; }
+  .figura-manuale figcaption { font-size: 8.5pt; color: #555; font-style: italic; margin-top: 3pt; }
+{% endblock %}
+{% block contenuto %}
+<div class="copertina">
+  <h1>Manuale operativo</h1>
+  <div class="sotto">{{ organizzazione.denominazione }}</div>
+  <div class="dati">Gestione Associazione, versione {{ versione }}<br>aggiornato al {{ oggi|date:"d/m/Y" }}<br>
+  Le immagini mostrano dati di esempio.</div>
+</div>
+<div class="indice" id="indice">
+  <h1>Indice</h1>
+  <ol>{% for nome, titolo, html in capitoli %}<li><a href="#capitolo-{{ nome }}">{{ titolo }}</a></li>{% endfor %}</ol>
+</div>
+{% for nome, titolo, html in capitoli %}
+<section class="capitolo" id="capitolo-{{ nome }}">{{ html|safe }}</section>
+{% endfor %}
+{% endblock %}

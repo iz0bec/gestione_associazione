@@ -17,6 +17,8 @@ Calendar, Outlook e Thunderbird).
 
 ## Cosa contiene
 
+![Il calendario: prossimi impegni, scadenze e collegamento per il telefono](immagini/calendario.jpg)
+
 | Impegno | Da dove viene | Chi lo vede |
 |---|---|---|
 | Riunioni (1ª e 2ª convocazione, luogo, ordine del giorno, collegamento) | [Organi sociali](organi.md): riunioni convocate o già verbalizzate | chi consulta le riunioni |
@@ -31,6 +33,8 @@ precedenti e successivi, *Oggi* per tornare al mese corrente); su un telefono il
 dei soli giorni con impegni. Il **cruscotto** mostra i prossimi 14 giorni e le scadenze superate.
 
 ## Appuntamenti e scadenze
+
+![La vista del mese](immagini/calendario-mese.jpg)
 
 **Nuovo** (anche con il **+** che compare su un giorno della vista mensile) inserisce:
 

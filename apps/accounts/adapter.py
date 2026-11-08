@@ -25,4 +25,12 @@ class AdapterAccount(DefaultAccountAdapter):
         if not Organizzazione.corrente().invio_email:
             log.warning("Email %s a %s non inviata: invio disattivato", template_prefix, email)
             return
+        utente = context.get("user")
+        if (
+            "password_reset" in template_prefix
+            and utente is not None
+            and not getattr(utente, "puo_cambiare_password", True)
+        ):
+            log.warning("Recupero password non inviato a %s: la imposta l'amministratore", email)
+            return
         super().send_mail(template_prefix, email, context)

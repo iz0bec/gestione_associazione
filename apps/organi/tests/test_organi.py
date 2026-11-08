@@ -16,6 +16,7 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.accounts.models import Utente
 from apps.anagrafica.models import Soggetto
 from apps.organi import servizi
 from apps.organi.forms import DeliberaForm, RiunioneForm, VerbaleForm
@@ -359,7 +360,10 @@ class TestOrganiDiSezione:
         assert r.status_code == 200 and "Esiste già un organo" in r.content.decode()
         r = c.post("/organi/nuovo/", {**dati, "sezione": avigliano.pk})
         assert r.status_code == 302 and Organo.objects.filter(sezione=avigliano).count() == 1
-        assert "Sezione di Avigliano" in c.get("/organi/").content.decode()
+        servizi.crea_organi_sezione(avigliano, Utente.objects.get(username=c.utente.username))
+        pagina = c.get("/organi/").content.decode()
+        assert pagina.count("Sezione di Avigliano") == 1  # un solo gruppo per sezione
+        assert pagina.index("Associazione") < pagina.index("Sezione di Avigliano")
 
     def test_organigramma_della_sezione(self, avigliano, segretario, client_ruolo):
         c = client_ruolo("Amministratore di sistema")

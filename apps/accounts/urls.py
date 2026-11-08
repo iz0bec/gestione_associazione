@@ -20,6 +20,9 @@ urlpatterns = [
     path("<int:pk>/", views.UtenteView.as_view(), name="utente"),
     path("<int:pk>/password/", views.ReimpostaPasswordView.as_view(), name="password"),
     path(
+        "<int:pk>/imposta-password/", views.ImpostaPasswordView.as_view(), name="imposta_password"
+    ),
+    path(
         "<int:pk>/secondo-fattore/",
         views.AzzeraSecondoFattoreView.as_view(),
         name="azzera_mfa",

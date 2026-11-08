@@ -19,7 +19,7 @@ from apps.core.audit import campi_modificati
 from apps.core.views import PermessoMixin
 
 from . import servizi
-from .forms import RuoliMfaForm, UtenteForm
+from .forms import ImpostaPasswordForm, RuoliMfaForm, UtenteForm
 from .models import PoliticaRuolo, Utente
 from .ruoli import RUOLI
 
@@ -152,6 +152,35 @@ class ReimpostaPasswordView(_AzioneUtente):
                 {"utente": utente, "password": password},
             )
         )
+
+
+class ImpostaPasswordView(PermessoMixin, View):
+    """L'amministratore sceglie la password dell'utente (non viene mai mostrata né registrata)."""
+
+    permission_required = "accounts.change_utente"
+    template_name = "accounts/imposta_password.html"
+
+    def _pagina(self, request, utente, form):
+        return _senza_cache(render(request, self.template_name, {"utente": utente, "form": form}))
+
+    def get(self, request, pk):
+        utente = get_object_or_404(Utente, pk=pk)
+        return self._pagina(request, utente, ImpostaPasswordForm(utente=utente))
+
+    def post(self, request, pk):
+        utente = get_object_or_404(Utente, pk=pk)
+        form = ImpostaPasswordForm(request.POST, utente=utente)
+        if not form.is_valid():
+            return self._pagina(request, utente, form)
+        try:
+            obbligo = form.cleaned_data.get("obbligo_cambio", False)
+            password = form.cleaned_data["password1"]
+            servizi.imposta_password(utente, request.user, password, obbligo_cambio=obbligo)
+        except servizi.OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return redirect("utenti:utente", pk)
+        messages.success(request, f"Password di «{utente}» impostata.")
+        return redirect("utenti:utente", pk)
 
 
 class AzzeraSecondoFattoreView(_AzioneUtente):

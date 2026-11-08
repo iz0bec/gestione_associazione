@@ -17,6 +17,8 @@ persona, per una lista o per una categoria.
 
 ## Modelli
 
+![I modelli di stampa](immagini/documenti.jpg)
+
 Un modello ha un **nome**, un **tipo** e un **testo**:
 
 | Tipo | Impaginazione |
