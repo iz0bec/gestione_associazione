@@ -111,6 +111,49 @@ def licenze():
     return _rendi(percorso, percorso.stat().st_mtime)[1]
 
 
+_RE_VERSIONE = re.compile(r"^## \[(?P<versione>[^\]]+)\](?:\s*-\s*(?P<data>\S+))?\s*$", re.M)
+
+
+def _data_italiana(iso):
+    a, _, resto = (iso or "").partition("-")
+    m, _, g = resto.partition("-")
+    return f"{g}/{m}/{a}" if a and m and g else (iso or "")
+
+
+@lru_cache(maxsize=4)
+def _novita(percorso, _mtime, quante):
+    testo = _RE_COMMENTO.sub("", percorso.read_text(encoding="utf-8"))
+    titoli = list(_RE_VERSIONE.finditer(testo))
+    versioni = []
+    for i, m in enumerate(titoli):
+        fine = titoli[i + 1].start() if i + 1 < len(titoli) else len(testo)
+        corpo = testo[m.end() : fine].strip()
+        if not corpo:  # «Non rilasciato» vuoto
+            continue
+        html = markdown.markdown(corpo, extensions=["sane_lists"])
+        for livello in ("h3", "h4"):  # sezioni (Aggiunto, Corretto...) più piccole
+            html = html.replace(f"<{livello}>", '<h4 class="mt-3 mb-1">').replace(
+                f"</{livello}>", "</h4>"
+            )
+        sviluppo = m["versione"].lower() == "non rilasciato"
+        versioni.append({
+            "versione": "In sviluppo" if sviluppo else m["versione"],
+            "data": _data_italiana(m["data"]),
+            "html": html,
+        })  # fmt: skip
+        if len(versioni) == quante:
+            break
+    return versioni
+
+
+def novita(quante=5):
+    """Ultime versioni del CHANGELOG (la più recente per prima), già convertite in HTML."""
+    percorso = Path(settings.BASE_DIR) / "CHANGELOG.md"
+    if not percorso.is_file():
+        return []
+    return _novita(percorso, percorso.stat().st_mtime, quante)
+
+
 def pagina(nome):
     """(titolo, html, indice dei paragrafi) di una pagina del manuale operativo."""
     percorso = _percorso(nome)

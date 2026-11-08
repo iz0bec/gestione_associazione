@@ -22,6 +22,20 @@
         </dl>
       </div>
     </div>
+    {% if novita %}
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-sparkles me-1"></i>Novità</h3></div>
+      <div class="list-group list-group-flush">
+        {% for v in novita %}
+        <details class="list-group-item novita"{% if forloop.first %} open{% endif %}>
+          <summary><strong>{{ v.versione }}</strong>{% if v.data %} <span class="text-secondary small ms-1">{{ v.data }}</span>{% endif %}{% if v.versione == APP_VERSIONE %} <span class="badge bg-green-lt ms-1">installata</span>{% endif %}</summary>
+          <div class="aiuto small mt-2">{{ v.html|safe }}</div>
+        </details>
+        {% endfor %}
+      </div>
+      {% if repository %}<div class="card-footer small"><a href="{{ repository }}/-/blob/main/CHANGELOG.md" rel="noopener">Storico completo delle modifiche</a></div>{% endif %}
+    </div>
+    {% endif %}
   </div>
   <div class="col-lg-7">
     <div class="card">

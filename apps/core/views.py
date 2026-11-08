@@ -238,5 +238,7 @@ class InformazioniView(LoginRequiredMixin, TemplateView):
         from . import aiuto
 
         ctx = super().get_context_data(**kwargs)
-        ctx.update(licenze=aiuto.licenze(), repository=settings.APP_REPOSITORY)
+        ctx.update(
+            licenze=aiuto.licenze(), novita=aiuto.novita(), repository=settings.APP_REPOSITORY
+        )
         return ctx

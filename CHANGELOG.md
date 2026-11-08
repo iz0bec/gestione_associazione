@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Pagina *Informazioni*: riquadro **Novità** con le ultime cinque versioni del registro delle
+  modifiche (la versione installata è evidenziata).
+
 ## [0.0.1-rc.6] - 2026-11-08
 
 Attestato solenne / benemerenza.

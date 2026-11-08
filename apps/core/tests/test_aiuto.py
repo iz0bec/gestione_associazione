@@ -59,6 +59,16 @@ class TestAiuto:
         assert settings.APP_AUTORE in testo and "CC0 1.0" in testo
         assert "WeasyPrint" in testo and "Markdown" in testo
 
+    def test_novita_dal_changelog(self, client_ruolo):
+        from apps.core import aiuto
+
+        versioni = aiuto.novita()
+        assert 1 <= len(versioni) <= 5
+        assert all(v["versione"] != "Non rilasciato" for v in versioni)
+        testo = client_ruolo("Consigliere").get("/informazioni/").content.decode()
+        assert "Novità" in testo and versioni[0]["versione"] in testo
+        assert "<details" in testo and "<h4" in testo
+
 
 @pytest.mark.django_db
 class TestMenuSistema:
