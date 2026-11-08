@@ -52,9 +52,11 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 | Comando | Quando | Cosa fa |
 |---|---|---|
 | `manage.py pianificatore` | sempre attivo (servizio) | esegue i comandi seguenti alle scadenze |
-| `manage.py invia_coda` | ogni minuto | prepara gli auguri automatici del giorno e spedisce le email in coda |
+| `manage.py invia_coda` | ogni minuto | prepara auguri e promemoria di rinnovo del giorno e spedisce le email in coda (se l'invio è attivo) |
 | `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo (sola lettura) |
 | `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
+| `manage.py conservazione_dati` | ogni notte | con l'anonimizzazione automatica attiva, anonimizza le persone oltre il termine di conservazione (`--elenco`: solo il conteggio) |
+| `manage.py manuale_pdf` | a richiesta | genera il manuale operativo in PDF (`--uscita file.pdf`) |
 | `manage.py backup --automatico` | ogni notte (`BACKUP_ORA`) | backup completo, conserva gli ultimi `BACKUP_CONSERVA` |
 | `manage.py genera_chiave_cifratura` | una volta | stampa una chiave per `CHIAVE_CIFRATURA` |
 

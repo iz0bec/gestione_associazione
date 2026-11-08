@@ -158,6 +158,18 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Testo della pagina pubblica; una riga vuota separa i paragrafi.",
     )
+    # termini di conservazione dei dati personali (Sistema -> Conservazione dei dati)
+    conservazione_anni = models.PositiveSmallIntegerField(
+        "anni di conservazione",
+        default=10,
+        help_text="Dopo la cessazione da socio o l'archiviazione, i dati della persona si possono "
+        "anonimizzare. 0 = nessun termine.",
+    )
+    anonimizzazione_automatica = models.BooleanField(
+        "anonimizzazione automatica",
+        default=False,
+        help_text="Ogni notte il programma anonimizza chi ha superato il termine (irreversibile).",
+    )
     # interruttori dei servizi di posta (Sistema -> Servizi di posta)
     invio_email = models.BooleanField(
         "invio delle email",

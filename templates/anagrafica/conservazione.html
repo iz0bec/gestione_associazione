@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Termini di conservazione dei dati personali e persone da anonimizzare
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Conservazione dei dati{% endblock %}
+{% block titolo_pagina %}Conservazione dei dati personali{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <input type="hidden" name="azione" value="impostazioni">
+      <div class="card-header"><h3 class="card-title">Termine</h3></div>
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+    </form>
+    <div class="card mt-3"><div class="card-body small text-secondary">
+      <p>Il termine decorre dalla <strong>cessazione da socio</strong> o, per chi non è socio, dall'<strong>archiviazione</strong> della scheda.</p>
+      <p>Sono esclusi le persone decedute (il GDPR non si applica e l'associazione ne conserva la memoria), chi è collegato a un utente e chi è già anonimizzato.</p>
+      <p class="mb-0">L'anonimizzazione è irreversibile: restano i documenti ufficiali e il registro attività (vedi il <a href="{% url 'core:aiuto_pagina' 'anagrafica' %}">manuale</a>).</p>
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Oltre il termine <span class="badge bg-secondary-lt ms-1">{{ scaduti|length }}</span></h3></div>
+      {% if not organizzazione_conservazione.conservazione_anni %}
+      <div class="card-body text-secondary">Nessun termine impostato.</div>
+      {% elif scaduti %}
+      <form method="post" data-conferma="Anonimizzare le persone selezionate? L'operazione è irreversibile.">{% csrf_token %}
+        <input type="hidden" name="azione" value="anonimizza">
+        <div class="table-responsive">
+          <table class="table table-vcenter card-table table-sm">
+            <thead><tr><th class="w-1"><input class="form-check-input" type="checkbox" data-seleziona-tutte="soggetti" aria-label="Seleziona tutte"></th><th>Persona</th><th>Fine del rapporto</th></tr></thead>
+            <tbody>
+            {% for s, fine in scaduti %}
+              <tr>
+                <td><input class="form-check-input" type="checkbox" name="soggetti" value="{{ s.pk }}" aria-label="Seleziona {{ s.nome_completo }}"></td>
+                <td><a href="{{ s.get_absolute_url }}">{{ s.nome_completo }}</a>{% if s.socio %}<span class="small text-secondary"> · socio n. {{ s.socio.numero }}, cessato</span>{% else %}<span class="small text-secondary"> · archiviato</span>{% endif %}</td>
+                <td>{{ fine|date:"d/m/Y" }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer d-flex flex-wrap gap-2 align-items-center">
+          <label class="small text-secondary" for="conferma-conservazione">Per confermare scrivi {{ parola }}</label>
+          <input class="form-control form-control-sm w-auto" id="conferma-conservazione" name="conferma" autocomplete="off" required>
+          <button class="btn btn-danger ms-auto" type="submit"><i class="ti ti-eraser me-1"></i>Anonimizza le selezionate</button>
+        </div>
+      </form>
+      {% else %}
+      <div class="card-body text-secondary">Nessuna persona oltre il termine di {{ organizzazione_conservazione.conservazione_anni }} anni.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

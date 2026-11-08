@@ -34,7 +34,10 @@ def backup_di_oggi(oggi):
 
 
 class Command(BaseCommand):
-    help = "Lavori periodici: invia_coda, scarica_posta, registro_giornaliero, backup notturno."
+    help = (
+        "Lavori periodici: invia_coda, scarica_posta, registro_giornaliero, conservazione_dati, "
+        "backup notturno."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument("--minuti-posta", type=int, default=15)
@@ -61,6 +64,7 @@ class Command(BaseCommand):
                 adesso.hour >= opzioni["ora_registro"] and ultimo_registro != adesso.date()
             ):
                 self._esegui("registro_giornaliero")
+                self._esegui("conservazione_dati")  # una volta al giorno, insieme al registro
                 ultimo_registro = adesso.date()
             if (
                 settings.BACKUP_AUTOMATICO

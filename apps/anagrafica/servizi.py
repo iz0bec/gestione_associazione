@@ -57,9 +57,12 @@ def salva_soggetto(form, utente, *, foto=None, togli_foto=False):
 
 @transaction.atomic
 def imposta_archiviato(soggetto, archiviato, utente):
+    from django.utils import timezone
+
     soggetto.attivo = not archiviato
+    soggetto.archiviato_il = timezone.now() if archiviato else None
     soggetto.modificato_da = utente
-    soggetto.save(update_fields=["attivo", "modificato_da", "modificato_il"])
+    soggetto.save(update_fields=["attivo", "archiviato_il", "modificato_da", "modificato_il"])
     registra(
         Azione.ARCHIVIAZIONE if archiviato else Azione.MODIFICA,
         soggetto,

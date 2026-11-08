@@ -96,6 +96,14 @@ Nella scheda di una persona, riquadro **Privacy (GDPR)**:
 Non si anonimizza un socio attivo o sospeso (prima si registra la cessazione), una persona collegata
 a un utente del programma o un ente. Una scheda anonimizzata non si modifica più.
 
+**Termini di conservazione** (*Sistema → Conservazione dei dati*, Amministratore di sistema): si
+indica per quanti **anni** conservare i dati dopo la **cessazione da socio** o, per chi non è socio,
+dopo l'**archiviazione** della scheda (predefinito 10; 0 = nessun termine). La pagina elenca le
+persone oltre il termine: si selezionano e si anonimizzano in blocco scrivendo **ANONIMIZZA**. Con
+**Anonimizzazione automatica** (spenta per impostazione predefinita) lo fa il programma ogni notte.
+Sono sempre escluse le **persone decedute** (il GDPR non si applica ai defunti e l'associazione ne
+conserva la memoria), chi è collegato a un utente e chi è già anonimizzato.
+
 ## Esportare
 
 **Esporta CSV** scarica l'elenco **con i filtri applicati** (file apribile con Excel o LibreOffice,

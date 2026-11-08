@@ -143,6 +143,7 @@ class Soggetto(ModelloBase):
     attivo = models.BooleanField(
         default=True, help_text="I soggetti archiviati restano nei documenti ma non nelle liste."
     )
+    archiviato_il = models.DateTimeField("archiviato il", null=True, blank=True, editable=False)
     anonimizzato_il = models.DateTimeField(
         "anonimizzato il", null=True, blank=True, editable=False,
         help_text="Dati personali cancellati (GDPR): la scheda non si modifica più.",

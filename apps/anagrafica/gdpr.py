@@ -321,3 +321,67 @@ def anonimizza(soggetto, utente, *, motivo, conferma):
         motivo=motivo.strip()[:255],
     )
     return soggetto
+
+
+# --- termini di conservazione ------------------------------------------------------------------
+
+
+def _limite(oggi=None):
+    from apps.core.models import Organizzazione
+
+    anni = Organizzazione.corrente().conservazione_anni
+    if not anni:
+        return None, 0
+    oggi = oggi or timezone.localdate()
+    try:
+        return oggi.replace(year=oggi.year - anni), anni
+    except ValueError:  # 29 febbraio
+        return oggi.replace(year=oggi.year - anni, day=28), anni
+
+
+def scaduti(oggi=None):
+    """(persona, data di fine del rapporto) oltre il termine di conservazione, anonimizzabili.
+    Esclusi i defunti: il GDPR non si applica e l'associazione ne conserva la memoria."""
+    from django.db.models import Q
+    from django.db.models.functions import Coalesce, TruncDate
+
+    from apps.soci.models import Socio
+
+    limite, _anni = _limite(oggi)
+    if limite is None:
+        return []
+    base = Soggetto.objects.filter(
+        tipo=Soggetto.Tipo.PERSONA, anonimizzato_il__isnull=True, data_decesso__isnull=True,
+        utente__isnull=True,
+    )  # fmt: skip
+    cessati = base.filter(socio__stato=Socio.Stato.CESSATO, socio__data_cessazione__lte=limite)
+    archiviati = (
+        base.filter(socio__isnull=True, attivo=False)
+        .annotate(fine=TruncDate(Coalesce("archiviato_il", "modificato_il")))
+        .filter(Q(fine__lte=limite))
+    )
+    risultato = [(s, s.socio.data_cessazione) for s in cessati.select_related("socio")]
+    risultato += [(s, s.fine) for s in archiviati]
+    return sorted(risultato, key=lambda r: (r[1], r[0].nome_completo))
+
+
+def anonimizza_scaduti(utente, soggetti=None):
+    """Anonimizza i soggetti indicati (o tutti) tra quelli oltre il termine: (fatti, saltati)."""
+    _limite_data, anni = _limite()
+    ammessi = {s.pk: s for s, _fine in scaduti()}
+    scelti = (
+        [ammessi[s.pk] for s in soggetti if s.pk in ammessi]
+        if soggetti is not None
+        else list(ammessi.values())
+    )
+    fatti = saltati = 0
+    for s in scelti:
+        try:
+            anonimizza(s, utente, motivo=f"Termine di conservazione ({anni} anni)",
+                       conferma=PAROLA_CONFERMA)  # fmt: skip
+            fatti += 1
+        except OperazioneNonValida:
+            saltati += 1
+    if soggetti is not None:
+        saltati += len(soggetti) - len(scelti)
+    return fatti, saltati

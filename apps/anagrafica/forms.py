@@ -108,3 +108,11 @@ class ImportaVCardForm(StileMixin, forms.Form):
         if f.size > 10 * 1024 * 1024:
             raise forms.ValidationError("Il file supera 10 MB.")
         return f
+
+
+class ConservazioneForm(StileMixin, forms.ModelForm):
+    class Meta:
+        from apps.core.models import Organizzazione
+
+        model = Organizzazione
+        fields = ["conservazione_anni", "anonimizzazione_automatica"]

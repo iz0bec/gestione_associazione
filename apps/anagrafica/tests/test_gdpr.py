@@ -122,3 +122,96 @@ def test_scheda_anonimizzata_non_si_modifica(persona, client_ruolo, crea_utente)
     c = client_ruolo("Segretario", username="s3")
     assert c.get(f"/anagrafica/{s.pk}/modifica/").status_code == 404
     assert "anonimizzata" in c.get(f"/anagrafica/{s.pk}/").content.decode()
+
+
+class TestConservazione:
+    @pytest.fixture
+    def scenario(self, crea_utente):
+        from django.utils import timezone
+
+        from apps.soci import servizi as soci
+        from apps.soci.models import TipologiaSocio
+
+        u = crea_utente("segr", ruoli=["Segretario"])
+        tip = TipologiaSocio.objects.get(nome="Ordinario")
+        vecchia = date.today().replace(year=date.today().year - 12)
+
+        def socio(cognome, cessato_il=None, **extra):
+            s = Soggetto.objects.create(cognome=cognome, nome="X", **extra)
+            so = soci.ammetti_socio(s, tip, u, data_ammissione=date(1990, 1, 1))
+            if cessato_il:
+                soci.cessa_socio(so, u, data_cessazione=cessato_il, causa="dimissioni")
+            return s
+
+        dati = {
+            "cessato_vecchio": socio("Vecchio", vecchia),
+            "cessato_recente": socio("Recente", date.today()),
+            "attivo": socio("Attivo"),
+            "defunto": socio("Defunto", vecchia),
+        }
+        Soggetto.objects.filter(pk=dati["defunto"].pk).update(data_decesso=vecchia)
+        archiviato = Soggetto.objects.create(cognome="Archiviato", nome="X", attivo=False)
+        Soggetto.objects.filter(pk=archiviato.pk).update(
+            archiviato_il=timezone.now().replace(year=vecchia.year)
+        )
+        dati["archiviato"] = archiviato
+        return dati
+
+    def test_chi_e_oltre_il_termine(self, scenario):
+        from apps.core.models import Organizzazione
+
+        nomi = {s.cognome for s, _fine in gdpr.scaduti()}
+        assert nomi == {"Vecchio", "Archiviato"}  # niente recenti, attivi, defunti
+        Organizzazione.objects.update_or_create(pk=1, defaults={"conservazione_anni": 0})
+        assert gdpr.scaduti() == []
+
+    def test_comando_notturno(self, scenario):
+        from django.core.management import call_command
+
+        from apps.core.models import Organizzazione
+
+        call_command("conservazione_dati")  # automatica spenta: nulla cambia
+        assert Soggetto.objects.filter(anonimizzato_il__isnull=False).count() == 0
+        Organizzazione.objects.update_or_create(pk=1, defaults={"anonimizzazione_automatica": True})
+        call_command("conservazione_dati")
+        anonimi = Soggetto.objects.filter(anonimizzato_il__isnull=False)
+        assert anonimi.count() == 2
+        assert not Soggetto.objects.filter(cognome__in=["Vecchio", "Archiviato"]).exists()
+        assert (
+            EventoAudit.objects.filter(
+                dettagli__motivo="Termine di conservazione (10 anni)"
+            ).count()
+            == 2
+        )
+
+    def test_pagina(self, scenario, client_ruolo):
+        assert client_ruolo("Segretario", username="s").get(
+            "/anagrafica/conservazione/").status_code == 403  # fmt: skip
+        c = client_ruolo("Amministratore di sistema", username="a")
+        pagina = c.get("/anagrafica/conservazione/").content.decode()
+        assert "Vecchio X" in pagina and "Recente X" not in pagina
+        vecchio = scenario["cessato_vecchio"]
+        c.post("/anagrafica/conservazione/", {"azione": "anonimizza", "soggetti": [vecchio.pk],
+                                              "conferma": "no"})  # fmt: skip
+        vecchio.refresh_from_db()
+        assert vecchio.anonimizzato_il is None
+        c.post("/anagrafica/conservazione/", {"azione": "anonimizza", "conferma": "ANONIMIZZA",
+                                              "soggetti": [vecchio.pk, scenario["attivo"].pk]})  # fmt: skip
+        vecchio.refresh_from_db()
+        scenario["attivo"].refresh_from_db()
+        assert vecchio.anonimizzato_il and scenario["attivo"].anonimizzato_il is None
+        r = c.post(
+            "/anagrafica/conservazione/", {"azione": "impostazioni", "conservazione_anni": 5}
+        )
+        from apps.core.models import Organizzazione
+
+        assert r.status_code == 302 and Organizzazione.corrente().conservazione_anni == 5
+
+    def test_archiviazione_registra_la_data(self, crea_utente):
+        from apps.anagrafica import servizi
+
+        s = Soggetto.objects.create(cognome="Prova", nome="X")
+        servizi.imposta_archiviato(s, True, crea_utente("u"))
+        assert s.archiviato_il is not None
+        servizi.imposta_archiviato(s, False, crea_utente("v"))
+        assert s.archiviato_il is None

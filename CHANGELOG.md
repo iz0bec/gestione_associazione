@@ -6,6 +6,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Termini di conservazione** (*Sistema → Conservazione dei dati*): anni di conservazione dopo la
+  cessazione o l'archiviazione, elenco delle persone oltre il termine con anonimizzazione in blocco
+  e, se attivata, automatica ogni notte (`manage.py conservazione_dati`); esclusi i defunti. Data di
+  archiviazione registrata nelle schede.
 - **GDPR** nella scheda della persona: **esportazione di tutti i dati** (ZIP con riepilogo PDF, JSON
   e foto) e **anonimizzazione** irreversibile con motivo e conferma; restano i documenti ufficiali e
   il registro attività. Nuovi permessi *esporta_dati_personali* (Amministratore, Segretario) e

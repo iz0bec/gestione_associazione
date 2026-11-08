@@ -296,3 +296,61 @@ class AnonimizzaView(PermessoMixin, View):
         else:
             messages.success(request, "Dati personali cancellati: la scheda è anonimizzata.")
         return redirect(soggetto)
+
+
+class ConservazioneView(PermessoMixin, View):
+    """Termini di conservazione: impostazioni e persone oltre il termine, da anonimizzare."""
+
+    permission_required = "anagrafica.anonimizza_soggetto"
+    template_name = "anagrafica/conservazione.html"
+
+    def _pagina(self, request, form):
+        from django.shortcuts import render
+
+        from apps.core.models import Organizzazione
+
+        from . import gdpr
+
+        return render(request, self.template_name, {
+            "form": form, "scaduti": gdpr.scaduti(), "parola": gdpr.PAROLA_CONFERMA,
+            "organizzazione_conservazione": Organizzazione.corrente(),
+        })  # fmt: skip
+
+    def get(self, request):
+        from apps.core.models import Organizzazione
+
+        from .forms import ConservazioneForm
+
+        return self._pagina(request, ConservazioneForm(instance=Organizzazione.corrente()))
+
+    def post(self, request):
+        from apps.core.audit import Azione, campi_modificati, registra
+        from apps.core.models import Organizzazione
+
+        from . import gdpr
+        from .forms import ConservazioneForm
+
+        if request.POST.get("azione") == "anonimizza":
+            if request.POST.get("conferma", "").strip().upper() != gdpr.PAROLA_CONFERMA:
+                messages.error(request, f"Per confermare scrivere {gdpr.PAROLA_CONFERMA}.")
+                return redirect("anagrafica:conservazione")
+            ids = [i for i in request.POST.getlist("soggetti") if i.isdigit()]
+            scelti = list(Soggetto.objects.filter(pk__in=ids))
+            if not scelti:
+                messages.warning(request, "Nessuna persona selezionata.")
+                return redirect("anagrafica:conservazione")
+            fatti, saltati = gdpr.anonimizza_scaduti(request.user, scelti)
+            testo = f"{fatti} persone anonimizzate."
+            if saltati:
+                testo += f" {saltati} saltate (non più oltre il termine o con impedimenti)."
+            messages.success(request, testo)
+            return redirect("anagrafica:conservazione")
+        form = ConservazioneForm(request.POST, instance=Organizzazione.corrente())
+        if not form.is_valid():
+            return self._pagina(request, form)
+        dettagli = campi_modificati(form)
+        org = form.save()
+        if dettagli.get("campi"):
+            registra(Azione.MODIFICA, org, descrizione="Conservazione dei dati", **dettagli)
+        messages.success(request, "Termini di conservazione salvati.")
+        return redirect("anagrafica:conservazione")
