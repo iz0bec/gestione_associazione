@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info> - Fregio centrale della cornice - Licenza: CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 20">
+<path d="M4,10 L72,10 M128,10 L196,10" stroke="#b08a3e" stroke-width=".8"/>
+<path d="M100,2 L108,10 L100,18 L92,10Z" fill="#b08a3e" stroke="#7d5f22" stroke-width=".6"/>
+<circle cx="100" cy="10" r="2" fill="#d9bf7f"/>
+<path d="M90,10 C84,2 76,4 76,10 C76,16 84,18 90,10Z" fill="none" stroke="#7d5f22" stroke-width=".9"/>
+<path d="M110,10 C116,2 124,4 124,10 C124,16 116,18 110,10Z" fill="none" stroke="#7d5f22" stroke-width=".9"/>
+<circle cx="72" cy="10" r="1.4" fill="#b08a3e"/><circle cx="128" cy="10" r="1.4" fill="#b08a3e"/>
+</svg>

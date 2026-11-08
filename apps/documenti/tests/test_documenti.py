@@ -39,7 +39,8 @@ def _modello(nome="Lettera"):
 class TestComposizione:
     def test_modelli_predefiniti(self):
         nomi = set(ModelloStampa.objects.values_list("nome", flat=True))
-        assert {"Attestato di iscrizione", "Lettera di auguri", "Lettera"} <= nomi
+        assert {"Attestato di iscrizione", "Lettera di auguri", "Lettera",
+                "Attestato di benemerenza"} <= nomi  # fmt: skip
 
     def test_segnaposto_e_html_neutralizzato(self, rossi):
         rossi.nome = "<script>x</script>"
@@ -57,7 +58,7 @@ class TestComposizione:
         organo = Organo.objects.first() or Organo.objects.create(nome="Consiglio")
         Carica.objects.create(organo=organo, soggetto=rossi, ruolo="presidente",
                               dal=date(2020, 1, 1))  # fmt: skip
-        assert servizi.firmatario(_modello()) == "Rossi Mario"
+        assert servizi.firmatario(_modello()) == "Mario Rossi"
         m = _modello()
         m.firma_nome = "Altro Nome"
         assert servizi.firmatario(m) == "Altro Nome"
@@ -123,3 +124,71 @@ class TestStampa:
             f"/documenti/{_modello('Attestato di iscrizione').pk}/anteprima/"
         )
         assert r.status_code == 200 and r.content.startswith(b"%PDF")
+
+
+def _png():
+    import io
+
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGBA", (40, 40), (180, 140, 60, 255)).save(buf, "PNG")
+    buf.name = "stemma.png"
+    buf.seek(0)
+    return buf
+
+
+@pytest.mark.django_db
+class TestBenemerenza:
+    def test_modello_pronto_e_template(self):
+        m = _modello("Attestato di benemerenza")
+        assert m.tipo == ModelloStampa.Tipo.BENEMERENZA and m.seconda_firma == "segretario"
+        assert servizi.template_di(m) == servizi.TEMPLATE_BENEMERENZA
+        assert servizi.template_di(_modello()) == servizi.TEMPLATE
+
+    def test_seconda_firma_in_carica(self, rossi):
+        from apps.organi.models import Carica, Organo
+
+        organo = Organo.objects.first() or Organo.objects.create(nome="Consiglio")
+        rossi.titolo = "Cav."
+        rossi.save()
+        Carica.objects.create(organo=organo, soggetto=rossi, ruolo="segretario",
+                              dal=date(2020, 1, 1))  # fmt: skip
+        firma = servizi.seconda_firma(_modello("Attestato di benemerenza"))
+        assert firma == {"ruolo": "Il Segretario", "nome": "Cav. Mario Rossi"}
+        assert servizi.seconda_firma(_modello()) is None
+
+    def test_pdf_con_font_e_ornamenti(self, rossi, monkeypatch):
+        from apps.core import pdf as modulo_pdf
+
+        lette = []
+        originale = modulo_pdf._percorso_risorsa
+        monkeypatch.setattr(modulo_pdf, "_percorso_risorsa",
+                            lambda url: lette.append(url) or originale(url))  # fmt: skip
+        pdf = servizi.anteprima(_modello("Attestato di benemerenza"), rossi)
+        assert pdf.startswith(b"%PDF")
+        nomi = {u.rsplit("/", 1)[-1] for u in lette}
+        assert {"Cinzel-VF.ttf", "EBGaramond-VF.ttf", "EBGaramond-Italic-VF.ttf", "angolo.svg",
+                "alloro.svg", "sigillo.svg", "fregio.svg"} <= nomi  # fmt: skip
+
+    def test_stemma_caricato_e_tolto(self, client_ruolo):
+        client = client_ruolo("Segretario")
+        m = _modello("Attestato di benemerenza")
+        dati = {"nome": m.nome, "tipo": m.tipo, "titolo": m.titolo, "corpo": m.corpo,
+                "firma_ruolo": m.firma_ruolo, "firma_nome": "", "seconda_firma": "segretario",
+                "attivo": "on"}  # fmt: skip
+        r = client.post(f"/documenti/{m.pk}/", {**dati, "nuovo_stemma": _png()})
+        assert r.status_code == 302
+        m.refresh_from_db()
+        assert m.stemma.name.startswith("stemmi/")
+        assert servizi.stemmi(m, _org())[-1] == m.stemma.name
+        assert client.get(f"/documenti/{m.pk}/anteprima/").status_code == 200
+        client.post(f"/documenti/{m.pk}/", {**dati, "togli_stemma": "on"})
+        m.refresh_from_db()
+        assert not m.stemma
+
+
+def _org():
+    from apps.core.models import Organizzazione
+
+    return Organizzazione.corrente()

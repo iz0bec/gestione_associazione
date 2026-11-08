@@ -9,7 +9,7 @@
 
 from django.contrib import messages
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, FormView, ListView, UpdateView
@@ -43,15 +43,31 @@ class _ModelloMixin:
     success_url = reverse_lazy("documenti:modelli")
 
     def form_valid(self, form):
+        from apps.core.immagini import ImmagineNonValida, ripulisci
+
         nuovo = form.instance.pk is None
         dettagli = {} if nuovo else campi_modificati(form)
-        risposta = super().form_valid(form)
+        modello = form.save(commit=False)
+        stemma, togli = form.cleaned_data.get("nuovo_stemma"), form.cleaned_data.get("togli_stemma")
+        try:
+            if stemma:
+                pulito = ripulisci(stemma, lato=800, formato="PNG")
+                if modello.stemma:
+                    modello.stemma.delete(save=False)
+                modello.stemma.save("stemma.png", pulito, save=False)
+            elif togli and modello.stemma:
+                modello.stemma.delete(save=False)
+        except ImmagineNonValida as e:
+            form.add_error("nuovo_stemma", e)
+            return self.form_invalid(form)
+        modello.save()
+        self.object = modello
         if nuovo:
-            registra(Azione.CREAZIONE, self.object)
-        elif dettagli.get("campi"):
-            registra(Azione.MODIFICA, self.object, **dettagli)
-        messages.success(self.request, f"Modello «{self.object}» salvato.")
-        return risposta
+            registra(Azione.CREAZIONE, modello)
+        elif dettagli.get("campi") or stemma or togli:
+            registra(Azione.MODIFICA, modello, stemma=bool(stemma) or None, **dettagli)
+        messages.success(self.request, f"Modello «{modello}» salvato.")
+        return redirect(self.success_url)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

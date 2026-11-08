@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Attestato solenne / benemerenza** fra i modelli di stampa: A4 orizzontale con cornice dorata
+  e angoli ornati, stemmi (logo dell'ente e stemma caricato sul modello), filigrana, titolo in
+  capitali, alloro, coccarda tricolore e seconda firma facoltativa; modello *Attestato di benemerenza* pronto.
+- Segnaposto `{{ intestazione }}` (titolo, nome e cognome).
+
+### Modificato
+- Il nome del firmatario dei documenti è nella forma «Mario Rossi» (con il titolo).
+
 ## [0.0.1-rc.5] - 2026-11-08
 
 Incasso massivo delle quote.

@@ -50,6 +50,7 @@ SEGNAPOSTO = {
     "cognome": "cognome",
     "nome_completo": "cognome e nome, o denominazione dell'ente",
     "titolo": "titolo (es. Cav., Dott.)",
+    "intestazione": "titolo, nome e cognome (es. Cav. Mario Rossi)",
     "saluto": "«Caro», «Cara» o «Gentile» secondo il sesso",
     "anni": "anni compiuti, di iscrizione o della ricorrenza",
     "numero_socio": "numero nel libro soci",
@@ -95,6 +96,7 @@ def contesto_soggetto(soggetto, oggi=None):
         "cognome": soggetto.cognome,
         "nome_completo": soggetto.nome_completo,
         "titolo": soggetto.titolo,
+        "intestazione": soggetto.intestazione,
         "saluto": {"M": "Caro", "F": "Cara"}.get(soggetto.sesso, "Gentile"),
     }
     if soggetto.data_nascita:

@@ -1,0 +1,94 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Attestato solenne / benemerenza: A4 orizzontale, doppia cornice con angoli ornati,
+               stemmi, titolo in capitali, alloro, coccarda tricolore e firme. Una pagina per destinatario.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ modello.nome }}{% endblock %}
+{% block formato %}A4 landscape{% endblock %}
+{% block piede %}{% endblock %}
+{% block intestazione %}{% endblock %}
+{% block stile %}
+  @font-face { font-family: "Cinzel AS"; src: url("risorsa:static/vendor/fonts/Cinzel-VF.ttf"); }
+  @font-face { font-family: "Garamond AS"; src: url("risorsa:static/vendor/fonts/EBGaramond-VF.ttf"); font-style: normal; }
+  @font-face { font-family: "Garamond AS"; src: url("risorsa:static/vendor/fonts/EBGaramond-Italic-VF.ttf"); font-style: italic; }
+  @page { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+  body { font-family: "Garamond AS", "DejaVu Serif", serif; color: #2a2418; }
+  .pagina { position: relative; width: 297mm; height: 209.6mm; overflow: hidden; page-break-after: always; }
+  .pagina:last-child { page-break-after: auto; }
+
+  /* cornice dorata: filetto spesso, perline, filetto sottile; gli angoli SVG portano solo gli ornamenti */
+  .filetto { position: absolute; }
+  .filetto.esterno { top: 7mm; left: 7mm; right: 7mm; bottom: 7mm; border: 1.6pt solid #7d5f22; border-radius: 4mm; }
+  .filetto.perline { top: 8.7mm; left: 8.7mm; right: 8.7mm; bottom: 8.7mm; border: 1.3pt dotted #b08a3e; border-radius: 3mm; }
+  .filetto.interno { top: 10.4mm; left: 10.4mm; right: 10.4mm; bottom: 10.4mm; border: .7pt solid #b08a3e; border-radius: 2mm; }
+  .angolo { position: absolute; width: 40mm; height: 40mm; }
+  .angolo.ss { top: 7mm; left: 7mm; }
+  .angolo.sd { top: 7mm; right: 7mm; transform: scaleX(-1); }
+  .angolo.is { bottom: 7mm; left: 7mm; transform: scaleY(-1); }
+  .angolo.id { bottom: 7mm; right: 7mm; transform: scale(-1, -1); }
+  .fregio-basso { position: absolute; bottom: 12.5mm; left: 118.5mm; width: 60mm; }
+  .filigrana { position: absolute; top: 47mm; left: 101mm; width: 95mm; height: 95mm; object-fit: contain; opacity: .06; }
+
+  .contenuto { position: absolute; top: 17mm; left: 26mm; right: 26mm; bottom: 20mm; text-align: center; display: flex; flex-direction: column; }
+  .contenuto > * { flex-shrink: 0; }
+  .testata { display: flex; align-items: center; justify-content: center; gap: 9mm; }
+  .testata.colonna { flex-direction: column; gap: 1.5mm; }
+  .testata.colonna .stemma { height: 19mm; }
+  .stemma { height: 23mm; max-width: 34mm; object-fit: contain; }
+  .ente-nome { font-family: "Cinzel AS", "DejaVu Serif", serif; font-weight: 600; font-size: 13.5pt; letter-spacing: 1.2pt; line-height: 1.25; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; max-width: 150mm; }
+  .ente-sede { font-size: 10pt; font-style: italic; color: #5b4a2a; margin-top: 1pt; letter-spacing: .3pt; }
+  h1 { font-family: "Cinzel AS", "DejaVu Serif", serif; font-weight: 700; font-size: 31pt; letter-spacing: 2.5pt; line-height: 1.1;
+       color: #6f531c; margin: 5mm 0 0; }
+  .alloro { width: 62mm; margin: 1.5mm auto 0; display: block; }
+  .testo { font-size: 15pt; line-height: 1.42; margin: 2mm auto 0; max-width: 205mm; }
+  .testo p { margin: 0 0 2.5mm; }
+  .testo strong { display: inline-block; font-style: italic; font-weight: 600; font-size: 27pt; line-height: 1.15;
+                  color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; margin: 1mm 0; }
+  .testo em { font-style: italic; }
+  .luogo-data { font-style: italic; font-size: 12.5pt; color: #4a3d22; margin-top: 3mm; }
+
+  .firme { margin-top: auto; padding-top: 3mm; display: flex; align-items: flex-end; justify-content: space-between; }
+  .firma { width: 72mm; text-align: center; }
+  .firma .ruolo { font-family: "Cinzel AS", "DejaVu Serif", serif; font-size: 10pt; letter-spacing: 1pt; color: #6f531c; }
+  .firma .spazio { height: 13mm; border-bottom: .6pt solid #b08a3e; margin: 0 6mm; }
+  .firma .nome { font-style: italic; font-size: 12.5pt; margin-top: 1.2mm; min-height: 5mm; }
+  .sigillo { width: 27mm; margin-bottom: -2mm; }
+  .protocollo { position: absolute; left: 16mm; bottom: 15mm; font-family: "DejaVu Sans", sans-serif; font-size: 6.5pt; color: #6b6b6b; }
+{% endblock %}
+{% block contenuto %}
+{% for p in pagine %}
+<div class="pagina">
+  {% if organizzazione.logo %}<img class="filigrana" src="risorsa:media/{{ organizzazione.logo.name }}" alt="">{% endif %}
+  <div class="filetto esterno"></div><div class="filetto perline"></div><div class="filetto interno"></div>
+  <img class="angolo ss" src="risorsa:static/img/attestato/angolo.svg" alt="">
+  <img class="angolo sd" src="risorsa:static/img/attestato/angolo.svg" alt="">
+  <img class="angolo is" src="risorsa:static/img/attestato/angolo.svg" alt="">
+  <img class="angolo id" src="risorsa:static/img/attestato/angolo.svg" alt="">
+  <img class="fregio-basso" src="risorsa:static/img/attestato/fregio.svg" alt="">
+  {% if protocollo %}<div class="protocollo">Prot. n. {{ protocollo.segnatura }} del {{ protocollo.registrato_il|date:"d/m/Y" }}</div>{% endif %}
+
+  <div class="contenuto">
+    <div class="testata{% if stemmi|length < 2 %} colonna{% endif %}">
+      {% if stemmi.0 %}<img class="stemma" src="risorsa:media/{{ stemmi.0 }}" alt="">{% endif %}
+      <div>
+        <div class="ente-nome">{{ organizzazione.denominazione }}</div>
+        {% if organizzazione.comune %}<div class="ente-sede">{{ organizzazione.comune }}</div>{% endif %}
+      </div>
+      {% if stemmi.1 %}<img class="stemma" src="risorsa:media/{{ stemmi.1 }}" alt="">{% endif %}
+    </div>
+    {% if p.titolo %}<h1>{{ p.titolo }}</h1>{% endif %}
+    <img class="alloro" src="risorsa:static/img/attestato/alloro.svg" alt="">
+    <div class="testo">{{ p.html|safe }}</div>
+    <div class="luogo-data">{{ luogo_data }}</div>
+
+    <div class="firme">
+      <div class="firma">{% if seconda_firma %}<div class="ruolo">{{ seconda_firma.ruolo }}</div><div class="spazio"></div><div class="nome">{{ seconda_firma.nome }}</div>{% endif %}</div>
+      <img class="sigillo" src="risorsa:static/img/attestato/sigillo.svg" alt="">
+      <div class="firma">{% if firma_ruolo or firma_nome %}<div class="ruolo">{{ firma_ruolo }}</div><div class="spazio"></div><div class="nome">{{ firma_nome }}</div>{% endif %}</div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

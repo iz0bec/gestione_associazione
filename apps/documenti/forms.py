@@ -19,10 +19,25 @@ from .models import ModelloStampa
 
 
 class ModelloForm(StileMixin, forms.ModelForm):
+    nuovo_stemma = forms.ImageField(
+        label="Stemma o logo aggiuntivo",
+        required=False,
+        help_text="Solo per l'attestato solenne: a destra del logo dell'ente (es. stemma della "
+        "presidenza nazionale o del Comune). Senza, si usa il logo del modulo di adesione.",
+        widget=forms.FileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+    )
+    togli_stemma = forms.BooleanField(label="Togli lo stemma", required=False)
+
     class Meta:
         model = ModelloStampa
-        fields = ["nome", "tipo", "titolo", "corpo", "firma_ruolo", "firma_nome", "attivo"]
+        fields = ["nome", "tipo", "titolo", "corpo", "firma_ruolo", "firma_nome", "seconda_firma",
+                  "attivo"]  # fmt: skip
         widgets = {"corpo": forms.Textarea(attrs={"rows": 14}), "tipo": forms.RadioSelect}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.stemma:
+            del self.fields["togli_stemma"]
 
     def clean(self):
         dati = super().clean()

@@ -30,6 +30,7 @@ from apps.core.models import Organizzazione
 from apps.core.pdf import genera_pdf
 
 TEMPLATE = "documenti/pdf/documento.html"
+TEMPLATE_BENEMERENZA = "documenti/pdf/benemerenza.html"
 SEGNAPOSTO_STAMPA = {
     **SEGNAPOSTO,
     "luogo": "comune dell'associazione",
@@ -48,21 +49,43 @@ def segnaposto_sconosciuti(*testi):
     return sorted(trovati - set(SEGNAPOSTO_STAMPA))
 
 
-def firmatario(modello):
-    """Nome del firmatario: quello del modello o il presidente in carica."""
-    if modello.firma_nome:
-        return modello.firma_nome
+def in_carica(ruolo):
+    """Nome («Mario Rossi», con il titolo) di chi ricopre oggi il ruolo, o stringa vuota."""
     from apps.organi.models import Carica
 
     oggi = timezone.localdate()
     carica = (
-        Carica.objects.filter(ruolo=Carica.Ruolo.PRESIDENTE, dal__lte=oggi)
+        Carica.objects.filter(ruolo=ruolo, dal__lte=oggi)
         .exclude(al__lte=oggi)
         .select_related("soggetto")
         .order_by("-dal")
         .first()
     )
-    return carica.soggetto.nome_completo if carica else ""
+    return carica.soggetto.intestazione if carica else ""
+
+
+def firmatario(modello):
+    """Nome del firmatario: quello del modello o il presidente in carica."""
+    return modello.firma_nome or in_carica("presidente")
+
+
+def seconda_firma(modello):
+    if not modello.seconda_firma:
+        return None
+    return {"ruolo": modello.get_seconda_firma_display(), "nome": in_carica(modello.seconda_firma)}
+
+
+def stemmi(modello, org):
+    """Immagini in testa all'attestato solenne: logo dell'ente e stemma del modello (o il logo
+    del modulo di adesione, es. della presidenza nazionale). Percorsi relativi a MEDIA_ROOT."""
+    elenco = [org.logo.name if org.logo else ""]
+    secondo = modello.stemma or org.modulo_logo
+    elenco.append(secondo.name if secondo else "")
+    return [s for s in elenco if s]
+
+
+def template_di(modello):
+    return TEMPLATE_BENEMERENZA if modello.tipo == modello.Tipo.BENEMERENZA else TEMPLATE
 
 
 def _contesto(soggetto, firma):
@@ -121,6 +144,8 @@ def _contesto_pdf(modello, soggetti, protocollo=None):
             p for p in (org.comune, date_format(timezone.localdate(), "j F Y").lower()) if p
         ),
         "protocollo": protocollo,
+        "seconda_firma": seconda_firma(modello),
+        "stemmi": stemmi(modello, org),
     }
 
 
@@ -130,7 +155,7 @@ def nome_file(modello):
 
 def anteprima(modello, soggetto=None):
     """PDF di prova (nessuna registrazione)."""
-    return genera_pdf(TEMPLATE, _contesto_pdf(modello, [soggetto] if soggetto else []))
+    return genera_pdf(template_di(modello), _contesto_pdf(modello, [soggetto] if soggetto else []))
 
 
 @transaction.atomic
@@ -159,7 +184,7 @@ def stampa(modello, soggetti, utente, *, protocolla=False, mezzo="posta"):
             corrispondenti,
             utente,
         )
-    pdf = genera_pdf(TEMPLATE, _contesto_pdf(modello, soggetti, protocollo))
+    pdf = genera_pdf(template_di(modello), _contesto_pdf(modello, soggetti, protocollo))
     if protocollo:
         prot.aggiungi_allegato(
             protocollo, ContentFile(pdf, name=nome_file(modello)), utente, principale=True,

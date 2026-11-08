@@ -28,8 +28,8 @@
 </style>
 </head>
 <body>
-<div class="piede">{{ organizzazione.denominazione }}</div>
-<div class="intestazione">
+{% block piede %}<div class="piede">{{ organizzazione.denominazione }}</div>{% endblock %}
+{% block intestazione %}<div class="intestazione">
   {% if organizzazione.logo %}<img src="risorsa:media/{{ organizzazione.logo.name }}" alt="">{% endif %}
   <div>
     <div class="nome">{{ organizzazione.denominazione }}</div>
@@ -40,7 +40,7 @@
       {% if organizzazione.email %}<br>{{ organizzazione.email }}{% endif %}{% if organizzazione.pec %} · PEC {{ organizzazione.pec }}{% endif %}
     </div>
   </div>
-</div>
+</div>{% endblock %}
 {% block contenuto %}{% endblock %}
 </body>
 </html>
