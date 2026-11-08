@@ -1,0 +1,27 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Riepilogo dei dati personali di una persona (diritto di accesso, GDPR art. 15)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Dati personali - {{ soggetto.nome_completo }}{% endblock %}
+{% block stile %}
+  h2 { font-size: 11.5pt; margin: 14pt 0 4pt; border-bottom: .6pt solid #bbb; }
+  .vuoto { color: #777; font-style: italic; }
+  dl { display: grid; grid-template-columns: 45mm 1fr; gap: 2pt 6pt; margin: 0; }
+  dt { color: #555; } dd { margin: 0; }
+  table { font-size: 8.5pt; }
+{% endblock %}
+{% block contenuto %}
+<h1>Dati personali di {{ soggetto.nome_completo }}</h1>
+<p class="piccolo">Estratto il {{ adesso|date:"d/m/Y H:i" }} da {{ organizzazione.denominazione }}, titolare del trattamento.
+Comprende tutti i dati riferiti alla persona conservati nel programma; lo stesso contenuto, in formato elaborabile, è nel file <em>dati-personali.json</em>.</p>
+{% for sezione, valore in dati.items %}
+<h2>{{ sezione|capfirst|cut:"_"|default:sezione }}</h2>
+{% if not valore %}<div class="vuoto">Nessun dato.</div>
+{% elif valore.items %}<dl>{% for k, v in valore.items %}{% if v not in "" %}<dt>{{ k }}</dt><dd>{% if v is True %}sì{% elif v is False %}no{% else %}{{ v }}{% endif %}</dd>{% endif %}{% endfor %}</dl>
+{% else %}
+<table><tbody>{% for riga in valore %}<tr><td>{% if riga.items %}{% for k, v in riga.items %}{% if v not in "" and v is not None %}<strong>{{ k }}</strong>: {% if v is True %}sì{% elif v is False %}no{% else %}{{ v }}{% endif %}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}{% else %}{{ riga }}{% endif %}</td></tr>{% endfor %}</tbody></table>
+{% endif %}
+{% endfor %}
+{% endblock %}

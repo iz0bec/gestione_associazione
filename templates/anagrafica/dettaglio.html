@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titolo %}{{ soggetto }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'anagrafica:elenco' %}">Anagrafica</a> · {{ soggetto.get_tipo_display }}</div>{% endblock %}
-{% block titolo_pagina %}{{ soggetto.intestazione }}{% if soggetto.deceduto %} <span class="badge bg-dark-lt">†</span>{% endif %}{% if not soggetto.attivo %} <span class="badge bg-secondary-lt">archiviato</span>{% endif %}{% endblock %}
+{% block titolo_pagina %}{{ soggetto.intestazione }}{% if soggetto.deceduto %} <span class="badge bg-dark-lt">†</span>{% endif %}{% if soggetto.anonimizzato_il %} <span class="badge bg-red-lt">anonimizzata</span>{% elif not soggetto.attivo %} <span class="badge bg-secondary-lt">archiviato</span>{% endif %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
   {% if perms.anagrafica.archivia_soggetto %}
@@ -107,6 +107,37 @@
       </div>
       {% endif %}
     </div>
+    {% if perms.anagrafica.esporta_dati_personali or perms.anagrafica.anonimizza_soggetto %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-lock-access me-2"></i>Privacy (GDPR)</h2></div>
+      <div class="card-body d-grid gap-2">
+        {% if soggetto.anonimizzato_il %}<div class="small text-secondary">Dati personali cancellati il {{ soggetto.anonimizzato_il|date:"d/m/Y" }}. Restano i documenti ufficiali (protocolli, verbali, prima nota, ricevute) e il registro attività.</div>{% endif %}
+        {% if perms.anagrafica.esporta_dati_personali %}<a class="btn w-100" href="{% url 'anagrafica:dati_personali' soggetto.pk %}"><i class="ti ti-file-zip me-1"></i>Esporta tutti i dati</a>
+        <div class="small text-secondary">Per la richiesta di accesso o di portabilità dell'interessato: archivio con riepilogo in PDF e file JSON.</div>{% endif %}
+        {% if perms.anagrafica.anonimizza_soggetto and not soggetto.anonimizzato_il %}
+          {% if impedimenti_gdpr %}<div class="small text-secondary">Anonimizzazione non possibile: {{ impedimenti_gdpr|join:"; " }}.</div>
+          {% else %}<button class="btn btn-outline-danger w-100" type="button" data-bs-toggle="modal" data-bs-target="#anonimizza"><i class="ti ti-eraser me-1"></i>Anonimizza</button>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
+{% if perms.anagrafica.anonimizza_soggetto and not soggetto.anonimizzato_il and not impedimenti_gdpr %}
+<div class="modal fade" id="anonimizza" tabindex="-1" aria-labelledby="titolo-anonimizza" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'anagrafica:anonimizza' soggetto.pk %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-anonimizza">Anonimizzare {{ soggetto.nome_completo }}?</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <div class="alert alert-danger">Operazione <strong>irreversibile</strong>: nome, recapiti, codice fiscale, data di nascita, foto e note vengono cancellati, insieme ai dati personali della domanda di iscrizione e alle copie negli invii. Restano i documenti ufficiali e il registro attività. Conviene prima <a href="{% url 'anagrafica:dati_personali' soggetto.pk %}">esportare i dati</a>.</div>
+        <label class="form-label required" for="motivo-anonimizza">Motivo</label>
+        <input class="form-control mb-3" id="motivo-anonimizza" name="motivo" maxlength="255" required placeholder="Es. richiesta dell'interessato del 10/11/2026">
+        <label class="form-label required" for="conferma-anonimizza">Per confermare scrivi {{ parola_gdpr }}</label>
+        <input class="form-control" id="conferma-anonimizza" name="conferma" autocomplete="off" required>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-danger">Anonimizza</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

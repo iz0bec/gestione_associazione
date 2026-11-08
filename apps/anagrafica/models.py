@@ -143,6 +143,10 @@ class Soggetto(ModelloBase):
     attivo = models.BooleanField(
         default=True, help_text="I soggetti archiviati restano nei documenti ma non nelle liste."
     )
+    anonimizzato_il = models.DateTimeField(
+        "anonimizzato il", null=True, blank=True, editable=False,
+        help_text="Dati personali cancellati (GDPR): la scheda non si modifica più.",
+    )  # fmt: skip
 
     objects = SoggettoQuerySet.as_manager()
 
@@ -153,6 +157,8 @@ class Soggetto(ModelloBase):
         permissions = [
             ("archivia_soggetto", "Può archiviare e ripristinare soggetti"),
             ("esporta_soggetti", "Può esportare l'anagrafica"),
+            ("esporta_dati_personali", "Può esportare tutti i dati di una persona (GDPR)"),
+            ("anonimizza_soggetto", "Può anonimizzare una persona (irreversibile)"),
             ("importa_soggetti", "Può importare schede da una rubrica (vCard)"),
         ]
         constraints = [

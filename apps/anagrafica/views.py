@@ -76,6 +76,11 @@ class DettaglioView(PermessoMixin, DetailView):
                 .filter(corrispondenti__soggetto=self.object)
                 .distinct()[:10]
             )
+        if self.request.user.has_perm("anagrafica.anonimizza_soggetto"):
+            from . import gdpr
+
+            ctx["impedimenti_gdpr"] = gdpr.impedimenti(self.object)
+            ctx["parola_gdpr"] = gdpr.PAROLA_CONFERMA
         if self.request.user.has_perm("core.view_eventoaudit"):
             ctx["storia"] = EventoAudit.objects.filter(
                 oggetto_tipo=ContentType.objects.get_for_model(Soggetto),
@@ -117,6 +122,9 @@ class CreaView(PermessoMixin, _SalvaMixin, CreateView):
 
 class ModificaView(PermessoMixin, _SalvaMixin, UpdateView):
     permission_required = "anagrafica.change_soggetto"
+
+    def get_queryset(self):
+        return Soggetto.objects.filter(anonimizzato_il__isnull=True)  # le anonimizzate no
 
 
 class FotoView(LoginRequiredMixin, View):
@@ -252,3 +260,39 @@ class ImportaVCardView(PermessoMixin, FormView):
         messages.success(request, f"Importazione completata: {c['nuovo']} schede nuove, "
                                   f"{c['aggiornato']} completate.")  # fmt: skip
         return self._rapporto(righe, eseguita=True, nome_file=dati["nome"], categoria=categoria)
+
+
+class DatiPersonaliView(PermessoMixin, View):
+    """Tutti i dati della persona in un archivio ZIP (JSON + riepilogo PDF + foto)."""
+
+    permission_required = "anagrafica.esporta_dati_personali"
+
+    def get(self, request, pk):
+        from . import gdpr
+
+        soggetto = get_object_or_404(Soggetto, pk=pk)
+        risposta = HttpResponse(
+            gdpr.esporta(soggetto, request.user), content_type="application/zip"
+        )
+        nome = slugify(soggetto.nome_completo) or str(soggetto.pk)
+        risposta["Content-Disposition"] = f'attachment; filename="dati-personali-{nome}.zip"'
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        return risposta
+
+
+class AnonimizzaView(PermessoMixin, View):
+    permission_required = "anagrafica.anonimizza_soggetto"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        from . import gdpr
+
+        soggetto = get_object_or_404(Soggetto, pk=pk)
+        try:
+            gdpr.anonimizza(soggetto, request.user, motivo=request.POST.get("motivo", ""),
+                            conferma=request.POST.get("conferma", ""))  # fmt: skip
+        except gdpr.OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+        else:
+            messages.success(request, "Dati personali cancellati: la scheda è anonimizzata.")
+        return redirect(soggetto)

@@ -6,6 +6,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **GDPR** nella scheda della persona: **esportazione di tutti i dati** (ZIP con riepilogo PDF, JSON
+  e foto) e **anonimizzazione** irreversibile con motivo e conferma; restano i documenti ufficiali e
+  il registro attività. Nuovi permessi *esporta_dati_personali* (Amministratore, Segretario) e
+  *anonimizza_soggetto* (Amministratore).
 - **Tessera digitale**: PDF in formato carta con QR di verifica dalla scheda del socio, e invio per
   email in bozza (nuovo modello *Tessera digitale*); la tessera ufficiale resta quella prestampata.
 - **Verifica pubblica della tessera** dal QR o con numero e cognome (anche nella pagina pubblica):

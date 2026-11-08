@@ -96,10 +96,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.
 - Area personale del socio: tessera digitale con QR verificabile, dati e quote.
-- Tessera stampabile (formato card) con QR di verifica.
+- ✅ Tessera digitale (formato carta) con QR di verifica, inviata per email; verifica pubblica.
 - ✅ Promemoria automatici di rinnovo ai soci non in regola.
-- GDPR: esportazione dati di una persona, anonimizzazione, termini di conservazione automatici.
+- ✅ GDPR: esportazione dei dati di una persona e anonimizzazione. *Da fare*: termini di conservazione automatici.
 - Backup automatici cifrati con verifica del ripristino.
-- Ricerca globale (persone, protocolli, verbali, beni) con ricerca testuale PostgreSQL.
+- ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).
 - API REST con token con scadenza e permessi limitati (per integrazioni esterne).
 - Pagamenti delle quote tracciati (contanti, bonifico, POS) con ricevuta numerata.

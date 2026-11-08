@@ -39,6 +39,9 @@ Va sempre assegnato insieme alla sua sezione (*Sistema → Utenti e ruoli → Se
 
 Chi guida l'intera associazione o federazione ha il ruolo **Presidente**.
 
+**Privacy (GDPR)**: l'esportazione di tutti i dati di una persona spetta ad Amministratore di sistema
+e Segretario, l'anonimizzazione al solo Amministratore di sistema (vedi [Anagrafica](anagrafica.md)).
+
 ### Soci e tesseramento
 
 | Ruolo | Libro soci | Tesseramento e attribuzione | Carico tessere dalla sede centrale | Incassi e annullamenti | Listino (costi e quote) | Domande | Stampe ed elenco tesserati | Tipologie | Importazione dal registro nazionale | Sezioni |

@@ -76,6 +76,26 @@ non compare più negli elenchi, ma resta nei documenti già registrati. Si può 
 in qualsiasi momento (stato *Archiviati* nel filtro → scheda → *Ripristina*).
 Le schede non si cancellano: i documenti ufficiali devono poter fare riferimento ai soggetti.
 
+## Privacy: diritti dell'interessato (GDPR)
+
+Nella scheda di una persona, riquadro **Privacy (GDPR)**:
+
+- **Esporta tutti i dati** (Amministratore di sistema, Segretario) - per la **richiesta di accesso**
+  o di **portabilità** dell'interessato: un archivio ZIP con un **riepilogo in PDF**, lo stesso
+  contenuto in **JSON** (formato elaborabile) e l'eventuale foto. Comprende scheda, categorie,
+  consensi, utente, iscrizione al libro soci, tessere e quote, domande di iscrizione, cariche,
+  presenze alle riunioni, protocolli, comunicazioni ricevute, liste, movimenti di tesoreria, beni
+  donati o avuti in prestito.
+- **Anonimizza** (solo Amministratore di sistema) - per la **richiesta di cancellazione** o al
+  termine del periodo di conservazione. È **irreversibile**: si cancellano nome, recapiti, codice
+  fiscale, date, luogo di nascita, foto, note, categorie e liste, i dati personali delle domande di
+  iscrizione e il modulo firmato, i nomi e le email nelle copie degli invii. **Restano** i documenti
+  ufficiali che vanno conservati per legge (protocolli, verbali, prima nota, ricevute e libro soci
+  con il numero) e il registro attività. Si chiede il **motivo** e di scrivere **ANONIMIZZA**.
+
+Non si anonimizza un socio attivo o sospeso (prima si registra la cessazione), una persona collegata
+a un utente del programma o un ente. Una scheda anonimizzata non si modifica più.
+
 ## Esportare
 
 **Esporta CSV** scarica l'elenco **con i filtri applicati** (file apribile con Excel o LibreOffice,
