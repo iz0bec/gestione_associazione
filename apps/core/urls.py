@@ -9,7 +9,7 @@
 
 from django.urls import path
 
-from . import views
+from . import views, viste_backup
 
 app_name = "core"
 
@@ -18,5 +18,21 @@ urlpatterns = [
     path("organizzazione/", views.OrganizzazioneView.as_view(), name="organizzazione"),
     path("organizzazione/aspetto/", views.AspettoView.as_view(), name="aspetto"),
     path("organizzazione/logo-modulo/", views.LogoModuloView.as_view(), name="logo_modulo"),
+    path("sistema/backup/", viste_backup.BackupView.as_view(), name="backup"),
+    path(
+        "sistema/backup/<str:nome>/scarica/",
+        viste_backup.ScaricaBackupView.as_view(),
+        name="scarica_backup",
+    ),
+    path(
+        "sistema/backup/<str:nome>/elimina/",
+        viste_backup.EliminaBackupView.as_view(),
+        name="elimina_backup",
+    ),
+    path(
+        "sistema/backup/<str:nome>/ripristina/",
+        viste_backup.RipristinoView.as_view(),
+        name="ripristino",
+    ),
     path("registro-attivita/", views.RegistroAttivitaView.as_view(), name="registro_attivita"),
 ]

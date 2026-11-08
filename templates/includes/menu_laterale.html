@@ -74,7 +74,7 @@
           <span class="nav-link disabled" title="Modulo in sviluppo"><span class="nav-link-icon"><i class="ti ti-{{ voce.1 }}"></i></span><span class="nav-link-title">{{ voce.0 }}</span><span class="badge badge-sm bg-secondary-lt ms-auto">presto</span></span>
         </li>
         {% endfor %}
-        {% if perms.core.gestisci_organizzazione or perms.core.view_eventoaudit or perms.soci.view_sezione or user.is_superuser %}
+        {% if perms.core.gestisci_organizzazione or perms.core.view_eventoaudit or perms.soci.view_sezione or perms.core.gestisci_backup or user.is_superuser %}
         <li class="nav-item mt-3"><span class="nav-link text-uppercase small text-secondary">Sistema</span></li>
         {% if perms.core.gestisci_organizzazione %}
         <li class="nav-item{% if request.resolver_match.url_name == 'organizzazione' %} active{% endif %}">
@@ -99,6 +99,11 @@
         {% if perms.soci.importa_soci %}
         <li class="nav-item{% if 'importa' in request.resolver_match.url_name %} active{% endif %}">
           <a class="nav-link" href="{% url 'soci:importa' %}"><span class="nav-link-icon"><i class="ti ti-file-import"></i></span><span class="nav-link-title">Importa soci</span></a>
+        </li>
+        {% endif %}
+        {% if perms.core.gestisci_backup %}
+        <li class="nav-item{% if 'backup' in request.resolver_match.url_name or request.resolver_match.url_name == 'ripristino' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'core:backup' %}"><span class="nav-link-icon"><i class="ti ti-database-export"></i></span><span class="nav-link-title">Backup</span></a>
         </li>
         {% endif %}
         {% if perms.core.view_eventoaudit %}

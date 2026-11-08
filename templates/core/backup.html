@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Backup completi: elenco, creazione, caricamento, scaricamento, ripristino
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Backup{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle">Sistema</div>{% endblock %}
+{% block titolo_pagina %}Backup e ripristino{% endblock %}
+{% block azioni %}
+<form method="post" data-conferma="Creare ora un backup completo (database e file)?">{% csrf_token %}
+  <button class="btn btn-primary" type="submit"><i class="ti ti-database-export me-1"></i>Crea backup ora</button>
+</form>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Data</th><th>Tipo</th><th class="d-none d-md-table-cell">Versione</th><th class="text-end">Dimensione</th><th></th></tr></thead>
+          <tbody>
+          {% for b in backup %}
+            <tr>
+              <td>{% if b.creato_il %}{{ b.creato_il|date:"d/m/Y H:i" }}{% else %}—{% endif %}<div class="small text-secondary text-break">{{ b.nome }}</div>
+                {% if b.manifesto.conteggi %}<div class="small text-secondary">{{ b.manifesto.conteggi.soci }} soci · {{ b.manifesto.conteggi.protocolli }} protocolli · {{ b.manifesto.conteggi.movimenti }} movimenti</div>{% endif %}</td>
+              <td><span class="badge {% if b.automatico %}bg-secondary-lt{% elif b.motivo == 'illeggibile' %}bg-red-lt{% else %}bg-blue-lt{% endif %}">{{ b.motivo }}</span>{% if b.manifesto.creato_da %}<div class="small text-secondary">{{ b.manifesto.creato_da }}</div>{% endif %}</td>
+              <td class="d-none d-md-table-cell">{{ b.manifesto.versione|default:"—" }}</td>
+              <td class="text-end text-nowrap">{{ b.dimensione|filesizeformat }}</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm" href="{% url 'core:scarica_backup' b.nome %}" title="Scarica" aria-label="Scarica {{ b.nome }}"><i class="ti ti-download"></i></a>
+                {% if perms.core.ripristina_backup and b.motivo != 'illeggibile' %}<a class="btn btn-sm btn-outline-warning" href="{% url 'core:ripristino' b.nome %}">Ripristina</a>{% endif %}
+                <form class="d-inline" method="post" action="{% url 'core:elimina_backup' b.nome %}" data-conferma="Eliminare definitivamente questo backup?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Elimina" aria-label="Elimina {{ b.nome }}"><i class="ti ti-trash"></i></button></form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-secondary">Nessun backup.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-body">
+      <h3 class="card-title">Come funziona</h3>
+      <ul class="small mb-0">
+        <li>Un backup contiene <strong>tutto</strong>: il database e i file caricati (documenti protocollati, foto, loghi, moduli firmati).</li>
+        <li>{% if automatico %}Ogni notte, dalle {{ ora }}:00, viene creato un backup automatico; si conservano gli ultimi {{ conserva }}.{% else %}Il backup automatico notturno è disattivato.{% endif %} I backup manuali restano finché non si eliminano.</li>
+        <li>Prima di ogni ripristino viene salvato in automatico lo stato attuale.</li>
+        <li><strong>Copiare i backup anche fuori dal server</strong> (scaricandoli o con una copia pianificata della cartella): un backup sullo stesso disco non protegge da un guasto del disco.</li>
+        <li>I backup contengono dati personali: conservarli in un luogo protetto.</li>
+      </ul>
+      <div class="small text-secondary mt-2 text-break">Cartella: {{ cartella }}</div>
+    </div></div>
+    <form class="card" method="post" enctype="multipart/form-data">{% csrf_token %}
+      <input type="hidden" name="azione" value="carica">
+      <div class="card-body">
+        <h3 class="card-title">Carica un backup</h3>
+        <p class="small text-secondary">Un file <code>.tar</code> creato da questa applicazione, ad esempio da un altro server. Viene verificato prima di essere aggiunto all'elenco.</p>
+        <input class="form-control" type="file" name="file" accept=".tar" required aria-label="File del backup">
+      </div>
+      <div class="card-footer text-end"><button class="btn" type="submit"><i class="ti ti-upload me-1"></i>Carica</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

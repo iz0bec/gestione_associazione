@@ -158,6 +158,12 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # MEDIA_ROOT NON è servita dal web server: gli allegati passano sempre da viste con permessi
 MEDIA_ROOT = env.path("MEDIA_ROOT", default=BASE_DIR / "var" / "media")
 MEDIA_URL = "/non-servito/"
+
+# Backup completi (database + file): cartella, backup automatico notturno e quanti conservarne
+BACKUP_ROOT = env.path("BACKUP_ROOT", default=BASE_DIR / "var" / "backup")
+BACKUP_AUTOMATICO = env.bool("BACKUP_AUTOMATICO", default=True)
+BACKUP_ORA = env.int("BACKUP_ORA", default=2)
+BACKUP_CONSERVA = env.int("BACKUP_CONSERVA", default=14)
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {

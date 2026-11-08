@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titolo %}Ripristino{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'core:backup' %}">Backup</a></div>{% endblock %}
+{% block titolo_pagina %}Ripristino di un backup{% endblock %}
+{% block contenuto %}
+{% if errore %}
+<div class="alert alert-danger">{{ errore }}</div>
+<a class="btn" href="{% url 'core:backup' %}">Torna ai backup</a>
+{% else %}
+<div class="row row-cards">
+  <div class="col-lg-7">
+    <form class="card" method="post" novalidate>{% csrf_token %}
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <h4 class="alert-title">Tutti i dati attuali saranno sostituiti</h4>
+          Anagrafica, soci, protocollo, tesoreria, utenti e file torneranno com'erano al momento del backup.
+          Lo stato attuale viene prima salvato in un nuovo backup, da cui si può tornare indietro.
+          Durante il ripristino l'applicazione non va usata; al termine occorre accedere di nuovo.
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="conferma">Per confermare scrivere <strong>{{ conferma }}</strong></label>
+          <input class="form-control" id="conferma" name="conferma" autocomplete="off" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="password">La propria password</label>
+          <input class="form-control" id="password" type="password" name="password" autocomplete="current-password" required>
+        </div>
+      </div>
+      <div class="card-footer d-flex">
+        <a class="btn btn-link" href="{% url 'core:backup' %}">Annulla</a>
+        <button class="btn btn-warning ms-auto" type="submit"><i class="ti ti-database-import me-1"></i>Ripristina</button>
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <div class="datagrid">
+        <div class="datagrid-item"><div class="datagrid-title">File</div><div class="datagrid-content text-break">{{ nome }}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Creato il</div><div class="datagrid-content">{{ manifesto.creato_il }}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Ente</div><div class="datagrid-content">{{ manifesto.ente|default:"—" }}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Versione</div><div class="datagrid-content">{{ manifesto.versione }}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Contenuto</div><div class="datagrid-content">{% for k, v in manifesto.conteggi.items %}{{ v }} {{ k }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div></div>
+        <div class="datagrid-item"><div class="datagrid-title">Verifica</div><div class="datagrid-content text-green"><i class="ti ti-check"></i> integro e compatibile</div></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

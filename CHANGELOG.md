@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato] - 0.0.1.dev0
 
+### Aggiunto - Backup e ripristino
+- Backup completi (database e file caricati) in un unico file con manifesto e impronte; creazione,
+  scaricamento, caricamento ed eliminazione da *Sistema → Backup*; backup automatico notturno con
+  conservazione degli ultimi N.
+- Ripristino dall'interfaccia (conferma e password, avanzamento in tempo reale) o con
+  `manage.py ripristina`: verifica, backup di sicurezza dello stato attuale, migrazioni mancanti.
+- `inizializza` usa lo stesso backup completo prima di cancellare.
+
 ### Aggiunto - Modulo di adesione (Allegato A) e registro nazionale
 - Domanda di iscrizione (online e da segreteria) con gli stessi campi, dichiarazioni e consensi del
   modulo di richiesta di adesione e consenso: cellulare, statuto con articoli richiamati, dichiarazione

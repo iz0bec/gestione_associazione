@@ -13,9 +13,7 @@ import contextlib
 import getpass
 import os
 import shutil
-import subprocess  # noqa: S404 - pg_dump con argomenti fissi, senza shell
 import sys
-import tarfile
 from pathlib import Path
 
 from django.conf import settings
@@ -24,8 +22,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connection
-from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -39,11 +35,6 @@ class Command(BaseCommand):
             "--conferma",
             metavar="NOME_DATABASE",
             help="Conferma senza domande: va indicato il nome del database da azzerare.",
-        )
-        parser.add_argument(
-            "--cartella-backup",
-            default=str(Path(settings.BASE_DIR) / "var" / "backup"),
-            help="Dove salvare il backup (predefinita: var/backup).",
         )
         parser.add_argument(
             "--senza-backup", action="store_true", help="Non salvare il backup (sconsigliato)."
@@ -89,44 +80,22 @@ class Command(BaseCommand):
         if risposta != nome:
             raise CommandError("Inizializzazione annullata: nessuna modifica.")
 
-    def _backup(self, cartella):
-        db = settings.DATABASES["default"]
-        pg_dump = shutil.which("pg_dump")
-        if not pg_dump:
-            raise CommandError("pg_dump non trovato: installarlo o usare --senza-backup.")
-        cartella = Path(cartella)
-        cartella.mkdir(parents=True, exist_ok=True)
-        marca = timezone.localtime().strftime("%Y%m%d_%H%M%S")
-        dump = cartella / f"prima_inizializzazione_{marca}.dump"
-        ambiente = {**os.environ, "PGPASSWORD": str(db.get("PASSWORD") or "")}
-        comando = [
-            pg_dump, "--format=custom", "--no-owner", f"--file={dump}",
-            f"--host={db.get('HOST') or 'localhost'}", f"--port={db.get('PORT') or 5432}",
-            f"--username={db.get('USER') or ''}", db["NAME"],
-        ]  # fmt: skip
-        esito = subprocess.run(comando, env=ambiente, capture_output=True, text=True)  # noqa: S603
-        if esito.returncode != 0:
+    def _backup(self):
+        from apps.core import backup
+
+        try:
+            p = backup.crea(motivo="prima dell'inizializzazione")
+        except backup.BackupNonValido as e:
             raise CommandError(
-                f"Backup del database non riuscito, nulla è stato cancellato:\n{esito.stderr}"
-            )
-        dump.chmod(0o600)
-        self.stdout.write(f"Backup del database: {dump}")
-        media = Path(settings.MEDIA_ROOT)
-        if media.is_dir() and any(media.iterdir()):
-            archivio = cartella / f"prima_inizializzazione_{marca}_file.tar.gz"
-            with tarfile.open(archivio, "w:gz") as tar:
-                tar.add(media, arcname="media")
-            archivio.chmod(0o600)
-            self.stdout.write(f"Backup dei file:     {archivio}")
+                f"Backup non riuscito, nulla è stato cancellato: {' '.join(e.messages)}"
+            ) from None
+        self.stdout.write(f"Backup completo: {p}")
 
     def _azzera_database(self):
-        tabelle = connection.introspection.table_names()
-        with connection.cursor() as cursore:
-            for tabella in tabelle:
-                cursore.execute(
-                    f"DROP TABLE IF EXISTS {connection.ops.quote_name(tabella)} CASCADE"
-                )
-        self.stdout.write(f"Tabelle eliminate: {len(tabelle)}")
+        from apps.core.backup import svuota_database
+
+        n = svuota_database()
+        self.stdout.write(f"Tabelle eliminate: {n}")
         call_command("migrate", interactive=False, verbosity=0)
         self.stdout.write(
             "Database ricreato con i dati iniziali (ruoli, tipologie, piano dei conti...)."
@@ -172,7 +141,7 @@ class Command(BaseCommand):
         self._riepilogo()
         self._conferma(opzioni)
         if not opzioni["senza_backup"]:
-            self._backup(opzioni["cartella_backup"])
+            self._backup()
         self._azzera_database()
         self._azzera_file()
         if not opzioni["senza_admin"]:

@@ -1,0 +1,41 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Avanzamento del ripristino. Non usa il database (viene sostituito): niente
+               menu, utente o dati dell'ente.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}{% load static %}<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if stato.esito == "in_corso" %}<meta http-equiv="refresh" content="3">{% endif %}
+  <title>Ripristino · {{ APP_NOME }}</title>
+  <link rel="stylesheet" href="{% static 'vendor/tabler/css/tabler.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/tabler-icons/tabler-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="d-flex flex-column">
+<div class="page page-center">
+  <main class="container container-tight py-4">
+    <div class="card card-md"><div class="card-body text-center">
+      <h1 class="h2">Ripristino del backup</h1>
+      <p class="text-secondary text-break">{{ nome }}</p>
+      {% if stato.esito == "in_corso" %}
+        <div class="spinner-border text-primary my-3" role="status"></div>
+        <p class="mb-0"><strong>{{ stato.fase }}</strong>…</p>
+        <p class="small text-secondary">La pagina si aggiorna da sola. Non chiudere e non usare l'applicazione.</p>
+      {% elif stato.esito == "ok" %}
+        <div class="text-green my-3"><i class="ti ti-circle-check icona-grande"></i></div>
+        <p>{{ stato.messaggio }}</p>
+        <a class="btn btn-primary" href="{% url 'account_login' %}">Accedi</a>
+      {% else %}
+        <div class="text-red my-3"><i class="ti ti-alert-triangle icona-grande"></i></div>
+        <p>Il ripristino non è riuscito.</p>
+        <pre class="text-start small">{{ stato.messaggio }}</pre>
+        <p class="small text-secondary">Lo stato precedente è stato salvato in un backup «prima del ripristino»: l'amministratore di sistema può ripristinarlo con <code>manage.py ripristina</code>.</p>
+      {% endif %}
+    </div></div>
+  </main>
+</div>
+</body>
+</html>

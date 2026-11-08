@@ -13,6 +13,7 @@ import logging
 import signal
 import time
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import close_old_connections
@@ -22,7 +23,7 @@ log = logging.getLogger("pianificatore")
 
 
 class Command(BaseCommand):
-    help = "Lavori periodici: invia_coda (ogni minuto), scarica_posta, registro_giornaliero."
+    help = "Lavori periodici: invia_coda, scarica_posta, registro_giornaliero, backup notturno."
 
     def add_arguments(self, parser):
         parser.add_argument("--minuti-posta", type=int, default=15)
@@ -34,7 +35,7 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, self._ferma)
         signal.signal(signal.SIGINT, self._ferma)
         ultima_posta = ultima_coda = 0.0
-        ultimo_registro = None
+        ultimo_registro = ultimo_backup = None
         log.info("Pianificatore avviato")
         while self.attivo:
             adesso = timezone.localtime()
@@ -50,6 +51,13 @@ class Command(BaseCommand):
             ):
                 self._esegui("registro_giornaliero")
                 ultimo_registro = adesso.date()
+            if (
+                settings.BACKUP_AUTOMATICO
+                and not opzioni["una_volta"]
+                and (adesso.hour >= settings.BACKUP_ORA and ultimo_backup != adesso.date())
+            ):
+                self._esegui("backup", automatico=True)
+                ultimo_backup = adesso.date()
             if opzioni["una_volta"]:
                 return
             for _ in range(30):  # risveglio ogni secondo per fermarsi subito
@@ -58,10 +66,10 @@ class Command(BaseCommand):
                 time.sleep(1)
         log.info("Pianificatore fermato")
 
-    def _esegui(self, comando):
+    def _esegui(self, comando, **opzioni):
         close_old_connections()
         try:
-            call_command(comando, stdout=self.stdout, stderr=self.stderr)
+            call_command(comando, stdout=self.stdout, stderr=self.stderr, **opzioni)
         except Exception:  # noqa: BLE001 - un lavoro in errore non ferma il pianificatore
             log.exception("Lavoro %s non riuscito", comando)
         finally:

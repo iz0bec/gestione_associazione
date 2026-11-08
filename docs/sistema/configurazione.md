@@ -55,6 +55,7 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 | `manage.py invia_coda` | ogni minuto | prepara gli auguri automatici del giorno e spedisce le email in coda |
 | `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo (sola lettura) |
 | `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
+| `manage.py backup --automatico` | ogni notte (`BACKUP_ORA`) | backup completo, conserva gli ultimi `BACKUP_CONSERVA` |
 | `manage.py genera_chiave_cifratura` | una volta | stampa una chiave per `CHIAVE_CIFRATURA` |
 
 Con Docker il pianificatore è il servizio `pianificatore` di `compose.yaml`; senza Docker vedi
@@ -66,6 +67,7 @@ Con Docker il pianificatore è il servizio `pianificatore` di `compose.yaml`; se
 |---|---|
 | `manage.py importa_registro_soci FILE [opzioni]` | importa i soci dall'estratto `.xlsx`/`.csv` del registro nazionale. **Senza `--esegui` mostra solo l'anteprima.** Opzioni: `--sezione CODICE` (righe senza sezione), `--tipologia NOME` (predefinita `Ordinario`), `--crea-sezioni`, `--allinea-sezione`, `--anno-tessere ANNO`, `--quote-pagate` (quote già incassate),
 `--senza-tessere`, `--non-creare-tessere`, `--senza-cessazioni`, `--utente USERNAME` (autore nel registro attività), `--dettagli` (una riga per socio) |
+| `manage.py backup` / `ripristina` | backup completo e ripristino (vedi [Backup](backup.md)) |
 | `manage.py inizializza` | **cancella tutti i dati** e riporta a una nuova installazione, dopo conferma e backup (vedi [Backup](backup.md#inizializzazione-azzerare-tutto)) |
 | `manage.py configura_ruoli` | riallinea i permessi dei ruoli predefiniti (eseguito anche dalle migrazioni) |
 

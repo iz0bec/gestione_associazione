@@ -162,6 +162,8 @@ RUOLI = {
         "anagrafica.add_categoria",
         "anagrafica.change_categoria",
         "core.gestisci_organizzazione",
+        "core.gestisci_backup",
+        "core.ripristina_backup",
         "core.view_eventoaudit",
         "accounts.view_utente",
         "accounts.add_utente",

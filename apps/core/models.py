@@ -151,7 +151,11 @@ class Organizzazione(models.Model):
     class Meta:
         verbose_name = "organizzazione"
         verbose_name_plural = "organizzazione"
-        permissions = [("gestisci_organizzazione", "Può modificare i dati dell'organizzazione")]
+        permissions = [
+            ("gestisci_organizzazione", "Può modificare i dati dell'organizzazione"),
+            ("gestisci_backup", "Può creare, scaricare ed eliminare i backup"),
+            ("ripristina_backup", "Può ripristinare un backup (sostituisce tutti i dati)"),
+        ]
 
     def __str__(self):
         return self.denominazione

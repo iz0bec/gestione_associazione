@@ -66,3 +66,4 @@ fieldset legend.h3 { margin-bottom: .75rem; color: var(--tblr-secondary); }
 
 /* richiesta di adesione firmata, consultabile nella scheda del socio */
 .anteprima-pdf { width: 100%; height: 70vh; border: 0; border-top: 1px solid var(--tblr-border-color); display: block; }
+.icona-grande { font-size: 3rem; }

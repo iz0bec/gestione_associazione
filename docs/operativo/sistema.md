@@ -52,6 +52,12 @@ privacy).
 
 Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante in alto.
 
+## Backup
+
+**Sistema → Backup** (amministratore di sistema): backup completi di dati e file, creati ogni notte
+e su richiesta, da scaricare e conservare fuori dal server; ripristino con conferma. Vedi il
+[manuale di sistema](../sistema/backup.md).
+
 ## Sezioni
 
 **Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Con

@@ -14,6 +14,7 @@ from django.urls import include, path
 from apps.core.aspetto import aspetto_css, logo
 from apps.core.configurazione import ConfigurazioneView
 from apps.core.views import salute
+from apps.core.viste_backup import StatoRipristinoView
 from apps.patrimonio.views import BenePubblicoView, FotoPubblicaView
 from apps.soci.pubblico import DomandaInviataView, DomandaPubblicaView
 
@@ -25,6 +26,7 @@ urlpatterns = [
     path("salute/", salute, name="salute"),
     path("aspetto.css", aspetto_css, name="aspetto_css"),
     path("logo.png", logo, name="logo"),
+    path("ripristino/", StatoRipristinoView.as_view(), name="stato_ripristino"),
     path("account/", include("allauth.urls")),
     path("amministrazione-tecnica/", admin.site.urls),
     path("anagrafica/", include("apps.anagrafica.urls")),
