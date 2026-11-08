@@ -98,7 +98,10 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   `/opt/gestione-associazione`, dati in `/var/lib/gestione-associazione`, servizi `gestione-associazione`
   e `gestione-associazione-pianificatore`. Sullo stesso host gira il Protocollo ANCR (8002) e altri servizi:
   non toccarli. È produzione: niente reset o ripristini senza conferma esplicita.
-- Release stabile (1.0) su **GitHub**.
+- **GitHub** (pubblico, copia con la stessa storia): `https://github.com/iz0bec/gestione_associazione`,
+  remote `github` (accesso con `gh`, account iz0bec). A ogni release: `git push github main` e il tag,
+  poi `gh release create vX --prerelease` con le note del CHANGELOG (le rc sono «anteprima»).
+  La release stabile 1.0 sarà la prima non pre-release.
 
 ## Stato
 
