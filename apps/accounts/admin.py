@@ -17,7 +17,7 @@ from .models import Utente
 class UtenteAdmin(UserAdmin):
     fieldsets = (
         *UserAdmin.fieldsets,
-        ("Associazione", {"fields": ("telefono", "soggetto", "sezioni")}),
+        ("Associazione", {"fields": ("telefono", "soggetto", "sezioni", "deve_cambiare_password")}),
     )
     add_fieldsets = (
         (None, {"classes": ("wide",), "fields": ("username", "email", "password1", "password2")}),

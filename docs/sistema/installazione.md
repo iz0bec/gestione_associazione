@@ -162,8 +162,8 @@ funzionano solo in HTTPS (o su `localhost`).
 2. Parte la [configurazione guidata](../operativo/configurazione-iniziale.md): dati dell'ente, logo e
    colori, sezioni, tesseramento, tesoreria.
 3. Attivare la verifica in due passaggi (menu utente → *Verifica in due passaggi*).
-4. Creare gli utenti e assegnare i ruoli da *Amministrazione tecnica → Utenti*
-   (la gestione utenti nell'interfaccia principale è prevista per la 0.0.1 RC).
+4. Creare gli utenti e assegnare i ruoli da *Sistema → Utenti e ruoli*; in *Ruoli* scegliere
+   per quali ruoli il secondo fattore è obbligatorio (vedi [Utenti e ruoli](../operativo/utenti.md)).
 
 ## Aggiornamento
 

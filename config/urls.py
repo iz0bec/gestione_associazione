@@ -29,6 +29,7 @@ urlpatterns = [
     path("ripristino/", StatoRipristinoView.as_view(), name="stato_ripristino"),
     path("account/", include("allauth.urls")),
     path("amministrazione-tecnica/", admin.site.urls),
+    path("sistema/utenti/", include("apps.accounts.urls")),
     path("anagrafica/", include("apps.anagrafica.urls")),
     path("soci/", include("apps.soci.urls")),
     path("protocollo/", include("apps.protocollo.urls")),

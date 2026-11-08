@@ -24,5 +24,6 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 9. [Tesoreria](tesoreria.md) - prima nota, quote, preventivo, rendiconto per cassa (Modello D), chiusura
 10. [Patrimonio](patrimonio.md) - inventario, valutazioni, prestiti e uscite, schede pubbliche con QR, passaggio di consegne
 11. [Organizzazione, aspetto, sezioni e registro attività](sistema.md) - dati dell'ente, logo e colori, sezioni, controllo delle operazioni
+12. [Utenti e ruoli](utenti.md) - account, password temporanee, secondo fattore obbligatorio per ruolo
 
 Sono pronti tutti i moduli previsti per la 0.0.1.

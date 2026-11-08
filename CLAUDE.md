@@ -78,6 +78,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Traduzioni mancanti in Django: `locale/it/LC_MESSAGES/django.po` (ricompilare il `.mo` con `msgfmt`).
 - Patrimonio: inventario con sequenza `inventario`; beni mai cancellati (stato «uscito»); foto solo via
   `servizi.foto_ripulita`; schede pubbliche solo per token + `pubblico=True`, mai valori o ubicazioni.
+- Utenti: operazioni solo da `apps/accounts/servizi.py` (password temporanea mostrata una volta, mai nel
+  registro; niente superutenti dall'interfaccia); `ObblighiAccessoMiddleware` blocca chi deve cambiare
+  password o configurare il secondo fattore richiesto dal ruolo (`PoliticaRuolo`).
 - Ogni modulo nuovo: test, pagina in `docs/operativo/`, aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -99,4 +102,4 @@ anniversari** (`apps/comunicazioni`), **Tesoreria** (`apps/tesoreria`), **Patrim
 sempre soci/tessere/carte/domande con `sezioni.filtra()` nelle viste), listino annuale, importazione dal
 registro nazionale (`apps/soci/importazione.py`; gli estratti reali stanno in `tmp/`, mai versionati).
 Prossimo (roadmap punto 7-10):
-modelli di stampa, import dai tre gestionali, installer su host, gestione utenti dall'interfaccia.
+modelli di stampa, import dai tre gestionali. Fatti: installer su host, gestione utenti (`apps/accounts`, `/sistema/utenti/`).

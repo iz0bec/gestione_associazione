@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Elenco degli utenti con ricerca e filtri
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Utenti{% endblock %}
+{% block titolo_pagina %}Utenti{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.accounts.change_utente %}<a class="btn" href="{% url 'utenti:ruoli' %}"><i class="ti ti-shield-check me-1"></i>Ruoli</a>{% endif %}
+  {% if perms.accounts.add_utente %}<a class="btn btn-primary" href="{% url 'utenti:nuovo' %}"><i class="ti ti-user-plus me-1"></i>Nuovo utente</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 w-100" hx-get="{% url 'utenti:elenco' %}" hx-target="#tabella-utenti" hx-swap="outerHTML" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change from:select, submit">
+      <div class="col-lg-6">
+        <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Nome, cognome, nome utente o email" autocomplete="off" aria-label="Cerca utenti"></div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <select class="form-select" name="ruolo" aria-label="Ruolo">
+          <option value="">Tutti i ruoli</option>
+          {% for r in ruoli %}<option value="{{ r.pk }}"{% if ruolo == r.pk|stringformat:"d" %} selected{% endif %}>{{ r.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <select class="form-select" name="stato" aria-label="Stato">
+          <option value="attivi"{% if stato == "attivi" %} selected{% endif %}>Attivi</option>
+          <option value="disattivati"{% if stato == "disattivati" %} selected{% endif %}>Disattivati</option>
+          <option value="tutti"{% if stato == "tutti" %} selected{% endif %}>Tutti</option>
+        </select>
+      </div>
+      <noscript><button class="btn" type="submit">Filtra</button></noscript>
+    </form>
+  </div>
+  {% partialdef elenco inline %}
+  <div id="tabella-utenti">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead><tr><th>Utente</th><th class="d-none d-md-table-cell">Ruoli</th><th class="d-none d-lg-table-cell">Secondo fattore</th><th class="d-none d-lg-table-cell">Ultimo accesso</th></tr></thead>
+        <tbody>
+        {% for u in page_obj %}
+          <tr class="{% if not u.is_active %}text-secondary{% endif %}">
+            <td>
+              <a class="text-reset fw-medium" href="{% url 'utenti:utente' u.pk %}">{{ u }}</a>
+              {% if u.is_superuser %}<span class="badge bg-purple-lt ms-1">superutente</span>{% endif %}
+              {% if not u.is_active %}<span class="badge bg-secondary-lt ms-1">disattivato</span>{% endif %}
+              {% if u.deve_cambiare_password %}<span class="badge bg-yellow-lt ms-1" title="Password temporanea da cambiare">password temporanea</span>{% endif %}
+              <div class="small text-secondary">{{ u.username }} · {{ u.email }}</div>
+            </td>
+            <td class="d-none d-md-table-cell">
+              {% for g in u.groups.all %}<span class="badge bg-blue-lt me-1">{{ g.name }}</span>{% empty %}<span class="text-secondary small">nessuno</span>{% endfor %}
+              {% if u.sezioni.all %}<div class="small text-secondary mt-1"><i class="ti ti-map-pin"></i> {{ u.sezioni.all|join:", " }}</div>{% endif %}
+            </td>
+            <td class="d-none d-lg-table-cell">
+              {% if u.ha_mfa %}<span class="text-success"><i class="ti ti-shield-check"></i> attivo</span>
+              {% elif u.mfa_obbligo %}<span class="text-danger"><i class="ti ti-shield-x"></i> richiesto, da configurare</span>
+              {% else %}<span class="text-secondary small">no</span>{% endif %}
+            </td>
+            <td class="d-none d-lg-table-cell small">{% if u.last_login %}{{ u.last_login|date:"d/m/Y H:i" }}{% else %}<span class="text-secondary">mai</span>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-secondary py-4 text-center">Nessun utente.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/paginazione.html" %}
+  </div>
+  {% endpartialdef %}
+</div>
+{% endblock %}

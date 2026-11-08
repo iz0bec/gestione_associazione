@@ -67,8 +67,8 @@ una sola sezione l'applicazione si comporta come per un'associazione singola. Co
 compaiono il filtro e la scelta della sezione in soci, tessere e domande di iscrizione. Una
 sezione con soci attivi non si può disattivare.
 
-Le sezioni visibili a un utente si assegnano nella sua scheda (**Amministrazione tecnica →
-Utenti → Sezioni**). Senza sezioni assegnate l'utente vede tutto.
+Le sezioni visibili a un utente si assegnano nella sua scheda (**Sistema → Utenti e ruoli**,
+vedi [Utenti e ruoli](utenti.md)). Senza sezioni assegnate l'utente vede tutto.
 
 La casella **Domande di iscrizione online** pubblica il modulo di iscrizione all'indirizzo
 `/iscrizione/` (vedi [Soci e tesseramento](soci.md#domande-di-iscrizione)).

@@ -12,17 +12,18 @@
 # Ruoli e permessi
 
 Ogni utente ha uno o più **ruoli**; il ruolo decide cosa si vede e cosa si può fare.
-I ruoli li assegna l'amministratore.
+I ruoli li assegna l'amministratore da **Sistema → Utenti e ruoli** (vedi [Utenti e ruoli](utenti.md)),
+dove si sceglie anche per quali ruoli il secondo fattore è obbligatorio.
 
-| Ruolo | Anagrafica | Esporta anagrafica | Dati organizzazione, aspetto, configurazione guidata | Registro attività |
-|---|---|---|---|---|
-| Amministratore di sistema | consulta, inserisce, modifica, archivia | sì | modifica | consulta |
-| Presidente | consulta, inserisce, modifica, archivia | sì | - | consulta |
-| Segretario | consulta, inserisce, modifica, archivia | sì | modifica | - |
-| Addetto protocollo | consulta, inserisce, modifica, archivia | - | - | - |
-| Tesoriere | consulta | - | - | - |
-| Consigliere | consulta | - | - | - |
-| Revisore | consulta | - | - | consulta |
+| Ruolo | Anagrafica | Esporta anagrafica | Dati organizzazione, aspetto, configurazione guidata | Registro attività | Utenti e ruoli |
+|---|---|---|---|---|---|
+| Amministratore di sistema | consulta, inserisce, modifica, archivia | sì | modifica | consulta | **gestisce** |
+| Presidente | consulta, inserisce, modifica, archivia | sì | - | consulta | - |
+| Segretario | consulta, inserisce, modifica, archivia | sì | modifica | - | - |
+| Addetto protocollo | consulta, inserisce, modifica, archivia | - | - | - | - |
+| Tesoriere | consulta | - | - | - | - |
+| Consigliere | consulta | - | - | - | - |
+| Revisore | consulta | - | - | consulta | - |
 
 ### Soci e tesseramento
 

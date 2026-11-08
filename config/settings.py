@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
     "apps.core.middleware.ContestoRichiestaMiddleware",
+    "apps.accounts.middleware.ObblighiAccessoMiddleware",
     # django-axes deve restare l'ultimo
     "axes.middleware.AxesMiddleware",
 ]

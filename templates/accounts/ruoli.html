@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Ruoli: utenti, permessi e obbligo del secondo fattore
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Ruoli{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'utenti:elenco' %}">Utenti</a></div>{% endblock %}
+{% block titolo_pagina %}Ruoli{% endblock %}
+{% block contenuto %}
+<form method="post" class="card">{% csrf_token %}
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Ruolo</th><th class="text-end">Utenti attivi</th><th class="text-end d-none d-md-table-cell">Permessi</th><th class="text-center">Secondo fattore obbligatorio</th></tr></thead>
+      <tbody>
+      {% for r in ruoli %}
+        <tr>
+          <td><a class="text-reset fw-medium" href="{% url 'utenti:elenco' %}?ruolo={{ r.pk }}&amp;stato=attivi">{{ r.name }}</a>{% if r.name not in predefiniti %} <span class="badge bg-secondary-lt">personalizzato</span>{% endif %}</td>
+          <td class="text-end">{{ r.n_utenti }}</td>
+          <td class="text-end d-none d-md-table-cell">{{ r.n_permessi }}</td>
+          <td class="text-center"><input class="form-check-input" type="checkbox" name="ruoli" value="{{ r.pk }}" aria-label="Secondo fattore obbligatorio per {{ r.name }}"{% if r.pk in ruoli_mfa %} checked{% endif %}></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer d-flex align-items-center">
+    <div class="text-secondary small me-3">
+      Chi ha un ruolo con il secondo fattore obbligatorio, al prossimo accesso, deve configurare un'app di autenticazione (TOTP) o una passkey prima di poter usare il programma.
+      I permessi dei ruoli predefiniti sono fissati dal programma e riallineati a ogni aggiornamento.
+    </div>
+    <button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button>
+  </div>
+</form>
+{% endblock %}

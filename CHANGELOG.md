@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto - Utenti e ruoli
+- **Sistema → Utenti e ruoli**: elenco con ricerca e filtri, creazione, modifica di dati, ruoli e
+  sezioni, collegamento alla scheda anagrafica; disattivazione e riattivazione (mai eliminazione).
+- Password temporanea generata alla creazione o su richiesta, mostrata una sola volta e da
+  cambiare al primo accesso (fino ad allora sono consentite solo le pagine dell'account).
+- Azzeramento del secondo fattore per chi ha perso telefono o passkey.
+- **Secondo fattore obbligatorio per ruolo** (pagina *Ruoli*): chi ha quei ruoli deve configurare
+  app di autenticazione o passkey prima di usare il programma.
+- Protezioni: niente auto-disattivazione, niente perdita dei propri permessi di gestione utenti,
+  superutenti modificabili solo da superutenti; tutte le operazioni nel registro attività.
+
 ## [0.0.1-rc.2] - 2026-11-08
 
 Correzioni dal primo collaudo in produzione: installatore su server condivisi, backup automatici,

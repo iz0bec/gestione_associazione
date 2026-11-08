@@ -16,7 +16,8 @@
 | Versione | Contenuto | Pubblicazione |
 |---|---|---|
 | **0.0.1-rc.1** ✅ | moduli di base, configurazione guidata, importazione dal registro nazionale, backup e ripristino, installazione su host e LXC | GitLab personale (pubblico) |
-| 0.0.1-rc.2 | import dai tre gestionali attuali, gestione utenti dall'interfaccia | GitLab |
+| **0.0.1-rc.2** ✅ | correzioni del primo collaudo (installatore, backup, importazione dal registro) | GitLab |
+| 0.0.1-rc.3 | gestione utenti dall'interfaccia, import dai tre gestionali attuali, modelli di stampa | GitLab |
 | 0.x | collaudo presso la sezione, correzioni, funzionalità della fase 2 | GitLab |
 | **1.0** | prima release stabile, documentazione completa, Django 6.2 LTS | GitHub |
 
@@ -63,12 +64,13 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    **importazione dal registro soci nazionale** (Excel/CSV) con anteprima. *Da completare*: adattare le
    colonne all'estratto reale del registro quando disponibile (`tmp/`, non versionato).
 7. **Documenti PDF** - modelli di stampa HTML con intestazione dell'ente (WeasyPrint).
-8. **Import** (rimandato alla rc.2) - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione
+8. **Import** (rimandato alla rc.3) - comandi di importazione da Protocollo ANCR (PostgreSQL), Gestione Soci e Gestione
    Assemblee (SQLite), con deduplica dell'anagrafica per codice fiscale/email e rapporto finale.
 9. ✅ **Installazione su host** - `scripts/installa.sh` (Debian/Ubuntu, systemd) e
    `scripts/proxmox/crea-lxc.sh` (container LXC su Proxmox). Backup e ripristino dall'interfaccia.
    *Rimandati*: RHEL/Rocky.
-10. **Gestione utenti dall'interfaccia** (rimandata alla rc.2) - creazione, ruoli, reimpostazione, MFA obbligatoria per ruolo.
+10. ✅ **Gestione utenti dall'interfaccia** - creazione con password temporanea, ruoli e sezioni,
+   reimpostazione password, azzeramento del secondo fattore, MFA obbligatoria per ruolo.
 
 ## Fase 2 - Dopo la RC (proposte)
 
