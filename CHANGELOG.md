@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [0.0.1-rc.16] - 2026-11-08
+
+Pagina pubblica di presentazione.
+
 ### Aggiunto
 - **Pagina pubblica di presentazione** (*Sistema → Organizzazione*): all'indirizzo principale, per
   chi non ha fatto l'accesso, finalità dell'associazione, documenti pubblici, contatti, pulsanti
