@@ -149,6 +149,27 @@ class TestGestioneSoci:
         assert any("non sovrascritti: email" in n for n in voce.note)
         assert any("foto" in n for n in voce.note)
 
+    def test_abbina_per_tessera_e_data_di_nascita(self, sorgente, ruoti, crea_utente):
+        """Codice fiscale diverso (es. sesso sbagliato) ma stessa tessera e data di nascita."""
+        from datetime import date
+
+        from apps.soci import servizi
+
+        utente = crea_utente("seg")
+        locale = Soggetto.objects.create(
+            tipo=Soggetto.Tipo.PERSONA, cognome="Rossi", nome="Maria",
+            data_nascita=date(1950, 3, 15),
+        )  # fmt: skip
+        socio = servizi.ammetti_socio(locale, _opzioni().tipologia, utente, sezione=ruoti)
+        servizi.carta_da_registro(ANNO, ruoti, 31763, utente)
+        tessera = servizi.rilascia_tessera(socio, ANNO, utente)
+        servizi.attribuisci_carta(tessera, utente, "31763")
+        r = gestione_soci.importa(sorgente, _opzioni(), None, esegui=True)
+        assert Socio.objects.count() == 2  # Rossi abbinato, Bianchi nuovo
+        assert not Soggetto.objects.filter(codice_fiscale=CF_ROSSI).exists()
+        voce = next(v for v in r.parti["Soci"] if "Rossi" in v.descrizione.title())
+        assert "abbinato a Rossi Maria" in voce.note[0]
+
     def test_crea_sezioni(self, sorgente, ruoti):
         gestione_soci.importa(sorgente, _opzioni(crea_sezioni=True), None, esegui=True)
         assert Socio.objects.get(soggetto__cognome="Altrove").sezione.comune == "Matera"

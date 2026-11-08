@@ -10,6 +10,7 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -18,12 +19,13 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from apps.anagrafica.models import Soggetto
 from apps.core.audit import Azione, registra
 from apps.core.numerazione import prossimo_numero
 from apps.patrimonio.models import SEQ_INVENTARIO, Bene, CategoriaBene, Valutazione
 from apps.soci import importazione as reg
 from apps.soci import servizi as soci_servizi
-from apps.soci.models import Sezione, Socio, TipologiaSocio
+from apps.soci.models import Sezione, Socio, Tessera, TipologiaSocio
 from apps.tesoreria import servizi as tesoreria
 from apps.tesoreria.models import Conto, Esercizio, Movimento, Voce
 
@@ -95,6 +97,24 @@ def _sezione_di(valore):
     return testo(valore).split("/")[-1].strip()
 
 
+def _per_tessera(d, tessere_origine):
+    """Persona a cui è già attribuita una delle tessere del record, se ha la stessa data di
+    nascita: è la stessa persona con un codice fiscale o un nome diversi nei due archivi."""
+    if not d["data_nascita"]:
+        return None
+    for anno, codice in tessere_origine:
+        if not codice.isdigit():
+            continue
+        t = (
+            Tessera.objects.filter(anno=anno, carta__numero=int(codice))
+            .select_related("socio__soggetto")
+            .first()
+        )
+        if t and t.socio.soggetto.data_nascita == d["data_nascita"]:
+            return t.socio.soggetto
+    return None
+
+
 def _soci(conn, opzioni, utente, rapporto):
     mappa = {}
     opz = reg.Opzioni(
@@ -103,6 +123,9 @@ def _soci(conn, opzioni, utente, rapporto):
     )  # fmt: skip
     rapporto_reg = reg.Rapporto()
     cache = {}
+    tessere_origine = defaultdict(list)
+    for t in righe(conn, "tessere"):
+        tessere_origine[t["socio_id"]].append((int(t["anno"]), testo(t["numero"]).lstrip("0")))
     for r in righe(conn, "soci"):
         nome = f"{testo(r['cognome'])} {testo(r['nome'])}".strip()
         gia = importato(FONTE, "soci", r["id"], Socio)
@@ -123,8 +146,23 @@ def _soci(conn, opzioni, utente, rapporto):
         d = reg._pulisci(grezza)
         try:
             sezione = reg._sezione(d, opz, cache, rapporto_reg)
+            soggetto, abbinamento = None, []
+            cf_noto = (
+                d["codice_fiscale"]
+                and Soggetto.objects.filter(codice_fiscale__iexact=d["codice_fiscale"]).exists()
+            )
+            if not cf_noto:
+                soggetto = _per_tessera(d, tessere_origine[r["id"]])
+                if soggetto:
+                    cf = d["codice_fiscale"] or testo(r["codice_fiscale"]) or "assente"
+                    abbinamento = [
+                        f"abbinato a {soggetto.nome_completo} per tessera e data di nascita "
+                        f"(codice fiscale nel vecchio gestionale: {cf})"
+                    ]
+                    d["codice_fiscale"] = ""  # non completa la scheda con un codice diverso
             with transaction.atomic():
-                stato, note, socio = reg._riga(d, sezione, opz, utente)
+                stato, note, socio = reg._riga(d, sezione, opz, utente, soggetto=soggetto)
+                note = abbinamento + note
                 segna(FONTE, "soci", r["id"], socio)
             mappa[r["id"]] = socio
             if r.get("foto"):

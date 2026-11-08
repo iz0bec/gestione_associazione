@@ -478,7 +478,8 @@ def _trova_soggetto(d):
     return None
 
 
-def _riga(d, sezione, opzioni, utente):
+def _riga(d, sezione, opzioni, utente, soggetto=None):
+    """Importa una riga. `soggetto`: persona già individuata dal chiamante (altrimenti si cerca)."""
     note = []
     if not d["cognome"]:
         raise _Errore("cognome mancante")
@@ -503,7 +504,7 @@ def _riga(d, sezione, opzioni, utente):
     tipologia, avvisi = _tipologia(d, opzioni)
     note += avvisi
 
-    soggetto = _trova_soggetto(d)
+    soggetto = soggetto or _trova_soggetto(d)
     stato = "invariato"
     if soggetto is None:
         soggetto = Soggetto.objects.create(

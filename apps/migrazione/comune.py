@@ -48,8 +48,9 @@ class Rapporto:
             conti = Counter(v.stato for v in voci)
             righe.append(f"\n{parte}: " + ", ".join(f"{s} {n}" for s, n in sorted(conti.items())))
             for v in voci:
-                # senza dettagli: solo errori e record con annotazioni (non i già importati)
-                if dettagli or v.stato == "errore" or (v.note and v.stato != "invariato"):
+                # senza dettagli: errori e record con annotazioni (non i già importati)
+                annotato = any(not n.startswith("già ") for n in v.note)
+                if dettagli or v.stato == "errore" or annotato:
                     nota = f" - {'; '.join(v.note)}" if v.note else ""
                     righe.append(f"  [{v.stato}] {v.descrizione}{nota}")
         if self.avvisi:
