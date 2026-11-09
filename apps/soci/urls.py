@@ -52,6 +52,16 @@ urlpatterns = [
     path("domande/nuova/", views.NuovaDomandaView.as_view(), name="domanda_nuova"),
     path("domande/<int:pk>/", views.DomandaView.as_view(), name="domanda"),
     path("domande/<int:pk>/accogli/", views.AccogliView.as_view(), name="accogli"),
+    path(
+        "domande/<int:pk>/modulo-firmato.pdf",
+        views.ModuloDomandaView.as_view(),
+        name="domanda_modulo_firmato",
+    ),
+    path(
+        "domande/da-messaggio/<int:messaggio>/",
+        views.DomandaDaMessaggioView.as_view(),
+        name="domanda_da_messaggio",
+    ),
     path("domande/<int:pk>/respingi/", views.RespingiView.as_view(), name="respingi"),
     path("tessere/listino/", views.ListinoView.as_view(), name="listino"),
     path("importa/", views.ImportaView.as_view(), name="importa"),

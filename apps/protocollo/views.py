@@ -358,6 +358,13 @@ class PostaView(PermessoMixin, ListView):
         ctx["stato"] = self.request.GET.get("stato", MessaggioRicevuto.Stato.NUOVO)
         ctx["stati"] = [*MessaggioRicevuto.Stato.choices, ("tutti", "Tutti")]
         ctx["caselle"] = CasellaPosta.objects.all()
+        from apps.soci.estrazione import probabile_iscrizione
+
+        ctx["iscrizioni"] = {
+            m.pk
+            for m in ctx["messaggi"]
+            if m.stato == MessaggioRicevuto.Stato.NUOVO and probabile_iscrizione(m)
+        }
         return ctx
 
     def post(self, request):
@@ -391,6 +398,9 @@ class MessaggioView(PermessoMixin, DetailView):
         m = self.object
         ctx["form"] = ProtocollaMessaggioForm(initial={"oggetto": m.oggetto})
         ctx["mittente_noto"] = servizi.soggetto_per_indirizzo(m.mittente_email)
+        from apps.soci.estrazione import probabile_iscrizione
+
+        ctx["probabile_iscrizione"] = probabile_iscrizione(m)
         return ctx
 
 

@@ -16,7 +16,7 @@
           <div class="datagrid-item"><div class="datagrid-title">Indirizzo</div><div class="datagrid-content">{{ domanda.indirizzo }}, {{ domanda.cap }} {{ domanda.comune }} ({{ domanda.provincia }})</div></div>
           {% if multisezione %}<div class="datagrid-item"><div class="datagrid-title">Sezione</div><div class="datagrid-content">{{ domanda.sezione|default:"—" }}</div></div>{% endif %}
           <div class="datagrid-item"><div class="datagrid-title">Tipologia richiesta</div><div class="datagrid-content">{{ domanda.tipologia|default:"—" }}</div></div>
-          <div class="datagrid-item"><div class="datagrid-title">Ricevuta il</div><div class="datagrid-content">{{ domanda.ricevuta_il|date:"d/m/Y H:i" }}</div></div>
+          <div class="datagrid-item"><div class="datagrid-title">Ricevuta il</div><div class="datagrid-content">{{ domanda.ricevuta_il|date:"d/m/Y H:i" }} · {{ domanda.get_origine_display|lower }}{% if domanda.protocollo %}<div>prot. n. {% if perms.protocollo.view_protocollo %}<a href="{{ domanda.protocollo.get_absolute_url }}">{{ domanda.protocollo.segnatura }}</a>{% else %}{{ domanda.protocollo.segnatura }}{% endif %}</div>{% endif %}</div></div>
           {% if organizzazione.modulo_dichiarazione %}<div class="datagrid-item"><div class="datagrid-title">Dichiara di essere {{ organizzazione.modulo_dichiarazione }}</div><div class="datagrid-content">{{ domanda.dichiarazione|yesno:"SI,NO,—" }}</div></div>{% endif %}
           <div class="datagrid-item"><div class="datagrid-title">Dichiarazioni e consensi</div><div class="datagrid-content">
             <div>{% if domanda.accetta_statuto %}<i class="ti ti-check text-green"></i>{% else %}<i class="ti ti-x text-red"></i>{% endif %} statuto e regolamento</div>
@@ -30,6 +30,26 @@
       {% if domanda.stato != "in_attesa" %}
       <div class="card-footer d-flex align-items-center gap-2"><span class="flex-fill">Esito del {{ domanda.esito_il|date:"d/m/Y" }}{% if domanda.esito_da %} ({{ domanda.esito_da }}){% endif %}{% if domanda.esito_note %}: {{ domanda.esito_note }}{% endif %}{% if domanda.socio %} · <a href="{{ domanda.socio.get_absolute_url }}">socio n. {{ domanda.socio.numero }}</a>{% endif %}</span>
         {% if perms.comunicazioni.add_invio %}<form method="post" action="{% url 'comunicazioni:da_domanda' domanda.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-mail me-1"></i>Comunica l'esito</button></form>{% endif %}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-7 order-lg-last">
+    <div class="card" id="modulo-firmato">
+      <div class="card-header">
+        <h2 class="card-title"><i class="ti ti-signature me-2"></i>Richiesta di adesione firmata</h2>
+        {% if domanda.modulo_firmato %}<div class="card-actions"><a class="btn btn-sm" href="{% url 'soci:domanda_modulo_firmato' domanda.pk %}" target="_blank" rel="noopener"><i class="ti ti-external-link me-1"></i>Apri</a></div>{% endif %}
+      </div>
+      {% if domanda.modulo_firmato %}
+      <iframe class="anteprima-pdf" src="{% url 'soci:domanda_modulo_firmato' domanda.pk %}#view=FitH" title="Richiesta di adesione firmata"></iframe>
+      {% else %}
+      <div class="card-body text-secondary">Nessuna richiesta firmata allegata.{% if domanda.stato == "in_attesa" %} All'accoglimento passa alla scheda del socio.{% endif %}</div>
+      {% endif %}
+      {% if domanda.stato == "in_attesa" and perms.soci.add_domandaiscrizione %}
+      <form class="card-footer d-flex flex-wrap gap-2 align-items-center" method="post" action="{% url 'soci:domanda_modulo_firmato' domanda.pk %}" enctype="multipart/form-data">{% csrf_token %}
+        <input class="form-control form-control-sm w-auto flex-fill" type="file" name="modulo" accept="application/pdf,image/jpeg,image/png" multiple required aria-label="File della richiesta firmata">
+        <button class="btn btn-sm btn-primary" type="submit"><i class="ti ti-upload me-1"></i>{% if domanda.modulo_firmato %}Sostituisci{% else %}Carica{% endif %}</button>
+        <div class="w-100 form-hint">Un PDF, oppure le foto/scansioni delle pagine (vengono unite in un PDF).</div>
+      </form>
       {% endif %}
     </div>
   </div>

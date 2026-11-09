@@ -503,6 +503,7 @@ class DomandaIscrizione(models.Model):
     class Origine(models.TextChoices):
         PUBBLICA = "pubblica", "Modulo online"
         SEGRETERIA = "segreteria", "Segreteria"
+        EMAIL = "email", "Email"
 
     # dati del richiedente (copiati nell'anagrafica all'accoglimento)
     nome = models.CharField(max_length=100)
@@ -562,6 +563,22 @@ class DomandaIscrizione(models.Model):
     )
     socio = models.ForeignKey(
         Socio, null=True, blank=True, on_delete=models.SET_NULL, related_name="domande"
+    )
+    # documento di iscrizione: la richiesta firmata (passa al socio all'accoglimento)
+    modulo_firmato = models.FileField(
+        "richiesta di adesione firmata",
+        upload_to=percorso_modulo,
+        blank=True,
+        max_length=255,
+        editable=False,
+    )
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="domande_iscrizione",
+        verbose_name="protocollo di arrivo",
     )
 
     class Meta:

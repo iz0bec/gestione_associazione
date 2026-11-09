@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Domanda di iscrizione da un messaggio ricevuto: dati recuperati da controllare,
+               documento di iscrizione dagli allegati, protocollazione del messaggio
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Domanda da email{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:posta' %}">Posta da protocollare</a> · <a href="{{ messaggio.get_absolute_url }}">{{ messaggio.oggetto|default:"(senza oggetto)"|truncatechars:60 }}</a></div>{% endblock %}
+{% block titolo_pagina %}Domanda di iscrizione arrivata per email{% endblock %}
+{% block contenuto %}
+<form method="post" novalidate>{% csrf_token %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="alert alert-info">I dati sono stati recuperati dal messaggio e dagli allegati: <strong>controllarli sul modulo firmato</strong> e completare quelli mancanti. I campi non trovati sono vuoti.</div>
+        {% include "soci/_campi_domanda.html" with cf_assistito=True %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    {% if esistente %}<div class="alert alert-warning">In anagrafica esiste già <a href="{{ esistente.get_absolute_url }}">{{ esistente }}</a> con questo codice fiscale{% if esistente.socio %}, <strong>già iscritto al libro soci (n. {{ esistente.socio.numero }})</strong>{% endif %}.</div>{% endif %}
+    {% if mittente_noto and mittente_noto != esistente %}<div class="alert alert-info">Il mittente è in anagrafica: <a href="{{ mittente_noto.get_absolute_url }}">{{ mittente_noto }}</a>{% if mittente_noto.socio %} (socio n. {{ mittente_noto.socio.numero }}){% endif %}.</div>{% endif %}
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-mail me-2"></i>Messaggio</h2></div>
+      <div class="card-body small">
+        <div><strong>Da:</strong> {{ messaggio.mittente }}</div>
+        <div><strong>Del:</strong> {{ messaggio.data|date:"d/m/Y H:i"|default:"—" }}</div>
+        <div class="testo-messaggio mt-2 testo-messaggio-breve">{{ messaggio.testo|default:"(senza testo)"|truncatechars:1200 }}</div>
+        {% if provenienza %}<div class="mt-2 text-secondary">Recuperati: {% for campo, fonte in provenienza %}{{ campo|cut:"_" }} ({{ fonte }}){% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-signature me-2"></i>Documento di iscrizione</h2></div>
+      {% if allegati %}
+      <div class="list-group list-group-flush">
+        {% for i, a, proposto in allegati %}
+        <label class="list-group-item d-flex gap-2 align-items-center">
+          <input class="form-check-input m-0" type="checkbox" name="modulo" value="{{ i }}"{% if proposto %} checked{% endif %}>
+          <span class="flex-fill text-break">{{ a.nome }} <span class="text-secondary small">{{ a.dimensione|filesizeformat }}</span></span>
+          <a class="small" href="{% url 'protocollo:messaggio_allegato' messaggio.pk i %}" target="_blank" rel="noopener">apri</a>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="card-footer small text-secondary">Gli allegati scelti (un PDF, oppure foto/scansioni delle pagine) diventano la richiesta firmata della domanda e, all'accoglimento, del socio.</div>
+      {% else %}
+      <div class="card-body small text-secondary">Il messaggio non ha allegati: la richiesta firmata si potrà caricare dalla domanda.</div>
+      {% endif %}
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-stamp me-2"></i>Protocollo in entrata</h2></div>
+      <div class="card-body">
+        <label class="form-label required" for="oggetto-protocollo">Oggetto</label>
+        <input class="form-control" id="oggetto-protocollo" name="oggetto_protocollo" maxlength="500" required value="{{ oggetto }}">
+        <div class="form-hint">Il messaggio originale e gli allegati diventano i documenti della registrazione, collegata alla domanda.</div>
+      </div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{{ messaggio.get_absolute_url }}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-device-floppy me-1"></i>Registra e protocolla</button></div>
+    </div>
+  </div>
+</div>
+</form>
+{% endblock %}

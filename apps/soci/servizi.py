@@ -789,6 +789,9 @@ def accogli_domanda(
         )
     if tessera_anno:
         rilascia_tessera(socio, tessera_anno, utente, carta="prossima")
+    if domanda.modulo_firmato:  # documento di iscrizione: passa alla scheda del socio
+        with domanda.modulo_firmato.open("rb") as f:
+            carica_modulo(socio, [f], utente)
     domanda.stato = DomandaIscrizione.Stato.ACCOLTA
     domanda.esito_il = date.today()
     domanda.esito_note = note_esito or delibera
@@ -871,6 +874,62 @@ def carica_modulo(socio, files, utente):
     registra(Azione.MODIFICA, socio, utente=utente, modulo_adesione="sostituito" if sostituito
              else "caricato", impronta=hashlib.sha256(pdf).hexdigest())  # fmt: skip
     return socio
+
+
+@transaction.atomic
+def carica_modulo_domanda(domanda, files, utente):
+    """Richiesta firmata allegata alla domanda (passa al socio quando la domanda è accolta)."""
+    import hashlib
+
+    from django.core.files.base import ContentFile
+
+    pdf = modulo_in_pdf(files)
+    domanda = DomandaIscrizione.objects.select_for_update().get(pk=domanda.pk)
+    if domanda.stato != DomandaIscrizione.Stato.IN_ATTESA:
+        raise OperazioneNonValida(
+            "La domanda è già stata valutata: caricare il modulo nella scheda del socio."
+        )
+    sostituito = bool(domanda.modulo_firmato)
+    if sostituito:
+        domanda.modulo_firmato.delete(save=False)
+    domanda.modulo_firmato.save("modulo.pdf", ContentFile(pdf), save=False)
+    domanda.save(update_fields=["modulo_firmato"])
+    registra(Azione.MODIFICA, domanda, utente=utente, modulo_firmato="sostituito" if sostituito
+             else "caricato", impronta=hashlib.sha256(pdf).hexdigest())  # fmt: skip
+    return domanda
+
+
+@transaction.atomic
+def domanda_da_messaggio(messaggio, form, utente, *, oggetto, allegati_modulo=()):
+    """Domanda di iscrizione arrivata per email: protocolla il messaggio in entrata, registra la
+    domanda (origine «email», collegata al protocollo) e, se indicati, unisce gli allegati scelti
+    nel documento di iscrizione firmato. Tutto o niente."""
+    from django.core.files import File
+    from django.core.files.storage import default_storage
+
+    from apps.protocollo import servizi as protocollo_servizi
+    from apps.protocollo.servizi import OperazioneNonValida as ErroreProtocollo
+
+    try:
+        protocollo = protocollo_servizi.protocolla_messaggio(messaggio, utente, oggetto=oggetto)
+    except ErroreProtocollo as e:
+        raise OperazioneNonValida(" ".join(e.messages)) from None
+    domanda = form.save(commit=False)
+    domanda.origine = DomandaIscrizione.Origine.EMAIL
+    domanda.protocollo = protocollo
+    domanda.save()
+    form.save_m2m()
+    registra(Azione.CREAZIONE, domanda, utente=utente, origine="email",
+             protocollo=protocollo.segnatura)  # fmt: skip
+    scelti = [messaggio.allegati[i] for i in allegati_modulo if 0 <= i < len(messaggio.allegati)]
+    if scelti:
+        files = [File(default_storage.open(a["percorso"], "rb"), name=a["nome"]) for a in scelti]
+        try:
+            carica_modulo_domanda(domanda, files, utente)
+        finally:
+            for f in files:
+                f.close()
+    return domanda
 
 
 # --- esportazioni ------------------------------------------------------------------------

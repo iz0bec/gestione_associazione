@@ -57,7 +57,7 @@
       </div>
       {% if socio.modulo_adesione %}
       <iframe class="anteprima-pdf" src="{% url 'soci:modulo_firmato' socio.pk %}#view=FitH" title="Richiesta di adesione firmata"></iframe>
-      <div class="card-footer small text-secondary">Caricata il {{ socio.modulo_adesione_il|date:"d/m/Y H:i" }}</div>
+      <div class="card-footer small text-secondary">Caricata il {{ socio.modulo_adesione_il|date:"d/m/Y H:i" }}{% for d in socio.domande.all %}{% if d.protocollo %} · domanda ricevuta con prot. n. {% if perms.protocollo.view_protocollo %}<a href="{{ d.protocollo.get_absolute_url }}">{{ d.protocollo.segnatura }}</a>{% else %}{{ d.protocollo.segnatura }}{% endif %}{% endif %}{% endfor %}</div>
       {% else %}
       <div class="card-body text-secondary">Nessuna richiesta firmata caricata.</div>
       {% endif %}

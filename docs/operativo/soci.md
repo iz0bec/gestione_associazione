@@ -200,8 +200,35 @@ intestazione, articoli dello statuto, dichiarazione SI/NO, piè di pagina e info
 - **Dal sito**: se attivato in *Sistema → Organizzazione* (casella *Domande di iscrizione online*),
   il modulo è pubblico all'indirizzo **`/iscrizione/`** dell'applicazione e si può collegare dal sito
   dell'associazione. Qui l'email è obbligatoria, per poter rispondere.
+- **Per email**: vedi sotto *Domande arrivate per email*.
 - Dalla domanda, **Modulo da firmare (PDF)** stampa l'Allegato A già compilato con i dati inseriti,
   da far firmare al richiedente.
+- Nella domanda, il riquadro **Richiesta di adesione firmata** conserva il modulo firmato (PDF, oppure
+  foto o scansioni delle pagine unite in un PDF). Quando la domanda viene **accolta**, il modulo passa
+  da solo alla scheda del socio.
+
+### Domande arrivate per email
+
+In *Protocollo → Posta da protocollare* i messaggi che sembrano richieste di iscrizione (oggetto, testo
+o nome degli allegati con «iscrizione», «adesione», «tesseramento», «modulo di adesione»...) hanno
+l'etichetta **iscrizione?**. Nel messaggio, prima di protocollarlo, **Domanda di iscrizione**
+(per chi può registrare le domande e protocollare la posta):
+
+1. il modulo della domanda si apre **già compilato** con i dati trovati: nel testo del messaggio
+   (righe come «Cognome: Rossi», «CAP: 85021», «Cell. 333...»), nei **PDF allegati** (campi del
+   modulo compilabile o testo) e nel mittente. Dal **codice fiscale** si ricavano data e luogo di
+   nascita e si capisce quale parte del nome del mittente è il cognome. **Nulla viene inventato**: i
+   campi non trovati restano vuoti. Accanto, l'elenco di dove è stato trovato ogni dato;
+2. un avviso segnala se la persona è **già in anagrafica** con lo stesso codice fiscale (o già socia)
+   e se il mittente è già noto;
+3. si spuntano gli **allegati che formano il modulo firmato** (proposti i PDF e le immagini);
+4. si controlla l'**oggetto** della registrazione di protocollo e si preme **Registra e protocolla**.
+
+In un'unica operazione il messaggio viene **protocollato in entrata** (originale e allegati come
+documenti), la domanda viene registrata con origine *email* e **collegata al protocollo**, e gli
+allegati scelti diventano la sua richiesta firmata. Se qualcosa non va (ad esempio un dato
+obbligatorio mancante) non viene salvato nulla. La domanda prosegue poi come le altre: accoglimento o
+rigetto. Nella scheda del socio, sotto la richiesta firmata, resta il numero di protocollo di arrivo.
 
 Le domande in attesa compaiono sul cruscotto. Nella domanda:
 
@@ -213,8 +240,8 @@ Le domande in attesa compaiono sul cruscotto. Nella domanda:
   del socio.
 - **Respingi**: con la motivazione obbligatoria.
 
-L'esito resta sulla domanda (data, utente, motivazione). Comunicare l'esito al richiedente è per ora
-compito della segreteria; l'invio automatico arriverà con il modulo *Comunicazioni*.
+L'esito resta sulla domanda (data, utente, motivazione). **Comunica l'esito** (nella domanda valutata)
+prepara la comunicazione al richiedente con il modulo *Comunicazioni*.
 
 Il modulo pubblico è protetto dagli invii automatici (vedi il manuale di sistema, *Sicurezza*):
 se qualcuno segnala di non riuscire a inviarlo, deve ricaricare la pagina e riprovare dopo qualche minuto.
@@ -227,6 +254,7 @@ scheda con **Apri**.
 
 - **Carica**: un PDF (ad esempio la scansione), oppure le **foto delle pagine** fatte con il telefono
   (JPEG o PNG, anche più di una), che vengono unite in un unico PDF. Massimo 20 MB.
+- Se la domanda di iscrizione aveva il modulo firmato, il file è già qui dall'accoglimento.
 - **Sostituisci**: sostituisce il file. Il caricamento e la sostituzione restano nella storia, con
   l'impronta del file.
 - **Modulo da firmare**: stampa l'Allegato A già compilato con i dati del socio, utile per chi non ha

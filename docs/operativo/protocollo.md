@@ -71,6 +71,9 @@ Per ogni messaggio:
 - **Protocolla**: si conferma o si migliora l'oggetto, si sceglie la classificazione; il mittente viene
   riconosciuto se la sua email o PEC è in anagrafica. Il messaggio originale e gli allegati diventano i
   documenti del protocollo;
+- **Domanda di iscrizione**: per le richieste di iscrizione (etichetta *iscrizione?* nell'elenco),
+  registra la domanda con i dati recuperati dal messaggio e protocolla in un colpo solo (vedi il
+  manuale *Soci*, *Domande arrivate per email*);
 - **Scarta** con un motivo (pubblicità, doppione...): il messaggio resta nell'elenco *Scartati*;
   dalla sua scheda, **Riporta tra quelli da esaminare** annulla uno scarto sbagliato.
 

@@ -41,7 +41,7 @@
           {% if selezione and stato == "nuovo" or selezione and stato == "scartato" %}<td><input class="form-check-input" type="checkbox" name="messaggi" value="{{ m.pk }}" aria-label="Seleziona {{ m.oggetto|default:'il messaggio' }}"></td>{% endif %}
           <td class="text-nowrap">{{ m.data|date:"d/m/Y H:i"|default:"—" }}</td>
           <td class="text-truncate">{{ m.mittente|truncatechars:50 }}</td>
-          <td><a class="text-reset fw-medium" href="{{ m.get_absolute_url }}">{{ m.oggetto|default:"(senza oggetto)"|truncatechars:90 }}</a>{% if m.allegati %} <i class="ti ti-paperclip text-secondary" title="{{ m.allegati|length }} allegati"></i>{% endif %}</td>
+          <td><a class="text-reset fw-medium" href="{{ m.get_absolute_url }}">{{ m.oggetto|default:"(senza oggetto)"|truncatechars:90 }}</a>{% if m.allegati %} <i class="ti ti-paperclip text-secondary" title="{{ m.allegati|length }} allegati"></i>{% endif %}{% if m.pk in iscrizioni %} <span class="badge bg-azure-lt" title="Sembra una domanda di iscrizione">iscrizione?</span>{% endif %}</td>
           <td class="d-none d-md-table-cell">{{ m.casella }}{% if m.casella.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}</td>
           <td>{% if m.stato == "protocollato" %}<a class="badge bg-green-lt" href="{{ m.protocollo.get_absolute_url }}">{{ m.protocollo.segnatura }}</a>{% elif m.stato == "scartato" %}<span class="badge bg-secondary-lt" title="{{ m.motivo_scarto }}">scartato</span>{% else %}<span class="badge bg-yellow-lt">da esaminare</span>{% endif %}</td>
         </tr>

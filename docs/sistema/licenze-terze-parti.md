@@ -43,6 +43,7 @@ soggette alle proprie licenze, tutte compatibili con l'uso e la ridistribuzione.
 | et-xmlfile (usata da openpyxl) | 2.0.0 | MIT |
 | defusedxml | 0.7.1 | PSF-2.0 |
 | Markdown (help in linea) | 3.11.3 | BSD-3-Clause |
+| pypdf (testo e campi dei PDF ricevuti) | 7.0.0 | BSD-3-Clause |
 
 Versioni esatte di tutte le dipendenze (anche indirette) in `uv.lock`.
 

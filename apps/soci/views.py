@@ -846,6 +846,120 @@ class NuovaDomandaView(PermessoMixin, CreateView):
         return risposta
 
 
+class DomandaDaMessaggioView(PermessoMixin, CreateView):
+    """Domanda di iscrizione da un messaggio ricevuto: dati recuperati dal testo e dagli
+    allegati, da controllare; al salvataggio il messaggio è protocollato e collegato."""
+
+    permission_required = (
+        "soci.add_domandaiscrizione",
+        "protocollo.gestisci_posta",
+        "protocollo.add_protocollo",
+    )
+    model = DomandaIscrizione
+    form_class = DomandaForm
+    template_name = "soci/domanda_da_messaggio.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        from apps.protocollo.models import MessaggioRicevuto
+
+        self.messaggio = get_object_or_404(MessaggioRicevuto, pk=kwargs["messaggio"])
+        if request.user.is_authenticated and self.messaggio.stato != MessaggioRicevuto.Stato.NUOVO:
+            messages.warning(request, "Il messaggio è già stato gestito.")
+            return redirect(self.messaggio)
+        return super().dispatch(request, *args, **kwargs)
+
+    def _estratti(self):
+        from . import estrazione
+
+        if not hasattr(self, "_cache_estratti"):
+            self._cache_estratti = estrazione.estrai(self.messaggio)
+        return self._cache_estratti
+
+    def get_initial(self):
+        valori, _ = self._estratti()
+        return {**super().get_initial(), **valori}
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
+
+    def get_context_data(self, **kwargs):
+        from apps.protocollo import servizi as protocollo_servizi
+
+        from . import estrazione
+
+        ctx = super().get_context_data(**kwargs)
+        valori, provenienza = self._estratti()
+        nome = " ".join(p for p in (valori.get("cognome"), valori.get("nome")) if p)
+        ctx.update(
+            messaggio=self.messaggio,
+            provenienza=sorted(provenienza.items()),
+            oggetto=self.request.POST.get("oggetto_protocollo")
+            or f"Domanda di iscrizione{' di ' + nome if nome else ''}",
+            allegati=[
+                (i, a, i in estrazione.allegati_modulo(self.messaggio))
+                for i, a in enumerate(self.messaggio.allegati or [])
+            ],
+            mittente_noto=protocollo_servizi.soggetto_per_indirizzo(self.messaggio.mittente_email),
+            esistente=(
+                Soggetto.objects.filter(codice_fiscale__iexact=valori["codice_fiscale"]).first()
+                if valori.get("codice_fiscale")
+                else None
+            ),
+        )
+        return ctx
+
+    def form_valid(self, form):
+        oggetto = self.request.POST.get("oggetto_protocollo", "").strip()
+        if not oggetto:
+            form.add_error(None, "Indicare l'oggetto della registrazione di protocollo.")
+            return self.form_invalid(form)
+        indici = [int(i) for i in self.request.POST.getlist("modulo") if i.isdigit()]
+        try:
+            self.object = servizi.domanda_da_messaggio(
+                self.messaggio, form, self.request.user, oggetto=oggetto, allegati_modulo=indici
+            )
+        except OperazioneNonValida as e:
+            form.add_error(None, " ".join(e.messages))
+            return self.form_invalid(form)
+        messages.success(
+            self.request,
+            f"Domanda registrata e messaggio protocollato con il n. "
+            f"{self.object.protocollo.segnatura}.",
+        )
+        return redirect(self.object)
+
+
+class ModuloDomandaView(PermessoMixin, View):
+    """Richiesta firmata allegata alla domanda: consultazione (GET) e caricamento (POST)."""
+
+    permission_required = "soci.view_domandaiscrizione"
+
+    def get(self, request, pk):
+        from django.http import FileResponse, Http404
+
+        domanda = get_object_or_404(_domande(request), pk=pk)
+        if not domanda.modulo_firmato:
+            raise Http404
+        registra(Azione.CONSULTAZIONE, domanda, descrizione="Richiesta di adesione firmata")
+        risposta = FileResponse(domanda.modulo_firmato.open("rb"), content_type="application/pdf")
+        risposta["Content-Disposition"] = f'inline; filename="richiesta_firmata_{domanda.pk}.pdf"'
+        risposta["X-Frame-Options"] = "SAMEORIGIN"
+        risposta["Content-Security-Policy"] = "frame-ancestors 'self'"
+        risposta["Cache-Control"] = "private, no-store"
+        return risposta
+
+    def post(self, request, pk):
+        if not request.user.has_perm("soci.add_domandaiscrizione"):
+            return self.handle_no_permission()
+        domanda = get_object_or_404(_domande(request), pk=pk)
+        try:
+            servizi.carica_modulo_domanda(domanda, request.FILES.getlist("modulo"), request.user)
+            messages.success(request, "Richiesta di adesione firmata salvata.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect(domanda)
+
+
 class AccogliView(PermessoMixin, View):
     permission_required = "soci.valuta_domanda"
     http_method_names = ["post"]
