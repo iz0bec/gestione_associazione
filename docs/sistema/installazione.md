@@ -110,7 +110,7 @@ dell'amministratore dell'applicazione. Il container si avvia con l'host (`onboot
 Aggiornamento, con backup automatico prima:
 
 ```bash
-bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.0
+bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.1
 ```
 
 Per i backup conviene anche il backup del container di Proxmox (snapshot o vzdump), in aggiunta ai
@@ -187,7 +187,7 @@ git pull && docker compose up -d --build
 Senza Docker, dalla copia del repository usata per l'installazione:
 
 ```bash
-cd /root/gestione-associazione-src && git fetch --tags && git checkout v1.0.0
+cd /root/gestione-associazione-src && git fetch --tags && git checkout v1.0.1
 ./scripts/installa.sh -y      # backup automatico, migrazioni, riavvio dei servizi
 ```
 

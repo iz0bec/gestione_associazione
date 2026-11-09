@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.1] - 2026-11-09
+
+Scambio dei soci fra installazioni (federazione e sezioni).
+
 ### Aggiunto
 - **Scambio dei soci fra installazioni** (federazione e sezioni, nei due sensi): *Soci → Stampa ed
   esporta → Per un'altra installazione (Excel)* con le stesse colonne dell'importazione (anagrafica,

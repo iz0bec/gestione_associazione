@@ -19,7 +19,7 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env", overwrite=False)
 
 APP_NOME = "Gestione Associazione"
-APP_VERSIONE = "1.0.0"
+APP_VERSIONE = "1.0.1"
 APP_AUTORE = "Bartolomeo Santoro aka IZ0BEC"
 APP_EMAIL_AUTORE = "info@iz0bec.info"
 APP_REPOSITORY = "https://mygitlab.iz0bec.info/sbart64/gestione_associazione"
