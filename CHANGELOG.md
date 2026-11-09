@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.4] - 2026-11-09
+
+Aggiornamenti sicuri per le installazioni su porta diversa dalla 8000.
+
+### Corretto
+- **Aggiornamento con `installa.sh`** (e `crea-lxc.sh --aggiorna`): senza `--porta`/`--indirizzo`
+  il servizio tornava sulla porta 8000 e su `0.0.0.0`, mettendo fuori linea le installazioni dietro
+  reverse proxy su un'altra porta. Ora restano porta e indirizzo del servizio installato.
+- **Messaggio di benvenuto dei container**: mostra l'indirizzo pubblico (`URL_PUBBLICO`) quando è
+  configurato, con quello interno tra parentesi.
+
 ## [1.0.3] - 2026-11-09
 
 Codice fiscale assistito, firme in calce alle stampe e domande di iscrizione arrivate per email;

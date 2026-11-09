@@ -19,8 +19,8 @@ DIR_APP="/opt/${NOME}"
 DIR_DATI="/var/lib/${NOME}"
 UTENTE="gestione"
 DB_NOME="gestione_associazione"
-PORTA="8000"
-INDIRIZZO="0.0.0.0"
+PORTA=""      # vuoti: in un aggiornamento restano quelli del servizio installato
+INDIRIZZO=""
 HOST_EXTRA=""
 ADMIN="admin"
 ADMIN_EMAIL=""
@@ -30,8 +30,9 @@ SI=0
 uso() {
   cat <<EOF
 Uso: $0 [opzioni]
-  --porta N           porta del servizio web (predefinita ${PORTA})
-  --indirizzo IP      indirizzo di ascolto (predefinito ${INDIRIZZO}; 127.0.0.1 dietro reverse proxy)
+  --porta N           porta del servizio web (predefinita 8000; negli aggiornamenti resta quella in uso)
+  --indirizzo IP      indirizzo di ascolto (predefinito 0.0.0.0; 127.0.0.1 dietro reverse proxy;
+                      negli aggiornamenti resta quello in uso)
   --host NOMI         nomi o IP aggiuntivi per ALLOWED_HOSTS, separati da virgola
   --db NOME           nome del database (predefinito ${DB_NOME})
   --admin UTENTE      amministratore creato alla prima installazione (predefinito ${ADMIN})
@@ -64,10 +65,19 @@ errore() { echo -e "\033[1;31mERRORE: $*\033[0m" >&2; exit 1; }
 command -v systemctl >/dev/null || errore "serve systemd."
 [[ -r /etc/os-release ]] && . /etc/os-release
 case "${ID:-}" in debian|ubuntu) ;; *) errore "sistema non supportato (${ID:-?}): servono Debian o Ubuntu." ;; esac
-[[ "$PORTA" =~ ^[0-9]+$ ]] || errore "porta non valida."
-
 AGGIORNAMENTO=0
 [[ -f "${DIR_APP}/.env" ]] && AGGIORNAMENTO=1
+# in un aggiornamento porta e indirizzo restano quelli del servizio installato (es. 8003 dietro
+# un reverse proxy), salvo indicarli di nuovo con --porta / --indirizzo
+UNITA_WEB="/etc/systemd/system/${NOME}.service"
+if [[ -f "$UNITA_WEB" ]]; then
+  ASCOLTO="$(grep -o -- '--bind [^ ]*' "$UNITA_WEB" | head -1 | cut -d' ' -f2)"
+  [[ -z "$PORTA" && "$ASCOLTO" == *:* ]] && PORTA="${ASCOLTO##*:}"
+  [[ -z "$INDIRIZZO" && "$ASCOLTO" == *:* ]] && INDIRIZZO="${ASCOLTO%:*}"
+fi
+PORTA="${PORTA:-8000}"
+INDIRIZZO="${INDIRIZZO:-0.0.0.0}"
+[[ "$PORTA" =~ ^[0-9]+$ ]] || errore "porta non valida."
 if [[ $AGGIORNAMENTO -eq 0 && $SI -eq 0 ]]; then
   echo "Installazione di Gestione Associazione in ${DIR_APP}, dati in ${DIR_DATI}, porta ${PORTA}."
   read -r -p "Procedere? [s/N] " r; [[ "$r" =~ ^[sS]$ ]] || exit 1

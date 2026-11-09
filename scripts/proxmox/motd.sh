@@ -24,6 +24,8 @@ _ga_motd() {
   versione=$(grep -m1 '^APP_VERSIONE' "$app/config/settings.py" 2>/dev/null | cut -d'"' -f2)
   porta=$(grep -o -- '--bind [^ ]*' "$unita" 2>/dev/null | sed 's/.*://')
   ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+  # indirizzo pubblico (dietro reverse proxy) se configurato, altrimenti quello interno
+  pubblico=$(sed -n 's/^URL_PUBBLICO=//p' "$app/.env" 2>/dev/null | tr -d '"'"'"' ')
   sistema=$(. /etc/os-release 2>/dev/null && echo "$NAME $(cat /etc/debian_version 2>/dev/null)")
 
   stato() {
@@ -40,7 +42,11 @@ _ga_motd() {
   echo
   echo "  ${c}${b}Gestione Associazione${n} ${b}${versione:-?}${n}  ${d}· container LXC ${ctid}${n}"
   echo "  ${d}──────────────────────────────────────────────────${n}"
-  echo "  Indirizzo     ${b}http://${ip:-?}:${porta:-8000}/${n}"
+  if [ -n "$pubblico" ]; then
+    echo "  Indirizzo     ${b}${pubblico%/}/${n}  ${d}(interno http://${ip:-?}:${porta:-8000}/)${n}"
+  else
+    echo "  Indirizzo     ${b}http://${ip:-?}:${porta:-8000}/${n}"
+  fi
   echo "  Sistema       ${sistema:-Debian} · $(hostname)"
   echo "  Servizi       web $(stato gestione-associazione)   pianificatore $(stato gestione-associazione-pianificatore)"
   echo "  Ultimo backup ${ultimo}"
