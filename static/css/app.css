@@ -105,3 +105,12 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
 /* codice fiscale assistito: pulsante «Calcola» subito sotto il campo */
 .cf-assistito { margin-top: -0.5rem; }
 .testo-messaggio-breve { max-height: 16rem; }
+
+/* Menu laterale nascosto (pulsante nella barra superiore, solo schermi larghi) */
+.menu-nascosto .icona-menu-nascondi,
+:root:not(.menu-nascosto) .icona-menu-mostra { display: none; }
+@media (min-width: 992px) {
+  .menu-nascosto .navbar-vertical.navbar-expand-lg { display: none; }
+  .menu-nascosto .navbar-expand-lg.navbar-vertical ~ .page-wrapper,
+  .menu-nascosto .navbar-expand-lg.navbar-vertical ~ .navbar { margin-inline-start: 0; }
+}

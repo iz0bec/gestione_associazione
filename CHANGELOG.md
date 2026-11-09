@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.5] - 2026-11-09
+
+Stampa dei codici fiscali da sistemare e menu laterale nascondibile.
+
+### Aggiunto
+- **Stampa PDF dei codici fiscali da sistemare** (Anagrafica → Codici fiscali): riepilogo della
+  scheda scelta (non validi, non corrispondenti, mancanti o tutti) con problema e codice calcolato,
+  raggruppato per sezione quando le sezioni attive sono più d'una.
+- **Menu laterale nascondibile**: pulsante nella barra superiore (schermi larghi); la scelta resta
+  nel browser.
+
 ## [1.0.4] - 2026-11-09
 
 Aggiornamenti sicuri per le installazioni su porta diversa dalla 8000.

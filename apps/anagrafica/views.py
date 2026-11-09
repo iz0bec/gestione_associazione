@@ -416,7 +416,7 @@ class CodiciFiscaliView(PermessoMixin, TemplateView):
             .filter(tipo=Soggetto.Tipo.PERSONA, anonimizzato_il__isnull=True)
             .order_by("cognome", "nome")
         )
-        esami = [(p, codice_fiscale.esamina(p)) for p in persone.select_related("socio")]
+        esami = [(p, codice_fiscale.esamina(p)) for p in persone.select_related("socio__sezione")]
         # un codice mancante si segnala solo per i soci (per un contatto della rubrica è normale)
         da_sistemare = [
             (p, e) for p, e in esami
@@ -448,3 +448,54 @@ class CodiciFiscaliView(PermessoMixin, TemplateView):
         else:
             messages.success(request, f"Codice fiscale di {soggetto.nome_completo} aggiornato.")
         return redirect(f"{request.path}?stato={request.POST.get('stato', '')}")
+
+
+class StampaCodiciFiscaliView(CodiciFiscaliView):
+    """Riepilogo in PDF dell'elenco mostrato (stessa scheda scelta), da usare per le verifiche."""
+
+    def get(self, request, *args, **kwargs):
+        from apps.core.audit import Azione, registra
+        from apps.core.models import Organizzazione
+        from apps.core.pdf import risposta_pdf
+
+        ctx = self.get_context_data(**kwargs)
+        etichetta = self.STATI.get(ctx["stato"], "Tutti")
+        registra(
+            Azione.ESPORTAZIONE,
+            descrizione=f"Codici fiscali da sistemare, {etichetta.lower()} ({len(ctx['righe'])})",
+        )
+        ctx.update(
+            etichetta=etichetta,
+            gruppi=self._per_sezione(ctx["righe"]),
+            organizzazione=Organizzazione.corrente(),
+            oggi=date.today(),
+        )
+        return risposta_pdf(
+            "anagrafica/pdf/codici_fiscali.html",
+            ctx,
+            f"codici_fiscali_{ctx['stato'] or 'tutti'}_{date.today():%Y%m%d}.pdf",
+        )
+
+    @staticmethod
+    def _per_sezione(righe):
+        """Righe raggruppate per sezione del socio, solo se le sezioni attive sono più d'una
+        (altrimenti un unico gruppo senza titolo); le persone che non sono soci vanno in fondo."""
+        from apps.soci import sezioni
+
+        if not sezioni.multisezione():
+            return [("", righe)]
+        gruppi = {}
+        for p, e in righe:
+            sezione = getattr(getattr(p, "socio", None), "sezione", None)
+            gruppi.setdefault(sezione, []).append((p, e))
+
+        def ordine(sezione):
+            return (1, 0, "") if sezione is None else (0, sezione.ordine, sezione.nome)
+
+        return [
+            (str(sezione) if sezione else "Non soci o senza sezione", gruppi[sezione])
+            for sezione in sorted(gruppi, key=ordine)
+        ]
+
+    def post(self, request):
+        raise PermissionDenied

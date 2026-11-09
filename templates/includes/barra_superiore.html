@@ -1,6 +1,9 @@
 {% comment %}Barra superiore: ricerca rapida, versione e crediti, aiuto, tema, menu utente.{% endcomment %}
 <header class="navbar navbar-expand-md d-print-none">
   <div class="container-xl">
+    <button type="button" class="nav-link px-2 me-2 d-none d-lg-flex" data-cambia-menu title="Nascondi o mostra il menu laterale" aria-label="Nascondi o mostra il menu laterale">
+      <i class="ti ti-layout-sidebar-left-collapse icona-menu-nascondi"></i><i class="ti ti-layout-sidebar-left-expand icona-menu-mostra"></i>
+    </button>
     <form action="{% url 'core:cerca' %}" method="get" role="search" class="d-none d-md-flex">
       <div class="input-icon">
         <span class="input-icon-addon"><i class="ti ti-search"></i></span>

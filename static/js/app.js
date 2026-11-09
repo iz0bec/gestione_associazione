@@ -19,6 +19,15 @@
     try { localStorage.setItem("tema", nuovo); } catch (e) { /* ignorato */ }
   });
 
+  // Menu laterale nascosto o visibile (schermi larghi), ricordato nel browser
+  document.addEventListener("click", function (ev) {
+    var pulsante = ev.target.closest("[data-cambia-menu]");
+    if (!pulsante) return;
+    var nascosto = document.documentElement.classList.toggle("menu-nascosto");
+    pulsante.setAttribute("aria-pressed", nascosto ? "true" : "false");
+    try { localStorage.setItem("menu", nascosto ? "nascosto" : "visibile"); } catch (e) { /* ignorato */ }
+  });
+
   // Conferma per i moduli con data-conferma="testo"
   document.addEventListener("submit", function (ev) {
     var modulo = ev.target.closest("form[data-conferma]");

@@ -22,6 +22,11 @@ urlpatterns = [
     path("conservazione/", views.ConservazioneView.as_view(), name="conservazione"),
     path("codici-fiscali/", views.CodiciFiscaliView.as_view(), name="codici_fiscali"),
     path(
+        "codici-fiscali/stampa.pdf",
+        views.StampaCodiciFiscaliView.as_view(),
+        name="stampa_codici_fiscali",
+    ),
+    path(
         "codici-fiscali/calcola/",
         views.CalcolaCodiceFiscaleView.as_view(),
         name="calcola_codice_fiscale",

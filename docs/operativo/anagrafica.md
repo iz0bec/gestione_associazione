@@ -61,6 +61,8 @@ la ricerca (es. `rossi avigliano`). Accanto si filtra per tipo, categoria e stat
   è normale), con il codice calcolato. **Applica** lo sostituisce, dopo conferma; se i dati non
   bastano per il calcolo, **Completa i dati** apre la scheda. Ogni correzione è nel registro attività
   con il valore precedente. Il programma rifiuta un codice già usato da un'altra persona.
+  **Stampa PDF** produce il riepilogo della scheda aperta (o di tutte), con problema e codice
+  calcolato, utile per le verifiche con gli interessati.
 
 ## La scheda
 

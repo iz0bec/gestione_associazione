@@ -1,0 +1,37 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Riepilogo in PDF dei codici fiscali da sistemare (scheda scelta nella pagina)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Codici fiscali da sistemare{% endblock %}
+{% block formato %}A4 landscape{% endblock %}
+{% block stile %}h2 { font-size: 11.5pt; margin: 14pt 0 5pt; page-break-after: avoid; } code { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; }{% endblock %}
+{% block contenuto %}
+<h1>Codici fiscali da sistemare <span class="piccolo">{{ etichetta|lower }} · situazione al {{ oggi|date:"d/m/Y" }}</span></h1>
+{% for titolo, righe_gruppo in gruppi %}
+{% if titolo %}<h2>{{ titolo }} <span class="piccolo">({{ righe_gruppo|length }})</span></h2>{% endif %}
+<table>
+  <thead><tr><th>Persona</th><th>Socio</th><th>Sesso</th><th>Nascita</th><th>Codice attuale</th><th>Problema</th><th>Codice calcolato</th></tr></thead>
+  <tbody>
+  {% for p, esame in righe_gruppo %}
+  <tr>
+    <td>{{ p.cognome }} {{ p.nome }}</td>
+    <td>{% if p.socio %}{{ p.socio.numero }}{% endif %}</td>
+    <td>{{ p.get_sesso_display|default:"?" }}</td>
+    <td>{{ p.data_nascita|date:"d/m/Y"|default:"?" }}<br><span class="piccolo">{{ p.luogo_nascita|default:"luogo ?" }}</span></td>
+    <td><code>{{ p.codice_fiscale|default:"—" }}</code></td>
+    <td>{{ esame.descrizione }}{% if esame.anomalie %}: {{ esame.anomalie|join:", " }}{% endif %}</td>
+    <td>{% if esame.proposta %}<code>{{ esame.proposta }}</code>{% else %}<span class="piccolo">{{ esame.nota|default:"—" }}</span>{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="7">Nessun codice da sistemare in questo elenco.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+<p class="piccolo">
+  Totale in elenco: {{ righe|length }} su {{ totale }} persone controllate
+  ({% for chiave, nome, numero in stati %}{{ nome|lower }} {{ numero }}{% if not forloop.last %}, {% endif %}{% endfor %}).
+  Il codice calcolato è quello «teorico» ricavato da cognome, nome, sesso, data e luogo di nascita: in rari casi
+  (omocodia o errori storici) quello attribuito è diverso e fa fede la tessera sanitaria.
+</p>
+{% endblock %}

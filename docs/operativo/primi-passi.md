@@ -43,7 +43,9 @@ Protegge l'account anche se qualcuno scopre la password.
 ![Il cruscotto: menu a sinistra, ricerca e menu dell'utente in alto, riquadri con i numeri e i prossimi impegni](immagini/cruscotto.jpg)
 
 - **Menu a sinistra**: i moduli. Si vedono solo quelli consentiti dal proprio ruolo.
-  Su smartphone il menu si apre con il pulsante ☰.
+  Su smartphone il menu si apre con il pulsante ☰. Sugli schermi larghi il pulsante all'inizio della
+  barra in alto lo **nasconde** per lasciare più spazio alla pagina (e lo rimostra); il browser
+  ricorda la scelta.
 - **Barra in alto**: **ricerca globale** (persone ed enti, soci, protocolli, riunioni, delibere,
   beni, appuntamenti e comunicazioni, solo nei moduli che si possono consultare: soci della propria
   sezione, protocolli riservati solo con il permesso; più parole devono comparire tutte, i numeri di

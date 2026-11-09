@@ -164,3 +164,47 @@ class TestViste:
         assert c.get("/anagrafica/codici-fiscali/").status_code == 200
         r = c.post("/anagrafica/codici-fiscali/", {"soggetto": s.pk, "codice": CF_ROSSI})
         assert r.status_code == 403
+
+    def test_stampa_pdf(self, client_ruolo, monkeypatch):
+        from apps.core import pdf
+
+        Soggetto.objects.create(codice_fiscale="RSSMRA50C15A519X", **ROSSI)
+        c = client_ruolo("Consigliere")
+        visto = {}
+        monkeypatch.setattr(pdf, "genera_pdf", lambda t, ctx: visto.update(ctx) or b"%PDF")
+        c.get("/anagrafica/codici-fiscali/stampa.pdf", {"stato": "non_valido"})
+        assert [len(r) for _, r in visto["gruppi"]] == [1]
+        monkeypatch.undo()
+        for stato in ("non_valido", "tutti", ""):
+            r = c.get("/anagrafica/codici-fiscali/stampa.pdf", {"stato": stato})
+            assert r.status_code == 200 and r["Content-Type"] == "application/pdf"
+        assert EventoAudit.objects.filter(azione="esportazione").exists()
+        assert c.post("/anagrafica/codici-fiscali/stampa.pdf").status_code == 403
+
+    def test_stampa_pdf_senza_permesso(self, client, crea_utente):
+        client.force_login(crea_utente("nessuno"))
+        assert client.get("/anagrafica/codici-fiscali/stampa.pdf").status_code == 403
+
+    def test_stampa_raggruppata_per_sezione(self, crea_utente):
+        from apps.anagrafica.views import StampaCodiciFiscaliView
+        from apps.soci import servizi
+        from apps.soci.models import Sezione, TipologiaSocio
+
+        u = crea_utente("segr", ruoli=["Segretario"])
+        tip = TipologiaSocio.objects.get(nome="Ordinario")
+        b = Sezione.objects.create(codice="B", nome="Bella", ordine=2)
+        a = Sezione.objects.create(codice="A", nome="Atella", ordine=1)
+        righe = []
+        for cognome, sezione in (("Uno", b), ("Due", a), ("Tre", None)):
+            s = Soggetto.objects.create(cognome=cognome, nome="Mario")
+            if sezione:
+                servizi.ammetti_socio(s, tip, u, sezione=sezione)
+            righe.append((Soggetto.objects.get(pk=s.pk), None))
+        gruppi = StampaCodiciFiscaliView._per_sezione(righe)
+        assert [(t, [p.cognome for p, _ in r]) for t, r in gruppi] == [
+            ("Atella", ["Due"]),
+            ("Bella", ["Uno"]),
+            ("Non soci o senza sezione", ["Tre"]),
+        ]
+        Sezione.objects.exclude(pk=a.pk).update(attiva=False)
+        assert StampaCodiciFiscaliView._per_sezione(righe) == [("", righe)]
