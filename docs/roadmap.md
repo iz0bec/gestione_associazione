@@ -113,6 +113,17 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   - per un codice **non valido** (es. quelli dei vecchi gestionali, finiti nelle note) proposta del
     codice calcolato dai dati, da confermare;
   - elenco dei codici mancanti, non validi o incoerenti, con la correzione proposta.
+- **Firme in calce a tutte le stampe**. Oggi le firmano solo i modelli di `apps/documenti`
+  (il presidente in carica, o il nome indicato nel modello). *Da fare*: un blocco firme comune in
+  `pdf/base.html` alimentato dalle cariche in corso degli Organi sociali alla data del documento,
+  con qualifica e nome:
+  - **Presidente** su tutte le stampe ufficiali (ricevute di quota e di protocollo, libro soci,
+    rendiconto, inventario, tessere);
+  - **firme collegiali dove previste**: presidente e segretario della riunione su convocazioni,
+    verbali e delibere; il tesoriere (se c'è) accanto al presidente sul rendiconto; i revisori
+    (se ci sono) sulla relazione al rendiconto;
+  - in mancanza della carica, spazio per la firma autografa senza nome; mai un nome inventato;
+  - opzione per l'immagine della firma (caricata nella carica, servita solo ai PDF).
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.
 - Area personale del socio: tessera digitale con QR verificabile, dati e quote.
