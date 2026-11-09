@@ -461,3 +461,50 @@ def test_sezione_nelle_schede(client_ruolo, nord, ordinario):
     assert "Sezione di Sezione Nord" in c.get(f"/anagrafica/{s.pk}/").content.decode()
     assert 'title="Sezione di appartenenza' in c.get(f"/soci/{socio.pk}/").content.decode()
     assert 'title="Sezione di appartenenza' in c.get(f"/anagrafica/{s.pk}/").content.decode()
+
+
+def test_scambio_fra_installazioni_andata_e_ritorno(capo, ordinario):
+    """Esportazione di scambio da un'installazione e reimportazione in una vuota."""
+    from django.db import transaction
+
+    from apps.anagrafica.models import Soggetto
+
+    anno = date.today().year
+    ordinario.quota_annua = 25
+    ordinario.save()
+    with transaction.atomic():
+        sez = Sezione.objects.create(codice="AV", nome="Avigliano", comune="Avigliano")
+        s = Soggetto.objects.create(cognome="Rossi", nome="Mario", codice_fiscale=CF_ROSSI,
+                                    data_nascita=date(1950, 3, 15), telefono="+39 0971 123456",
+                                    email="rossi@example.org")  # fmt: skip
+        socio = servizi.ammetti_socio(s, ordinario, capo, sezione=sez,
+                                      data_ammissione=date(2020, 3, 1))  # fmt: skip
+        servizi.carica_lotto(capo, anno=anno, numero_da=29000, numero_a=29010, cifre=6, sezione=sez)
+        t = servizi.rilascia_tessera(socio, anno, capo, pagata_il=date(anno, 2, 15),
+                                     metodo="contanti")  # fmt: skip
+        servizi.attribuisci_carta(t, capo, "029005")
+        contenuto = servizi.esporta_scambio(Socio.objects.all(), anno, capo)
+        transaction.set_rollback(True)  # l'altra installazione è vuota
+    assert not Soggetto.objects.filter(cognome="Rossi").exists()
+
+    mappa, righe, ignorate = importazione.leggi("scambio.xlsx", contenuto)
+    assert ignorate == [] and {"valido", "data_pagamento", "tessera_precedente"} <= set(
+        mappa.values())  # fmt: skip
+    opzioni = importazione.Opzioni(tipologia=ordinario, crea_sezioni=True, valido=True)
+    r = importazione.elabora(righe, opzioni, capo, esegui=True)
+    assert r.riepilogo["errore"] == 0, [e.note for e in r.esiti]
+    socio = Socio.objects.select_related("sezione", "soggetto").get(soggetto__cognome="Rossi")
+    assert socio.sezione.nome == "Avigliano" and socio.data_ammissione == date(2020, 3, 1)
+    assert socio.soggetto.telefono == "+39 0971 123456"  # nessun apice aggiunto
+    t = socio.tessera_anno(anno)
+    assert t.carta.numero == 29005 and t.pagata_il == date(anno, 2, 15) and t.incasso_esterno
+
+
+def test_telefoni_con_prefisso_internazionale():
+    assert importazione._telefoni("+39 0971 123456", "+39 333 1234567") == (
+        "+39 0971 123456", "+39 333 1234567")  # fmt: skip
+    assert importazione._telefoni("0039 0971 123456, 3471234567") == (
+        "0039 0971 123456",
+        "3471234567",
+    )
+    assert importazione._telefoni("0972-123456, 3331234567") == ("0972-123456", "3331234567")

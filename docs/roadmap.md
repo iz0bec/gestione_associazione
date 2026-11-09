@@ -90,6 +90,16 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 
 ## Fase 2 - Dopo la RC (proposte)
 
+- **Allineamento fra installazioni** (federazione ↔ sezioni). ✅ *Fatto*: scambio con file Excel
+  nei due sensi. *Da fare*:
+  - opzione dell'importazione **«aggiorna anche i dati anagrafici diversi»** (oggi si completano
+    solo i vuoti) e passaggio della sospensione;
+  - **collegamento diretto** fra installazioni, senza file: ogni installazione espone un'API in
+    sola lettura dei soci della propria sezione (HTTPS, token per installazione con scadenza e
+    revoca, elenco degli indirizzi ammessi, registro di ogni richiesta); l'altra la interroga a
+    orari fissi, mostra le differenze e le applica con le stesse regole dell'importazione (o dopo
+    conferma). Nessun dato viaggia senza cifratura e nessuna installazione scrive nell'altra.
+
 - Scadenzario e calendario (assemblee, rinnovi, ricorrenze, cerimonie) con esportazione iCal.
   ✅ *Fatti*: prossimi impegni, vista mensile, appuntamenti e scadenze inseriti a mano,
   riquadro nel cruscotto, esportazione iCal (file e collegamento personale).

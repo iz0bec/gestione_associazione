@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Scambio dei soci fra installazioni** (federazione e sezioni, nei due sensi): *Soci → Stampa ed
+  esporta → Per un'altra installazione (Excel)* con le stesse colonne dell'importazione (anagrafica,
+  sezione, tessere dell'anno e del precedente, Valido, data del pagamento), da reimportare così
+  com'è; l'importazione riconosce la nuova colonna **Data pagamento**.
+
+### Corretto
+- Importazione dei soci: un telefono fisso con il prefisso internazionale (+39 0971…) veniva
+  registrato come cellulare.
+
 ## [1.0.0] - 2026-11-09
 
 **Prima versione stabile.** Comprende tutto quanto rilasciato nelle release candidate 0.0.1-rc.1 … rc.16 e le novità seguenti. Requisiti: Python 3.13, Django 6.1, PostgreSQL; installazione su Debian/Ubuntu o in un container LXC (la build Docker non è ancora verificata).

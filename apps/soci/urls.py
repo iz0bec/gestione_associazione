@@ -19,6 +19,7 @@ urlpatterns = [
     path("ammissione/<int:soggetto>/", views.AmmissioneView.as_view(), name="ammissione"),
     path("libro-soci.pdf", views.LibroSociPdfView.as_view(), name="libro_pdf"),
     path("soci.csv", views.LibroSociCsvView.as_view(), name="esporta"),
+    path("soci-scambio.xlsx", views.SociScambioView.as_view(), name="esporta_scambio"),
     path("<int:pk>/", views.DettaglioView.as_view(), name="dettaglio"),
     path("<int:pk>/modifica/", views.ModificaView.as_view(), name="modifica"),
     path("<int:pk>/cessazione/", views.CessazioneView.as_view(), name="cessazione"),

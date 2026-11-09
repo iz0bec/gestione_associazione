@@ -9,6 +9,7 @@
     <div class="dropdown-menu dropdown-menu-end">
       <a class="dropdown-item" href="{% url 'soci:libro_pdf' %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Libro soci (PDF)</a>
       <a class="dropdown-item" href="{% url 'soci:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-2"></i>Elenco filtrato (CSV)</a>
+      <a class="dropdown-item" href="{% url 'soci:esporta_scambio' %}?{{ request.GET.urlencode }}" title="Stesse colonne dell'importazione: si reimporta in un'altra installazione"><i class="ti ti-arrows-exchange me-2"></i>Per un'altra installazione (Excel)</a>
     </div>
   </div>
   {% endif %}

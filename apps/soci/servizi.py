@@ -887,3 +887,60 @@ def esporta_tesserati_csv(anno, destinazione, utente, sezioni=None):
 
 def tipologie_attive():
     return TipologiaSocio.objects.filter(attiva=True)
+
+
+# --- esportazione di scambio fra installazioni ---------------------------------------------------
+
+INTESTAZIONE_SCAMBIO = [
+    "Sezione", "Codice Sezione", "Matricola", "Cognome", "Nome", "Sesso", "Codice Fiscale",
+    "Data di nascita", "Luogo di nascita", "Indirizzo", "CAP", "Comune", "Provincia", "Email",
+    "Telefono", "Cellulare", "Tipologia", "Data di ammissione", "Data di cessazione",
+    "Numero Tessera Anno {precedente}", "Numero Tessera", "Anno Sociale", "Data Tessera",
+    "Valido", "Data pagamento",
+]  # fmt: skip
+
+
+def esporta_scambio(queryset, anno, utente):
+    """Elenco soci (es. di una sezione) in Excel, con le intestazioni riconosciute
+    dall'importazione: si reimporta così com'è in un'altra installazione per allinearla
+    (anagrafica, tessere dell'anno e del precedente, pagamenti, cessazioni)."""
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Soci {anno}"
+    ws.append([c.format(precedente=anno - 1) for c in INTESTAZIONE_SCAMBIO])
+    soci = queryset.select_related("soggetto", "tipologia", "sezione").order_by("numero")
+    tessere = {}
+    for t in (
+        Tessera.objects.valide()
+        .filter(socio__in=soci, anno__in=(anno, anno - 1))
+        .select_related("carta")
+    ):
+        tessere[(t.socio_id, t.anno)] = t
+    n = 0
+    for s in soci:
+        p, t, prec = s.soggetto, tessere.get((s.pk, anno)), tessere.get((s.pk, anno - 1))
+        # SI = quota versata o esente, NO = da versare, vuoto = nessuna tessera dell'anno
+        valido = "" if t is None else ("SI" if (t.pagata or t.importo == 0) else "NO")
+        riga = [
+            s.sezione.nome if s.sezione_id else "", s.sezione.codice if s.sezione_id else "",
+            s.matricola, p.cognome, p.nome, p.sesso, p.codice_fiscale or "", p.data_nascita,
+            p.luogo_nascita, p.indirizzo, p.cap, p.comune, p.provincia, p.email, p.telefono,
+            p.cellulare, s.tipologia.nome, s.data_ammissione, s.data_cessazione,
+            prec.carta.codice if prec and prec.carta_id else "",
+            t.carta.codice if t and t.carta_id else "", anno if t else "",
+            t.data_rilascio if t else None, valido, t.pagata_il if t else None,
+        ]  # fmt: skip
+        ws.append(riga)
+        for cella in ws[ws.max_row]:  # i valori restano esatti; nessuno diventa formula
+            if isinstance(cella.value, str) and cella.value.startswith("="):
+                cella.data_type = "s"
+        n += 1
+    for colonna in ws.columns:
+        ws.column_dimensions[colonna[0].column_letter].width = 16
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    registra(Azione.ESPORTAZIONE, utente=utente, descrizione=f"Soci per scambio ({n} righe)",
+             righe=n, anno=anno)  # fmt: skip
+    return buffer.getvalue()

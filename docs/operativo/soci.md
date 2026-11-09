@@ -234,9 +234,32 @@ proprie sezioni). Ogni consultazione è registrata.
 |---|---|---|
 | **Libro soci** (PDF, A4 orizzontale, tutti gli iscritti compresi i cessati) | Soci → Stampa ed esporta | presidente, segretario, amministratore |
 | **Elenco filtrato** (CSV per Excel, con sezione e matricola) | Soci → Stampa ed esporta | come sopra |
+| **Per un'altra installazione** (Excel di scambio, vedi sotto) | Soci → Stampa ed esporta | come sopra |
 | **Ricevuta** (PDF) | tessera pagata | tutti i ruoli che vedono le tessere |
 
 Ogni stampa ed esportazione è registrata nel registro attività.
+
+### Scambio dei soci fra installazioni (federazione e sezioni)
+
+Quando la federazione e le sezioni usano ciascuna la propria installazione, l'elenco dei soci si
+tiene allineato **nei due sensi** con un file Excel:
+
+1. nell'installazione di partenza, *Soci*, filtro sulla **sezione** (e l'anno nel filtro *Quota*,
+   se non è l'anno in corso), poi **Stampa ed esporta → Per un'altra installazione (Excel)**;
+2. nell'installazione di arrivo, *Sistema → Importa soci*, si carica il file così com'è: le colonne
+   sono le stesse dell'importazione dal registro nazionale, più **Data pagamento**. Conviene
+   spuntare **Tieni conto della colonna «Valido»**.
+
+Il file contiene, per ogni socio: anagrafica, sezione (nome e codice), matricola, tipologia, date di
+ammissione e cessazione, numero di tessera dell'anno e dell'anno precedente, **Valido** (SI = quota
+versata o esente, NO = da versare) e **data del pagamento**. All'importazione:
+
+- i soci nuovi vengono iscritti, le **tessere** attribuite con il loro numero, le **quote** segnate
+  come incassate alla data del pagamento (incassi avvenuti altrove: niente ricevuta né prima nota);
+- le **cessazioni** vengono registrate;
+- dei soci già presenti si **completano i dati anagrafici vuoti**; quelli diversi **non vengono
+  sovrascritti** e sono segnalati nel rapporto, da sistemare a mano dove è giusto;
+- la sospensione di un socio non passa da un'installazione all'altra.
 
 ## Tipologie
 

@@ -721,6 +721,26 @@ class LibroSociPdfView(PermessoMixin, View):
         )
 
 
+class SociScambioView(PermessoMixin, View):
+    """Elenco filtrato (es. una sezione) in Excel, da reimportare in un'altra installazione."""
+
+    permission_required = "soci.esporta_libro_soci"
+
+    def get(self, request):
+        from django.utils.text import slugify
+
+        filtro = SocioFilter(request.GET, queryset=_soci(request), request=request)
+        anno = request.GET.get("anno", "")
+        anno = int(anno) if anno.isdigit() else date.today().year
+        contenuto = servizi.esporta_scambio(filtro.qs, anno, request.user)
+        sezione = filtro.form.cleaned_data.get("sezione") if filtro.form.is_valid() else None
+        nome = f"soci_{slugify(sezione.nome) + '_' if sezione else ''}{date.today():%Y%m%d}.xlsx"
+        risposta = HttpResponse(contenuto, content_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))  # fmt: skip
+        risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
+        return risposta
+
+
 class LibroSociCsvView(PermessoMixin, View):
     permission_required = "soci.esporta_libro_soci"
 
