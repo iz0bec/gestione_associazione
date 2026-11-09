@@ -39,6 +39,7 @@
 | **1.0.4** ✅ | aggiornamenti che mantengono porta e indirizzo del servizio; benvenuto dei container con l'indirizzo pubblico | GitHub, GitLab |
 | **1.0.5** ✅ | stampa PDF dei codici fiscali da sistemare (per sezione); menu laterale nascondibile | GitHub, GitLab |
 | **1.0.6** ✅ | coriandoli nel calendario quando ci sono compleanni | GitHub, GitLab |
+| **1.0.7** ✅ | rappresentante legale (anche esterno, per tutta la struttura), modelli di convocazione, modelli privacy/GDPR | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
