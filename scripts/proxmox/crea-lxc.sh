@@ -124,8 +124,11 @@ pct status "$CTID" >/dev/null 2>&1 && errore "il container ${CTID} esiste già (
 
 passo "Template Debian ${DEBIAN}"
 pveam update >/dev/null
-TEMPLATE="$(pveam available --section system | awk -v d="debian-${DEBIAN}-standard" '$2 ~ d {print $2}' | sort -V | tail -1)"
-[[ -n "$TEMPLATE" ]] || errore "template debian-${DEBIAN}-standard non disponibile."
+# Solo l'architettura dell'host: il catalogo contiene anche i template arm64, che
+# nell'ordinamento seguono gli amd64 e su un host x86_64 non si avviano.
+ARCH="$(dpkg --print-architecture)"
+TEMPLATE="$(pveam available --section system | awk -v d="debian-${DEBIAN}-standard" -v a="_${ARCH}." '$2 ~ d && index($2, a) {print $2}' | sort -V | tail -1)"
+[[ -n "$TEMPLATE" ]] || errore "template debian-${DEBIAN}-standard (${ARCH}) non disponibile."
 pveam list "$STORAGE_TEMPLATE" | grep -q "$TEMPLATE" || pveam download "$STORAGE_TEMPLATE" "$TEMPLATE"
 
 passo "Creazione del container ${CTID} (${NOME})"
