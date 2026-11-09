@@ -23,6 +23,7 @@ services:
       - "${APP_PORT:-8000}:8000"
     volumes:
       - media:/data/media
+      - backup:/data/backup
     depends_on:
       db:
         condition: service_healthy
@@ -36,8 +37,12 @@ services:
       DATABASE_URL: postgres://gestione:${DB_PASSWORD:?Impostare DB_PASSWORD in .env}@db:5432/gestione_associazione
       SALTA_MIGRAZIONI: "1"
     command: ["python", "manage.py", "pianificatore"]
+    # il controllo dell'immagine interroga il web server, che qui non c'è
+    healthcheck:
+      disable: true
     volumes:
       - media:/data/media
+      - backup:/data/backup
     depends_on:
       app:
         condition: service_healthy
@@ -59,3 +64,4 @@ services:
 volumes:
   db:
   media:
+  backup:

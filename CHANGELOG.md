@@ -12,6 +12,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ### Corretto
 - `crea-lxc.sh` sceglieva il template Debian **arm64** su host x86_64 (il container non si avviava).
 - `installa.sh` lanciato da `crea-lxc.sh` non trovava `uv` («uv: comando non trovato»).
+- **Docker**: file statici illeggibili (pagine senza stile ed errori), backup impossibili
+  (`pg_dump` mancante: l'immagine passa a Debian 13 con il client PostgreSQL 17) e salvati fuori
+  dai volumi (nuovo volume `backup`), errore del socket di controllo di gunicorn, pianificatore
+  segnalato come non funzionante dal controllo di salute del web server.
 
 ## [1.0.2] - 2026-11-09
 

@@ -39,7 +39,8 @@ docker compose exec app python manage.py createsuperuser
 ```
 
 L'app è su `http://<server>:<APP_PORT>`. All'avvio il container applica le migrazioni e
-allinea i ruoli. I dati stanno in due volumi: `db` (PostgreSQL) e `media` (allegati).
+allinea i ruoli. I dati stanno in tre volumi: `db` (PostgreSQL), `media` (allegati) e
+`backup` (backup dell'applicazione, anche quello automatico notturno del pianificatore).
 
 ## Su server Linux senza Docker (consigliato)
 
