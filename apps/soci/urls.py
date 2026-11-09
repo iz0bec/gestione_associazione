@@ -24,6 +24,7 @@ urlpatterns = [
     path("<int:pk>/modifica/", views.ModificaView.as_view(), name="modifica"),
     path("<int:pk>/cessazione/", views.CessazioneView.as_view(), name="cessazione"),
     path("<int:pk>/stato/", views.StatoView.as_view(), name="stato"),
+    path("<int:pk>/trasferisci/", views.TrasferimentoView.as_view(), name="trasferisci"),
     path("<int:pk>/modulo.pdf", views.ModuloSocioPdfView.as_view(), name="modulo_socio"),
     path("<int:pk>/modulo-firmato.pdf", views.ModuloFirmatoView.as_view(), name="modulo_firmato"),
     path("<int:pk>/modulo-firmato/", views.CaricaModuloView.as_view(), name="carica_modulo"),

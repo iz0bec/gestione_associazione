@@ -10,6 +10,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   diversi** (dati anagrafici, matricola, sospensione e riattivazione prendono il valore del file;
   nome, cognome e codice fiscale invariati; nessuna riattivazione dei cessati) e colonna **Stato
   socio** nell'esportazione di scambio.
+- **Trasferimento di sezione** di un socio (scheda del socio → *Trasferisci di sezione*): data,
+  motivo e storico dei passaggi; numero, tessere e quote invariati; le cariche in corso negli organi
+  della sezione di provenienza si chiudono alla stessa data a scelta, altrimenti vengono segnalate.
+  Permesso nuovo `soci.trasferisci_socio` (Amministratore di sistema, Segretario). Nella modifica
+  del socio la sezione non è più modificabile.
 - **Anteprima** dell'importazione più chiara: ogni differenza è indicata come *valore attuale →
   valore del file*.
 

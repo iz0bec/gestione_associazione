@@ -188,6 +188,7 @@ class Socio(ModelloBase):
             ("esporta_libro_soci", "Può stampare ed esportare il libro soci"),
             ("cessa_socio", "Può registrare la cessazione di un socio"),
             ("importa_soci", "Può importare i soci dal registro nazionale"),
+            ("trasferisci_socio", "Può trasferire un socio in un'altra sezione"),
         ]
         constraints = [
             models.CheckConstraint(
@@ -465,6 +466,30 @@ class Tessera(ModelloBase):
         if self.pagata:
             return "pagata"
         return "esente" if self.importo == 0 else "da pagare"
+
+
+class Trasferimento(models.Model):
+    """Passaggio di un socio da una sezione a un'altra (storico)."""
+
+    socio = models.ForeignKey(Socio, on_delete=models.CASCADE, related_name="trasferimenti")
+    da = models.ForeignKey(Sezione, on_delete=models.PROTECT, related_name="+",
+                           verbose_name="dalla sezione")  # fmt: skip
+    a = models.ForeignKey(Sezione, on_delete=models.PROTECT, related_name="+",
+                          verbose_name="alla sezione")  # fmt: skip
+    data = models.DateField()
+    motivo = models.CharField(max_length=255, blank=True)
+    registrato_il = models.DateTimeField(auto_now_add=True)
+    registrato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "trasferimento di sezione"
+        verbose_name_plural = "trasferimenti di sezione"
+        ordering = ["-data", "-registrato_il"]
+
+    def __str__(self):
+        return f"{self.socio}: {self.da} → {self.a} ({self.data:%d/%m/%Y})"
 
 
 class DomandaIscrizione(models.Model):

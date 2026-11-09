@@ -593,3 +593,78 @@ def test_scambio_simmetrico_con_anteprima(capo, ordinario, client_ruolo):
     importazione.elabora(righe, importazione.Opzioni(**base, aggiorna_dati=True), capo, esegui=True)
     socio.refresh_from_db()
     assert socio.stato == "attivo"
+
+
+class TestTrasferimento:
+    def test_trasferimento_con_storico_e_cariche(self, capo, ordinario, nord):
+        from datetime import timedelta
+
+        from apps.organi import servizi as organi
+        from apps.soci.models import Trasferimento
+
+        principale = Sezione.objects.get(codice="001")
+        socio = servizi.ammetti_socio(
+            Soggetto.objects.create(nome="Ada", cognome="Rossi"), ordinario, capo,
+            data_ammissione=date.today() - timedelta(days=30),
+        )  # fmt: skip
+        direttivo = organi.crea_organi_sezione(principale, capo)[0]
+        organi.nomina(direttivo, socio.soggetto, "consigliere", date.today() - timedelta(days=20),
+                      capo)  # fmt: skip
+        aperte, chiuse = servizi.trasferisci(socio, nord, capo, motivo="Cambio di residenza")
+        socio.refresh_from_db()
+        assert socio.sezione == nord and len(aperte) == 1 and chiuse == []
+        t = Trasferimento.objects.get(socio=socio)
+        assert (t.da, t.a, t.motivo) == (principale, nord, "Cambio di residenza")
+        # ritorno, chiudendo le cariche nella sezione di provenienza (nessuna: era nella principale)
+        servizi.trasferisci(socio, principale, capo, chiudi_cariche=True)
+        servizi.trasferisci(socio, nord, capo, chiudi_cariche=True)
+        assert direttivo.cariche.get().al == date.today()
+        assert socio.trasferimenti.count() == 3
+
+    def test_casi_non_ammessi(self, capo, ordinario, nord):
+        principale = Sezione.objects.get(codice="001")
+        socio = servizi.ammetti_socio(Soggetto.objects.create(cognome="Bianchi"), ordinario, capo)
+        with pytest.raises(servizi.OperazioneNonValida, match="diversa"):
+            servizi.trasferisci(socio, principale, capo)
+        with pytest.raises(servizi.OperazioneNonValida, match="data"):
+            servizi.trasferisci(socio, nord, capo, data=date(1900, 1, 1))
+        nord.attiva = False
+        nord.save()
+        with pytest.raises(servizi.OperazioneNonValida, match="non è attiva"):
+            servizi.trasferisci(socio, nord, capo)
+        nord.attiva = True
+        nord.save()
+        servizi.cessa_socio(socio, capo, data_cessazione=date.today(), causa="dimissioni")
+        with pytest.raises(servizi.OperazioneNonValida, match="cessato"):
+            servizi.trasferisci(socio, nord, capo)
+
+    def test_vista_e_permessi(self, client, client_ruolo, capo, ordinario, nord):
+        socio = servizi.ammetti_socio(Soggetto.objects.create(cognome="Verdi"), ordinario, capo)
+        url = reverse("soci:trasferisci", args=[socio.pk])
+        dati = {"trasferimento-sezione": nord.pk, "trasferimento-data": date.today().isoformat(),
+                "trasferimento-motivo": "Richiesta"}  # fmt: skip
+        assert client_ruolo("Consigliere").post(url, dati).status_code == 403
+        client.force_login(capo)
+        dettaglio = reverse("soci:dettaglio", args=[socio.pk])
+        assert "Trasferisci di sezione" in client.get(dettaglio).content.decode()
+        r = client.post(url, dati, follow=True)
+        socio.refresh_from_db()
+        assert socio.sezione == nord and "Trasferimenti di sezione" in r.content.decode()
+        # in Modifica la sezione non si cambia più
+        html = client.get(reverse("soci:modifica", args=[socio.pk])).content.decode()
+        assert "Trasferisci di sezione" in html
+
+    def test_sezione_di_arrivo_fuori_dalle_proprie(self, client, crea_utente, capo, ordinario,
+                                                    nord):  # fmt: skip
+        sud = Sezione.objects.create(codice="S01", nome="Sezione Sud", comune="Sudville")
+        socio = servizi.ammetti_socio(
+            Soggetto.objects.create(cognome="Neri"), ordinario, capo, sezione=nord
+        )
+        segretario = crea_utente("segr-nord", ruoli=["Segretario"])
+        segretario.sezioni.add(nord)
+        client.force_login(segretario)
+        r = client.post(reverse("soci:trasferisci", args=[socio.pk]),
+                        {"trasferimento-sezione": sud.pk,
+                         "trasferimento-data": date.today().isoformat()})  # fmt: skip
+        socio.refresh_from_db()
+        assert r.status_code == 403 and socio.sezione == nord

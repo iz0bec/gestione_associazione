@@ -57,8 +57,15 @@ al nome; il riquadro *Cariche sociali* elenca anche quelle concluse, con date e 
 (le cariche si registrano negli [Organi sociali](organi.md#cariche) e compaiono anche nella scheda
 dell'anagrafica). Dai pulsanti in alto:
 
-- **Modifica**: sezione, matricola, tipologia, data e delibera di ammissione, note, **foto** (ogni
-  cambio è registrato);
+- **Modifica**: matricola, tipologia, data e delibera di ammissione, note, **foto** (ogni cambio è
+  registrato); la sezione si sceglie qui solo all'iscrizione;
+- **Trasferisci di sezione** (solo con più sezioni attive): nuova sezione, data e motivo. Numero
+  del libro soci, tessere e quote restano quelli; il passaggio compare nel riquadro *Trasferimenti
+  di sezione* e nel registro attività. Le **cariche in corso** negli organi della sezione di
+  provenienza (es. consigliere del direttivo di sezione) si possono chiudere alla stessa data con
+  l'apposita casella; altrimenti restano aperte e un avviso le elenca, così si decide negli
+  [Organi sociali](organi.md#cariche). Chi gestisce solo alcune sezioni può trasferire solo verso
+  quelle;
 - **Sospendi / Riattiva**;
 - **Cessazione**: data, causa (dimissioni, decesso, esclusione, morosità, altro) e note.
   Il socio resta nel libro con il suo numero; perde la categoria *Socio*. Per il **decesso** la data

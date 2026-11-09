@@ -53,6 +53,7 @@ from .forms import (
     StatoCartaForm,
     TesseraForm,
     TipologiaForm,
+    TrasferimentoForm,
 )
 from .models import (
     CartaTessera,
@@ -141,6 +142,8 @@ class DettaglioView(PermessoMixin, DetailView):
 
         ctx["cariche"] = cariche_di(self.object.soggetto)
         ctx["form_cessazione"] = CessazioneForm(prefix="cessazione")
+        ctx["form_trasferimento"] = TrasferimentoForm(prefix="trasferimento", socio=self.object)
+        ctx["trasferimenti"] = self.object.trasferimenti.select_related("da", "a")
         ctx["form_annullamento"] = MotivoForm(prefix="annulla")
         if self.request.user.has_perm("core.view_eventoaudit"):
             tipi = ContentType.objects.get_for_models(Socio, Tessera)
@@ -283,6 +286,34 @@ class CessazioneView(_AzioneSocioView):
             note=d["note"],
         )
         messages.success(request, "Cessazione registrata.")
+
+
+class TrasferimentoView(_AzioneSocioView):
+    permission_required = "soci.trasferisci_socio"
+
+    def esegui(self, request, socio):
+        form = TrasferimentoForm(request.POST, prefix="trasferimento", socio=socio)
+        if not form.is_valid():
+            raise OperazioneNonValida(
+                [m for errori in form.errors.values() for m in errori] or "Dati non validi."
+            )
+        d = form.cleaned_data
+        sezioni.controlla(request.user, d["sezione"].pk)  # anche la sezione di arrivo
+        aperte, chiuse = servizi.trasferisci(
+            socio, d["sezione"], request.user, data=d["data"], motivo=d["motivo"],
+            chiudi_cariche=d["chiudi_cariche"],
+        )  # fmt: skip
+        messages.success(request, f"Socio trasferito alla sezione {d['sezione']}.")
+        if chiuse:
+            elenco = ", ".join(f"{c.get_ruolo_display()} in {c.organo}" for c in chiuse)
+            messages.info(request, f"Cariche chiuse: {elenco}.")
+        if aperte:
+            elenco = ", ".join(f"{c.get_ruolo_display()} in {c.organo}" for c in aperte)
+            messages.warning(
+                request,
+                f"Ha ancora cariche nella sezione di provenienza ({elenco}): "
+                "se finiscono, registrare la fine carica in Organi sociali.",
+            )
 
 
 class StatoView(_AzioneSocioView):

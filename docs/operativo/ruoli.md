@@ -57,6 +57,8 @@ e Segretario, l'anonimizzazione al solo Amministratore di sistema (vedi [Anagraf
 ruolo, vedrà e gestirà solo soci, tessere, carichi e domande di quelle sezioni. Gli utenti senza
 sezioni assegnate, e l'amministratore tecnico, vedono tutto.
 
+Il **trasferimento di sezione** è riservato ad Amministratore di sistema e Segretario.
+
 Incassi e segreteria sono separati di proposito: chi iscrive i soci non registra i pagamenti.
 In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 

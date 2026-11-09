@@ -14,6 +14,7 @@
     <form method="post" action="{% url 'soci:stato' socio.pk %}" data-conferma="{% if socio.stato == 'cessato' %}Riammettere il socio con lo stesso numero?{% else %}Riattivare il socio?{% endif %}">{% csrf_token %}<input type="hidden" name="stato" value="attivo"><button class="btn" type="submit"><i class="ti ti-player-play me-1"></i>{% if socio.stato == 'cessato' %}Riammetti{% else %}Riattiva{% endif %}</button></form>
     {% endif %}
   {% endif %}
+  {% if perms.soci.trasferisci_socio and multisezione and socio.stato != "cessato" %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#trasferimento"><i class="ti ti-arrows-transfer-up me-1"></i>Trasferisci di sezione</button>{% endif %}
   {% if perms.soci.cessa_socio and socio.stato != "cessato" %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#cessazione"><i class="ti ti-user-off me-1"></i>Cessazione</button>{% endif %}
   {% if perms.soci.change_socio %}<a class="btn btn-primary" href="{% url 'soci:modifica' socio.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
 </div>
@@ -107,6 +108,15 @@
       </div>
     </div>
 
+    {% if trasferimenti %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-arrows-transfer-up me-2"></i>Trasferimenti di sezione</h2></div>
+      <div class="list-group list-group-flush">
+        {% for t in trasferimenti %}<div class="list-group-item"><span class="text-secondary">dal {{ t.data|date:"d/m/Y" }}</span> · {{ t.da.nome }} → <strong>{{ t.a.nome }}</strong>{% if t.motivo %}<div class="small text-secondary">{{ t.motivo }}</div>{% endif %}</div>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     {% if storia is not None %}
     <div class="card mt-3">
       <div class="card-header"><h2 class="card-title">Storia</h2></div>
@@ -176,6 +186,20 @@
 </div>
 {% endif %}
 
+{% if perms.soci.trasferisci_socio and multisezione and socio.stato != "cessato" %}
+<div class="modal fade" id="trasferimento" tabindex="-1" aria-labelledby="titolo-trasferimento" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'soci:trasferisci' socio.pk %}" novalidate>{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-trasferimento">Trasferisci {{ socio.soggetto.nome_completo }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        <p class="small text-secondary">Oggi nella sezione <strong>{{ socio.sezione.nome }}</strong>. Il numero nel libro soci e la tessera dell'anno non cambiano; il passaggio resta nello storico.</p>
+        {{ form_trasferimento }}
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Trasferisci</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% if perms.soci.cessa_socio %}
 <div class="modal fade" id="cessazione" tabindex="-1" aria-labelledby="titolo-cessazione" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">

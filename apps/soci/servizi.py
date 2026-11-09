@@ -91,6 +91,57 @@ def ammetti_socio(soggetto, tipologia, utente, *, data_ammissione=None, delibera
 
 
 @transaction.atomic
+def trasferisci(socio, sezione, utente, *, data=None, motivo="", chiudi_cariche=False):
+    """Sposta il socio in un'altra sezione, con lo storico. Le cariche in corso negli organi della
+    sezione di provenienza si chiudono alla data del trasferimento solo se richiesto
+    (`chiudi_cariche`). Restituisce (cariche rimaste aperte, cariche chiuse)."""
+    from apps.organi import servizi as organi
+    from apps.organi.models import Carica
+
+    from .models import Trasferimento
+
+    socio = Socio.objects.select_for_update().select_related("sezione", "soggetto").get(pk=socio.pk)
+    data = data or date.today()
+    if socio.stato == Socio.Stato.CESSATO:
+        raise OperazioneNonValida("Un socio cessato non si trasferisce.")
+    if sezione is None or sezione.pk == socio.sezione_id:
+        raise OperazioneNonValida("Scegliere una sezione diversa da quella attuale.")
+    if not sezione.attiva:
+        raise OperazioneNonValida(f"La sezione {sezione} non è attiva.")
+    if data < socio.data_ammissione or data > date.today():
+        raise OperazioneNonValida("La data deve essere tra l'ammissione e oggi.")
+    da = socio.sezione
+    Trasferimento.objects.create(socio=socio, da=da, a=sezione, data=data, motivo=motivo[:255],
+                                 registrato_da=utente)  # fmt: skip
+    socio.sezione = sezione
+    socio.modificato_da = utente
+    socio.save(update_fields=["sezione", "modificato_da", "modificato_il"])
+    passaggio = {"da": str(da), "a": str(sezione)}
+    registra(Azione.MODIFICA, socio, utente=utente, trasferimento=passaggio, data=str(data),
+             motivo=motivo)  # fmt: skip
+    oggi = date.today()
+    cariche = list(
+        Carica.objects.filter(soggetto=socio.soggetto, organo__sezione=da, dal__lte=oggi)
+        .exclude(al__lte=oggi)
+        .select_related("organo")
+    )
+    if not chiudi_cariche:
+        return cariche, []
+    chiusa = f"Trasferito alla sezione {sezione}."
+    for c in cariche:
+        if data < c.dal:
+            raise OperazioneNonValida(
+                f"La carica di {c.get_ruolo_display().lower()} in {c.organo} inizia il "
+                f"{c.dal:%d/%m/%Y}, dopo la data del trasferimento."
+            )
+        try:
+            organi.termina_carica(c, data, utente, chiusa)
+        except organi.OperazioneNonValida as e:
+            raise OperazioneNonValida(e.messages) from e
+    return [], cariche
+
+
+@transaction.atomic
 def salva_socio(form, utente, *, foto=None, togli_foto=False):
     """Modifica dei dati di iscrizione (sezione, tipologia, delibera, note) e della foto."""
     from apps.anagrafica.servizi import imposta_foto

@@ -59,6 +59,22 @@ def prepara_sezione(form, utente, nome="sezione"):
             form.data[form.add_prefix(nome)] = qs.first().pk
 
 
+class TrasferimentoForm(StileMixin, forms.Form):
+    sezione = forms.ModelChoiceField(label="Nuova sezione", queryset=Sezione.objects.none())
+    data = forms.DateField(label="Dal", widget=CampoData, initial=date.today)
+    motivo = forms.CharField(required=False, max_length=255,
+                             help_text="Es. cambio di residenza, richiesta del socio.")  # fmt: skip
+    chiudi_cariche = forms.BooleanField(
+        label="Chiudi alla stessa data le cariche negli organi della sezione di provenienza",
+        required=False,
+    )
+
+    def __init__(self, *args, socio=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        qs = Sezione.objects.filter(attiva=True).order_by("nome")
+        self.fields["sezione"].queryset = qs.exclude(pk=socio.sezione_id) if socio else qs
+
+
 class TipologiaField(forms.ModelChoiceField):
     def __init__(self, **kwargs):
         super().__init__(queryset=TipologiaSocio.objects.filter(attiva=True), **kwargs)
@@ -116,6 +132,12 @@ class SocioForm(StileMixin, CampiFotoMixin, forms.ModelForm):
     def __init__(self, *args, utente=None, **kwargs):
         super().__init__(*args, **kwargs)
         prepara_sezione(self, utente)
+        if self.instance.pk and "sezione" in self.fields:
+            # dopo l'iscrizione la sezione cambia solo con «Trasferisci di sezione» (con lo storico)
+            self.fields["sezione"].disabled = True
+            self.fields[
+                "sezione"
+            ].help_text = "Si cambia con «Trasferisci di sezione» nella scheda."
 
     def clean_matricola(self):
         matricola = self.cleaned_data["matricola"].strip()
