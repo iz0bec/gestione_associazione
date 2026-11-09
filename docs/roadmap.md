@@ -105,6 +105,14 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   ✅ *Fatti*: prossimi impegni, vista mensile, appuntamenti e scadenze inseriti a mano,
   riquadro nel cruscotto, esportazione iCal (file e collegamento personale).
 - ✅ Scambio dell'anagrafica con le rubriche (vCard): esportazione e importazione con anteprima.
+- **Codice fiscale assistito**. Oggi dal codice si ricavano sesso, data e luogo di nascita (compilati
+  se mancano, segnalati se in contrasto). *Da fare*, con `python-codicefiscale` già incluso:
+  - pulsante **Calcola** nelle schede (anagrafica, socio, domanda di iscrizione) da cognome, nome,
+    sesso, data e comune o stato di nascita, con scelta del comune fra quelli omonimi;
+  - controllo anche di **cognome e nome** rispetto al codice (oggi solo sesso e data);
+  - per un codice **non valido** (es. quelli dei vecchi gestionali, finiti nelle note) proposta del
+    codice calcolato dai dati, da confermare;
+  - elenco dei codici mancanti, non validi o incoerenti, con la correzione proposta.
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.
 - Area personale del socio: tessera digitale con QR verificabile, dati e quote.
