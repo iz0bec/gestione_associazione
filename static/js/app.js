@@ -187,6 +187,77 @@
     campo.select();
     if (navigator.clipboard) navigator.clipboard.writeText(campo.value).catch(function () {});
   });
+  // Codice fiscale assistito: <div data-cf-assistito="url"> sotto il campo; «Calcola» invia
+  // cognome, nome, sesso, data e luogo di nascita del modulo e mostra codice, avvisi o comuni omonimi
+  function campoCf(modulo, nome) { return modulo.querySelector('[name="' + nome + '"]'); }
+  function valoreCf(modulo, nome) {
+    var campi = modulo.querySelectorAll('[name="' + nome + '"]');
+    for (var i = 0; i < campi.length; i++) {
+      var c = campi[i];
+      if ((c.type === "radio" || c.type === "checkbox") && !c.checked) continue;
+      return c.value;
+    }
+    return "";
+  }
+  function esitoCf(box, testo, classe) {
+    var esito = box.querySelector("[data-cf-esito]");
+    esito.textContent = testo;
+    esito.className = "small mt-1 " + (classe || "");
+    return esito;
+  }
+  function calcolaCf(box) {
+    var modulo = box.closest("form");
+    var dati = new FormData();
+    ["cognome", "nome", "data_nascita", "luogo_nascita", "codice_fiscale"].forEach(function (n) {
+      dati.append(n, valoreCf(modulo, n));
+    });
+    var sesso = box.querySelector("[data-cf-sesso]");
+    dati.append("sesso", sesso ? sesso.value : valoreCf(modulo, "sesso"));
+    var token = campoCf(modulo, "csrfmiddlewaretoken");
+    var candidati = box.querySelector("[data-cf-candidati]");
+    candidati.replaceChildren();
+    esitoCf(box, "Calcolo…", "text-secondary");
+    fetch(box.dataset.cfAssistito, {
+      method: "POST", body: dati, credentials: "same-origin",
+      headers: { "X-CSRFToken": token ? token.value : "" },
+    })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (r) {
+        var campo = campoCf(modulo, "codice_fiscale");
+        if (r.candidati && r.candidati.length) {
+          esitoCf(box, r.errore, "text-warning");
+          r.candidati.forEach(function (etichetta) {
+            var b = document.createElement("button");
+            b.type = "button"; b.className = "btn btn-sm btn-outline-secondary"; b.textContent = etichetta;
+            b.addEventListener("click", function () {
+              var luogo = campoCf(modulo, "luogo_nascita");
+              if (luogo) luogo.value = etichetta;
+              calcolaCf(box);
+            });
+            candidati.appendChild(b);
+          });
+        } else if (r.errore) {
+          esitoCf(box, r.errore, "text-danger");
+        } else if (!campo.value.trim()) {
+          campo.value = r.codice;
+          esitoCf(box, "Calcolato dai dati: verificarlo sulla tessera sanitaria.", "text-success");
+        } else if (campo.value.trim().toUpperCase() === r.codice) {
+          esitoCf(box, "Corrisponde ai dati anagrafici.", "text-success");
+        } else {
+          var testo = "Dai dati risulta " + r.codice + (r.avvisi.length ? " (" + r.avvisi.join(", ") + ")" : "") + ". ";
+          var esito = esitoCf(box, testo, "text-warning");
+          var usa = document.createElement("button");
+          usa.type = "button"; usa.className = "btn btn-sm btn-link p-0 align-baseline"; usa.textContent = "Usa questo";
+          usa.addEventListener("click", function () { campo.value = r.codice; esitoCf(box, "Codice sostituito: verificarlo sulla tessera sanitaria.", "text-success"); });
+          esito.appendChild(usa);
+        }
+      })
+      .catch(function () { esitoCf(box, "Calcolo non riuscito: riprovare.", "text-danger"); });
+  }
+  document.addEventListener("click", function (ev) {
+    var pulsante = ev.target.closest("[data-cf-calcola]");
+    if (pulsante) calcolaCf(pulsante.closest("[data-cf-assistito]"));
+  });
   document.addEventListener("DOMContentLoaded", function () { inizializza(document); });
   document.addEventListener("htmx:load", function (ev) { inizializza(ev.target); });
 })();

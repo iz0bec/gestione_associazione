@@ -17,18 +17,18 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.text import slugify
 from django.views import View
-from django.views.generic import CreateView, DetailView, FormView, UpdateView
+from django.views.generic import CreateView, DetailView, FormView, TemplateView, UpdateView
 from django_filters.views import FilterView
 
 from apps.core.immagini import ImmagineNonValida, risposta_immagine
 from apps.core.models import EventoAudit
 from apps.core.views import PermessoMixin
 
-from . import servizi, vcard
+from . import codice_fiscale, servizi, vcard
 from .filtri import SoggettoFilter
 from .forms import ConsensoForm, ImportaVCardForm, SoggettoForm
 from .models import Soggetto
@@ -64,6 +64,10 @@ class DettaglioView(PermessoMixin, DetailView):
         from apps.organi.models import cariche_di
 
         ctx["cariche"] = cariche_di(self.object) if self.object.is_persona else []
+        if self.object.is_persona and not self.object.anonimizzato_il:
+            esame = codice_fiscale.esamina(self.object)
+            if esame.stato != "mancante" or ctx["socio"]:
+                ctx["esame_cf"] = esame
         if self.request.user.has_perm("comunicazioni.view_invio"):
             ctx["comunicazioni"] = self.object.comunicazioni.select_related("invio").order_by(
                 "-invio__creato_il"
@@ -354,3 +358,93 @@ class ConservazioneView(PermessoMixin, View):
             registra(Azione.MODIFICA, org, descrizione="Conservazione dei dati", **dettagli)
         messages.success(request, "Termini di conservazione salvati.")
         return redirect("anagrafica:conservazione")
+
+
+# --- codice fiscale assistito ------------------------------------------------------------
+
+
+class CalcolaCodiceFiscaleView(PermessoMixin, View):
+    """Calcolo del codice fiscale per il pulsante «Calcola» dei moduli (risposta JSON).
+
+    Con un codice già scritto nel modulo segnala anche le differenze con i dati.
+    """
+
+    http_method_names = ["post"]
+    PERMESSI = (
+        "anagrafica.add_soggetto",
+        "anagrafica.change_soggetto",
+        "soci.add_domandaiscrizione",
+    )
+
+    def has_permission(self):
+        return any(self.request.user.has_perm(p) for p in self.PERMESSI)
+
+    def post(self, request):
+        dati = {
+            campo: request.POST.get(campo, "").strip()
+            for campo in ("cognome", "nome", "sesso", "data_nascita", "luogo_nascita")
+        }
+        calcolo = codice_fiscale.calcola(**dati)
+        attuale = request.POST.get("codice_fiscale", "").strip().upper()
+        avvisi = []
+        if attuale and calcolo.codice and attuale != calcolo.codice:
+            avvisi = codice_fiscale.anomalie(attuale, **dati)
+        return JsonResponse({
+            "codice": calcolo.codice,
+            "errore": calcolo.errore,
+            "candidati": [luogo.etichetta for luogo in calcolo.candidati],
+            "avvisi": avvisi,
+        })  # fmt: skip
+
+
+class CodiciFiscaliView(PermessoMixin, TemplateView):
+    """Persone con il codice fiscale mancante, non valido o non corrispondente ai dati,
+    con la correzione calcolata da applicare (una per volta, con conferma)."""
+
+    permission_required = "anagrafica.view_soggetto"
+    template_name = "anagrafica/codici_fiscali.html"
+    STATI = {
+        "non_valido": "Non validi",
+        "incoerente": "Non corrispondenti",
+        "mancante": "Mancanti (soci)",
+    }
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        persone = (
+            Soggetto.objects.attivi()
+            .filter(tipo=Soggetto.Tipo.PERSONA, anonimizzato_il__isnull=True)
+            .order_by("cognome", "nome")
+        )
+        esami = [(p, codice_fiscale.esamina(p)) for p in persone.select_related("socio")]
+        # un codice mancante si segnala solo per i soci (per un contatto della rubrica è normale)
+        da_sistemare = [
+            (p, e) for p, e in esami
+            if e.da_sistemare and (e.stato != "mancante" or hasattr(p, "socio"))
+        ]  # fmt: skip
+        stato = self.request.GET.get("stato", "")
+        if stato not in self.STATI:
+            stato = "non_valido" if any(e.stato == "non_valido" for _, e in da_sistemare) else ""
+        ctx.update(
+            stato=stato,
+            stati=[
+                (chiave, etichetta, sum(1 for _, e in da_sistemare if e.stato == chiave))
+                for chiave, etichetta in self.STATI.items()
+            ],
+            righe=[(p, e) for p, e in da_sistemare if not stato or e.stato == stato],
+            totale=len(esami),
+            puo_correggere=self.request.user.has_perm("anagrafica.change_soggetto"),
+        )
+        return ctx
+
+    def post(self, request):
+        if not request.user.has_perm("anagrafica.change_soggetto"):
+            raise PermissionDenied
+        soggetto = get_object_or_404(Soggetto, pk=request.POST.get("soggetto"))
+        try:
+            codice_fiscale.correggi(soggetto, request.POST.get("codice", ""), request.user)
+        except codice_fiscale.OperazioneNonValida as e:
+            messages.error(request, f"{soggetto.nome_completo}: {e}")
+        else:
+            messages.success(request, f"Codice fiscale di {soggetto.nome_completo} aggiornato.")
+        return redirect(f"{request.path}?stato={request.POST.get('stato', '')}")

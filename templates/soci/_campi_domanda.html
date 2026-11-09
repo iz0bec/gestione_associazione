@@ -9,7 +9,7 @@ segreteria e modulo pubblico.{% endcomment %}
     <div class="col-md-6">{{ form.nome.as_field_group }}</div>
     <div class="col-md-5">{{ form.luogo_nascita.as_field_group }}</div>
     <div class="col-md-3">{{ form.data_nascita.as_field_group }}</div>
-    <div class="col-md-4">{{ form.codice_fiscale.as_field_group }}</div>
+    <div class="col-md-4">{{ form.codice_fiscale.as_field_group }}{% if cf_assistito %}{% include "anagrafica/_cf_assistito.html" with chiedi_sesso=True %}{% endif %}</div>
     <div class="col-md-6">{{ form.indirizzo.as_field_group }}</div>
     <div class="col-md-2">{{ form.cap.as_field_group }}</div>
     <div class="col-md-3">{{ form.comune.as_field_group }}</div>

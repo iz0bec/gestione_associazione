@@ -10,6 +10,7 @@
   {% if perms.anagrafica.importa_soggetti %}
   <a class="btn" href="{% url 'anagrafica:importa_vcard' %}"><i class="ti ti-file-import me-1"></i>Importa da rubrica</a>
   {% endif %}
+  <a class="btn" href="{% url 'anagrafica:codici_fiscali' %}" title="Codici mancanti, non validi o non corrispondenti ai dati"><i class="ti ti-id me-1"></i>Codici fiscali</a>
   {% if perms.anagrafica.add_soggetto %}
   <a class="btn btn-primary" href="{% url 'anagrafica:nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo</a>
   {% endif %}

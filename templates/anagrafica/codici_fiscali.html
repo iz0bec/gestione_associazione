@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Codici fiscali mancanti, non validi o non corrispondenti ai dati, con la correzione calcolata
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Codici fiscali{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'anagrafica:elenco' %}">Anagrafica</a></div>{% endblock %}
+{% block titolo_pagina %}Codici fiscali da sistemare{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      {% for chiave, etichetta, numero in stati %}
+      <li class="nav-item"><a class="nav-link{% if stato == chiave %} active{% endif %}" href="?stato={{ chiave }}">{{ etichetta }} <span class="badge {% if numero %}bg-warning-lt{% else %}bg-secondary-lt{% endif %} ms-1">{{ numero }}</span></a></li>
+      {% endfor %}
+      <li class="nav-item"><a class="nav-link{% if not stato %} active{% endif %}" href="?stato=tutti">Tutti</a></li>
+    </ul>
+  </div>
+  {% if righe %}
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Persona</th><th>Dati anagrafici</th><th>Codice attuale</th><th>Problema</th><th>Codice calcolato</th>{% if puo_correggere %}<th class="w-1"></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for p, esame in righe %}
+        <tr>
+          <td><a href="{{ p.get_absolute_url }}">{{ p.nome_completo }}</a>{% if p.socio %}<div class="small text-secondary">socio n. {{ p.socio.numero }}</div>{% endif %}</td>
+          <td class="small">{{ p.get_sesso_display|default:"sesso ?" }} · {{ p.data_nascita|date:"d/m/Y"|default:"data ?" }} · {{ p.luogo_nascita|default:"luogo ?" }}</td>
+          <td><code>{{ p.codice_fiscale|default:"—" }}</code></td>
+          <td class="small">{{ esame.descrizione }}{% if esame.anomalie %}: {{ esame.anomalie|join:", " }}{% endif %}</td>
+          <td>{% if esame.proposta %}<code>{{ esame.proposta }}</code>{% else %}<span class="small text-secondary">{{ esame.nota|default:"—" }}</span>{% endif %}</td>
+          {% if puo_correggere %}
+          <td class="text-nowrap">
+            {% if esame.proposta %}
+            <form method="post" data-conferma="Sostituire il codice fiscale di {{ p.nome_completo }} con {{ esame.proposta }}?">{% csrf_token %}
+              <input type="hidden" name="soggetto" value="{{ p.pk }}"><input type="hidden" name="codice" value="{{ esame.proposta }}"><input type="hidden" name="stato" value="{{ stato }}">
+              <button class="btn btn-sm btn-primary" type="submit"><i class="ti ti-check me-1"></i>Applica</button>
+            </form>
+            {% else %}
+            <a class="btn btn-sm" href="{% url 'anagrafica:modifica' p.pk %}"><i class="ti ti-pencil me-1"></i>Completa i dati</a>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body text-secondary">Nessun codice da sistemare in questo elenco ({{ totale }} persone controllate).</div>
+  {% endif %}
+  <div class="card-footer small text-secondary">
+    Il codice calcolato è quello «teorico» ricavato da cognome, nome, sesso, data e luogo di nascita. In rari casi
+    l'Agenzia delle Entrate ne ha attribuito uno diverso (omocodia o errori storici): fa fede la tessera sanitaria
+    o il certificato di attribuzione. Ogni correzione resta nel registro attività.
+  </div>
+</div>
+{% endblock %}

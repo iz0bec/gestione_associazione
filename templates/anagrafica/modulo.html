@@ -9,7 +9,7 @@
   <div class="card-body">
     <div class="row">
       <div class="col-md-8">{{ form.tipo.as_field_group }}</div>
-      <div class="col-md-4">{{ form.codice_fiscale.as_field_group }}</div>
+      <div class="col-md-4">{{ form.codice_fiscale.as_field_group }}<div class="solo-persona">{% include "anagrafica/_cf_assistito.html" %}</div></div>
     </div>
     <fieldset class="solo-persona">
       <legend class="h3">Persona</legend>

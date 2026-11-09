@@ -1,0 +1,16 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Pulsante «Calcola» sotto il campo del codice fiscale (comportamento in static/js/app.js).
+               Parametro facoltativo chiedi_sesso: il modulo non ha il campo sesso, lo si chiede qui.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+<div class="cf-assistito mb-3" data-cf-assistito="{% url 'anagrafica:calcola_codice_fiscale' %}">
+  <div class="d-flex gap-2 align-items-center">
+    {% if chiedi_sesso %}
+    <select class="form-select form-select-sm w-auto" data-cf-sesso aria-label="Sesso per il calcolo"><option value="">Sesso…</option><option value="M">M</option><option value="F">F</option></select>
+    {% endif %}
+    <button type="button" class="btn btn-sm" data-cf-calcola title="Dal cognome, nome, sesso, data e luogo di nascita"><i class="ti ti-calculator me-1"></i>Calcola</button>
+  </div>
+  <div class="small mt-1" data-cf-esito aria-live="polite"></div>
+  <div class="d-flex flex-wrap gap-1 mt-1" data-cf-candidati></div>
+</div>

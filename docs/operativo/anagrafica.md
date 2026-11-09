@@ -39,6 +39,29 @@ la ricerca (es. `rossi avigliano`). Accanto si filtra per tipo, categoria e stat
 7. **Data di decesso**: se indicata, la persona resta nello storico ma non riceve più auguri né comunicazioni.
 8. **Salva**.
 
+## Codice fiscale assistito
+
+- **Calcola** (sotto il campo, per le persone): calcola il codice da cognome, nome, sesso, data e
+  luogo di nascita. Se il campo è vuoto lo compila; se c'è già un codice e non corrisponde ai dati,
+  mostra quello calcolato, dice cosa non torna (cognome, nome, sesso, data o luogo) e offre **Usa
+  questo**. Il pulsante c'è anche nella registrazione delle domande di iscrizione, dove si sceglie il
+  sesso accanto al pulsante.
+- **Luogo di nascita**: si scrive il comune italiano (anche in maiuscolo, con apostrofi o nella forma
+  bilingue: «SANT'ANTONIO», «Bolzano/Bozen») o lo **stato estero** (es. *Germania*). Per i comuni con
+  lo **stesso nome** in province diverse compaiono i pulsanti per scegliere (es. *Castro (BG)*,
+  *Castro (LE)*); si può anche scrivere la provincia tra parentesi. Vale il comune com'era alla
+  **data di nascita**, anche se poi è stato soppresso, fuso o rinominato.
+- Il codice calcolato è quello «teorico». In rari casi l'Agenzia delle Entrate ne ha attribuito uno
+  diverso (omocodia o errori storici): **fa fede la tessera sanitaria**. Per questo il programma non
+  blocca mai il salvataggio per il nome: segnala soltanto.
+- Nella **scheda** di una persona, sotto il codice fiscale, compare un avviso se il codice non è valido
+  o non corrisponde ai dati (e, per i soci, se manca), con il codice ricavato dai dati.
+- **Codici fiscali** (pulsante nell'elenco dell'anagrafica): le persone con il codice **non valido**,
+  **non corrispondente** ai dati o **mancante** (solo per i soci, perché per un contatto della rubrica
+  è normale), con il codice calcolato. **Applica** lo sostituisce, dopo conferma; se i dati non
+  bastano per il calcolo, **Completa i dati** apre la scheda. Ogni correzione è nel registro attività
+  con il valore precedente. Il programma rifiuta un codice già usato da un'altra persona.
+
 ## La scheda
 
 ![La scheda di una persona](immagini/scheda-anagrafica.jpg)

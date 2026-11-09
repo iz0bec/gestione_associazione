@@ -20,6 +20,12 @@ urlpatterns = [
     path("rubrica.vcf", views.EsportaVCardView.as_view(), name="esporta_vcard"),
     path("importa/", views.ImportaVCardView.as_view(), name="importa_vcard"),
     path("conservazione/", views.ConservazioneView.as_view(), name="conservazione"),
+    path("codici-fiscali/", views.CodiciFiscaliView.as_view(), name="codici_fiscali"),
+    path(
+        "codici-fiscali/calcola/",
+        views.CalcolaCodiceFiscaleView.as_view(),
+        name="calcola_codice_fiscale",
+    ),
     path("<int:pk>/vcard.vcf", views.VCardSoggettoView.as_view(), name="vcard"),
     path("<int:pk>/", views.DettaglioView.as_view(), name="dettaglio"),
     path("<int:pk>/modifica/", views.ModificaView.as_view(), name="modifica"),
