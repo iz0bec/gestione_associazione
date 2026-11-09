@@ -49,13 +49,15 @@ Protegge l'account anche se qualcuno scopre la password.
   sezione, protocolli riservati solo con il permesso; più parole devono comparire tutte, i numeri di
   socio e di protocollo si cercano direttamente); nome e **versione** del programma (un clic apre
   *Informazioni*: autore, licenza, componenti di terze parti); pulsante **?** dell'aiuto; tema
-  chiaro/scuro (🌙/☀); menu utente (cambio password, verifica in due passaggi, manuale,
+  chiaro/scuro (icona della luna o del sole); menu utente (cambio password, verifica in due passaggi, manuale,
   informazioni, esci).
 - **Aiuto in linea**: il pulsante **?** apre la pagina di questo manuale dedicata alla sezione in
   cui ci si trova (es. da *Tesoreria* apre il manuale della tesoreria). Dalla pagina dell'aiuto si
   passa alle altre con l'indice a destra. **Manuale in PDF** scarica tutto il manuale, con le
   immagini, per leggerlo o stamparlo (le immagini mostrano dati di esempio).
 - **Cruscotto**: numeri principali, compleanni dei prossimi 14 giorni, le proprie ultime attività.
+
+![La ricerca globale: risultati raggruppati per modulo](immagini/cerca.jpg)
 
 ## Uscire
 

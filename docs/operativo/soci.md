@@ -116,6 +116,8 @@ dell'anagrafica). Dai pulsanti in alto:
 
 ## Tessera digitale e verifica
 
+![La tessera digitale (fronte); sul retro c'è il QR di verifica](immagini/tessera-digitale.jpg)
+
 La tessera vera resta quella **prestampata dalla sede centrale** e consegnata a mano. In più, per
 ogni tessera attribuita, nella scheda del socio:
 
@@ -130,6 +132,8 @@ ogni tessera attribuita, nella scheda del socio:
 **valida** - dell'anno in corso, non annullata, quota versata (o esente), titolare socio attivo - con
 nome, anno e sezione del titolare: nessun altro dato. Le ricerche per numero e cognome sono
 limitate a 20 l'ora per indirizzo; il codice nel QR è casuale e non si ricava dal numero.
+
+![La verifica pubblica di una tessera](immagini/verifica-tessera.jpg)
 
 ## Rinnovo annuale
 

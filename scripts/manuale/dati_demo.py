@@ -57,6 +57,13 @@ org.indirizzo, org.cap, org.comune, org.provincia = (
 )
 org.email, org.telefono = "segreteria@esempio.invalid", "0971 000000"
 org.configurata = True
+org.pagina_pubblica = True
+org.presentazione = (
+    "L'Associazione di Esempio custodisce la memoria di chi ha servito il Paese e promuove i valori "
+    "della Costituzione, la pace e la solidarietà tra le generazioni.\n\n"
+    "Organizza cerimonie, incontri con le scuole e iniziative di ricerca storica, e sostiene i soci "
+    "in difficoltà."
+)
 org.save()
 
 
@@ -131,6 +138,7 @@ try:
 except Exception as e:  # noqa: BLE001
     print("esercizio:", e)
 
+soci.carica_lotto(admin, anno=ANNO, numero_da=1000, numero_a=1100)
 soci_creati = []
 for i, s in enumerate(tutti):
     socio = soci.ammetti_socio(
@@ -144,13 +152,19 @@ for i, s in enumerate(tutti):
     soci_creati.append(socio)
     try:
         if i % 4:  # tre su quattro pagati, gli altri da incassare
-            soci.rilascia_tessera(
+            t = soci.rilascia_tessera(
                 socio, ANNO, admin, pagata_il=OGGI - timedelta(days=i * 3), metodo="contanti"
             )
+            soci.attribuisci_carta(t, admin, str(1000 + i))
         elif i % 8 == 0:
             soci.rilascia_tessera(socio, ANNO, admin)
     except Exception as e:  # noqa: BLE001
         print("tessera", s, e)
+
+# un ex socio oltre il termine di conservazione (per la pagina dei termini)
+ex = persona("Antichi", "Ernesto", email="antichi@esempio.invalid")
+ex_socio = soci.ammetti_socio(ex, ordinario, admin, data_ammissione=date(1995, 1, 1), sezione=monte)
+soci.cessa_socio(ex_socio, admin, data_cessazione=date(ANNO - 12, 6, 30), causa="dimissioni")
 
 enti = [
     Soggetto.objects.create(

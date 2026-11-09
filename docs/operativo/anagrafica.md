@@ -78,6 +78,8 @@ Le schede non si cancellano: i documenti ufficiali devono poter fare riferimento
 
 ## Privacy: diritti dell'interessato (GDPR)
 
+![Il riquadro Privacy (GDPR) nella scheda della persona](immagini/scheda-gdpr.jpg)
+
 Nella scheda di una persona, riquadro **Privacy (GDPR)**:
 
 - **Esporta tutti i dati** (Amministratore di sistema, Segretario) - per la **richiesta di accesso**
@@ -103,6 +105,8 @@ persone oltre il termine: si selezionano e si anonimizzano in blocco scrivendo *
 **Anonimizzazione automatica** (spenta per impostazione predefinita) lo fa il programma ogni notte.
 Sono sempre escluse le **persone decedute** (il GDPR non si applica ai defunti e l'associazione ne
 conserva la memoria), chi è collegato a un utente e chi è già anonimizzato.
+
+![I termini di conservazione e le persone oltre il termine](immagini/conservazione.jpg)
 
 ## Esportare
 

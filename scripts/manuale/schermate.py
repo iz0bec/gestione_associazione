@@ -8,8 +8,9 @@
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
-# ruff: noqa: T201, E501
+# ruff: noqa: T201, E501, S603, S607  (strumento di sviluppo: pdftoppm con argomenti fissi)
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,6 +42,8 @@ SCHERMATE = {
     "utenti": ("/sistema/utenti/", None, False),
     "servizi-posta": ("/sistema/posta/", None, False),
     "documenti-pubblici": ("/sistema/documenti-pubblici/", None, False),
+    "cerca": ("/cerca/?q=rossi", None, False),
+    "conservazione": ("/anagrafica/conservazione/", None, False),
 }
 
 
@@ -87,12 +90,46 @@ def main():
                 path=USCITA / f"{nome}.jpg", type="jpeg", quality=82, full_page=intera
             )
             print("ok", nome, indirizzo)
-        # pagina pubblica dei documenti (senza accesso)
+        # riquadro Privacy (GDPR) della scheda in anagrafica
+        pagina.goto(BASE + speciali["@scheda"]())
+        pagina.get_by_text("Privacy (GDPR)").scroll_into_view_if_needed()
+        pagina.screenshot(path=USCITA / "scheda-gdpr.jpg", type="jpeg", quality=82)
+        # tessera digitale (PDF convertito in immagine)
+        pagina.goto(BASE + primo_link(pagina, "/soci/?q=verdi", "/soci/"))
+        pdf = pagina.locator('a[href$="tessera-digitale.pdf"]').first.get_attribute("href")
+        temporaneo = USCITA / "tessera.pdf"
+        temporaneo.write_bytes(contesto.request.get(BASE + pdf).body())
+        subprocess.run(
+            [
+                "pdftoppm",
+                "-r",
+                "220",
+                "-jpeg",
+                "-jpegopt",
+                "quality=85",
+                "-f",
+                "1",
+                "-l",
+                "1",
+                "-singlefile",
+                str(temporaneo),
+                str(USCITA / "tessera-digitale"),
+            ],
+            check=True,
+        )
+        temporaneo.unlink()
+        # pagine pubbliche (senza accesso)
         pubblica = browser.new_context(
             viewport={"width": 1366, "height": 820}, locale="it-IT"
         ).new_page()
         pubblica.goto(BASE + "/documenti-pubblici/")
         pubblica.screenshot(path=USCITA / "documenti-pubblici-pagina.jpg", type="jpeg", quality=82)
+        pubblica.goto(BASE + "/")
+        pubblica.screenshot(
+            path=USCITA / "presentazione.jpg", type="jpeg", quality=82, full_page=True
+        )
+        pubblica.goto(BASE + "/verifica-tessera/?numero=1001&cognome=Verdi")
+        pubblica.screenshot(path=USCITA / "verifica-tessera.jpg", type="jpeg", quality=82)
         browser.close()
     print("Schermate in", USCITA)
 

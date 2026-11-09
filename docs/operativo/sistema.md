@@ -112,6 +112,8 @@ può avere cariche nella propria sezione e nell'associazione (vedi [Organi socia
 
 ## Pagina pubblica
 
+![La pagina pubblica di presentazione, per chi non ha fatto l'accesso](immagini/presentazione.jpg)
+
 In **Sistema → Organizzazione**, riquadro *Pagina pubblica*: con **Pagina pubblica di presentazione**
 spuntata, chi apre l'indirizzo principale dell'applicazione **senza aver fatto l'accesso** vede una
 pagina con il logo e la denominazione, le **finalità dell'associazione** (testo libero; una riga vuota

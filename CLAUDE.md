@@ -103,7 +103,7 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - **GitHub** (pubblico, copia con la stessa storia): `https://github.com/iz0bec/gestione_associazione`,
   remote `github` (accesso con `gh`, account iz0bec). A ogni release: `git push github main` e il tag,
   poi `gh release create vX --prerelease` con le note del CHANGELOG (le rc sono «anteprima»).
-  La release stabile 1.0 sarà la prima non pre-release.
+  Dalla 1.0.0 le release su GitHub sono stabili (non pre-release), con il manuale PDF allegato.
 
 ## Stato
 

@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.0] - 2026-11-09
+
+**Prima versione stabile.** Comprende tutto quanto rilasciato nelle release candidate 0.0.1-rc.1 … rc.16 e le novità seguenti. Requisiti: Python 3.13, Django 6.1, PostgreSQL; installazione su Debian/Ubuntu o in un container LXC (la build Docker non è ancora verificata).
+
 ### Aggiunto
 - **Termini di conservazione** (*Sistema → Conservazione dei dati*): anni di conservazione dopo la
   cessazione o l'archiviazione, elenco delle persone oltre il termine con anonimizzazione in blocco
