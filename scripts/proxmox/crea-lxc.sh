@@ -109,12 +109,22 @@ copia_codice() {
   fi
 }
 
+# Messaggio di benvenuto al login, alla maniera degli script di community-scripts.org:
+# sostituisce quello di Debian e si ricalcola a ogni accesso (vedi scripts/proxmox/motd.sh).
+installa_motd() {
+  passo "Messaggio di benvenuto (motd)"
+  nel_ct bash -c "sed 's/@CTID@/${CTID}/g' '${SRC_CT}/scripts/proxmox/motd.sh' > /etc/profile.d/00-gestione-associazione.sh \
+    && chmod 644 /etc/profile.d/00-gestione-associazione.sh && : > /etc/motd \
+    && { chmod -x /etc/update-motd.d/* 2>/dev/null || true; }"
+}
+
 if [[ $AGGIORNA -eq 1 ]]; then
   [[ -n "$CTID" ]] || errore "indicare --id del container da aggiornare."
   pct status "$CTID" | grep -q running || pct start "$CTID"
   copia_codice
   passo "Aggiornamento (con backup automatico prima)"
   nel_ct bash "${SRC_CT}/scripts/installa.sh" -y
+  installa_motd
   exit 0
 fi
 
@@ -163,6 +173,7 @@ passo "Installazione dell'applicazione"
 ARG=(-y --porta "$PORTA")
 [[ -n "$EMAIL" ]] && ARG+=(--email "$EMAIL")
 nel_ct bash "${SRC_CT}/scripts/installa.sh" "${ARG[@]}"
+installa_motd
 
 INDIRIZZO_CT="$(nel_ct hostname -I | awk '{print $1}')"
 echo -e "\n\033[1;32mContainer ${CTID} pronto: http://${INDIRIZZO_CT}:${PORTA}/\033[0m"

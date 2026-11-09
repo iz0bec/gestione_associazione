@@ -106,6 +106,13 @@ bash crea-lxc.sh --versione v0.0.1-rc.1 --ip 192.168.0.40/24 --gw 192.168.0.1 --
 
 Alla fine lo script stampa l'indirizzo, la password di root del container e le credenziali
 dell'amministratore dell'applicazione. Il container si avvia con l'host (`onboot`).
+Il template Debian scaricato è quello dell'architettura dell'host (amd64 o arm64).
+
+All'accesso (SSH o console) il container mostra un **messaggio di benvenuto** al posto di quello di
+Debian: versione, indirizzo dell'applicazione, stato dei servizi web e pianificatore, ultimo backup e
+comandi utili, più un avviso finché esiste il file con la password iniziale dell'amministratore.
+È il file `/etc/profile.d/00-gestione-associazione.sh` (sorgente `scripts/proxmox/motd.sh`), riscritto
+a ogni `--aggiorna`; non compare con `pct enter`, che non apre una shell di login.
 
 Aggiornamento, con backup automatico prima:
 

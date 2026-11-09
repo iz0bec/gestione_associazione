@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Container Proxmox**: messaggio di benvenuto al login (versione, indirizzo, stato dei servizi,
+  ultimo backup, comandi utili), installato da `crea-lxc.sh` anche negli aggiornamenti.
+
+### Corretto
+- `crea-lxc.sh` sceglieva il template Debian **arm64** su host x86_64 (il container non si avviava).
+- `installa.sh` lanciato da `crea-lxc.sh` non trovava `uv` («uv: comando non trovato»).
+
 ## [1.0.2] - 2026-11-09
 
 Scambio simmetrico fra installazioni e trasferimento di sezione dei soci.
