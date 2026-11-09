@@ -64,13 +64,43 @@ spazio per la firma senza nome: il programma non inventa mai un firmatario.
 |---|---|
 | Ricevuta della quota | tesoriere; se non c'è, presidente (alla data del pagamento) |
 | Rendiconto | tesoriere (solo se c'è) e presidente |
-| Libro soci, inventario, ricevuta di protocollo, dati personali (GDPR) | presidente |
+| Libro soci, inventario, ricevuta di protocollo | presidente |
+| Dati personali (GDPR) | rappresentante legale (vedi sotto); se non è indicato, presidente |
 | Convocazione | presidente dell'associazione o della sezione dell'organo |
 | Verbale | presidente e segretario della riunione (scritti nel verbale) |
 | Lettere e attestati (*Documenti*) | firmatario del modello o presidente in carica |
 
 Contano le cariche degli organi dell'associazione (per le convocazioni di un organo di sezione,
 quelle della sezione) e, fra più organi, prima l'organo di amministrazione.
+
+## Rappresentante legale
+
+Di solito il rappresentante legale è il presidente, e allora non serve fare nulla. Può però essere
+una persona diversa, anche **esterna agli organi gestiti**: per esempio in un'associazione nazionale
+le sezioni agiscono in autonomia con i propri presidenti, ma per la privacy (GDPR) il titolare del
+trattamento è l'associazione nazionale, rappresentata dal presidente nazionale.
+
+Da *Organi sociali → Rappresentante legale*:
+
+1. inserire prima la persona in **Anagrafica** (non serve che sia socio);
+2. **Indica il rappresentante**: ente rappresentato (l'associazione o una sezione), persona,
+   qualifica stampata sopra la firma (es. «Il Presidente nazionale»), data di inizio, atto di nomina;
+3. per l'associazione, **«Vale per tutta la struttura»** estende la nomina alle sezioni che non ne
+   hanno una propria.
+
+Chi era in carica per lo stesso ente cessa dal giorno della nuova nomina; date, qualifica e atto si
+correggono con la matita (ogni modifica va nel registro attività). La tabella **Chi firma oggi**
+mostra, per l'associazione e per ogni sezione, chi firma e perché. L'ordine è:
+
+1. la nomina della sezione;
+2. la nomina dell'associazione «per tutta la struttura»;
+3. il presidente in carica (della sezione o dell'associazione);
+4. per una sezione senza nessuno dei precedenti, il rappresentante dell'associazione.
+
+Il rappresentante legale firma **solo** i documenti del titolare del trattamento (il riepilogo dei
+dati personali); tutte le altre stampe restano firmate dal presidente come nella tabella sopra. Nei
+modelli di *Documenti* sono disponibili i segnaposto `{{ rappresentante_legale }}` e
+`{{ qualifica_rappresentante }}` (es. per un'informativa o una nomina a incaricato del trattamento).
 
 **Organigramma PDF** (pulsante in alto nella pagina dell'organo): i componenti in carica alla data
 di oggi, su carta intestata e in orizzontale. In alto il presidente; sotto vicepresidente, segretario
@@ -82,12 +112,30 @@ e tesoriere; poi i consiglieri, i componenti e i supplenti. Ogni scheda riporta 
 1. **Nuova riunione**: organo, ordinaria o straordinaria, data, ora e luogo della **prima** e (facoltativa)
    della **seconda convocazione**, modalità (in presenza, mista, videoconferenza con le istruzioni di
    collegamento), **ordine del giorno** (un punto per riga) ed eventuale testo introduttivo della lettera.
+   Con **Parti da un modello** testo e ordine del giorno si compilano da un modello di convocazione
+   (vedi sotto), da completare.
 2. **Convocazione**: il PDF della lettera è sempre disponibile per controllo. **Convoca** assegna il numero
    della riunione (es. *Consiglio direttivo n. 3/2026*) e, se scelto, **protocolla** la convocazione in
    uscita con la lettera e gli aventi diritto come destinatari. L'invio per email arriverà con il modulo
    Comunicazioni.
 3. Fino alla chiusura del verbale si possono modificare data, luogo e ordine del giorno, o **annullare** la
    riunione con il motivo.
+
+### Modelli di convocazione
+
+*Organi sociali → Modelli di convocazione* raccoglie testi e ordini del giorno tipici, già pronti e
+modificabili:
+
+- assemblea ordinaria per il rendiconto annuale, assemblea elettiva, assemblea straordinaria per le
+  modifiche allo statuto;
+- consiglio direttivo: seduta ordinaria, rendiconto e convocazione dell'assemblea, insediamento e
+  attribuzione delle cariche;
+- organo di controllo: verifica periodica.
+
+Ogni modello indica l'organo a cui si adatta, se la seduta è straordinaria, il testo della lettera e
+l'ordine del giorno (un punto per riga). `{{ anno }}` e `{{ anno_precedente }}` diventano gli anni
+correnti quando si prepara la riunione. Un modello non più usato si disattiva; quelli nuovi si
+aggiungono con **Nuovo modello**. Usare un modello non cambia le riunioni già preparate.
 
 ## Presenze
 

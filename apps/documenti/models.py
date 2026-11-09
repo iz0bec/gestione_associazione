@@ -53,6 +53,13 @@ class ModelloStampa(models.Model):
         blank=True,
         help_text="Vuoto = il presidente in carica negli Organi sociali.",
     )
+    firma_legale = models.BooleanField(
+        "firma il rappresentante legale",
+        default=False,
+        help_text="Per gli atti del titolare del trattamento (privacy, GDPR): firma il "
+        "rappresentante legale indicato negli Organi sociali, con la sua qualifica (se non è "
+        "indicato, il presidente). Prevale su qualifica e nome del firmatario.",
+    )
     seconda_firma = models.CharField(
         "seconda firma",
         max_length=16,

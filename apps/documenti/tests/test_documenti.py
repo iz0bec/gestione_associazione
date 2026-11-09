@@ -63,6 +63,25 @@ class TestComposizione:
         m.firma_nome = "Altro Nome"
         assert servizi.firmatario(m) == "Altro Nome"
 
+    def test_modelli_privacy_firmati_dal_rappresentante_legale(self, rossi):
+        from apps.organi.models import RappresentanteLegale
+
+        privacy = ModelloStampa.objects.filter(nome__startswith="Privacy - ")
+        assert privacy.count() >= 6 and all(m.firma_legale for m in privacy)
+        for m in privacy:  # nessun segnaposto ignoto nei testi pronti
+            assert servizi.segnaposto_sconosciuti(m.titolo, m.corpo) == []
+        landi = Soggetto.objects.create(cognome="Landi", nome="Antonio", titolo="Prof.")
+        RappresentanteLegale.objects.create(
+            soggetto=landi, qualifica="Il Presidente nazionale", dal=date(2020, 1, 1),
+            tutta_la_struttura=True,
+        )  # fmt: skip
+        m = privacy.first()
+        assert servizi.firmatario(m) == "Prof. Antonio Landi"
+        assert servizi.qualifica_firmatario(m) == "Il Presidente nazionale"
+        c = servizi._contesto(rossi, "")
+        assert c["rappresentante_legale"] == "Prof. Antonio Landi"
+        assert servizi.anteprima(m, rossi).startswith(b"%PDF")
+
 
 @pytest.mark.django_db
 class TestStampa:

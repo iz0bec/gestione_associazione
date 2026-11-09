@@ -22,7 +22,7 @@
         <tr class="{% if not m.attivo %}text-secondary{% endif %}">
           <td><span class="fw-medium">{{ m.nome }}</span>{% if not m.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}{% if m.titolo %}<div class="small text-secondary">{{ m.titolo }}</div>{% endif %}</td>
           <td class="d-none d-md-table-cell">{{ m.get_tipo_display|truncatewords:1 }}</td>
-          <td class="d-none d-lg-table-cell small">{{ m.firma_ruolo }}{% if m.firma_nome %} - {{ m.firma_nome }}{% endif %}</td>
+          <td class="d-none d-lg-table-cell small">{% if m.firma_legale %}Rappresentante legale{% else %}{{ m.firma_ruolo }}{% if m.firma_nome %} - {{ m.firma_nome }}{% endif %}{% endif %}</td>
           <td class="text-end text-nowrap">
             <a class="btn btn-sm" href="{% url 'documenti:anteprima' m.pk %}" target="_blank" rel="noopener"><i class="ti ti-eye me-1"></i>Anteprima</a>
             {% if perms.documenti.stampa_documento and m.attivo %}<a class="btn btn-sm" href="{% url 'documenti:stampa' %}?modello={{ m.pk }}"><i class="ti ti-printer me-1"></i>Stampa</a>{% endif %}

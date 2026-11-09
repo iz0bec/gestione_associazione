@@ -78,6 +78,8 @@ PROTOCOLLO_RESPONSABILE = [
 ORGANI_LETTURA = [
     "organi.view_organo",
     "organi.view_carica",
+    "organi.view_rappresentantelegale",
+    "organi.view_modelloconvocazione",
     "organi.view_riunione",
     "organi.view_verbale",
     "organi.view_delibera",
@@ -89,6 +91,8 @@ ORGANI_SEGRETERIA = [
     "organi.convoca_riunione",
     "organi.verbalizza",
     "organi.gestisci_cariche",
+    "organi.add_modelloconvocazione",
+    "organi.change_modelloconvocazione",
 ]
 
 COMUNICAZIONI_LETTURA = [

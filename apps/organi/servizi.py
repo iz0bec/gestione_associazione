@@ -21,7 +21,16 @@ from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.models import Organizzazione
 from apps.core.numerazione import prossimo_numero
 
-from .models import Carica, Delibera, Organo, Presenza, PuntoOdg, Riunione, Verbale
+from .models import (
+    Carica,
+    Delibera,
+    Organo,
+    Presenza,
+    PuntoOdg,
+    RappresentanteLegale,
+    Riunione,
+    Verbale,
+)
 
 
 class OperazioneNonValida(ValidationError):
@@ -103,6 +112,101 @@ def modifica_carica(carica, utente, *, dal, al=None, atto="", note=""):
     carica.save()
     registra(Azione.MODIFICA, carica, utente=utente, organo=str(carica.organo), **cambiati)
     return carica
+
+
+# --- rappresentante legale ----------------------------------------------------------------
+
+
+def _sovrapposte(sezione, dal, al, escludi=None):
+    """Nomine dello stesso ente il cui periodo [dal, al) si sovrappone a quello indicato."""
+    from django.db.models import Q
+
+    altre = RappresentanteLegale.objects.filter(sezione=sezione).filter(
+        Q(al__isnull=True) | Q(al__gt=dal)
+    )
+    if al is not None:
+        altre = altre.filter(dal__lt=al)
+    if escludi is not None:
+        altre = altre.exclude(pk=escludi.pk)
+    return altre
+
+
+def _periodo(r):
+    return f"dal {r.dal:%d/%m/%Y}" + (f" al {r.al:%d/%m/%Y}" if r.al else "")
+
+
+@transaction.atomic
+def nomina_rappresentante(
+    soggetto, dal, utente, *, sezione=None, tutta_la_struttura=False, qualifica="", atto="",
+    note="",
+):  # fmt: skip
+    """Registra il rappresentante legale dell'associazione (sezione None) o di una sezione.
+
+    Chi era in carica senza data di fine cessa dal giorno della nuova nomina; un periodo che si
+    sovrapporrebbe a una nomina già conclusa va corretto prima.
+    """
+    if not soggetto.is_persona:
+        raise OperazioneNonValida("Il rappresentante legale è una persona.")
+    if sezione is not None and tutta_la_struttura:
+        raise OperazioneNonValida(
+            "«Tutta la struttura» vale solo per il rappresentante dell'associazione."
+        )
+    list(RappresentanteLegale.objects.select_for_update().filter(sezione=sezione).order_by("pk"))
+    for precedente in _sovrapposte(sezione, dal, None):
+        if precedente.al is None and precedente.dal < dal:
+            precedente.al = dal
+            precedente.modificato_da = utente
+            precedente.save()
+            registra(Azione.MODIFICA, precedente, utente=utente, fine=str(dal),
+                     motivo="nuovo rappresentante legale")  # fmt: skip
+        else:
+            raise OperazioneNonValida(
+                f"Esiste già un rappresentante legale per lo stesso periodo: "
+                f"{precedente.soggetto} {_periodo(precedente)}."
+            )
+    nomina = RappresentanteLegale.objects.create(
+        sezione=sezione, tutta_la_struttura=tutta_la_struttura, soggetto=soggetto,
+        qualifica=(qualifica or RappresentanteLegale.QUALIFICA_PREDEFINITA)[:100], dal=dal,
+        nomina=atto[:200], note=note[:255], creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    registra(Azione.CREAZIONE, nomina, utente=utente, ambito=nomina.ambito)
+    return nomina
+
+
+@transaction.atomic
+def modifica_rappresentante(nomina, utente, *, qualifica, dal, al=None, tutta_la_struttura=False,
+                            atto="", note=""):  # fmt: skip
+    """Corregge qualifica, periodo (al vuoto = in carica), estensione, atto e note."""
+    nomina = (
+        RappresentanteLegale.objects.select_for_update(of=("self",))
+        .select_related("soggetto", "sezione")
+        .order_by()
+        .get(pk=nomina.pk)
+    )
+    if al is not None and al < dal:
+        raise OperazioneNonValida("La cessazione non può precedere l'inizio.")
+    if nomina.sezione_id and tutta_la_struttura:
+        raise OperazioneNonValida(
+            "«Tutta la struttura» vale solo per il rappresentante dell'associazione."
+        )
+    altra = _sovrapposte(nomina.sezione, dal, al, escludi=nomina).first()
+    if altra:
+        raise OperazioneNonValida(
+            f"Il periodo si sovrappone a quello di {altra.soggetto} {_periodo(altra)}."
+        )
+    campi = ("qualifica", "dal", "al", "tutta_la_struttura", "nomina", "note")
+    prima = {k: str(getattr(nomina, k) or "") for k in campi}
+    nomina.qualifica = (qualifica or RappresentanteLegale.QUALIFICA_PREDEFINITA)[:100]
+    nomina.dal, nomina.al, nomina.tutta_la_struttura = dal, al, tutta_la_struttura
+    nomina.nomina, nomina.note = atto[:200], note[:255]
+    dopo = {k: str(getattr(nomina, k) or "") for k in campi}
+    cambiati = {k: {"prima": prima[k], "dopo": dopo[k]} for k in campi if prima[k] != dopo[k]}
+    if not cambiati:
+        return nomina
+    nomina.modificato_da = utente
+    nomina.save()
+    registra(Azione.MODIFICA, nomina, utente=utente, **cambiati)
+    return nomina
 
 
 # --- riunioni ------------------------------------------------------------------------------

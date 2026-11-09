@@ -151,6 +151,86 @@ class Carica(ModelloBase):
         return self.ruolo != self.Ruolo.SUPPLENTE
 
 
+class RappresentanteLegale(ModelloBase):
+    """Chi rappresenta legalmente l'associazione o una sezione, per periodi.
+
+    Di solito è il presidente (e allora non serve indicarlo: le firme ricadono sul presidente
+    in carica), ma può essere una persona diversa, anche esterna agli organi gestiti: per
+    esempio il presidente nazionale che rappresenta tutte le sezioni di un'associazione
+    nazionale. Con «tutta la struttura» la nomina dell'associazione vale anche per le sezioni
+    che non ne hanno una propria.
+    """
+
+    QUALIFICA_PREDEFINITA = "Il Legale rappresentante"
+
+    sezione = models.ForeignKey(
+        "soci.Sezione",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="rappresentanti_legali",
+        help_text="Vuota = l'associazione (federazione).",
+    )
+    tutta_la_struttura = models.BooleanField(
+        "vale per tutta la struttura",
+        default=False,
+        help_text="Solo per l'associazione: rappresenta anche le sezioni che non hanno un "
+        "proprio rappresentante legale.",
+    )
+    soggetto = models.ForeignKey(
+        Soggetto,
+        on_delete=models.PROTECT,
+        related_name="rappresentanze_legali",
+        limit_choices_to={"tipo": "persona"},
+        verbose_name="persona",
+    )
+    qualifica = models.CharField(
+        max_length=100,
+        default=QUALIFICA_PREDEFINITA,
+        help_text="Come compare sopra la firma, es. «Il Presidente nazionale», "
+        "«Il Commissario straordinario».",
+    )
+    dal = models.DateField()
+    al = models.DateField(
+        "data di cessazione",
+        null=True,
+        blank=True,
+        help_text="Vuoto = in carica. Da questo giorno non rappresenta più l'ente.",
+    )
+    nomina = models.CharField(
+        "atto di nomina", max_length=200, blank=True, help_text="Es. delibera, procura, statuto."
+    )
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "rappresentante legale"
+        verbose_name_plural = "rappresentanti legali"
+        ordering = [models.F("sezione__nome").asc(nulls_first=True), "-dal"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(al__isnull=True) | Q(al__gte=models.F("dal")),
+                name="rappresentante_date_coerenti",
+            ),
+            models.CheckConstraint(
+                condition=Q(sezione__isnull=True) | Q(tutta_la_struttura=False),
+                name="rappresentante_struttura_solo_associazione",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.qualifica} - {self.soggetto.nome_completo} ({self.ambito})"
+
+    @property
+    def ambito(self):
+        if self.sezione_id:
+            return f"sezione di {self.sezione.nome}"
+        return "tutta la struttura" if self.tutta_la_struttura else "associazione"
+
+    @property
+    def in_carica(self):
+        return self.al is None or self.al > date.today()
+
+
 class Riunione(ModelloBase):
     class Stato(models.TextChoices):
         BOZZA = "bozza", "In preparazione"
@@ -223,6 +303,59 @@ class Riunione(ModelloBase):
     @property
     def modificabile(self):
         return self.stato in (self.Stato.BOZZA, self.Stato.CONVOCATA)
+
+
+class ModelloConvocazione(models.Model):
+    """Testo e ordine del giorno tipici da cui partire per preparare una riunione."""
+
+    nome = models.CharField(max_length=120, unique=True)
+    tipo_organo = models.CharField(
+        "per l'organo",
+        max_length=10,
+        choices=Organo.Tipo.choices,
+        blank=True,
+        help_text="Vuoto = per qualsiasi organo.",
+    )
+    straordinaria = models.BooleanField("seduta straordinaria", default=False)
+    premessa = models.TextField(
+        "testo della convocazione",
+        blank=True,
+        help_text="Riportato nella lettera prima dell'ordine del giorno.",
+    )
+    punti = models.TextField(
+        "ordine del giorno",
+        help_text="Un punto per riga. {{ anno }} e {{ anno_precedente }} diventano gli anni "
+        "correnti quando si prepara la riunione.",
+    )
+    ordine = models.PositiveSmallIntegerField(default=0)
+    attivo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "modello di convocazione"
+        verbose_name_plural = "modelli di convocazione"
+        ordering = ["ordine", "nome"]
+
+    def __str__(self):
+        return self.nome
+
+    def get_absolute_url(self):
+        return reverse("organi:modelli_convocazione")
+
+    def valori(self, oggi=None):
+        """Valori iniziali per una nuova riunione, con gli anni sostituiti."""
+        anno = (oggi or date.today()).year
+
+        def anni(testo):
+            for chiave, valore in (("anno_precedente", anno - 1), ("anno", anno)):
+                testo = testo.replace("{{ " + chiave + " }}", str(valore))
+                testo = testo.replace("{{" + chiave + "}}", str(valore))
+            return testo
+
+        return {
+            "straordinaria": self.straordinaria,
+            "premessa": anni(self.premessa),
+            "punti": anni(self.punti),
+        }
 
 
 class PuntoOdg(models.Model):

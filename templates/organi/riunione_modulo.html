@@ -2,7 +2,19 @@
 {% block titolo %}Riunione{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
 {% block titolo_pagina %}{% if object %}{{ object.titolo }}{% else %}Nuova riunione{% endif %}{% endblock %}
+{% block azioni %}
+{% if not object and modelli_convocazione %}
+<div class="dropdown">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-template me-1"></i>{% if modello_scelto %}{{ modello_scelto.nome }}{% else %}Parti da un modello{% endif %}</button>
+  <div class="dropdown-menu dropdown-menu-end">
+    {% for m in modelli_convocazione %}<a class="dropdown-item" href="?modello={{ m.pk }}{% if organo_scelto %}&amp;organo={{ organo_scelto|urlencode }}{% endif %}">{{ m.nome }}{% if m.tipo_organo %} <span class="text-secondary small ms-1">{{ m.get_tipo_organo_display|lower }}</span>{% endif %}</a>{% endfor %}
+    {% if perms.organi.view_modelloconvocazione %}<div class="dropdown-divider"></div><a class="dropdown-item" href="{% url 'organi:modelli_convocazione' %}">Gestisci i modelli…</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
 {% block contenuto %}
+{% if modello_scelto %}<div class="alert alert-info">Testo e ordine del giorno dal modello «{{ modello_scelto.nome }}»: completali e correggili prima di salvare.</div>{% endif %}
 <form method="post" class="card" novalidate>{% csrf_token %}
   <div class="card-body">
     {% for errore in form.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}

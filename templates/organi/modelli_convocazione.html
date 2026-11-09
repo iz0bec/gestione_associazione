@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modelli di convocazione: testo e ordine del giorno tipici per preparare le riunioni.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Modelli di convocazione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}Modelli di convocazione{% endblock %}
+{% block azioni %}
+{% if perms.organi.add_modelloconvocazione %}<a class="btn btn-primary" href="{% url 'organi:modello_convocazione_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo modello</a>{% endif %}
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Modello</th><th class="d-none d-md-table-cell">Organo</th><th class="d-none d-lg-table-cell">Ordine del giorno</th><th></th></tr></thead>
+      <tbody>
+      {% for m in modelli %}
+        <tr class="{% if not m.attivo %}text-secondary{% endif %}">
+          <td><span class="fw-medium">{{ m.nome }}</span>{% if m.straordinaria %} <span class="badge bg-orange-lt">straordinaria</span>{% endif %}{% if not m.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}</td>
+          <td class="d-none d-md-table-cell">{{ m.get_tipo_organo_display|default:"qualsiasi" }}</td>
+          <td class="d-none d-lg-table-cell small">{{ m.punti|linebreaksbr|truncatewords_html:24 }}</td>
+          <td class="text-end text-nowrap">
+            {% if perms.organi.add_riunione and m.attivo %}<a class="btn btn-sm" href="{% url 'organi:riunione_nuova' %}?modello={{ m.pk }}"><i class="ti ti-calendar-plus me-1"></i>Usa</a>{% endif %}
+            {% if perms.organi.change_modelloconvocazione %}<a class="btn btn-sm" href="{% url 'organi:modello_convocazione' m.pk %}">Modifica</a>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-secondary text-center py-4">Nessun modello.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer small text-secondary">
+    In <em>Nuova riunione</em> il pulsante <strong>Parti da un modello</strong> compila testo della convocazione e ordine del giorno, da completare con data, luogo e dettagli. <code>{% templatetag openvariable %} anno {% templatetag closevariable %}</code> e <code>{% templatetag openvariable %} anno_precedente {% templatetag closevariable %}</code> diventano gli anni correnti.
+  </div>
+</div>
+{% endblock %}

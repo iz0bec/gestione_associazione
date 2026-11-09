@@ -201,6 +201,10 @@ def esporta(soggetto, utente):
 
     contenuto = dati(soggetto)
     adesso = timezone.localtime()
+    # titolare del trattamento: lo rappresenta il legale rappresentante (della sezione del socio,
+    # o dell'associazione per tutta la struttura), non per forza il presidente locale
+    socio = getattr(soggetto, "socio", None)
+    sezione = socio.sezione if socio is not None else None
     pdf = genera_pdf(
         "anagrafica/pdf/dati_personali.html",
         {
@@ -208,6 +212,7 @@ def esporta(soggetto, utente):
             "dati": contenuto,
             "adesso": adesso,
             "organizzazione": Organizzazione.corrente(),
+            "sezione": sezione,
         },
     )
     buffer = io.BytesIO()

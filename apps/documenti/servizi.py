@@ -36,6 +36,12 @@ SEGNAPOSTO_STAMPA = {
     "luogo": "comune dell'associazione",
     "data_estesa": "data di oggi per esteso (8 novembre 2026)",
     "firmatario": "nome del firmatario",
+    "sede": "indirizzo della sede (via, CAP, comune e provincia)",
+    "codice_fiscale_ente": "codice fiscale dell'associazione",
+    "email_ente": "email dell'associazione",
+    "pec_ente": "PEC dell'associazione",
+    "rappresentante_legale": "nome del rappresentante legale (titolare del trattamento)",
+    "qualifica_rappresentante": "qualifica del rappresentante legale",
 }
 _RE_SEGNAPOSTO = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
 
@@ -64,9 +70,27 @@ def in_carica(ruolo):
     return carica.soggetto.intestazione if carica else ""
 
 
+def firma_legale(modello):
+    """Firma del rappresentante legale per i modelli che la richiedono, o None."""
+    if not modello.firma_legale:
+        return None
+    from apps.organi.firme import QUALIFICHE, RAPPRESENTANTE, Firma, legale_rappresentante
+
+    return legale_rappresentante() or Firma(QUALIFICHE[RAPPRESENTANTE])
+
+
 def firmatario(modello):
-    """Nome del firmatario: quello del modello o il presidente in carica."""
+    """Nome del firmatario: il rappresentante legale (se richiesto), quello del modello o il
+    presidente in carica."""
+    legale = firma_legale(modello)
+    if legale is not None:
+        return legale.nome
     return modello.firma_nome or in_carica("presidente")
+
+
+def qualifica_firmatario(modello):
+    legale = firma_legale(modello)
+    return legale.qualifica if legale is not None else modello.firma_ruolo
 
 
 def seconda_firma(modello):
@@ -95,7 +119,28 @@ def _contesto(soggetto, firma):
         luogo=org.comune,
         data_estesa=date_format(timezone.localdate(), "j F Y").lower(),
         firmatario=firma,
+        sede=" ".join(
+            p
+            for p in (
+                org.indirizzo + ("," if org.indirizzo else ""),
+                org.cap,
+                org.comune,
+                f"({org.provincia})" if org.provincia else "",
+            )
+            if p
+        ).strip(" ,"),  # fmt: skip
+        codice_fiscale_ente=org.codice_fiscale,
+        email_ente=org.email,
+        pec_ente=org.pec,
     )
+    from apps.organi.firme import legale_rappresentante
+
+    rappresentante = legale_rappresentante()
+    if rappresentante:
+        c.update(
+            rappresentante_legale=rappresentante.nome,
+            qualifica_rappresentante=rappresentante.qualifica,
+        )
     if soggetto is not None:
         c.update(contesto_soggetto(soggetto))
     return c
@@ -138,7 +183,7 @@ def _contesto_pdf(modello, soggetti, protocollo=None):
         "organizzazione": org,
         "modello": modello,
         "pagine": elenco,
-        "firma_ruolo": modello.firma_ruolo,
+        "firma_ruolo": qualifica_firmatario(modello),
         "firma_nome": firma,
         "luogo_data": ", ".join(
             p for p in (org.comune, date_format(timezone.localdate(), "j F Y").lower()) if p

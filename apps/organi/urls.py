@@ -22,6 +22,32 @@ urlpatterns = [
     path("<int:pk>/nomina/", views.NominaView.as_view(), name="nomina"),
     path("cariche/<int:pk>/fine/", views.FineCaricaView.as_view(), name="fine_carica"),
     path("cariche/<int:pk>/modifica/", views.ModificaCaricaView.as_view(), name="modifica_carica"),
+    path("rappresentante-legale/", views.RappresentantiView.as_view(), name="rappresentanti"),
+    path(
+        "rappresentante-legale/nuovo/",
+        views.RappresentanteNuovoView.as_view(),
+        name="rappresentante_nuovo",
+    ),
+    path(
+        "rappresentante-legale/<int:pk>/",
+        views.RappresentanteModificaView.as_view(),
+        name="rappresentante_modifica",
+    ),
+    path(
+        "modelli-convocazione/",
+        views.ModelliConvocazioneView.as_view(),
+        name="modelli_convocazione",
+    ),
+    path(
+        "modelli-convocazione/nuovo/",
+        views.ModelloConvocazioneNuovoView.as_view(),
+        name="modello_convocazione_nuovo",
+    ),
+    path(
+        "modelli-convocazione/<int:pk>/",
+        views.ModelloConvocazioneModificaView.as_view(),
+        name="modello_convocazione",
+    ),
     path("riunioni/", views.RiunioniView.as_view(), name="riunioni"),
     path("riunioni/nuova/", views.RiunioneNuovaView.as_view(), name="riunione_nuova"),
     path("riunioni/<int:pk>/", views.RiunioneView.as_view(), name="riunione"),

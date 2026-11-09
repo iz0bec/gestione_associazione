@@ -30,8 +30,8 @@ class ModelloForm(StileMixin, forms.ModelForm):
 
     class Meta:
         model = ModelloStampa
-        fields = ["nome", "tipo", "titolo", "corpo", "firma_ruolo", "firma_nome", "seconda_firma",
-                  "attivo"]  # fmt: skip
+        fields = ["nome", "tipo", "titolo", "corpo", "firma_ruolo", "firma_nome", "firma_legale",
+                  "seconda_firma", "attivo"]  # fmt: skip
         widgets = {"corpo": forms.Textarea(attrs={"rows": 14}), "tipo": forms.RadioSelect}
 
     def __init__(self, *args, **kwargs):

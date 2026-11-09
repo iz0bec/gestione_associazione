@@ -30,16 +30,29 @@ from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.views import PermessoMixin
 
 from . import servizi
+from .firme import situazione_rappresentanza
 from .forms import (
     CaricaForm,
     DeliberaForm,
     FineCaricaForm,
+    ModelloConvocazioneForm,
     ModificaCaricaForm,
+    ModificaRappresentanteForm,
     OrganoForm,
+    RappresentanteForm,
     RiunioneForm,
     VerbaleForm,
 )
-from .models import Carica, Delibera, Organo, Presenza, Riunione, Verbale
+from .models import (
+    Carica,
+    Delibera,
+    ModelloConvocazione,
+    Organo,
+    Presenza,
+    RappresentanteLegale,
+    Riunione,
+    Verbale,
+)
 from .servizi import OperazioneNonValida
 
 
@@ -233,6 +246,112 @@ class FineCaricaView(PermessoMixin, View):
         return redirect(carica.organo)
 
 
+# --- rappresentante legale ----------------------------------------------------------------------
+
+
+class RappresentantiView(PermessoMixin, TemplateView):
+    """Chi rappresenta legalmente l'associazione e le sezioni, con lo storico delle nomine."""
+
+    permission_required = "organi.view_rappresentantelegale"
+    template_name = "organi/rappresentanti.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["situazione"] = situazione_rappresentanza()
+        ctx["nomine"] = RappresentanteLegale.objects.select_related("soggetto", "sezione")
+        if self.request.user.has_perm("organi.gestisci_cariche"):
+            ctx["form"] = kwargs.get("form") or RappresentanteForm()
+            ctx["moduli"] = [(n, ModificaRappresentanteForm.per(n)) for n in ctx["nomine"]]
+        return ctx
+
+
+class RappresentanteNuovoView(PermessoMixin, View):
+    permission_required = "organi.gestisci_cariche"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        form = RappresentanteForm(request.POST)
+        if form.is_valid():
+            d = form.cleaned_data
+            try:
+                servizi.nomina_rappresentante(
+                    d["soggetto"], d["dal"], request.user, sezione=d["sezione"],
+                    tutta_la_struttura=d["tutta_la_struttura"], qualifica=d["qualifica"],
+                    atto=d["atto"], note=d["note"],
+                )  # fmt: skip
+                messages.success(request, "Rappresentante legale registrato.")
+            except OperazioneNonValida as e:
+                _errore(request, e)
+        else:
+            errori = "; ".join(e for lista in form.errors.values() for e in lista)
+            messages.error(request, f"Rappresentante legale non registrato: {errori}")
+        return redirect("organi:rappresentanti")
+
+
+class RappresentanteModificaView(PermessoMixin, View):
+    permission_required = "organi.gestisci_cariche"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        nomina = get_object_or_404(RappresentanteLegale, pk=pk)
+        form = ModificaRappresentanteForm.per(nomina, request.POST)
+        if form.is_valid():
+            d = form.cleaned_data
+            try:
+                servizi.modifica_rappresentante(
+                    nomina, request.user, qualifica=d["qualifica"], dal=d["dal"], al=d["al"],
+                    tutta_la_struttura=d.get("tutta_la_struttura", False), atto=d["atto"],
+                    note=d["note"],
+                )  # fmt: skip
+                messages.success(request, f"Nomina di {nomina.soggetto.nome_completo} aggiornata.")
+            except OperazioneNonValida as e:
+                _errore(request, e)
+        else:
+            errori = "; ".join(e for lista in form.errors.values() for e in lista)
+            messages.error(request, f"Nomina non modificata: {errori}")
+        return redirect("organi:rappresentanti")
+
+
+# --- modelli di convocazione ---------------------------------------------------------------------
+
+
+class ModelliConvocazioneView(PermessoMixin, ListView):
+    permission_required = "organi.view_modelloconvocazione"
+    model = ModelloConvocazione
+    template_name = "organi/modelli_convocazione.html"
+    context_object_name = "modelli"
+
+
+class ModelloConvocazioneNuovoView(PermessoMixin, CreateView):
+    permission_required = "organi.add_modelloconvocazione"
+    model = ModelloConvocazione
+    form_class = ModelloConvocazioneForm
+    template_name = "organi/modulo.html"
+    extra_context = {"titolo": "Nuovo modello di convocazione"}
+
+    def form_valid(self, form):
+        risposta = super().form_valid(form)
+        registra(Azione.CREAZIONE, self.object)
+        messages.success(self.request, f"Modello «{self.object}» creato.")
+        return risposta
+
+
+class ModelloConvocazioneModificaView(PermessoMixin, UpdateView):
+    permission_required = "organi.change_modelloconvocazione"
+    model = ModelloConvocazione
+    form_class = ModelloConvocazioneForm
+    template_name = "organi/modulo.html"
+    extra_context = {"titolo": "Modello di convocazione"}
+
+    def form_valid(self, form):
+        dettagli = campi_modificati(form)
+        risposta = super().form_valid(form)
+        if dettagli.get("campi"):
+            registra(Azione.MODIFICA, self.object, **dettagli)
+        messages.success(self.request, "Modello salvato.")
+        return risposta
+
+
 # --- riunioni ----------------------------------------------------------------------------------
 
 
@@ -274,8 +393,25 @@ class _RiunioneFormMixin:
 class RiunioneNuovaView(PermessoMixin, _RiunioneFormMixin, FormView):
     permission_required = "organi.add_riunione"
 
+    def _modello(self):
+        pk = self.request.GET.get("modello", "")
+        if pk.isdigit():
+            return ModelloConvocazione.objects.filter(pk=pk, attivo=True).first()
+        return None
+
     def get_initial(self):
-        return {"organo": self.request.GET.get("organo")}
+        iniziali = {"organo": self.request.GET.get("organo")}
+        modello = self._modello()
+        if modello:
+            iniziali.update(modello.valori(timezone.localdate()))
+        return iniziali
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["modelli_convocazione"] = ModelloConvocazione.objects.filter(attivo=True)
+        ctx["modello_scelto"] = self._modello()
+        ctx["organo_scelto"] = self.request.GET.get("organo", "")
+        return ctx
 
     def get_form_kwargs(self):
         return {**super().get_form_kwargs(), "instance": Riunione()}

@@ -35,12 +35,18 @@ Nel testo:
 - le righe che iniziano con `- ` formano un elenco;
 - i **segnaposto** fra doppie graffe vengono sostituiti con i dati del destinatario: per esempio
   `{{ nome_completo }}` (Rossi Mario), `{{ intestazione }}` (Cav. Mario Rossi), `{{ saluto }}` («Caro», «Cara» o «Gentile»), `{{ numero_socio }}`,
-  `{{ anni_socio }}`, `{{ organizzazione }}`, `{{ luogo }}`, `{{ data_estesa }}`. L'elenco
+  `{{ anni_socio }}`, `{{ organizzazione }}`, `{{ luogo }}`, `{{ data_estesa }}`; per gli atti
+  della privacy anche `{{ rappresentante_legale }}`, `{{ qualifica_rappresentante }}`, `{{ sede }}`,
+  `{{ codice_fiscale_ente }}`, `{{ email_ente }}`, `{{ pec_ente }}`. L'elenco
   completo è a destra nella pagina del modello. Un segnaposto scritto male viene segnalato al
   salvataggio.
 
 **Firma**: qualifica (predefinita «Il Presidente») e nome. Se il nome è vuoto si usa il presidente
 in carica registrato negli [Organi sociali](organi.md).
+
+Con **«Firma il rappresentante legale»** firma invece il rappresentante legale indicato in
+*Organi sociali → Rappresentante legale* (es. il presidente nazionale), con la sua qualifica; se non
+è indicato, il presidente in carica. Serve per gli atti del titolare del trattamento (privacy, GDPR).
 
 Il nome del firmatario è stampato nella forma «Mario Rossi», con il titolo se presente.
 
@@ -48,6 +54,24 @@ Il nome del firmatario è stampato nella forma «Mario Rossi», con il titolo se
 
 Sono già presenti quattro modelli, da adattare: *Attestato di iscrizione*, *Attestato di
 benemerenza*, *Lettera di auguri*, *Lettera*.
+
+### Modelli per la privacy (GDPR)
+
+Sono pronti anche sette modelli, tutti firmati dal rappresentante legale e **da rileggere e adattare**
+allo statuto e alla realtà dell'associazione (le righe `____` vanno completate a mano o nel testo):
+
+| Modello | Uso |
+|---|---|
+| Informativa sul trattamento dei dati (art. 13) | da consegnare a soci e interessati |
+| Autorizzazione al trattamento (art. 29) | per consiglieri, segreteria, volontari che usano i dati, con le istruzioni |
+| Nomina del responsabile del trattamento (art. 28) | per fornitori e consulenti esterni (commercialista, informatico) |
+| Riscontro alla richiesta di accesso (art. 15) | lettera di accompagnamento al riepilogo dei dati personali (Anagrafica → scheda → Dati personali) |
+| Riscontro alla richiesta di cancellazione (art. 17) | dopo l'anonimizzazione della scheda |
+| Comunicazione di violazione dei dati (art. 34) | agli interessati, in caso di violazione con rischio elevato |
+| Consenso a foto e video | modulo da far firmare all'interessato |
+
+I modelli non sono consulenza legale: in caso di dubbio, verificarli con il proprio consulente o
+con la sede nazionale.
 
 ## Attestato solenne (benemerenza)
 

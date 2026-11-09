@@ -5,6 +5,31 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.7] - 2026-11-09
+
+Rappresentante legale, modelli di convocazione e modelli per la privacy.
+
+### Aggiunto
+- **Rappresentante legale** (Organi sociali → Rappresentante legale): persona anche esterna agli
+  organi gestiti (es. il presidente nazionale), per l'associazione o per una sezione, con qualifica,
+  periodo e atto di nomina; «vale per tutta la struttura» la estende alle sezioni senza una nomina
+  propria. Tabella «Chi firma oggi» per ente. Segnaposto `{{ rappresentante_legale }}` e
+  `{{ qualifica_rappresentante }}` nei modelli di stampa.
+- **Modelli di convocazione** (Organi sociali → Modelli di convocazione): testo e ordine del giorno
+  tipici (assemblea ordinaria per il rendiconto, elettiva, straordinaria per lo statuto; consiglio
+  ordinario, per il rendiconto, di insediamento; organo di controllo), con `{{ anno }}` e
+  `{{ anno_precedente }}`. In *Nuova riunione* il pulsante «Parti da un modello» li precompila.
+- **Modelli di stampa per la privacy (GDPR)**, da adattare: informativa (art. 13), autorizzazione
+  al trattamento con istruzioni (art. 29), nomina del responsabile (art. 28), riscontri alle
+  richieste di accesso (art. 15) e di cancellazione (art. 17), comunicazione di violazione
+  (art. 34), consenso a foto e video. Opzione «Firma il rappresentante legale» nei modelli e
+  segnaposto `{{ sede }}`, `{{ codice_fiscale_ente }}`, `{{ email_ente }}`, `{{ pec_ente }}`.
+
+### Modificato
+- Il riepilogo dei dati personali (GDPR) è firmato dal rappresentante legale del titolare del
+  trattamento (se non indicato, dal presidente in carica come prima); le altre stampe restano
+  firmate dal presidente.
+
 ## [1.0.6] - 2026-11-09
 
 Coriandoli per i compleanni nel calendario.

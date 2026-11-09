@@ -16,7 +16,15 @@ from apps.anagrafica.forms import CampoData
 from apps.anagrafica.models import Soggetto
 from apps.core.forms import StileMixin
 
-from .models import Carica, Delibera, Organo, Riunione, Verbale
+from .models import (
+    Carica,
+    Delibera,
+    ModelloConvocazione,
+    Organo,
+    RappresentanteLegale,
+    Riunione,
+    Verbale,
+)
 
 
 class CampoDataOra(forms.DateTimeInput):
@@ -94,6 +102,98 @@ class ModificaCaricaForm(StileMixin, forms.Form):
     def per(cls, carica, data=None):
         iniziali = {"dal": carica.dal, "al": carica.al, "atto": carica.nomina, "note": carica.note}
         return cls(data, initial=iniziali, prefix=f"carica{carica.pk}")
+
+
+class RappresentanteForm(StileMixin, forms.Form):
+    """Nuova nomina del rappresentante legale (associazione o sezione)."""
+
+    sezione = forms.ModelChoiceField(
+        label="Ente rappresentato",
+        queryset=None,
+        required=False,
+        empty_label="— l'associazione (federazione) —",
+    )
+    tutta_la_struttura = forms.BooleanField(
+        label="Vale per tutta la struttura",
+        required=False,
+        help_text="Solo per l'associazione: rappresenta anche le sezioni senza un proprio "
+        "rappresentante legale (es. il presidente nazionale per tutte le sezioni).",
+    )
+    soggetto = forms.ModelChoiceField(
+        label="Persona",
+        queryset=Soggetto.objects.attivi().filter(
+            tipo=Soggetto.Tipo.PERSONA, data_decesso__isnull=True
+        ),
+        help_text="Anche esterna all'associazione: va prima inserita in Anagrafica.",
+    )
+    qualifica = forms.CharField(
+        max_length=100,
+        initial=RappresentanteLegale.QUALIFICA_PREDEFINITA,
+        help_text="Come compare sopra la firma, es. «Il Presidente nazionale».",
+    )
+    dal = forms.DateField(widget=CampoData, initial=date.today)
+    atto = forms.CharField(
+        label="Atto di nomina", required=False, max_length=200, help_text="Es. statuto, procura."
+    )
+    note = forms.CharField(required=False, max_length=255)
+
+    def __init__(self, *args, **kwargs):
+        from apps.soci.models import Sezione
+
+        super().__init__(*args, **kwargs)
+        self.fields["sezione"].queryset = Sezione.objects.filter(attiva=True)
+        self.fields["soggetto"].queryset = self.fields["soggetto"].queryset.order_by(
+            "cognome", "nome"
+        )
+
+    def clean(self):
+        dati = super().clean()
+        if dati.get("sezione") and dati.get("tutta_la_struttura"):
+            self.add_error(
+                "tutta_la_struttura", "Vale solo per il rappresentante dell'associazione."
+            )
+        return dati
+
+
+class ModificaRappresentanteForm(StileMixin, forms.Form):
+    qualifica = forms.CharField(max_length=100)
+    dal = forms.DateField(label="Inizio", widget=CampoData)
+    al = forms.DateField(
+        label="Data di cessazione",
+        widget=CampoData,
+        required=False,
+        help_text="Vuota = in carica. Da questo giorno non rappresenta più l'ente.",
+    )
+    tutta_la_struttura = forms.BooleanField(label="Vale per tutta la struttura", required=False)
+    atto = forms.CharField(label="Atto di nomina", required=False, max_length=200)
+    note = forms.CharField(required=False, max_length=255)
+
+    @classmethod
+    def per(cls, nomina, data=None):
+        iniziali = {
+            "qualifica": nomina.qualifica, "dal": nomina.dal, "al": nomina.al,
+            "tutta_la_struttura": nomina.tutta_la_struttura, "atto": nomina.nomina,
+            "note": nomina.note,
+        }  # fmt: skip
+        form = cls(data, initial=iniziali, prefix=f"rapp{nomina.pk}")
+        if nomina.sezione_id:
+            del form.fields["tutta_la_struttura"]
+        return form
+
+
+class ModelloConvocazioneForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = ModelloConvocazione
+        fields = ["nome", "tipo_organo", "straordinaria", "premessa", "punti", "ordine", "attivo"]
+        widgets = {
+            "premessa": forms.Textarea(attrs={"rows": 4}),
+            "punti": forms.Textarea(attrs={"rows": 8}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tipo_organo"].choices = [("", "— qualsiasi organo —"),
+                                              *Organo.Tipo.choices]  # fmt: skip
 
 
 class RiunioneForm(StileMixin, forms.ModelForm):

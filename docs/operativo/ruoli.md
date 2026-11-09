@@ -77,7 +77,7 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 
 ### Organi sociali
 
-| Ruolo | Consulta organi, riunioni, verbali, delibere | Prepara e convoca riunioni | Presenze e verbali | Cariche | Regole degli organi |
+| Ruolo | Consulta organi, riunioni, verbali, delibere | Prepara e convoca riunioni | Presenze e verbali | Cariche, rappresentante legale, modelli di convocazione | Regole degli organi |
 |---|---|---|---|---|---|
 | Amministratore di sistema | sì | sì | sì | sì | sì |
 | Presidente | sì | sì | sì | - | - |

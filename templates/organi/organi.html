@@ -4,6 +4,8 @@
 {% block azioni %}
 <div class="btn-list">
   <a class="btn" href="{% url 'organi:riunioni' %}"><i class="ti ti-calendar-event me-1"></i>Tutte le riunioni</a>
+  {% if perms.organi.view_rappresentantelegale %}<a class="btn" href="{% url 'organi:rappresentanti' %}"><i class="ti ti-scale me-1"></i>Rappresentante legale</a>{% endif %}
+  {% if perms.organi.view_modelloconvocazione %}<a class="btn" href="{% url 'organi:modelli_convocazione' %}"><i class="ti ti-template me-1"></i>Modelli di convocazione</a>{% endif %}
   {% if perms.organi.view_delibera %}<a class="btn" href="{% url 'organi:delibere' %}"><i class="ti ti-gavel me-1"></i>Registro delibere</a>{% endif %}
   {% if perms.organi.add_organo %}<a class="btn" href="{% url 'organi:organo_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo organo</a>{% endif %}
   {% if perms.organi.add_riunione %}<a class="btn btn-primary" href="{% url 'organi:riunione_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova riunione</a>{% endif %}

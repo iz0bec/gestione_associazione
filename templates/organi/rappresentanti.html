@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rappresentante legale dell'associazione e delle sezioni (anche esterno agli
+               organi gestiti, es. il presidente nazionale), con lo storico delle nomine.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Rappresentante legale{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}Rappresentante legale{% endblock %}
+{% block azioni %}
+{% if form %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#nuovo-rappresentante"><i class="ti ti-plus me-1"></i>Indica il rappresentante</button>{% endif %}
+{% endblock %}
+{% block contenuto %}
+<div class="alert alert-info">
+  Il rappresentante legale firma i documenti del <strong>titolare del trattamento</strong> (privacy, GDPR), come il riepilogo
+  dei dati personali. Se non ne è indicato uno vale il <strong>presidente in carica</strong>. Può essere una persona esterna
+  agli organi gestiti (es. il presidente nazionale): va prima inserita in Anagrafica. Una nomina dell'associazione
+  «per tutta la struttura» vale anche per le sezioni che non ne hanno una propria, mentre i presidenti locali
+  continuano a firmare gli altri documenti.
+</div>
+<div class="row row-cards">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-scale me-2"></i>Chi firma oggi</h2></div>
+      <div class="table-responsive"><table class="table card-table table-vcenter">
+        <thead><tr><th>Ente</th><th>Firma</th><th>Perché</th></tr></thead>
+        <tbody>{% for r in situazione %}<tr>
+          <td>{% if r.sezione %}Sezione di {{ r.sezione.nome }}{% else %}<strong>Associazione</strong>{% endif %}</td>
+          <td>{% if r.firma %}{{ r.firma.qualifica }} · <span class="fw-medium">{{ r.firma.nome }}</span>{% else %}<span class="text-secondary">nessuno</span>{% endif %}</td>
+          <td class="text-secondary">{% if r.origine == "nomina" %}nomina propria{% elif r.origine == "struttura" %}nomina dell'associazione per tutta la struttura{% elif r.origine == "presidente" %}presidente in carica{% elif r.origine == "associazione" %}nessuna nomina né presidente: vale l'associazione{% else %}<span class="text-warning">da indicare</span>{% endif %}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Nomine</h2></div>
+      <div class="table-responsive"><table class="table table-sm card-table">
+        <thead><tr><th>Ente</th><th>Persona</th><th>Qualifica</th><th>Periodo</th><th>Atto</th>{% if moduli %}<th></th>{% endif %}</tr></thead>
+        <tbody>{% for n in nomine %}<tr{% if not n.in_carica %} class="text-secondary"{% endif %}>
+          <td>{{ n.ambito|capfirst }}</td>
+          <td>{% if perms.anagrafica.view_soggetto %}<a href="{{ n.soggetto.get_absolute_url }}">{{ n.soggetto.nome_completo }}</a>{% else %}{{ n.soggetto.nome_completo }}{% endif %}</td>
+          <td>{{ n.qualifica }}</td>
+          <td>{{ n.dal|date:"d/m/Y" }} – {{ n.al|date:"d/m/Y"|default:"in carica" }}</td>
+          <td>{{ n.nomina }}</td>
+          {% if moduli %}<td class="text-end"><button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modifica-rapp-{{ n.pk }}" title="Modifica qualifica, date, atto e note"><i class="ti ti-pencil"></i></button></td>{% endif %}
+        </tr>{% empty %}<tr><td colspan="6" class="text-secondary">Nessuna nomina: firma il presidente in carica.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+{% if form %}
+<div class="modal fade" id="nuovo-rappresentante" tabindex="-1" aria-labelledby="titolo-nuovo-rapp" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'organi:rappresentante_nuovo' %}" novalidate>{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-nuovo-rapp">Rappresentante legale</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        {{ form }}
+        <p class="small text-secondary mb-0">Chi era in carica per lo stesso ente cessa dal giorno della nuova nomina.</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Registra</button></div>
+    </form>
+  </div>
+</div>
+{% for n, modulo in moduli %}
+<div class="modal fade" id="modifica-rapp-{{ n.pk }}" tabindex="-1" aria-labelledby="titolo-rapp-{{ n.pk }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'organi:rappresentante_modifica' n.pk %}" novalidate>{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-rapp-{{ n.pk }}">{{ n.soggetto.nome_completo }} · {{ n.ambito }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">{{ modulo }}</div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Annulla</button><button type="submit" class="btn btn-primary">Salva</button></div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

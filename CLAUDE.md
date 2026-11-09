@@ -92,6 +92,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   libreria `python-codicefiscale`, indice in cache; mai bloccare il salvataggio per il nome: si segnala).
 - Firme nei PDF: tag `{% load firme %}{% firme "presidente" "tesoriere?" "tesoriere|presidente" giorno=... %}`
   (`apps/organi/firme.py`: carica alla data del documento, vacante = senza nome); niente firme scritte a mano.
+  `"rappresentante_legale"` = `RappresentanteLegale` (anche esterno; sezione → «tutta la struttura» →
+  presidente → associazione), solo per gli atti del titolare del trattamento (GDPR); il resto firma il presidente.
 - Domande da email: `soci.servizi.domanda_da_messaggio` (protocolla + domanda + modulo firmato, tutto o niente);
   recupero dati in `apps/soci/estrazione.py` (mai valori inventati); il modulo firmato della domanda passa al socio
   in `accogli_domanda`.
