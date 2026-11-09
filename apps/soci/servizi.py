@@ -895,7 +895,7 @@ INTESTAZIONE_SCAMBIO = [
     "Sezione", "Codice Sezione", "Matricola", "Cognome", "Nome", "Sesso", "Codice Fiscale",
     "Data di nascita", "Luogo di nascita", "Indirizzo", "CAP", "Comune", "Provincia", "Email",
     "Telefono", "Cellulare", "Tipologia", "Data di ammissione", "Data di cessazione",
-    "Causa di cessazione",
+    "Causa di cessazione", "Stato socio",
     "Numero Tessera Anno {precedente}", "Numero Tessera", "Anno Sociale", "Data Tessera",
     "Valido", "Data pagamento",
 ]  # fmt: skip
@@ -929,7 +929,7 @@ def esporta_scambio(queryset, anno, utente):
             s.matricola, p.cognome, p.nome, p.sesso, p.codice_fiscale or "", p.data_nascita,
             p.luogo_nascita, p.indirizzo, p.cap, p.comune, p.provincia, p.email, p.telefono,
             p.cellulare, s.tipologia.nome, s.data_ammissione, s.data_cessazione,
-            s.get_causa_cessazione_display() if s.causa_cessazione else "",
+            s.get_causa_cessazione_display() if s.causa_cessazione else "", s.get_stato_display(),
             prec.carta.codice if prec and prec.carta_id else "",
             t.carta.codice if t and t.carta_id else "", anno if t else "",
             t.data_rilascio if t else None, valido, t.pagata_il if t else None,

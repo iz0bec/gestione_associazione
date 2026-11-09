@@ -1059,6 +1059,7 @@ class ImportaView(PermessoMixin, FormView):
             "cessazioni": bool(d.get("cessazioni")),
             "quote_pagate": d.get("quote") == "pagate",
             "valido": bool(d.get("valido")),
+            "aggiorna_dati": bool(d.get("aggiorna_dati")),
             "anno_tessere": d.get("anno_tessere"),
             "sezioni_consentite": sorted(consentite) if consentite is not None else None,
         }

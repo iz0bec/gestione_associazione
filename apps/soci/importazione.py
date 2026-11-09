@@ -71,6 +71,7 @@ COLONNE = {
     "valido": ["valido", "validato", "socio validato", "valida"],
     "data_pagamento": ["data pagamento", "data del pagamento", "pagata il", "data versamento"],
     "causa_cessazione": ["causa di cessazione", "causa cessazione", "motivo della cessazione"],
+    "stato_socio": ["stato socio", "stato del socio"],
 }
 # colonne con l'anno nell'intestazione, es. «Numero Tessera Anno 2025»
 COLONNE_CON_ANNO = {"tessera_precedente": re.compile(r"^(?:numero |n |nr )?tessera anno (\d{4})$")}
@@ -320,6 +321,9 @@ class Opzioni:
     crea_tessere: bool = True  # crea le tessere fisiche non ancora caricate (lotto «registro»)
     cessazioni: bool = True  # registra le cessazioni (data di annullamento dell'iscrizione)
     quote_pagate: bool = False  # le quote dei tesseramenti importati risultano già incassate
+    aggiorna_dati: bool = (
+        False  # scambio simmetrico: i dati diversi del file sostituiscono i locali
+    )
     valido: bool = False  # colonna «Valido» (socio validato = in regola): sì -> quota incassata,
     # no -> quota da incassare; vuota -> vale `quote_pagate`
     sezioni_consentite: set | None = None  # utente limitato a queste sezioni
@@ -540,19 +544,24 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
             completati.append("codice_fiscale")
         for c in completati:
             setattr(soggetto, c, d[c])
-        diversi = [
-            c for c in ("email", "comune", "indirizzo")
-            if d.get(c) and getattr(soggetto, c)
-            and normalizza(getattr(soggetto, c)) != normalizza(d[c])
-        ]  # fmt: skip
-        if diversi:
-            note.append("dati locali diversi, non sovrascritti: " + ", ".join(diversi))
-        if completati:
+        diversi = [c for c in CAMPI_ANAGRAFICI if c not in completati and _diverso(soggetto, c, d)]
+        differenze = "; ".join(f"{c}: {_mostra(getattr(soggetto, c))} → {_mostra(d[c])}"
+                               for c in diversi)  # fmt: skip
+        if diversi and opzioni.aggiorna_dati:
+            for c in diversi:
+                setattr(soggetto, c, d[c])
+            note.append("aggiornati " + differenze)
+        elif diversi:
+            note.append("dati locali diversi, non sovrascritti: " + differenze)
+        cambiati = completati + (diversi if opzioni.aggiorna_dati else [])
+        if cambiati:
             soggetto.modificato_da = utente
             soggetto.save()
             registra(Azione.MODIFICA, soggetto, utente=utente, completati=completati,
-                     origine="registro nazionale")  # fmt: skip
-            note.append("completati: " + ", ".join(completati))
+                     aggiornati=diversi if opzioni.aggiorna_dati else None,
+                     origine="importazione da file")  # fmt: skip
+            if completati:
+                note.append("completati: " + ", ".join(completati))
             stato = "aggiornato"
         if not soggetto.attivo:
             raise _Errore(f"{soggetto} è archiviato in anagrafica")
@@ -581,14 +590,32 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
             socio.matricola = d["matricola"]
             cambi.append("matricola")
         elif d.get("matricola") and socio.matricola != d["matricola"]:
-            note.append(f"matricola locale {socio.matricola}, nel registro {d['matricola']}")
+            altro = Socio.objects.filter(matricola=d["matricola"]).exclude(pk=socio.pk).exists()
+            if opzioni.aggiorna_dati and not altro:
+                note.append(f"matricola: {socio.matricola} → {d['matricola']}")
+                socio.matricola = d["matricola"]
+                cambi.append("matricola")
+            else:
+                note.append(f"matricola locale {socio.matricola}, nel file {d['matricola']}")
         if socio.sezione_id != sezione.pk:
             if opzioni.allinea_sezione:
                 socio.sezione = sezione
                 cambi.append("sezione")
             else:
                 note.append(f"sezione locale «{socio.sezione}», nel registro «{sezione}»")
-        if socio.stato != Socio.Stato.ATTIVO:
+        voluto = _stato_socio(d.get("stato_socio"))
+        if voluto and voluto != socio.stato and socio.stato != Socio.Stato.CESSATO \
+                and voluto != Socio.Stato.CESSATO:  # fmt: skip
+            # sospensione e riattivazione (la cessazione ha la sua colonna; un cessato resta tale)
+            if opzioni.aggiorna_dati:
+                servizi.cambia_stato(socio, voluto, utente, motivo="Importazione da file")
+                socio.refresh_from_db()
+                stato = "aggiornato" if stato != "nuovo" else stato
+                note.append(f"stato: {Socio.Stato(voluto).label.lower()}")
+            else:
+                note.append(f"stato locale {socio.get_stato_display().lower()}, nel file "
+                            f"{Socio.Stato(voluto).label.lower()}")  # fmt: skip
+        elif socio.stato != Socio.Stato.ATTIVO:
             note.append(f"socio {socio.get_stato_display().lower()} in locale")
         if cambi:
             socio.modificato_da = utente
@@ -637,6 +664,30 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
             if stato == "invariato" and any("attribuita" in n or "incassata" in n for n in esito):
                 stato = "aggiornato"
     return stato, note, socio
+
+
+def _mostra(valore):
+    if valore in (None, ""):
+        return "(vuoto)"
+    return valore.strftime("%d/%m/%Y") if isinstance(valore, date) else str(valore)
+
+
+def _diverso(soggetto, campo, d):
+    nuovo, attuale = d.get(campo), getattr(soggetto, campo)
+    if not nuovo or not attuale:
+        return False
+    if isinstance(nuovo, date) or isinstance(attuale, date):
+        return nuovo != attuale
+    return normalizza(attuale) != normalizza(nuovo)
+
+
+def _stato_socio(testo):
+    t = normalizza(testo or "")
+    for chiave, stato in (("sospes", Socio.Stato.SOSPESO), ("cessat", Socio.Stato.CESSATO),
+                          ("attiv", Socio.Stato.ATTIVO)):  # fmt: skip
+        if t.startswith(chiave):
+            return stato
+    return None
 
 
 def _causa(testo):

@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Scambio simmetrico** fra installazioni: opzione dell'importazione **Aggiorna anche i dati
+  diversi** (dati anagrafici, matricola, sospensione e riattivazione prendono il valore del file;
+  nome, cognome e codice fiscale invariati; nessuna riattivazione dei cessati) e colonna **Stato
+  socio** nell'esportazione di scambio.
+- **Anteprima** dell'importazione più chiara: ogni differenza è indicata come *valore attuale →
+  valore del file*.
+
 ## [1.0.1] - 2026-11-09
 
 Scambio dei soci fra installazioni (federazione e sezioni).

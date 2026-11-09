@@ -39,7 +39,7 @@
     </div>
     {% endif %}
     {% if rapporto.sezioni_nuove %}<p class="small mb-1"><strong>Sezioni {% if rapporto.eseguito %}create{% else %}da creare{% endif %}:</strong> {{ rapporto.sezioni_nuove|join:", " }}.</p>{% endif %}
-    <p class="small text-secondary mb-0">Le schede anagrafiche esistenti sono solo completate nei dati mancanti: ciò che è già registrato qui non viene sovrascritto (le differenze sono segnalate nelle note).</p>
+    <p class="small text-secondary mb-0">Le schede esistenti sono completate nei dati mancanti; i dati diversi sono sostituiti solo con l'opzione <em>Aggiorna anche i dati diversi</em>. Nelle note ogni differenza è indicata come <em>valore attuale → valore del file</em>.</p>
   </div>
   <div class="table-responsive">
     <table class="table table-vcenter card-table table-sm">
@@ -94,6 +94,7 @@
         {% if perms.soci.gestisci_tessere_fisiche %}{{ form.crea_tessere.as_field_group }}{% endif %}
         {{ form.quote.as_field_group }}
         {{ form.valido.as_field_group }}
+        {{ form.aggiorna_dati.as_field_group }}
         {{ form.anno_tessere.as_field_group }}
       </div>
       <div class="card-footer d-flex">

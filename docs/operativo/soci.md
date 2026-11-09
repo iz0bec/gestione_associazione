@@ -247,8 +247,11 @@ tiene allineato **nei due sensi** con un file Excel:
 1. nell'installazione di partenza, *Soci*, filtro sulla **sezione** (e l'anno nel filtro *Quota*,
    se non è l'anno in corso), poi **Stampa ed esporta → Per un'altra installazione (Excel)**;
 2. nell'installazione di arrivo, *Sistema → Importa soci*, si carica il file così com'è: le colonne
-   sono le stesse dell'importazione dal registro nazionale, più **Data pagamento**. Conviene
-   spuntare **Tieni conto della colonna «Valido»**.
+   sono le stesse dell'importazione dal registro nazionale, più **Data pagamento**, **Causa di
+   cessazione** e **Stato socio**. Si spuntano **Tieni conto della colonna «Valido»** e, per uno
+   scambio **simmetrico**, **Aggiorna anche i dati diversi**;
+3. l'**anteprima** mostra riga per riga cosa succederà - ogni differenza come *valore attuale →
+   valore del file* - senza salvare nulla; solo dopo si conferma l'importazione.
 
 Il file contiene, per ogni socio - **cessati compresi**, qualunque sia il filtro sullo stato -:
 anagrafica, sezione (nome e codice), matricola, tipologia, date di ammissione e cessazione con la
@@ -260,9 +263,15 @@ esente, NO = da versare) e **data del pagamento**. All'importazione:
 - le **cessazioni** vengono registrate con data e causa (per un decesso anche la data di decesso
   nella scheda); un socio cessato in questa installazione ma attivo nel file **non viene
   riattivato**: è segnalato nel rapporto;
-- dei soci già presenti si **completano i dati anagrafici vuoti**; quelli diversi **non vengono
-  sovrascritti** e sono segnalati nel rapporto, da sistemare a mano dove è giusto;
-- la sospensione di un socio non passa da un'installazione all'altra.
+- dei soci già presenti si **completano i dati anagrafici vuoti**; con **Aggiorna anche i dati
+  diversi** anche quelli diversi (indirizzo, CAP, comune, provincia, email, telefoni, sesso, data e
+  luogo di nascita) e la **matricola** prendono il valore del file, e la **sospensione** si allinea
+  (sospeso ↔ attivo). Senza l'opzione le differenze sono solo segnalate;
+- **nome, cognome e codice fiscale** non cambiano mai (servono a riconoscere la persona) e un socio
+  **cessato** non viene riattivato dal file.
+
+Così ogni installazione può aggiornare l'altra: chi registra una modifica la esporta, l'altra la
+importa con le stesse opzioni.
 
 ## Tipologie
 

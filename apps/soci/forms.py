@@ -364,6 +364,13 @@ class ImportaForm(StileMixin, forms.Form):
         required=False,
         widget=forms.RadioSelect,
     )
+    aggiorna_dati = forms.BooleanField(
+        label="Aggiorna anche i dati diversi (scambio fra installazioni)",
+        required=False,
+        help_text="I dati anagrafici diversi, la matricola e la sospensione dei soci già presenti "
+        "prendono il valore del file. Nome, cognome e codice fiscale non cambiano; un socio "
+        "cessato non viene riattivato. L'anteprima mostra ogni modifica.",
+    )
     valido = forms.BooleanField(
         label="Tieni conto della colonna «Valido» (socio validato: attivo e in regola)",
         required=False,

@@ -93,8 +93,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 
 - **Allineamento fra installazioni** (federazione ↔ sezioni). ✅ *Fatto*: scambio con file Excel
   nei due sensi. *Da fare*:
-  - opzione dell'importazione **«aggiorna anche i dati anagrafici diversi»** (oggi si completano
-    solo i vuoti) e passaggio della sospensione;
+  - ✅ opzione **«aggiorna anche i dati diversi»** e passaggio della sospensione (scambio simmetrico);
   - **collegamento diretto** fra installazioni, senza file: ogni installazione espone un'API in
     sola lettura dei soci della propria sezione (HTTPS, token per installazione con scadenza e
     revoca, elenco degli indirizzi ammessi, registro di ogni richiesta); l'altra la interroga a

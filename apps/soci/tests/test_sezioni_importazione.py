@@ -543,3 +543,53 @@ def test_causa_di_cessazione_dal_testo():
     assert importazione._causa("DECESSO") == "decesso"
     assert importazione._causa("Decadenza per morosità") == "morosita"
     assert importazione._causa("") == "altro"
+
+
+def test_scambio_simmetrico_con_anteprima(capo, ordinario, client_ruolo):
+    """Dati e sospensione cambiati sul sito A arrivano sul sito B solo con «aggiorna_dati»."""
+    from django.db import transaction
+
+    from apps.anagrafica.models import Soggetto
+
+    sez = Sezione.objects.create(codice="AV", nome="Avigliano", comune="Avigliano")
+    s = Soggetto.objects.create(cognome="Rossi", nome="Mario", codice_fiscale=CF_ROSSI,
+                                data_nascita=date(1950, 3, 15), email="vecchia@example.org",
+                                indirizzo="Via Roma 1", comune="Avigliano")  # fmt: skip
+    socio = servizi.ammetti_socio(s, ordinario, capo, sezione=sez, data_ammissione=date(2020, 3, 1))
+    c = client_ruolo("Amministratore di sistema", username="a")
+
+    def esporta_dal_sito_a(modifica):
+        with transaction.atomic():
+            modifica()
+            contenuto = c.get(f"/soci/soci-scambio.xlsx?sezione={sez.pk}").content
+            transaction.set_rollback(True)
+        return importazione.leggi("scambio.xlsx", contenuto)[1]
+
+    def sul_sito_a():
+        Soggetto.objects.filter(pk=s.pk).update(email="nuova@example.org", indirizzo="Via Po 2")
+        servizi.cambia_stato(socio, "sospeso", capo)
+
+    righe = esporta_dal_sito_a(sul_sito_a)
+    base = {"tipologia": ordinario, "abbina": "nome"}
+    # anteprima: le differenze si vedono, nulla cambia
+    anteprima = importazione.elabora(righe, importazione.Opzioni(**base, aggiorna_dati=True), capo)
+    nota = " ".join(anteprima.esiti[0].note)
+    assert "email: vecchia@example.org → nuova@example.org" in nota and "stato: sospeso" in nota
+    s.refresh_from_db()
+    socio.refresh_from_db()
+    assert s.email == "vecchia@example.org" and socio.stato == "attivo"
+    # senza l'opzione: solo segnalato
+    importazione.elabora(righe, importazione.Opzioni(**base), capo, esegui=True)
+    s.refresh_from_db()
+    assert s.email == "vecchia@example.org"
+    # con l'opzione: allineato
+    importazione.elabora(righe, importazione.Opzioni(**base, aggiorna_dati=True), capo, esegui=True)
+    s.refresh_from_db()
+    socio.refresh_from_db()
+    assert (s.email, s.indirizzo, socio.stato) == ("nuova@example.org", "Via Po 2", "sospeso")
+    assert (s.cognome, s.codice_fiscale) == ("Rossi", CF_ROSSI)  # identità intatta
+    # nel senso opposto: il sito A riattiva, il sito B si allinea
+    righe = esporta_dal_sito_a(lambda: servizi.cambia_stato(socio, "attivo", capo))
+    importazione.elabora(righe, importazione.Opzioni(**base, aggiorna_dati=True), capo, esegui=True)
+    socio.refresh_from_db()
+    assert socio.stato == "attivo"

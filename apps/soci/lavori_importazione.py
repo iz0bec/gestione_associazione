@@ -94,6 +94,7 @@ def opzioni_da_dict(d):
         cessazioni=d.get("cessazioni", True),
         quote_pagate=d.get("quote_pagate", False),
         valido=d.get("valido", False),
+        aggiorna_dati=d.get("aggiorna_dati", False),
         sezioni_consentite=set(consentite) if consentite is not None else None,
     )
 
