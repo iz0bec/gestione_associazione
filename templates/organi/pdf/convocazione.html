@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% block titolo %}Convocazione {{ r.titolo }}{% endblock %}
 {% block stile %}
   .data { text-align: right; margin-bottom: 14pt; }
@@ -20,6 +21,6 @@ per discutere e deliberare sul seguente</p>
 <ol>{% for p in r.punti.all %}<li>{{ p.titolo }}</li>{% endfor %}</ol>
 {% if r.modalita != "presenza" %}<p>Modalità: {{ r.get_modalita_display|lower }}. {{ r.collegamento }}</p>{% endif %}
 {% if r.organo.e_assemblea and r.organo.max_deleghe %}<p class="piccolo">Il socio impossibilitato a intervenire può farsi rappresentare da un altro socio con delega scritta; ogni socio può ricevere al massimo {{ r.organo.max_deleghe }} deleg{{ r.organo.max_deleghe|pluralize:"a,he" }}.{% if r.organo.solo_soci_in_regola %} Hanno diritto di voto i soci in regola con la quota associativa.{% endif %}</p>{% endif %}
-<div class="firma">Il Presidente<br><br>______________________</div>
+{% firme "presidente" giorno=r.data_convocazione|default:r.prima_convocazione sezione=r.organo.sezione %}
 {% if not r.organo.e_assemblea and destinatari %}<div class="destinatari">Destinatari: {% for s in destinatari %}{{ s.nome_completo }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
 {% endblock %}

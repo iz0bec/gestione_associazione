@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% block titolo %}Rendiconto per cassa {{ esercizio.anno }}{% endblock %}
 {% block stile %}
   .colonne { display: flex; gap: 8pt; }
@@ -49,5 +50,5 @@
   <tr><td>Cassa al 31/12/{{ esercizio.anno }}</td><td class="n">{{ cassa|floatformat:"2g" }}</td><td></td></tr>
   <tr><td>Depositi bancari e postali al 31/12/{{ esercizio.anno }}</td><td class="n">{{ banca|floatformat:"2g" }}</td><td></td></tr>
 </table>
-<div class="firme"><div>Il Tesoriere<br><br>____________________</div><div>Il Presidente<br><br>____________________</div></div>
+{% firme "tesoriere?" "presidente" %}
 {% endblock %}

@@ -24,6 +24,12 @@
   .piede { position: running(piede); font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 8pt; color: #666; }
   .destra { text-align: right; }
   .piccolo { font-size: 8pt; color: #555; }
+  /* firme in calce (tag «firme», vedi pdf/_firme.html): a destra, affiancate se più d’una */
+  .firme-calce { display: flex; justify-content: flex-end; gap: 14mm; margin-top: 22pt; page-break-inside: avoid; }
+  .firma-calce { width: 62mm; text-align: center; }
+  .firma-calce .qualifica { font-size: 9.5pt; }
+  .firma-calce .spazio-firma { height: 14mm; border-bottom: .6pt solid #333; margin: 0 4mm; }
+  .firma-calce .nome-firma { font-size: 9.5pt; margin-top: 2pt; min-height: 11pt; }
   {% block stile %}{% endblock %}
 </style>
 </head>

@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% block titolo %}Libro soci{% endblock %}
 {% block formato %}A4 landscape{% endblock %}
 {% block contenuto %}
@@ -21,4 +22,5 @@
   </tbody>
 </table>
 <p class="piccolo">Libro degli associati tenuto ai sensi dell'art. 15 del D.Lgs. 117/2017. Totale iscrizioni: {{ soci|length }}.</p>
+{% firme "presidente" %}
 {% endblock %}

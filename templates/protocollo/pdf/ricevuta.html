@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% block titolo %}Protocollo {{ p.segnatura }}{% endblock %}
 {% block formato %}A5 landscape{% endblock %}
 {% block stile %}
@@ -15,5 +16,6 @@
   {% if p.classificazione %}<dt>Classificazione</dt><dd>{{ p.classificazione }}</dd>{% endif %}
   {% with n=p.allegati.count %}{% if n %}<dt>Documenti</dt><dd>{{ n }} file registrati</dd>{% endif %}{% endwith %}
 </dl>
+{% firme "presidente" giorno=p.registrato_il %}
 {% if p.annullato %}<p class="piccolo">Annullato il {{ p.annullato_il|date:"d/m/Y" }}: {{ p.motivo_annullamento }}</p>{% endif %}
 {% endblock %}

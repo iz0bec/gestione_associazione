@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
   Descrizione: Riepilogo dei dati personali di una persona (diritto di accesso, GDPR art. 15)
@@ -24,4 +25,5 @@ Comprende tutti i dati riferiti alla persona conservati nel programma; lo stesso
 <table><tbody>{% for riga in valore %}<tr><td>{% if riga.items %}{% for k, v in riga.items %}{% if v not in "" and v is not None %}<strong>{{ k }}</strong>: {% if v is True %}sì{% elif v is False %}no{% else %}{{ v }}{% endif %}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}{% else %}{{ riga }}{% endif %}</td></tr>{% endfor %}</tbody></table>
 {% endif %}
 {% endfor %}
+{% firme "presidente" giorno=adesso %}
 {% endblock %}

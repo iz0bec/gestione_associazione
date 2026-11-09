@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% block titolo %}Inventario{% endblock %}
 {% block formato %}A4 landscape{% endblock %}
 {% block stile %}td.n { text-align: right; white-space: nowrap; } .cat { background: #eef2f7; font-weight: bold; }{% endblock %}
@@ -15,4 +16,5 @@
   </tbody>
 </table>
 <p>Beni nel patrimonio: {{ totali.beni }} · valore stimato complessivo: <strong>{{ totali.valore|floatformat:"2g" }} €</strong></p>
+{% firme "presidente" giorno=oggi %}
 {% endblock %}

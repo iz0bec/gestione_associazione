@@ -55,6 +55,23 @@ cariche della stessa persona che si sovrappongono nello stesso organo (una caric
 giorno stesso in cui finisce la precedente). Ogni modifica è annotata nel registro attività con i
 valori prima e dopo; le presenze delle riunioni già aperte non cambiano.
 
+**Firme sulle stampe.** Le cariche registrate qui firmano le stampe: in calce compaiono la qualifica,
+lo spazio per la firma e il **nome di chi era in carica alla data del documento** (un verbale del
+2025 porta il presidente del 2025, anche se oggi è un altro). Se la carica era vacante resta lo
+spazio per la firma senza nome: il programma non inventa mai un firmatario.
+
+| Stampa | Firme |
+|---|---|
+| Ricevuta della quota | tesoriere; se non c'è, presidente (alla data del pagamento) |
+| Rendiconto | tesoriere (solo se c'è) e presidente |
+| Libro soci, inventario, ricevuta di protocollo, dati personali (GDPR) | presidente |
+| Convocazione | presidente dell'associazione o della sezione dell'organo |
+| Verbale | presidente e segretario della riunione (scritti nel verbale) |
+| Lettere e attestati (*Documenti*) | firmatario del modello o presidente in carica |
+
+Contano le cariche degli organi dell'associazione (per le convocazioni di un organo di sezione,
+quelle della sezione) e, fra più organi, prima l'organo di amministrazione.
+
 **Organigramma PDF** (pulsante in alto nella pagina dell'organo): i componenti in carica alla data
 di oggi, su carta intestata e in orizzontale. In alto il presidente; sotto vicepresidente, segretario
 e tesoriere; poi i consiglieri, i componenti e i supplenti. Ogni scheda riporta la foto dell'anagrafica

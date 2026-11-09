@@ -1,4 +1,5 @@
 {% extends "pdf/base.html" %}
+{% load firme %}
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
   Descrizione: Ricevuta della quota associativa: una sola pagina A5 orizzontale
@@ -33,6 +34,6 @@
     <div class="piccolo">Quota associativa non soggetta a IVA.{% if tessera.annullata %} <strong>Tessera annullata: {{ tessera.motivo_annullamento }}</strong>{% endif %}</div>
     <div>{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ tessera.pagata_il|date:"d/m/Y" }}</div>
   </div>
-  <div class="firma">Il Tesoriere<div class="linea"></div></div>
+  {% firme "tesoriere|presidente" giorno=tessera.pagata_il %}
 </div>
 {% endblock %}
