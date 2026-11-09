@@ -124,6 +124,20 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     (se ci sono) sulla relazione al rendiconto;
   - in mancanza della carica, spazio per la firma autografa senza nome; mai un nome inventato;
   - opzione per l'immagine della firma (caricata nella carica, servita solo ai PDF).
+- **Domande di iscrizione arrivate per email**. Oggi un messaggio ricevuto si protocolla o si scarta
+  e la domanda va poi inserita a mano. *Da fare*: dal messaggio (*Protocollo → Posta ricevuta*)
+  l'azione **«Domanda di iscrizione»**, prima della protocollazione:
+  - riconoscimento dei messaggi probabili (oggetto o testo con «iscrizione», «adesione», «tessera»;
+    allegato con il modulo di adesione) con un'etichetta nell'elenco;
+  - **recupero dei dati** dal testo e dagli allegati: modulo PDF compilabile letto dai campi, altrimenti
+    testo del messaggio e del PDF (nome, cognome, codice fiscale e dati ricavati, indirizzo, telefono,
+    email del mittente); nessun dato inventato: i campi non trovati restano vuoti;
+  - modulo della **domanda precompilato** da controllare e completare, con avviso se la persona è già in
+    anagrafica o già socia (stessi abbinamenti dell'importazione);
+  - al salvataggio: domanda creata (`DomandaIscrizione`, origine «email»), messaggio **protocollato in
+    entrata** con il modulo allegato e collegato alla domanda (e viceversa); poi il normale percorso di
+    accoglimento o rifiuto (`accogli_domanda` / `respingi_domanda`);
+  - facoltativo: risposta di conferma di ricezione al mittente, da modello di Comunicazioni.
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.
 - Area personale del socio: tessera digitale con QR verificabile, dati e quote.
