@@ -729,7 +729,10 @@ class SociScambioView(PermessoMixin, View):
     def get(self, request):
         from django.utils.text import slugify
 
-        filtro = SocioFilter(request.GET, queryset=_soci(request), request=request)
+        # sempre tutti gli stati: i cessati servono all'altra installazione per allinearsi
+        dati = request.GET.copy()
+        dati["stato"] = "tutti"
+        filtro = SocioFilter(dati, queryset=_soci(request), request=request)
         anno = request.GET.get("anno", "")
         anno = int(anno) if anno.isdigit() else date.today().year
         contenuto = servizi.esporta_scambio(filtro.qs, anno, request.user)

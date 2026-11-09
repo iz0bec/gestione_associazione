@@ -9,7 +9,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 - **Scambio dei soci fra installazioni** (federazione e sezioni, nei due sensi): *Soci → Stampa ed
   esporta → Per un'altra installazione (Excel)* con le stesse colonne dell'importazione (anagrafica,
   sezione, tessere dell'anno e del precedente, Valido, data del pagamento), da reimportare così
-  com'è; l'importazione riconosce la nuova colonna **Data pagamento**.
+  com'è; l'importazione riconosce le nuove colonne **Data pagamento** e **Causa di cessazione**.
+  Il file comprende sempre anche i soci cessati, così la cessazione (con la causa, es. decesso)
+  passa all'altra installazione.
 
 ### Corretto
 - Importazione dei soci: un telefono fisso con il prefisso internazionale (+39 0971…) veniva

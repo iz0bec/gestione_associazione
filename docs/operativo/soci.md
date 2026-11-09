@@ -250,13 +250,16 @@ tiene allineato **nei due sensi** con un file Excel:
    sono le stesse dell'importazione dal registro nazionale, più **Data pagamento**. Conviene
    spuntare **Tieni conto della colonna «Valido»**.
 
-Il file contiene, per ogni socio: anagrafica, sezione (nome e codice), matricola, tipologia, date di
-ammissione e cessazione, numero di tessera dell'anno e dell'anno precedente, **Valido** (SI = quota
-versata o esente, NO = da versare) e **data del pagamento**. All'importazione:
+Il file contiene, per ogni socio - **cessati compresi**, qualunque sia il filtro sullo stato -:
+anagrafica, sezione (nome e codice), matricola, tipologia, date di ammissione e cessazione con la
+**causa**, numero di tessera dell'anno e dell'anno precedente, **Valido** (SI = quota versata o
+esente, NO = da versare) e **data del pagamento**. All'importazione:
 
 - i soci nuovi vengono iscritti, le **tessere** attribuite con il loro numero, le **quote** segnate
   come incassate alla data del pagamento (incassi avvenuti altrove: niente ricevuta né prima nota);
-- le **cessazioni** vengono registrate;
+- le **cessazioni** vengono registrate con data e causa (per un decesso anche la data di decesso
+  nella scheda); un socio cessato in questa installazione ma attivo nel file **non viene
+  riattivato**: è segnalato nel rapporto;
 - dei soci già presenti si **completano i dati anagrafici vuoti**; quelli diversi **non vengono
   sovrascritti** e sono segnalati nel rapporto, da sistemare a mano dove è giusto;
 - la sospensione di un socio non passa da un'installazione all'altra.

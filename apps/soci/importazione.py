@@ -70,6 +70,7 @@ COLONNE = {
     "incarico": ["codice incarico socio ordinario", "incarico", "carica"],
     "valido": ["valido", "validato", "socio validato", "valida"],
     "data_pagamento": ["data pagamento", "data del pagamento", "pagata il", "data versamento"],
+    "causa_cessazione": ["causa di cessazione", "causa cessazione", "motivo della cessazione"],
 }
 # colonne con l'anno nell'intestazione, es. «Numero Tessera Anno 2025»
 COLONNE_CON_ANNO = {"tessera_precedente": re.compile(r"^(?:numero |n |nr )?tessera anno (\d{4})$")}
@@ -603,9 +604,12 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
     cessato = False
     if d.get("data_cessazione") and opzioni.cessazioni:
         if socio.stato != Socio.Stato.CESSATO:
+            da_file = bool(d.get("causa_cessazione"))  # file di scambio fra installazioni
             servizi.cessa_socio(
-                socio, utente, data_cessazione=d["data_cessazione"], causa=Socio.Cessazione.ALTRO,
-                note="Iscrizione annullata nel registro soci nazionale",
+                socio, utente, data_cessazione=d["data_cessazione"],
+                causa=_causa(d.get("causa_cessazione")),
+                note="Cessazione importata da un'altra installazione" if da_file
+                else "Iscrizione annullata nel registro soci nazionale",
             )  # fmt: skip
             socio.refresh_from_db()
             stato = "aggiornato" if stato == "invariato" else stato
@@ -633,6 +637,15 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
             if stato == "invariato" and any("attribuita" in n or "incassata" in n for n in esito):
                 stato = "aggiornato"
     return stato, note, socio
+
+
+def _causa(testo):
+    """Causa di cessazione dal testo del file (etichetta o codice); altrimenti «Altro»."""
+    t = normalizza(testo or "")
+    c = Socio.Cessazione
+    parole = [("decess", c.DECESSO), ("dimission", c.DIMISSIONI), ("recesso", c.DIMISSIONI),
+              ("esclus", c.ESCLUSIONE), ("morosit", c.MOROSITA)]  # fmt: skip
+    return next((causa for chiave, causa in parole if chiave in t), c.ALTRO)
 
 
 def _incassa_esterno(tessera, utente, pagata_il=None):

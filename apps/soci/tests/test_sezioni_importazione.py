@@ -508,3 +508,38 @@ def test_telefoni_con_prefisso_internazionale():
         "3471234567",
     )
     assert importazione._telefoni("0972-123456, 3331234567") == ("0972-123456", "3331234567")
+
+
+def test_scambio_cessazione_passa_all_altra_installazione(capo, ordinario, client_ruolo):
+    """Socio attivo su entrambi i siti; sul sito A cessa per decesso; il sito B si allinea."""
+    from django.db import transaction
+
+    from apps.anagrafica.models import Soggetto
+
+    sez = Sezione.objects.create(codice="AV", nome="Avigliano", comune="Avigliano")
+    s = Soggetto.objects.create(cognome="Rossi", nome="Mario", codice_fiscale=CF_ROSSI,
+                                data_nascita=date(1950, 3, 15))  # fmt: skip
+    socio = servizi.ammetti_socio(s, ordinario, capo, sezione=sez, data_ammissione=date(2020, 3, 1))
+    c = client_ruolo("Amministratore di sistema", username="a")
+    with transaction.atomic():  # sito A
+        servizi.cessa_socio(socio, capo, data_cessazione=date(2026, 5, 4), causa="decesso")
+        r = c.get(f"/soci/soci-scambio.xlsx?sezione={sez.pk}")  # filtro predefinito: attivi
+        contenuto = r.content
+        transaction.set_rollback(True)  # sito B: il socio è ancora attivo
+    socio.refresh_from_db()
+    assert socio.stato == "attivo"
+    _mappa, righe, _ = importazione.leggi("scambio.xlsx", contenuto)
+    assert len(righe) == 1  # il cessato c'è anche se l'elenco mostra solo gli attivi
+    importazione.elabora(righe, importazione.Opzioni(tipologia=ordinario, abbina="nome"), capo,
+                         esegui=True)  # fmt: skip
+    socio.refresh_from_db()
+    assert socio.stato == "cessato" and socio.causa_cessazione == "decesso"
+    assert socio.data_cessazione == date(2026, 5, 4) and "un'altra installazione" in socio.note
+    assert socio.soggetto.data_decesso == date(2026, 5, 4)
+
+
+def test_causa_di_cessazione_dal_testo():
+    assert importazione._causa("Dimissioni (recesso)") == "dimissioni"
+    assert importazione._causa("DECESSO") == "decesso"
+    assert importazione._causa("Decadenza per morosità") == "morosita"
+    assert importazione._causa("") == "altro"
