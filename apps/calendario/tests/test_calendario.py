@@ -98,6 +98,20 @@ class TestIcs:
         assert r.status_code == 200 and r["Content-Type"].startswith("text/calendar")
         assert "attachment" in r["Content-Disposition"] and b"BEGIN:VEVENT" in r.content
 
+    def test_coriandoli_con_i_compleanni(self, crea_utente, client):
+        from apps.soci import servizi as soci
+        from apps.soci.models import TipologiaSocio
+
+        segretario = crea_utente("s3", ruoli=["Segretario"])
+        client.force_login(segretario)
+        assert b"data-coriandoli" not in client.get("/calendario/?compleanni=1").content
+        domani = timezone.localdate() + timedelta(days=1)
+        s = Soggetto.objects.create(cognome="Bianchi", nome="Anna",
+                                    data_nascita=domani.replace(year=1960))  # fmt: skip
+        soci.ammetti_socio(s, TipologiaSocio.objects.get(nome="Ordinario"), segretario)
+        assert b"data-coriandoli" in client.get("/calendario/?compleanni=1").content
+        assert b"data-coriandoli" not in client.get("/calendario/").content
+
 
 class TestCollegamento:
     def test_creato_letto_revocato(self, impegni, client_ruolo, client):

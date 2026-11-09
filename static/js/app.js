@@ -45,6 +45,12 @@
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("[data-modale-aperto]").forEach(apriModale);
   });
+
+  // Coriandoli di Tabler all'apertura (data-coriandoli + data-bs-toggle="confetti"),
+  // es. il calendario con i compleanni; Tabler li salta con «riduci movimento»
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-coriandoli]").forEach(function (el) { el.click(); });
+  });
   document.addEventListener("submit", function (ev) {
     var modulo = ev.target.closest("form[data-modale-invio]");
     if (!modulo || ev.defaultPrevented) return;

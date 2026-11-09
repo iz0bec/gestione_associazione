@@ -44,9 +44,11 @@ class CalendarioView(LoginRequiredMixin, TemplateView):
         utente = self.request.user
         feed = FeedCalendario.objects.filter(utente=utente).first()
         compleanni = self.request.GET.get("compleanni") == "1"
+        prossimi = servizi.prossimi(utente, compleanni=compleanni)
         ctx.update(
-            prossimi=servizi.prossimi(utente, compleanni=compleanni),
+            prossimi=prossimi,
             compleanni=compleanni,
+            coriandoli=any(e.categoria == "Compleanni" for _g, e in prossimi),
             puo_compleanni=utente.has_perm("soci.view_socio"),
             feed=feed,
             oggi=timezone.localdate(),

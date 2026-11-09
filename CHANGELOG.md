@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.6] - 2026-11-09
+
+Coriandoli per i compleanni nel calendario.
+
+### Aggiunto
+- **Coriandoli nel calendario**: con «Mostra i compleanni», se nei prossimi 60 giorni ci sono
+  compleanni, all'apertura scendono i coriandoli di Tabler (non con «riduci movimento» del sistema).
+
 ## [1.0.5] - 2026-11-09
 
 Stampa dei codici fiscali da sistemare e menu laterale nascondibile.
