@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.3] - 2026-11-09
+
+Codice fiscale assistito, firme in calce alle stampe e domande di iscrizione arrivate per email;
+correzioni all'immagine Docker e all'installazione in container Proxmox.
+
 ### Aggiunto
 - **Codice fiscale assistito**: pulsante **Calcola** nelle schede dell'anagrafica e nelle domande di
   iscrizione (scelta fra comuni omonimi, comune valido alla data di nascita, stati esteri, grafie degli
