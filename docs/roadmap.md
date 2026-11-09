@@ -137,6 +137,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   - al salvataggio: domanda creata (`DomandaIscrizione`, origine «email»), messaggio **protocollato in
     entrata** con il modulo allegato e collegato alla domanda (e viceversa); poi il normale percorso di
     accoglimento o rifiuto (`accogli_domanda` / `respingi_domanda`);
+  - all'accoglimento il **documento di iscrizione** passa al socio come «richiesta di adesione
+    firmata» (`servizi.carica_modulo`: PDF, o scansioni/foto unite in un PDF), con il riferimento al
+    protocollo di arrivo nella scheda del socio; vale anche per le domande inserite a mano o dal
+    modulo online che hanno il modulo firmato allegato;
   - facoltativo: risposta di conferma di ricezione al mittente, da modello di Comunicazioni.
 - Eventi e cerimonie con adesioni.
 - Cariche sociali con storico e scadenza dei mandati.
