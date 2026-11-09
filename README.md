@@ -11,6 +11,7 @@
 <p align="center">
   <img src="banner.png" width="100%" alt="Gestione Associazione">
 </p>
+
 # Gestione Associazione
 
 Gestionale unico per associazioni ed Enti del Terzo Settore di piccole dimensioni:
