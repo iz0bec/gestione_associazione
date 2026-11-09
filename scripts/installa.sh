@@ -11,6 +11,8 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 set -euo pipefail
+# uv va in /usr/local/bin, che manca dal PATH minimo di «pct exec» e di alcuni sudo.
+export PATH="/usr/local/bin:${PATH}"
 
 NOME="gestione-associazione"
 DIR_APP="/opt/${NOME}"
