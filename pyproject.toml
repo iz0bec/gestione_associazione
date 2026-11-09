@@ -9,7 +9,7 @@
 
 [project]
 name = "gestione-associazione"
-version = "1.0.1"
+version = "1.0.2"
 description = "Gestionale unico per associazioni: soci, protocollo, organi sociali, tesoreria, patrimonio e comunicazioni"
 readme = "README.md"
 license = "CC0-1.0"

@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.2] - 2026-11-09
+
+Scambio simmetrico fra installazioni e trasferimento di sezione dei soci.
+
 ### Aggiunto
 - **Scambio simmetrico** fra installazioni: opzione dell'importazione **Aggiorna anche i dati
   diversi** (dati anagrafici, matricola, sospensione e riattivazione prendono il valore del file;

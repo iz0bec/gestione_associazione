@@ -34,6 +34,7 @@
 | 0.x | collaudo presso la sezione, correzioni, funzionalità della fase 2 | GitLab |
 | **1.0.0** ✅ | prima release stabile: tutti i moduli della fase 1, ricerca globale, tessera digitale, GDPR e termini di conservazione, manuale con immagini e in PDF | GitHub, GitLab |
 | **1.0.1** ✅ | scambio dei soci fra installazioni (federazione e sezioni), cessazioni comprese | GitHub, GitLab |
+| **1.0.2** ✅ | scambio simmetrico con anteprima delle differenze; trasferimento di un socio in un'altra sezione | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
