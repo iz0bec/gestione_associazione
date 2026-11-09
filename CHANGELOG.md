@@ -6,6 +6,21 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Codice fiscale assistito**: pulsante **Calcola** nelle schede dell'anagrafica e nelle domande di
+  iscrizione (scelta fra comuni omonimi, comune valido alla data di nascita, stati esteri, grafie degli
+  archivi con apostrofi e nomi bilingui); controllo anche di cognome e nome; avviso nella scheda;
+  pagina **Anagrafica → Codici fiscali** con i codici non validi, non corrispondenti o mancanti (soci) e
+  la correzione calcolata da applicare, annotata nel registro attività.
+- **Firme in calce alle stampe**: qualifica, spazio per la firma e nome di chi era in carica alla data
+  del documento, dalle cariche degli Organi sociali (carica vacante: spazio senza nome). Su ricevute
+  delle quote (tesoriere o, se manca, presidente), rendiconto (tesoriere se c'è, e presidente), libro
+  soci, inventario, ricevuta di protocollo, dati personali e convocazioni (con il nome del presidente).
+- **Domande di iscrizione arrivate per email**: etichetta *iscrizione?* nella posta da protocollare;
+  dal messaggio, **Domanda di iscrizione** apre la domanda già compilata con i dati trovati nel testo,
+  nei PDF allegati e nel mittente (nulla di inventato), segnala i doppioni e, in un'unica operazione,
+  protocolla il messaggio in entrata e registra la domanda collegata. Le domande hanno ora la
+  **richiesta di adesione firmata** (dagli allegati, o caricata a mano), che all'accoglimento passa
+  alla scheda del socio con il riferimento al protocollo di arrivo. Nuova dipendenza `pypdf` (BSD).
 - **Container Proxmox**: messaggio di benvenuto al login (versione, indirizzo, stato dei servizi,
   ultimo backup, comandi utili), installato da `crea-lxc.sh` anche negli aggiornamenti.
 

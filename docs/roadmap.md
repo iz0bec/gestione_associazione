@@ -48,7 +48,7 @@
 - [x] **Anagrafica unica**: persone ed enti, categorie, codice fiscale, consensi, archiviazione, esportazione CSV
 - [x] Interfaccia: layout, tema chiaro/scuro, ricerca istantanea, uso da smartphone
 - [x] Test automatici, lint, pipeline CI
-- [ ] Dockerfile e compose scritti, **build non ancora verificata** (Docker non disponibile durante lo sviluppo)
+- [x] Dockerfile e compose, build e funzionamento verificati su Docker Desktop (09/11/2026)
 
 ## Fase 1 - Moduli per la 0.0.1 RC
 
@@ -56,20 +56,21 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 
 1. ✅ **Soci e tesseramento** - libro soci, numero socio, domande di iscrizione (anche pubbliche
    con anti-spam), tessere annuali con numerazione, quote, ricevute PDF, rinnovi massivi, morosi.
-   *Rimandati*: invio delle ricevute e dell'esito delle domande per email (con Comunicazioni),
-   collegamento degli incassi alla prima nota (con Tesoreria), foto del socio (fatti).
+   ✅ *Fatti in seguito*: invio delle ricevute e dell'esito delle domande per email (Comunicazioni),
+   incassi in prima nota (Tesoreria), foto del socio.
 2. ✅ **Protocollo** - registro in entrata/uscita/interno (numerazione annuale), allegati privati,
    annullamento motivato, registro giornaliero PDF, ricezione email/PEC da protocollare.
-   *Rimandati*: invio dei protocolli in uscita per email/PEC (con Comunicazioni), liste di
-   distribuzione (con Comunicazioni), API REST (fase 2), import dal Protocollo ANCR (punto 8).
+   ✅ *Fatti in seguito*: liste di distribuzione (Comunicazioni), import dal Protocollo ANCR (punto 8).
+   *Da fare*: invio dei protocolli in uscita per email/PEC; API REST (fase 2).
 3. ✅ **Organi sociali** - organi, riunioni con 1ª/2ª convocazione e ordine del giorno, presenze dai
    soci, verbali con delibere e votazioni, PDF, protocollazione automatica, libri dei verbali.
-   Comprende le **cariche sociali con storico** (previste in fase 2). *Rimandati*: invio delle
-   convocazioni per email (con Comunicazioni), firma digitale dei verbali, votazioni elettroniche.
+   Comprende le **cariche sociali con storico** (previste in fase 2). ✅ *Fatto in seguito*: invio
+   delle convocazioni per email (Comunicazioni). *Da fare*: firma digitale dei verbali, votazioni
+   elettroniche.
 4. ✅ **Comunicazioni e anniversari** - modelli con segnaposto, invii a persone/categorie/liste, coda di
    invio, registro invii, anniversari (compleanni, onomastici, ricorrenze, anzianità da socio, scomparse)
    con auguri automatici (rispettando consensi e decessi), invio di convocazioni, ricevute ed esiti.
-   *Rimandati*: invio tramite PEC, SMS/messaggistica, stampa di etichette e lettere per posta.
+   *Da fare*: invio tramite PEC, SMS/messaggistica, stampa di etichette e lettere per posta.
 5. ✅ **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. ✅ **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,
@@ -77,16 +78,16 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 6b. ✅ **Configurazione e federazione** - configurazione guidata al primo accesso, aspetto
    personalizzabile (logo, colori, menu), foto in anagrafica e soci, **sezioni** con utenti limitati
    alle proprie, matricola nazionale, **listino annuale** (costo d'acquisto e quote per tipologia),
-   **importazione dal registro soci nazionale** (Excel/CSV) con anteprima. *Da completare*: adattare le
-   colonne all'estratto reale del registro quando disponibile (`tmp/`, non versionato).
+   **importazione dal registro soci nazionale** (Excel/CSV) con anteprima, adattata all'estratto
+   reale del registro (✅, con l'opzione per la colonna «Valido»).
 7. ✅ **Documenti PDF** - modelli di stampa modificabili (lettere, attestati) su carta intestata,
    per una persona, una lista o una categoria, con protocollazione in uscita (`apps/documenti`).
 8. ✅ **Import** - `importa_gestionale` da Gestione Soci e Gestione Assemblee (SQLite) e Protocollo
    ANCR (PostgreSQL), con anteprima, deduplica dell'anagrafica e rapporto finale.
-   *Rimandati*: foto dei soci, passaggi di consegne e cessioni dei beni, verbali delle assemblee.
+   *Da fare*: foto dei soci, passaggi di consegne e cessioni dei beni, verbali delle assemblee.
 9. ✅ **Installazione su host** - `scripts/installa.sh` (Debian/Ubuntu, systemd) e
    `scripts/proxmox/crea-lxc.sh` (container LXC su Proxmox). Backup e ripristino dall'interfaccia.
-   *Rimandati*: RHEL/Rocky.
+   *Da fare*: RHEL/Rocky.
 10. ✅ **Gestione utenti dall'interfaccia** - creazione con password temporanea, ruoli e sezioni,
    reimpostazione password, azzeramento del secondo fattore, MFA obbligatoria per ruolo.
 
@@ -105,46 +106,25 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   ✅ *Fatti*: prossimi impegni, vista mensile, appuntamenti e scadenze inseriti a mano,
   riquadro nel cruscotto, esportazione iCal (file e collegamento personale).
 - ✅ Scambio dell'anagrafica con le rubriche (vCard): esportazione e importazione con anteprima.
-- **Codice fiscale assistito**. Oggi dal codice si ricavano sesso, data e luogo di nascita (compilati
-  se mancano, segnalati se in contrasto). *Da fare*, con `python-codicefiscale` già incluso:
-  - pulsante **Calcola** nelle schede (anagrafica, socio, domanda di iscrizione) da cognome, nome,
-    sesso, data e comune o stato di nascita, con scelta del comune fra quelli omonimi;
-  - controllo anche di **cognome e nome** rispetto al codice (oggi solo sesso e data);
-  - per un codice **non valido** (es. quelli dei vecchi gestionali, finiti nelle note) proposta del
-    codice calcolato dai dati, da confermare;
-  - elenco dei codici mancanti, non validi o incoerenti, con la correzione proposta.
-- **Firme in calce a tutte le stampe**. Oggi le firmano solo i modelli di `apps/documenti`
-  (il presidente in carica, o il nome indicato nel modello). *Da fare*: un blocco firme comune in
-  `pdf/base.html` alimentato dalle cariche in corso degli Organi sociali alla data del documento,
-  con qualifica e nome:
-  - **Presidente** su tutte le stampe ufficiali (ricevute di quota e di protocollo, libro soci,
-    rendiconto, inventario, tessere);
-  - **firme collegiali dove previste**: presidente e segretario della riunione su convocazioni,
-    verbali e delibere; il tesoriere (se c'è) accanto al presidente sul rendiconto; i revisori
-    (se ci sono) sulla relazione al rendiconto;
-  - in mancanza della carica, spazio per la firma autografa senza nome; mai un nome inventato;
-  - opzione per l'immagine della firma (caricata nella carica, servita solo ai PDF).
-- **Domande di iscrizione arrivate per email**. Oggi un messaggio ricevuto si protocolla o si scarta
-  e la domanda va poi inserita a mano. *Da fare*: dal messaggio (*Protocollo → Posta ricevuta*)
-  l'azione **«Domanda di iscrizione»**, prima della protocollazione:
-  - riconoscimento dei messaggi probabili (oggetto o testo con «iscrizione», «adesione», «tessera»;
-    allegato con il modulo di adesione) con un'etichetta nell'elenco;
-  - **recupero dei dati** dal testo e dagli allegati: modulo PDF compilabile letto dai campi, altrimenti
-    testo del messaggio e del PDF (nome, cognome, codice fiscale e dati ricavati, indirizzo, telefono,
-    email del mittente); nessun dato inventato: i campi non trovati restano vuoti;
-  - modulo della **domanda precompilato** da controllare e completare, con avviso se la persona è già in
-    anagrafica o già socia (stessi abbinamenti dell'importazione);
-  - al salvataggio: domanda creata (`DomandaIscrizione`, origine «email»), messaggio **protocollato in
-    entrata** con il modulo allegato e collegato alla domanda (e viceversa); poi il normale percorso di
-    accoglimento o rifiuto (`accogli_domanda` / `respingi_domanda`);
-  - all'accoglimento il **documento di iscrizione** passa al socio come «richiesta di adesione
-    firmata» (`servizi.carica_modulo`: PDF, o scansioni/foto unite in un PDF), con il riferimento al
-    protocollo di arrivo nella scheda del socio; vale anche per le domande inserite a mano o dal
-    modulo online che hanno il modulo firmato allegato;
-  - facoltativo: risposta di conferma di ricezione al mittente, da modello di Comunicazioni.
+- ✅ **Codice fiscale assistito** (`apps/anagrafica/codice_fiscale.py`): pulsante **Calcola** nelle
+  schede e nelle domande (comuni omonimi da scegliere, comune valido alla data di nascita, stati esteri,
+  grafie degli archivi: apostrofi, nomi bilingui), controllo di cognome, nome, sesso, data e luogo,
+  avviso nella scheda, elenco **Codici fiscali** con la correzione calcolata da applicare.
+- ✅ **Firme in calce alle stampe** (`apps/organi/firme.py`, tag `{% firme %}`): qualifica, spazio e
+  nome di chi era in carica **alla data del documento**; firme alternative («tesoriere, altrimenti
+  presidente») e facoltative («tesoriere se c'è»); carica vacante = spazio senza nome. Su ricevute,
+  rendiconto, libro soci, inventario, ricevuta di protocollo, dati personali, convocazioni.
+  *Da fare*: immagine della firma (caricata nella carica, servita solo ai PDF).
+- ✅ **Domande di iscrizione arrivate per email** (`apps/soci/estrazione.py`): etichetta
+  *iscrizione?* sulla posta, dati recuperati dal testo, dai PDF allegati (campi e testo) e dal mittente
+  senza inventare nulla, avviso dei doppioni, domanda e protocollazione in entrata in un'unica
+  operazione, **richiesta firmata** sulla domanda (anche per quelle a mano o online) che passa al socio
+  all'accoglimento con il riferimento al protocollo. *Da fare*: risposta di conferma di ricezione al
+  mittente (modello di Comunicazioni).
 - Eventi e cerimonie con adesioni.
-- Cariche sociali con storico e scadenza dei mandati.
-- Area personale del socio: tessera digitale con QR verificabile, dati e quote.
+- Scadenza dei mandati delle cariche (lo storico c'è già, punto 3 della fase 1): durata per organo,
+  avvisi prima della scadenza nel cruscotto e nello scadenzario.
+- Area personale del socio: dati e quote (la tessera digitale con QR è già fatta, voce sotto).
 - ✅ Tessera digitale (formato carta) con QR di verifica, inviata per email; verifica pubblica.
 - ✅ Promemoria automatici di rinnovo ai soci non in regola.
 - ✅ GDPR: esportazione dei dati di una persona, anonimizzazione, termini di conservazione.

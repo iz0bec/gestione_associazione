@@ -88,6 +88,13 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   la pagina di ogni sezione si sceglie in `PAGINE_PER_SEZIONE` (namespace o namespace:vista).
 - Documenti: modelli di stampa in `apps/documenti` (testi con segnaposto via `comunicazioni.servizi.componi`,
   HTML dell'utente neutralizzato prima del Markdown); stampa solo con `documenti.servizi.stampa`.
+- Codice fiscale: calcolo, controllo e correzioni solo da `apps/anagrafica/codice_fiscale.py` (luoghi dalla
+  libreria `python-codicefiscale`, indice in cache; mai bloccare il salvataggio per il nome: si segnala).
+- Firme nei PDF: tag `{% load firme %}{% firme "presidente" "tesoriere?" "tesoriere|presidente" giorno=... %}`
+  (`apps/organi/firme.py`: carica alla data del documento, vacante = senza nome); niente firme scritte a mano.
+- Domande da email: `soci.servizi.domanda_da_messaggio` (protocolla + domanda + modulo firmato, tutto o niente);
+  recupero dati in `apps/soci/estrazione.py` (mai valori inventati); il modulo firmato della domanda passa al socio
+  in `accogli_domanda`.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/` (con voce in `PAGINE_PER_SEZIONE`), aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
