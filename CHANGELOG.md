@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- Comunicazioni: nell'elenco e nel dettaglio l'oggetto di un invio con un solo destinatario mostra
+  i segnaposto personali risolti (es. «Buon compleanno, Alessandra!» invece di
+  «Buon compleanno, {{ nome }}!»), come nell'email effettivamente inviata.
+
 ## [1.0.7] - 2026-11-09
 
 Rappresentante legale, modelli di convocazione e modelli per la privacy.

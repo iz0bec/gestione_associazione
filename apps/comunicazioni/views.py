@@ -13,7 +13,7 @@ from datetime import date
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -74,6 +74,12 @@ class InviiView(PermessoMixin, ListView):
                 n_totale=Count("destinatari", filter=~Q(destinatari__stato="escluso")),
             )
             .select_related("creato_da")
+            .prefetch_related(
+                Prefetch(
+                    "destinatari",
+                    queryset=Destinatario.objects.select_related("soggetto", "soggetto__socio"),
+                )
+            )
             .order_by("-creato_il", "-pk")
         )
         if stato := self.request.GET.get("stato"):

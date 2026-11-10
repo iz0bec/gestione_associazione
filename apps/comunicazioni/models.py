@@ -151,10 +151,16 @@ class Invio(ModelloBase):
 
     @property
     def titolo(self):
-        """Oggetto con i segnaposto generali risolti (per gli elenchi)."""
-        from .servizi import componi, contesto_generale
+        """Oggetto per elenchi e intestazioni: con un solo destinatario i segnaposto sono risolti
+        con i suoi dati (come nell'email inviata); con più destinatari restano quelli personali."""
+        from .servizi import componi, contesto_destinatario, contesto_generale
 
-        return componi(self.oggetto, {**contesto_generale(), **self.contesto})
+        destinatari = list(self.destinatari.all()) if self.pk else []
+        if len(destinatari) == 1:
+            contesto = contesto_destinatario(self, destinatari[0])
+        else:
+            contesto = {**contesto_generale(), **self.contesto}
+        return " ".join(componi(self.oggetto, contesto).split())
 
 
 class Destinatario(models.Model):

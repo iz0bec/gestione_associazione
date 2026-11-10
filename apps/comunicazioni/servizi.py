@@ -298,8 +298,8 @@ def annulla(invio, utente):
 # --- invio dei messaggi ------------------------------------------------------------------------
 
 
-def messaggio(invio, destinatario, org=None):
-    org = org or Organizzazione.corrente()
+def contesto_destinatario(invio, destinatario):
+    """Segnaposto risolti per un destinatario: dati generali, dell'invio e della persona."""
     contesto = {**contesto_generale(), **invio.contesto}
     if destinatario.soggetto_id:
         contesto.update(contesto_soggetto(destinatario.soggetto))
@@ -308,6 +308,12 @@ def messaggio(invio, destinatario, org=None):
             {"nome": destinatario.nome, "nome_completo": destinatario.nome, "saluto": "Gentile"}
         )
     contesto.update(destinatario.contesto)
+    return contesto
+
+
+def messaggio(invio, destinatario, org=None):
+    org = org or Organizzazione.corrente()
+    contesto = contesto_destinatario(invio, destinatario)
     oggetto = " ".join(componi(invio.oggetto, contesto).split())
     testo = componi(invio.corpo, contesto)
     piede = render_to_string(

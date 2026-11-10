@@ -151,6 +151,18 @@ class TestCoda:
         assert invio.stato == "inviato" and invio.protocollo.corrispondenti.count() == 2
         assert Protocollo.objects.get().allegati.count() == 2
 
+    def test_titolo_con_un_solo_destinatario(self, utente, client):
+        uno = servizi.crea_invio(
+            utente, oggetto="Buon compleanno, {{ nome }}!", corpo="x",
+            finalita=Finalita.ISTITUZIONALE, soggetti=[persona("Verdi", "Alessandra")],
+        )  # fmt: skip
+        assert uno.titolo == "Buon compleanno, Alessandra!"
+        due = self._invio(utente)  # più destinatari: il segnaposto personale resta
+        assert due.titolo == "Ciao {{ nome }}"
+        client.force_login(utente)
+        pagina = client.get(reverse("comunicazioni:invii")).content.decode()
+        assert "Buon compleanno, Alessandra!" in pagina
+
     def test_errori_e_tentativi(self, utente):
         invio = servizi.conferma(self._invio(utente), utente)
         with mock.patch.object(
