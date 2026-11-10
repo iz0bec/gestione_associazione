@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.8] - 2026-11-10
+
+Correzione nelle comunicazioni.
+
 ### Corretto
 - Comunicazioni: nell'elenco e nel dettaglio l'oggetto di un invio con un solo destinatario mostra
   i segnaposto personali risolti (es. «Buon compleanno, Alessandra!» invece di
