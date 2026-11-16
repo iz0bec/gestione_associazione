@@ -35,13 +35,19 @@ class BackupView(PermessoMixin, View):
     permission_required = "core.gestisci_backup"
 
     def get(self, request):
+        elenco = backup.elenco()
+        tenuti = backup.classifica(elenco)
+        fissati = backup.conservati()
+        for b in elenco:
+            b.conservazione = tenuti.get(b.nome, "")
+            b.fissato = fissati.get(b.nome)
         return render(request, "core/backup.html", {
-            "backup": backup.elenco(),
+            "backup": elenco,
             "cartella": backup.cartella(),
             "automatico": settings.BACKUP_AUTOMATICO,
             "ora": settings.BACKUP_ORA,
-            "conserva": settings.BACKUP_CONSERVA,
-            "formato": backup.formato_dimensione,
+            "politica": backup.Politica.corrente(),
+            "occupazione": backup.occupazione(),
         })  # fmt: skip
 
     def post(self, request):
@@ -50,12 +56,16 @@ class BackupView(PermessoMixin, View):
                 file = request.FILES.get("file")
                 if not file:
                     raise backup.BackupNonValido("Scegliere il file del backup.")
+                backup.controlla_spazio()
                 p = backup.salva_caricato(file)
                 registra(Azione.CREAZIONE, descrizione="Backup caricato", file=p.name)
                 messages.success(request, f"Backup caricato e verificato: {p.name}.")
             else:
-                p = backup.crea(motivo="manuale", utente=request.user)
-                messages.success(request, f"Backup creato: {p.name}.")
+                p, tolti = backup.crea_e_pulisci(motivo="manuale", utente=request.user)
+                testo = f"Backup creato: {p.name}."
+                if tolti:
+                    testo += f" Eliminati {len(tolti)} backup vecchi secondo la conservazione."
+                messages.success(request, testo)
         except backup.BackupNonValido as e:
             messages.error(request, " ".join(e.messages))
         return redirect("core:backup")
@@ -84,6 +94,25 @@ class EliminaBackupView(PermessoMixin, View):
             messages.success(request, f"Backup {nome} eliminato.")
         except backup.BackupNonValido as e:
             messages.error(request, " ".join(e.messages))
+        return redirect("core:backup")
+
+
+class ConservaBackupView(PermessoMixin, View):
+    """Esclude un backup dalla rotazione automatica, o lo rimette in rotazione."""
+
+    permission_required = "core.gestisci_backup"
+    http_method_names = ["post"]
+
+    def post(self, request, nome):
+        conserva = request.POST.get("conserva") == "1"
+        try:
+            backup.imposta_conservato(nome, conserva, request.user, request.POST.get("nota", ""))
+        except backup.BackupNonValido as e:
+            messages.error(request, " ".join(e.messages))
+        else:
+            messages.success(request, f"Backup {nome} " + (
+                "escluso dalla rotazione: non sarà eliminato in automatico." if conserva
+                else "rimesso in rotazione."))  # fmt: skip
         return redirect("core:backup")
 
 

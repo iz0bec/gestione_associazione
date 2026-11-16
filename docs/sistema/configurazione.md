@@ -57,7 +57,7 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 | `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
 | `manage.py conservazione_dati` | ogni notte | con l'anonimizzazione automatica attiva, anonimizza le persone oltre il termine di conservazione (`--elenco`: solo il conteggio) |
 | `manage.py manuale_pdf` | a richiesta | genera il manuale operativo in PDF (`--uscita file.pdf`) |
-| `manage.py backup --automatico` | ogni notte (`BACKUP_ORA`) | backup completo, conserva gli ultimi `BACKUP_CONSERVA` |
+| `manage.py backup --automatico` | ogni notte (`BACKUP_ORA`) | backup completo e conservazione a rotazione (vedi [Backup](backup.md#conservazione-a-rotazione)) |
 | `manage.py genera_chiave_cifratura` | una volta | stampa una chiave per `CHIAVE_CIFRATURA` |
 
 Con Docker il pianificatore è il servizio `pianificatore` di `compose.yaml`; senza Docker vedi

@@ -72,14 +72,100 @@ class TestFile:
         with pytest.raises(backup.BackupNonValido):
             backup.percorso("../../etc/passwd")
 
-    def test_conservazione_automatici(self):
+    def test_conservazione_applicata(self):
         for _ in range(3):
             p = backup.crea(motivo="automatico")
             p.rename(p.with_name(p.name.replace("automatico", f"automatico-{_}")))
         manuale = backup.crea(motivo="manuale")
-        # nomi diversi ma stesso motivo nel manifesto
-        assert backup.pulisci_automatici(1) == 2
+        # stesso giorno: dei tre automatici resta solo il più recente
+        politica = backup.Politica(1, 0, 0, 10, 0, 0)
+        assert len(backup.pulisci(politica=politica)) == 2
         assert manuale.exists() and len(backup.elenco()) == 2
+
+    def test_conserva_da_interfaccia_e_comando(self, client_ruolo):
+        p1 = backup.crea(motivo="automatico")
+        p1 = p1.rename(p1.with_name(p1.name.replace("automatico", "automatico-1")))
+        p2 = backup.crea(motivo="automatico")
+        c = client_ruolo("Amministratore di sistema")
+        url = reverse("core:conserva_backup", args=[p1.name])
+        assert c.post(url, {"conserva": "1", "nota": "fine anno"}).status_code == 302
+        assert backup.conservati()[p1.name]["nota"] == "fine anno"
+        assert backup.pulisci(politica=backup.Politica(1, 0, 0, 0, 0, 0)) == []
+        assert "escluso dalla rotazione" in c.get(reverse("core:backup")).content.decode()
+        call_command("backup", rilascia=p1.name, stdout=io.StringIO())
+        assert backup.pulisci(politica=backup.Politica(1, 0, 0, 0, 0, 0)) == [p1.name]
+        assert p2.exists() and not p1.exists()
+        call_command("backup", conserva=p2.name, stdout=io.StringIO())
+        backup.elimina(p2.name)
+        assert backup.conservati() == {}
+
+    def test_spazio_insufficiente(self):
+        disco = shutil.disk_usage("/")._replace(free=10)
+        with (
+            mock.patch("apps.core.backup.shutil.disk_usage", return_value=disco),
+            pytest.raises(backup.BackupNonValido, match="Spazio su disco insufficiente"),
+        ):
+            backup.crea(motivo="manuale")
+        assert backup.elenco() == []
+
+
+def _finto(giorno, motivo="automatico", dimensione=100, ora=2):
+    from datetime import datetime
+
+    creato = datetime(giorno.year, giorno.month, giorno.day, ora)
+    nome = f"backup_{creato:%Y%m%d_%H%M%S}_{motivo}.tar"
+    return backup.Backup(nome, Path(nome), dimensione,
+                         {"creato_il": creato.isoformat(), "motivo": motivo})  # fmt: skip
+
+
+class TestPolitica:
+    def test_rotazione(self):
+        from datetime import date, timedelta
+
+        giorni = [date(2026, 1, 1) + timedelta(days=i) for i in range(90)]  # fino al 31/03
+        elenco = [_finto(g) for g in reversed(giorni)]
+        tenuti = backup.classifica(elenco, backup.Politica(3, 2, 2, 10, 0, 0))
+        attesi = {_finto(date(2026, 3, d)).nome: m for d, m in
+                  ((31, "giornaliero"), (30, "giornaliero"), (29, "giornaliero"))}  # fmt: skip
+        attesi[_finto(date(2026, 2, 28)).nome] = "mensile"
+        assert tenuti == attesi
+
+    def test_altri_illeggibili_e_ultimo(self):
+        from datetime import date, timedelta
+
+        manuali = [_finto(date(2026, 1, 1) + timedelta(days=i), "manuale") for i in range(12)]
+        rotto = backup.Backup("backup_rotto.tar", Path("x"), 1, {"motivo": "illeggibile"})
+        auto = _finto(date(2025, 1, 1))
+        tenuti = backup.classifica([*manuali, rotto, auto], backup.Politica(0, 0, 0, 10, 0, 0))
+        assert sum(1 for b in manuali if b.nome in tenuti) == 10
+        assert manuali[0].nome not in tenuti and manuali[-1].nome in tenuti
+        assert tenuti["backup_rotto.tar"] == "da controllare"
+        assert tenuti[auto.nome] == "il più recente"  # l'ultimo automatico resta sempre
+
+    def test_esclusi_dalla_rotazione(self):
+        from datetime import date, timedelta
+
+        elenco = [_finto(date(2026, 3, 10) - timedelta(days=i)) for i in range(5)]
+        fisso = elenco[4].nome
+        tenuti = backup.classifica(elenco, backup.Politica(1, 0, 0, 0, 250, 0), fissati=[fisso])
+        assert tenuti == {elenco[0].nome: "giornaliero", fisso: "escluso dalla rotazione"}
+
+    def test_spazio_massimo(self):
+        from datetime import date, timedelta
+
+        elenco = [_finto(date(2026, 3, 10) - timedelta(days=i)) for i in range(5)]
+        tenuti = backup.classifica(elenco, backup.Politica(10, 0, 0, 10, 250, 0))
+        assert set(tenuti) == {elenco[0].nome, elenco[1].nome}
+
+    def test_dimensioni(self):
+        from django.core.exceptions import ImproperlyConfigured
+
+        assert backup.dimensione_byte("") == 0
+        assert backup.dimensione_byte("20G") == 20 * 1024**3
+        assert backup.dimensione_byte("1.5gb") == int(1.5 * 1024**3)
+        assert backup.dimensione_byte("500M") == 500 * 1024**2
+        with pytest.raises(ImproperlyConfigured):
+            backup.dimensione_byte("tanto")
 
 
 @richiede_pg
@@ -104,6 +190,60 @@ def test_ripristino_reale(cartelle):
     sicurezza = [b for b in backup.elenco() if b.motivo == "prima del ripristino"]
     assert len(sicurezza) == 1 and sicurezza[0].manifesto["conteggi"]["soggetti"] == 2
     assert not (Path(settings.BACKUP_ROOT) / ".ripristino.lock").exists()
+
+
+@richiede_pg
+@pytest.mark.django_db(transaction=True, serialized_rollback=True)
+def test_ripristino_da_versione_precedente(cartelle):
+    """Backup senza l'ultima migrazione: dopo il ripristino lo schema viene aggiornato."""
+    from django.db import connection
+    from django.db.migrations.recorder import MigrationRecorder
+
+    from apps.comunicazioni.models import Modello
+
+    ultima = ("comunicazioni", "0005_modello_ricezione_domanda")
+    call_command("migrate", "comunicazioni", "0004", verbosity=0)
+    Modello.objects.filter(uso="ricezione").delete()  # i dati della migrazione mancante
+    try:
+        vecchio = backup.crea()
+    finally:
+        call_command("migrate", "comunicazioni", verbosity=0)
+    assert ultima[1] not in backup.leggi_manifesto(vecchio)["migrazioni"]["comunicazioni"]
+    Soggetto.objects.create(cognome="Dopo")
+
+    backup.ripristina(vecchio)
+    applicate = MigrationRecorder(connection).applied_migrations()
+    assert ultima in applicate
+    assert Modello.objects.filter(uso="ricezione").exists()  # migrazione rieseguita
+    assert not Soggetto.objects.filter(cognome="Dopo").exists()
+
+
+@richiede_pg
+@pytest.mark.django_db(transaction=True, serialized_rollback=True)
+def test_ripristino_fallito_torna_indietro(cartelle):
+    from django.core import management
+
+    Soggetto.objects.create(cognome="Prima")
+    p = backup.crea()
+    Soggetto.objects.create(cognome="Dopo")
+    (cartelle / "media" / "anagrafica" / "foto.jpg").write_bytes(b"foto modificata")
+    vero = management.call_command
+    chiamate = []
+
+    def migrate_che_fallisce(nome, *args, **kwargs):
+        chiamate.append(nome)
+        if nome == "migrate" and chiamate.count("migrate") == 1:
+            raise RuntimeError("migrazione rotta")
+        return vero(nome, *args, **kwargs)
+
+    with (
+        mock.patch("django.core.management.call_command", migrate_che_fallisce),
+        pytest.raises(backup.RipristinoAnnullato, match="migrazione rotta"),
+    ):
+        backup.ripristina(p)
+    assert set(Soggetto.objects.values_list("cognome", flat=True)) == {"Prima", "Dopo"}
+    assert (cartelle / "media" / "anagrafica" / "foto.jpg").read_bytes() == b"foto modificata"
+    assert chiamate.count("migrate") == 2
 
 
 @richiede_pg

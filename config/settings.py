@@ -174,7 +174,13 @@ MEDIA_URL = "/non-servito/"
 BACKUP_ROOT = env.path("BACKUP_ROOT", default=BASE_DIR / "var" / "backup")
 BACKUP_AUTOMATICO = env.bool("BACKUP_AUTOMATICO", default=True)
 BACKUP_ORA = env.int("BACKUP_ORA", default=2)
-BACKUP_CONSERVA = env.int("BACKUP_CONSERVA", default=14)
+# conservazione a rotazione (BACKUP_CONSERVA è il vecchio nome dei giornalieri)
+BACKUP_GIORNALIERI = env.int("BACKUP_GIORNALIERI", default=env.int("BACKUP_CONSERVA", default=7))
+BACKUP_SETTIMANALI = env.int("BACKUP_SETTIMANALI", default=4)
+BACKUP_MENSILI = env.int("BACKUP_MENSILI", default=12)
+BACKUP_ALTRI = env.int("BACKUP_ALTRI", default=10)  # manuali, caricati, prima del ripristino...
+BACKUP_SPAZIO_MASSIMO = env.str("BACKUP_SPAZIO_MASSIMO", default="")  # es. 20G; vuoto = nessuno
+BACKUP_SPAZIO_LIBERO_MINIMO = env.str("BACKUP_SPAZIO_LIBERO_MINIMO", default="1G")
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {

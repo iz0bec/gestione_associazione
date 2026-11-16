@@ -55,8 +55,10 @@ Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante
 ## Backup
 
 **Sistema → Backup** (amministratore di sistema): backup completi di dati e file, creati ogni notte
-e su richiesta, da scaricare e conservare fuori dal server; ripristino con conferma. Vedi il
-[manuale di sistema](../sistema/backup.md).
+e su richiesta, da scaricare e conservare fuori dal server; ripristino con conferma. I vecchi backup
+si eliminano da soli a rotazione (ultimi giorni, settimane e mesi): accanto a ognuno si legge perché è
+conservato. Con la **puntina** un backup si esclude dalla rotazione (es. quello di fine anno) e resta
+finché non lo si rimette in rotazione. Vedi il [manuale di sistema](../sistema/backup.md).
 
 ## Servizi di posta
 

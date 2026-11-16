@@ -173,8 +173,9 @@ conservazione (capitolo 9).</p>
 
 <h2>9. Conservazione, sicurezza e continuità</h2>
 <p>Il sistema esegue {% if backup.automatico %}ogni giorno alle ore {{ backup.ora }}{% else %}su richiesta{% endif %} un
-<strong>backup completo</strong> (database e documenti, con impronte di verifica), conservando gli ultimi {{ backup.conserva }}
-backup sul server. I backup non sono cifrati: vanno copiati periodicamente su un supporto esterno custodito in luogo
+<strong>backup completo</strong> (database e documenti, con impronte di verifica), conservati a rotazione sul server:
+l'ultimo di ciascuno degli ultimi {{ backup.giornalieri }} giorni, {{ backup.settimanali }} settimane e
+{{ backup.mensili }} mesi. I backup non sono cifrati: vanno copiati periodicamente su un supporto esterno custodito in luogo
 diverso dal server, con accesso limitato, e il loro ripristino va provato almeno una volta l'anno. Le credenziali delle
 caselle di posta sono conservate cifrate.</p>
 <p>Il sistema <strong>non è un sistema di conservazione</strong> ai sensi delle Linee guida AgID: per i documenti e i

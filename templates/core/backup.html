@@ -24,11 +24,14 @@
             <tr>
               <td>{% if b.creato_il %}{{ b.creato_il|date:"d/m/Y H:i" }}{% else %}—{% endif %}<div class="small text-secondary text-break">{{ b.nome }}</div>
                 {% if b.manifesto.conteggi %}<div class="small text-secondary">{{ b.manifesto.conteggi.soci }} soci · {{ b.manifesto.conteggi.protocolli }} protocolli · {{ b.manifesto.conteggi.movimenti }} movimenti</div>{% endif %}</td>
-              <td><span class="badge {% if b.automatico %}bg-secondary-lt{% elif b.motivo == 'illeggibile' %}bg-red-lt{% else %}bg-blue-lt{% endif %}">{{ b.motivo }}</span>{% if b.manifesto.creato_da %}<div class="small text-secondary">{{ b.manifesto.creato_da }}</div>{% endif %}</td>
+              <td><span class="badge {% if b.automatico %}bg-secondary-lt{% elif b.motivo == 'illeggibile' %}bg-red-lt{% else %}bg-blue-lt{% endif %}">{{ b.motivo }}</span>{% if b.manifesto.creato_da %}<div class="small text-secondary">{{ b.manifesto.creato_da }}</div>{% endif %}
+                <div class="small {% if b.fissato %}text-green{% elif b.conservazione %}text-secondary{% else %}text-orange{% endif %}">{% if b.fissato %}<i class="ti ti-pinned me-1"></i>escluso dalla rotazione{% if b.fissato.da %} da {{ b.fissato.da }}{% endif %}{% elif b.conservazione %}conservato: {{ b.conservazione }}{% else %}sarà eliminato al prossimo backup{% endif %}</div>
+                {% if b.fissato.nota %}<div class="small text-secondary">{{ b.fissato.nota }}</div>{% endif %}</td>
               <td class="d-none d-md-table-cell">{{ b.manifesto.versione|default:"—" }}</td>
               <td class="text-end text-nowrap">{{ b.dimensione|filesizeformat }}</td>
               <td class="text-end text-nowrap">
                 <a class="btn btn-sm" href="{% url 'core:scarica_backup' b.nome %}" title="Scarica" aria-label="Scarica {{ b.nome }}"><i class="ti ti-download"></i></a>
+                {% if b.motivo != 'illeggibile' %}<form class="d-inline" method="post" action="{% url 'core:conserva_backup' b.nome %}">{% csrf_token %}<input type="hidden" name="conserva" value="{% if b.fissato %}0{% else %}1{% endif %}">{% if b.fissato %}<button class="btn btn-sm btn-outline-green" type="submit" title="Rimetti in rotazione" aria-label="Rimetti in rotazione {{ b.nome }}"><i class="ti ti-pinned-off"></i></button>{% else %}<button class="btn btn-sm" type="submit" title="Escludi dalla rotazione (conserva)" aria-label="Escludi dalla rotazione {{ b.nome }}"><i class="ti ti-pin"></i></button>{% endif %}</form>{% endif %}
                 {% if perms.core.ripristina_backup and b.motivo != 'illeggibile' %}<a class="btn btn-sm btn-outline-warning" href="{% url 'core:ripristino' b.nome %}">Ripristina</a>{% endif %}
                 <form class="d-inline" method="post" action="{% url 'core:elimina_backup' b.nome %}" data-conferma="Eliminare definitivamente questo backup?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Elimina" aria-label="Elimina {{ b.nome }}"><i class="ti ti-trash"></i></button></form>
               </td>
@@ -46,12 +49,17 @@
       <h3 class="card-title">Come funziona</h3>
       <ul class="small mb-0">
         <li>Un backup contiene <strong>tutto</strong>: il database e i file caricati (documenti protocollati, foto, loghi, moduli firmati).</li>
-        <li>{% if automatico %}Ogni notte, dalle {{ ora }}:00, viene creato un backup automatico; si conservano gli ultimi {{ conserva }}.{% else %}Il backup automatico notturno è disattivato.{% endif %} I backup manuali restano finché non si eliminano.</li>
+        <li>{% if automatico %}Ogni notte, dalle {{ ora }}:00, viene creato un backup automatico.{% else %}Il backup automatico notturno è disattivato.{% endif %} Degli automatici si conserva l'ultimo di ciascuno degli ultimi <strong>{{ politica.giornalieri }} giorni</strong>, <strong>{{ politica.settimanali }} settimane</strong> e <strong>{{ politica.mensili }} mesi</strong>.</li>
+        <li>Degli altri backup (manuali, caricati, prima di un ripristino o di un aggiornamento) {% if politica.altri %}si conservano gli ultimi <strong>{{ politica.altri }}</strong>{% else %}non se ne elimina nessuno{% endif %}. L'ultimo di ciascun gruppo non viene mai eliminato da solo.</li>
+        <li>Con <i class="ti ti-pin"></i> si <strong>esclude un backup dalla rotazione</strong> (es. quello di fine anno o prima di una migrazione): resta finché non lo si rimette in rotazione o lo si elimina, ma il suo spazio conta nel totale.</li>
+        {% if politica.spazio_massimo %}<li>I backup non superano in tutto <strong>{{ politica.spazio_massimo|filesizeformat }}</strong>: oltre, si eliminano i più vecchi.</li>{% endif %}
+        <li>Un backup non parte se lascerebbe sul disco meno di {{ politica.spazio_libero_minimo|filesizeformat }} liberi.</li>
         <li>Prima di ogni ripristino viene salvato in automatico lo stato attuale.</li>
         <li><strong>Copiare i backup anche fuori dal server</strong> (scaricandoli o con una copia pianificata della cartella): un backup sullo stesso disco non protegge da un guasto del disco.</li>
         <li>I backup contengono dati personali: conservarli in un luogo protetto.</li>
       </ul>
-      <div class="small text-secondary mt-2 text-break">Cartella: {{ cartella }}</div>
+      <div class="small text-secondary mt-2">{{ occupazione.numero }} backup, {{ occupazione.backup|filesizeformat }} · liberi sul disco {{ occupazione.libero|filesizeformat }} di {{ occupazione.totale|filesizeformat }}</div>
+      <div class="small text-secondary text-break">Cartella: {{ cartella }}</div>
     </div></div>
     <form class="card" method="post" enctype="multipart/form-data">{% csrf_token %}
       <input type="hidden" name="azione" value="carica">

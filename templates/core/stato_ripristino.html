@@ -28,6 +28,11 @@
         <div class="text-green my-3"><i class="ti ti-circle-check icona-grande"></i></div>
         <p>{{ stato.messaggio }}</p>
         <a class="btn btn-primary" href="{% url 'account_login' %}">Accedi</a>
+      {% elif stato.esito == "annullato" %}
+        <div class="text-orange my-3"><i class="ti ti-arrow-back-up icona-grande"></i></div>
+        <p>Il ripristino non è riuscito, ma <strong>i dati sono stati riportati allo stato precedente</strong>: nulla è cambiato.</p>
+        <pre class="text-start small">{{ stato.messaggio }}</pre>
+        <a class="btn btn-primary" href="{% url 'account_login' %}">Accedi</a>
       {% else %}
         <div class="text-red my-3"><i class="ti ti-alert-triangle icona-grande"></i></div>
         <p>Il ripristino non è riuscito.</p>

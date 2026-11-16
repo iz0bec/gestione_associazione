@@ -47,6 +47,11 @@ urlpatterns = [
         name="scarica_backup",
     ),
     path(
+        "sistema/backup/<str:nome>/conserva/",
+        viste_backup.ConservaBackupView.as_view(),
+        name="conserva_backup",
+    ),
+    path(
         "sistema/backup/<str:nome>/elimina/",
         viste_backup.EliminaBackupView.as_view(),
         name="elimina_backup",

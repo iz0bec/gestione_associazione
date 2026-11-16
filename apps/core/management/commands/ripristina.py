@@ -61,6 +61,10 @@ class Command(BaseCommand):
                 p, utente_descrizione=o["utente"],
                 backup_sicurezza=not o["senza_backup_sicurezza"], avanzamento=avanzamento,
             )  # fmt: skip
+        except backup.RipristinoAnnullato as e:
+            if o["stato"]:
+                backup.scrivi_stato(esito="annullato", messaggio=" ".join(e.messages)[:2000])
+            raise CommandError(" ".join(e.messages)) from None
         except Exception as e:
             if o["stato"]:
                 backup.scrivi_stato(esito="errore", messaggio=str(e)[:2000])

@@ -112,7 +112,9 @@ def contesto(manuale=None, *, bozza=True, versione=None, giorno=None, pubblico=F
         "backup": {
             "automatico": settings.BACKUP_AUTOMATICO,
             "ora": settings.BACKUP_ORA,
-            "conserva": settings.BACKUP_CONSERVA,
+            "giornalieri": settings.BACKUP_GIORNALIERI,
+            "settimanali": settings.BACKUP_SETTIMANALI,
+            "mensili": settings.BACKUP_MENSILI,
         },
         "integrazioni": testo_html(manuale.integrazioni, {}) if manuale.integrazioni else "",
     }

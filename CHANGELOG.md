@@ -5,6 +5,34 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Liste di destinatari in Excel**: *Esporta in Excel* dalla pagina della lista (fogli Lista,
+  Persone, Destinatari attuali, Istruzioni) per modificarla fuori linea; *Liste → Importa da Excel*
+  con anteprima di impostazioni, persone abbinate (per codice, codice fiscale o email univoca),
+  aggiunte, tolte, righe ambigue o non trovate; il codice nel file indica la lista da aggiornare,
+  senza codice se ne crea una nuova. Su richiesta crea in anagrafica le schede mancanti con i soli
+  dati del file. Esportazione e importazione nel registro attività.
+- **Conservazione dei backup a rotazione**: degli automatici l'ultimo di ciascuno degli ultimi
+  `BACKUP_GIORNALIERI` (7) giorni, `BACKUP_SETTIMANALI` (4) settimane e `BACKUP_MENSILI` (12) mesi;
+  degli altri (manuali, caricati, prima del ripristino o dell'aggiornamento) gli ultimi
+  `BACKUP_ALTRI` (10); tetto facoltativo `BACKUP_SPAZIO_MASSIMO`. La pulizia gira dopo ogni backup,
+  anche manuale, e con `manage.py backup --pulisci`.
+- **Backup esclusi dalla rotazione** (puntina nella pagina dei backup, oppure
+  `manage.py backup --conserva NOME --nota ...` / `--rilascia NOME`): non vengono mai eliminati da soli.
+- **Ripristino sicuro**: se il ripristino non riesce (database, aggiornamento dello schema di un
+  backup di una versione precedente, file), si rimette da sé lo stato salvato «prima del ripristino»
+  e la pagina di avanzamento dice che nulla è cambiato. Test del ripristino di un backup creato con
+  una versione precedente (migrazioni mancanti applicate) e del ritorno allo stato precedente.
+- Controllo dello spazio su disco: un backup (anche quello prima di un ripristino) non parte se
+  lascerebbe meno di `BACKUP_SPAZIO_LIBERO_MINIMO` (1G) liberi. La pagina dei backup mostra perché
+  ciascuno è conservato, lo spazio occupato e quello libero.
+
+### Modificato
+- `BACKUP_CONSERVA` diventa `BACKUP_GIORNALIERI` (il vecchio nome vale ancora); il valore predefinito
+  passa da 14 backup automatici a 7 giorni + 4 settimane + 12 mesi. **Al primo backup dopo
+  l'aggiornamento** si eliminano gli automatici fuori dalla nuova rotazione e i backup manuali oltre
+  i 10 più recenti: escludere prima dalla rotazione quelli da tenere.
+
 ## [1.0.12] - 2026-11-16
 
 Conferma di ricezione delle domande di iscrizione arrivate per email.

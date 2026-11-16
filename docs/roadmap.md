@@ -139,7 +139,12 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 - ✅ Tessera digitale (formato carta) con QR di verifica, inviata per email; verifica pubblica.
 - ✅ Promemoria automatici di rinnovo ai soci non in regola.
 - ✅ GDPR: esportazione dei dati di una persona, anonimizzazione, termini di conservazione.
-- Backup automatici cifrati con verifica del ripristino.
+- Backup automatici cifrati con verifica del ripristino. ✅ Fatta la conservazione a rotazione
+  (giornalieri, settimanali, mensili), con tetto di spazio, controllo del disco e backup esclusi
+  dalla rotazione.
+- ✅ Liste di destinatari in Excel: esportazione per la modifica fuori linea e reimportazione con anteprima.
+- **Utenti connessi**: chi sta usando il gestionale in questo momento (per l'amministratore).
+- **Chat interna** fra gli utenti del gestionale.
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).
 - API REST con token con scadenza e permessi limitati (per integrazioni esterne).
 - Pagamenti delle quote tracciati (contanti, bonifico, POS) con ricevuta numerata.
