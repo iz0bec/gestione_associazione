@@ -50,6 +50,7 @@
 | **1.0.15** ✅ | lettere in PDF e buste DL per i destinatari senza email delle comunicazioni; indirizzi postali e motivo nel foglio Destinatari delle liste in Excel | GitHub, GitLab |
 | **1.0.16** ✅ | liste limitate ai soci di una o più sezioni; libro soci raggruppato per sezione; stampe ed esportazioni dell'elenco soci che seguono i filtri, elenco filtrato in PDF | GitHub, GitLab |
 | **1.0.17** ✅ | timbri degli enti in Sistema → Organizzazione, solo amministratore di sistema; corretti «Non usare» e «Togli» dei timbri | GitHub, GitLab |
+| **1.0.18** ✅ | spedizione dei protocolli in uscita per email e PEC dalla scheda, con le ricevute PEC agganciate; SMTP delle caselle (anche PEC Aruba) | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
@@ -76,7 +77,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 2. ✅ **Protocollo** - registro in entrata/uscita/interno (numerazione annuale), allegati privati,
    annullamento motivato, registro giornaliero PDF, ricezione email/PEC da protocollare.
    ✅ *Fatti in seguito*: liste di distribuzione (Comunicazioni), import dal Protocollo ANCR (punto 8).
-   *Da fare*: invio dei protocolli in uscita per email/PEC; API REST (fase 2).
+   ✅ *Fatto in seguito*: spedizione dei protocolli in uscita per email e PEC, con le ricevute PEC
+   agganciate. *Da fare*: API REST (fase 2).
 3. ✅ **Organi sociali** - organi, riunioni con 1ª/2ª convocazione e ordine del giorno, presenze dai
    soci, verbali con delibere e votazioni, PDF, protocollazione automatica, libri dei verbali.
    Comprende le **cariche sociali con storico** (previste in fase 2). ✅ *Fatto in seguito*: invio
@@ -85,7 +87,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 4. ✅ **Comunicazioni e anniversari** - modelli con segnaposto, invii a persone/categorie/liste, coda di
    invio, registro invii, anniversari (compleanni, onomastici, ricorrenze, anzianità da socio, scomparse)
    con auguri automatici (rispettando consensi e decessi), invio di convocazioni, ricevute ed esiti.
-   *Da fare*: invio tramite PEC, SMS/messaggistica, stampa di etichette e lettere per posta.
+   ✅ *Fatti in seguito*: lettere e buste DL per chi non ha l'email, indirizzi postali nelle liste in
+   Excel. *Da fare*: invio delle comunicazioni tramite PEC, SMS/messaggistica, etichette adesive.
 5. ✅ **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. ✅ **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,

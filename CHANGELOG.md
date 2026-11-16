@@ -5,6 +5,26 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.18] - 2026-11-16
+
+Spedizione dei protocolli in uscita per email e PEC, con le ricevute PEC agganciate.
+
+### Aggiunto
+- **Spedizione per email e PEC dei protocolli in uscita** (scheda del protocollo → *Spedisci*): da una
+  casella configurata per l'invio (la PEC dell'ente) o dal server generale, un messaggio per
+  destinatario con l'indirizzo proposto dall'anagrafica (PEC o email) e modificabile, oggetto con
+  numero e data di protocollo, testo e documenti scelti. Nella scheda il riquadro *Spedizioni* riporta
+  l'esito di ognuno; gli errori di invio si ritentano da soli (tre volte) e poi con *Riprova*. Segue
+  l'interruttore dell'invio in *Sistema → Servizi di posta* (spento: resta in coda).
+- **Ricevute PEC agganciate**: accettazione, avvenuta consegna e mancata consegna, lette dalla casella
+  PEC, aggiornano l'esito del destinatario e diventano documenti del protocollo, senza passare dalla
+  posta da protocollare.
+- Caselle di posta: *usata anche per spedire*, con server SMTP, porta, SSL e indirizzo del mittente
+  (stesse credenziali della lettura; per Aruba PEC `smtps.pec.aruba.it`, 465). *Verifica* in
+  *Servizi di posta* prova anche l'invio. Nuovo permesso `protocollo.spedisci_protocollo`
+  (amministratore di sistema, segretario, addetto al protocollo); impostazione
+  `PROTOCOLLO_SPEDIZIONE_MAX_MB` (20).
+
 ## [1.0.17] - 2026-11-16
 
 Timbri degli enti in Sistema → Organizzazione, solo per l'amministratore di sistema.
