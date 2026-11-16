@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Liste di destinatari: **Solo i soci delle sezioni** per limitare «tutti i soci» e «soci in regola»
+  a una o più sezioni (federazione); vale per invii, protocollo in uscita ed Excel (riga *Sezioni dei
+  soci*, per nome o codice). Chi è abilitato solo ad alcune sezioni sceglie fra le proprie e, se
+  include i soci, deve indicarle. Nel foglio Destinatari il motivo riporta la sezione.
+
 ## [1.0.15] - 2026-11-16
 
 Lettere e buste per chi non ha l'email; indirizzi dei soci nelle liste esportate.

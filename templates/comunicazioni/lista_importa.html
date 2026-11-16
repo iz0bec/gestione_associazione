@@ -18,7 +18,7 @@
     <p class="mb-2">{% if piano.nuova %}Verrà creata la <strong>nuova lista «{{ piano.nome }}»</strong>.{% else %}Verrà aggiornata la lista <a href="{{ piano.lista.get_absolute_url }}">«{{ piano.lista }}»</a>{% if piano.lista.nome != piano.nome %}, che si chiamerà <strong>«{{ piano.nome }}»</strong>{% endif %}.{% endif %}</p>
     <dl class="row small mb-2">
       <dt class="col-sm-4">Descrizione</dt><dd class="col-sm-8">{{ piano.descrizione|default:"—" }}</dd>
-      <dt class="col-sm-4">Soci</dt><dd class="col-sm-8">{% if piano.soci_in_regola %}solo i soci in regola con la quota{% elif piano.soci_attivi %}tutti i soci attivi{% else %}—{% endif %}</dd>
+      <dt class="col-sm-4">Soci</dt><dd class="col-sm-8">{% if piano.soci_in_regola %}solo i soci in regola con la quota{% elif piano.soci_attivi %}tutti i soci attivi{% else %}—{% endif %}{% if piano.soci_in_regola or piano.soci_attivi %}{% if piano.sezioni %} di {% for s in piano.sezioni %}{{ s.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}, tutte le sezioni{% endif %}{% endif %}</dd>
       <dt class="col-sm-4">Organo</dt><dd class="col-sm-8">{{ piano.organo|default:"—" }}</dd>
       <dt class="col-sm-4">Categorie</dt><dd class="col-sm-8">{% for c in piano.categorie %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% empty %}—{% endfor %}</dd>
     </dl>

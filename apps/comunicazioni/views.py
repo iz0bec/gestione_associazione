@@ -420,6 +420,9 @@ class _ListaMixin(_ConfigMixin):
     form_class = ListaForm
     template_name = "comunicazioni/lista_modulo.html"
 
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "utente": self.request.user}
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         valore = ctx["form"]["soggetti"].value() or []
@@ -468,7 +471,9 @@ class ListaImportaView(PermessoMixin, FormView):
         return kwargs
 
     def _prepara(self, contenuto, crea_schede):
-        piano = scambio_liste.prepara(scambio_liste.leggi(contenuto), crea_schede=crea_schede)
+        piano = scambio_liste.prepara(
+            scambio_liste.leggi(contenuto), crea_schede=crea_schede, utente=self.request.user
+        )
         if piano.nuova and not self.request.user.has_perm("comunicazioni.add_lista"):
             raise scambio_liste.FileNonValido("Non si possono creare liste nuove.")
         return piano

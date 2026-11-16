@@ -70,6 +70,13 @@ class Lista(models.Model):
     soci_in_regola = models.BooleanField(
         "solo i soci in regola con la quota dell'anno", default=False
     )
+    sezioni = models.ManyToManyField(
+        "soci.Sezione",
+        blank=True,
+        related_name="+",
+        verbose_name="solo i soci delle sezioni",
+        help_text="Vale per «tutti i soci» e «soci in regola»; nessuna = tutte le sezioni.",
+    )
     organo = models.ForeignKey(
         "organi.Organo",
         null=True,

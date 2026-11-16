@@ -32,6 +32,7 @@ CAMPI_LISTA = [
     ("descrizione", "Descrizione"),
     ("soci_attivi", "Tutti i soci attivi"),
     ("soci_in_regola", "Solo i soci in regola con la quota"),
+    ("sezioni", "Sezioni dei soci"),
     ("organo", "Componenti in carica dell'organo"),
     ("categorie", "Categorie dell'anagrafica"),
 ]
@@ -55,6 +56,7 @@ ISTRUZIONI = [
     "crea una lista nuova (o aggiorna quella con lo stesso nome).",
     "  - Tutti i soci attivi / Solo i soci in regola: «sì» oppure «no».",
     "  - Organo: il nome come appare nel gestionale (es. «Consiglio direttivo»); vuoto = nessuno.",
+    "  - Sezioni dei soci: nomi o codici separati da punto e virgola; vuoto = tutte le sezioni.",
     "  - Categorie: nomi separati da punto e virgola (es. «Autorità; Stampa»).",
     "",
     "Foglio «Persone»: le persone e gli enti scelti uno per uno.",
@@ -110,6 +112,7 @@ def esporta(lista, utente):
         "descrizione": lista.descrizione,
         "soci_attivi": "sì" if lista.soci_attivi else "no",
         "soci_in_regola": "sì" if lista.soci_in_regola else "no",
+        "sezioni": "; ".join(s.nome for s in lista.sezioni.order_by("nome")),
         "organo": str(lista.organo) if lista.organo_id else "",
         "categorie": "; ".join(c.nome for c in lista.categorie.order_by("nome")),
     }
@@ -185,6 +188,7 @@ class Piano:
     soci_in_regola: bool
     organo: object
     categorie: list
+    sezioni: list
     righe: list
     avvisi: list
     aggiunte: list = field(default_factory=list)
@@ -327,9 +331,32 @@ def _scheda_nuova(tipo, cognome, nome, cf, email, postale=None):
     return s, ""
 
 
-def prepara(fogli, *, crea_schede=False):
+def _sezioni(testo, utente, avvisi):
+    """Sezioni dal testo (nomi o codici); per un utente limitato solo le sue."""
+    from apps.soci import sezioni as sz
+
+    consentite = sz.id_sezioni(utente) if utente else None
+    per_chiave = {}
+    for s in sz.Sezione.objects.all():
+        per_chiave[_norma(s.nome)] = per_chiave[_norma(s.codice)] = s
+    trovate = []
+    for parte in testo.replace(",", ";").split(";"):
+        if not parte.strip():
+            continue
+        s = per_chiave.get(_norma(parte))
+        if s is None:
+            avvisi.append(f"Sezione «{parte.strip()}» non trovata: ignorata.")
+        elif consentite is not None and s.pk not in consentite:
+            avvisi.append(f"Sezione «{s.nome}» non fra le proprie: ignorata.")
+        elif s not in trovate:
+            trovate.append(s)
+    return trovate
+
+
+def prepara(fogli, *, crea_schede=False, utente=None):
     """Confronto fra il file e il gestionale. Non salva nulla."""
     from apps.organi.models import Organo
+    from apps.soci import sezioni as sz
 
     avvisi = []
     v = _impostazioni(fogli[FOGLIO_LISTA])
@@ -415,11 +442,15 @@ def prepara(fogli, *, crea_schede=False):
                                   dati={"tipo": nuova.tipo, "cognome": cognome, "nome": nome_p,
                                         "cf": cf, "email": email, "postale": postale}))  # fmt: skip
 
+    soci_attivi = _si_no(v.get("soci_attivi"), "Tutti i soci attivi", avvisi)
+    soci_in_regola = _si_no(v.get("soci_in_regola"), "Solo i soci in regola", avvisi)
+    sezioni = _sezioni(_testo(v.get("sezioni")), utente, avvisi)
+    if (soci_attivi or soci_in_regola) and not sezioni and utente and sz.limitato(utente):
+        raise FileNonValido("Indicare nel foglio «Lista» le sezioni dei soci da includere.")
     piano = Piano(
-        lista=lista, nome=nome, descrizione=descrizione,
-        soci_attivi=_si_no(v.get("soci_attivi"), "Tutti i soci attivi", avvisi),
-        soci_in_regola=_si_no(v.get("soci_in_regola"), "Solo i soci in regola", avvisi),
-        organo=organo, categorie=categorie, righe=righe, avvisi=avvisi,
+        lista=lista, nome=nome, descrizione=descrizione, soci_attivi=soci_attivi,
+        soci_in_regola=soci_in_regola, organo=organo, categorie=categorie, sezioni=sezioni,
+        righe=righe, avvisi=avvisi,
     )  # fmt: skip
     nuovi = {r.soggetto.pk for r in righe if r.soggetto}
     attuali = set(lista.soggetti.values_list("pk", flat=True)) if lista else set()
@@ -476,6 +507,7 @@ def applica(piano, utente):
         creati += 1
     lista.soggetti.set(soggetti)
     lista.categorie.set(piano.categorie)
+    lista.sezioni.set(piano.sezioni)
 
     dettagli = {"origine": "importazione da Excel", "schede_create": creati,
                 "schede_completate": completate,

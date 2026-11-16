@@ -109,15 +109,43 @@ class ListaForm(StileMixin, forms.ModelForm):
             "categorie",
             "soci_attivi",
             "soci_in_regola",
+            "sezioni",
             "organo",
             "soggetti",
         ]
-        widgets = {"categorie": forms.CheckboxSelectMultiple}
+        widgets = {
+            "categorie": forms.CheckboxSelectMultiple,
+            "sezioni": forms.CheckboxSelectMultiple,
+        }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, utente=None, **kwargs):
+        from apps.soci import sezioni
+
         super().__init__(*args, **kwargs)
         self.fields["categorie"].queryset = Categoria.objects.all()
         self.fields["organo"].empty_label = "— nessuno —"
+        self.utente = utente
+        self.sezioni_utente = sezioni.id_sezioni(utente) if utente else None
+        scelte = sezioni.sezioni_di(utente) if utente else sezioni.Sezione.objects.all()
+        gia = set(self.instance.sezioni.values_list("pk", flat=True)) if self.instance.pk else set()
+        self.fields["sezioni"].queryset = sezioni.Sezione.objects.filter(
+            pk__in={*scelte.values_list("pk", flat=True), *gia}
+        )
+        if not sezioni.multisezione() and not gia:
+            del self.fields["sezioni"]
+
+    def clean(self):
+        dati = super().clean()
+        consentite = self.sezioni_utente
+        if consentite is None or "sezioni" not in self.fields:
+            return dati
+        scelte = {s.pk for s in dati.get("sezioni") or []}
+        gia = set(self.instance.sezioni.values_list("pk", flat=True)) if self.instance.pk else set()
+        if scelte - consentite - gia:
+            self.add_error("sezioni", "Si possono scegliere solo le proprie sezioni.")
+        if (dati.get("soci_attivi") or dati.get("soci_in_regola")) and not scelte:
+            self.add_error("sezioni", "Indicare le sezioni dei soci da includere.")
+        return dati
 
 
 class ImportaListaForm(StileMixin, forms.Form):

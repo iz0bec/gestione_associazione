@@ -9,7 +9,7 @@
       <div class="col-md-5">{{ form.nome.as_field_group }}</div>
       <div class="col-md-7">{{ form.descrizione.as_field_group }}</div>
       <div class="col-md-6">{{ form.categorie.as_field_group }}</div>
-      <div class="col-md-6">{{ form.soci_attivi.as_field_group }}{{ form.soci_in_regola.as_field_group }}{{ form.organo.as_field_group }}</div>
+      <div class="col-md-6">{{ form.soci_attivi.as_field_group }}{{ form.soci_in_regola.as_field_group }}{% if form.sezioni %}{{ form.sezioni.as_field_group }}{% endif %}{{ form.organo.as_field_group }}</div>
       <div class="col-12"><div class="form-label">{{ form.soggetti.label }}</div>{% include "comunicazioni/_scelta_soggetti.html" %}</div>
     </div>
     <p class="text-secondary small mb-0">La lista è l'unione di tutti i criteri e si aggiorna da sola (es. nuovi soci, cambi di carica).</p>

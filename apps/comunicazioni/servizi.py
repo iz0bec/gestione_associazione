@@ -163,7 +163,13 @@ def motivi_lista(lista, anno=None):
         if lista.soci_in_regola:
             soci = soci.in_regola(anno)
         motivo = "socio in regola" if lista.soci_in_regola else "socio"
-        aggiungi(soci.values_list("soggetto_id", flat=True), motivo)
+        sezioni = list(lista.sezioni.all())
+        if sezioni:
+            soci = soci.filter(sezione__in=sezioni)
+        nomi = {s.pk: s.nome for s in sezioni}
+        for soggetto_id, sezione_id in soci.values_list("soggetto_id", "sezione_id"):
+            testo = f"{motivo} ({nomi[sezione_id]})" if sezione_id in nomi else motivo
+            aggiungi([soggetto_id], testo)
     if lista.organo_id:
         aggiungi(lista.organo.cariche_al().values_list("soggetto_id", flat=True),
                  str(lista.organo))  # fmt: skip

@@ -90,13 +90,17 @@ Un segnaposto scritto male viene segnalato e la comunicazione non parte.
   anniversario di iscrizione, ricorrenza, generico). Sono già presenti modelli di base da adattare.
 - **Liste**: unione di persone scelte, **categorie** dell'anagrafica (es. Autorità), **tutti i soci** o
   **solo quelli in regola** con la quota, **componenti di un organo**. Le liste si aggiornano da sole.
+  Con più sezioni (federazione), **Solo i soci delle sezioni** limita i soci a quelle scelte (nessuna
+  = tutte); chi è abilitato solo ad alcune sezioni vede e deve scegliere solo le proprie. Le
+  persone scelte, le categorie e l'organo non dipendono dalle sezioni.
   Si usano anche nel **protocollo in uscita** (liste di distribuzione), con le buste per chi non ha
   l'email.
 
 ### Modificare una lista fuori linea (Excel)
 
 1. Dalla pagina della lista, **Esporta in Excel**. Il file ha quattro fogli:
-   - **Lista**: nome, descrizione, soci (tutti o solo in regola: «sì»/«no»), organo, categorie
+   - **Lista**: nome, descrizione, soci (tutti o solo in regola: «sì»/«no»), sezioni dei soci
+     (nomi o codici; vuoto = tutte), organo, categorie
      (separate da punto e virgola) e il *codice lista*, che non va modificato;
    - **Persone**: le persone e gli enti scelti uno per uno (codice, tipo, cognome o denominazione,
      nome, codice fiscale, email e indirizzo postale: indirizzo, CAP, comune, provincia, nazione);

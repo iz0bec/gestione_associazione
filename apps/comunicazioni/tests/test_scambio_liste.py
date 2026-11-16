@@ -91,7 +91,7 @@ class TestImportazione:
         ws = wb["Lista"]
         ws["B3"] = "Cerimonia 2026"
         ws["B5"] = "no"
-        ws["B8"] = "Autorità; Inesistente"
+        ws["B9"] = "Autorità; Inesistente"
         wp = wb["Persone"]
         wp.delete_rows(3)  # Rossi
         wp.append([None, None, None, None, "rssmra80a01h501u", None])  # Verdi per codice fiscale
@@ -177,6 +177,79 @@ class TestImportazione:
     def test_file_non_valido(self):
         with pytest.raises(scambio_liste.FileNonValido):
             scambio_liste.leggi(b"non un excel")
+
+
+@pytest.fixture
+def due_sezioni(utente):
+    from apps.soci import servizi as soci
+    from apps.soci.models import Sezione, TipologiaSocio
+
+    nord = Sezione.objects.create(codice="N", nome="Nord")
+    sud = Sezione.objects.create(codice="S", nome="Sud")
+    ordinario = TipologiaSocio.objects.get(nome="Ordinario")
+    soci.ammetti_socio(persona("Alto"), ordinario, utente, sezione=nord)
+    soci.ammetti_socio(persona("Basso"), ordinario, utente, sezione=sud)
+    return nord, sud
+
+
+class TestSezioni:
+    def test_soci_di_una_sezione(self, utente, due_sezioni):
+        from apps.comunicazioni import servizi
+
+        nord, _ = due_sezioni
+        lista = Lista.objects.create(nome="Nord", soci_attivi=True)
+        assert {"Alto", "Basso"} <= set(
+            servizi.soggetti_lista(lista).values_list("cognome", flat=True)
+        )
+        lista.sezioni.add(nord)
+        assert list(servizi.soggetti_lista(lista).values_list("cognome", flat=True)) == ["Alto"]
+        motivi = servizi.motivi_lista(lista)
+        assert list(motivi.values()) == [["socio (Nord)"]]
+
+    def test_excel_con_sezioni(self, utente, due_sezioni):
+        nord, sud = due_sezioni
+        lista = Lista.objects.create(nome="Nord", soci_attivi=True)
+        lista.sezioni.add(nord)
+        wb = _file(scambio_liste.esporta(lista, utente))
+        valori = {r[0]: r for r in wb["Lista"].iter_rows(min_row=2, values_only=True)}
+        assert valori["Sezioni dei soci"][1] == "Nord"
+        wb["Lista"]["B7"] = "S; Ovest"  # per codice; Ovest non esiste
+        piano = scambio_liste.prepara(scambio_liste.leggi(_salva(wb)))
+        assert piano.sezioni == [sud] and any("Ovest" in a for a in piano.avvisi)
+        scambio_liste.applica(piano, utente)
+        assert list(lista.sezioni.all()) == [sud]
+
+    def test_utente_limitato(self, client, crea_utente, due_sezioni):
+        from apps.comunicazioni.forms import ListaForm
+
+        nord, sud = due_sezioni
+        limitato = crea_utente("nord", ruoli=["Segretario"])
+        limitato.sezioni.add(nord)
+        dati = {"nome": "Soci", "soci_attivi": "on"}
+        form = ListaForm(dati, utente=limitato)
+        assert list(form.fields["sezioni"].queryset) == [nord]
+        assert not form.is_valid() and "sezioni" in form.errors  # sezione obbligatoria
+        assert not ListaForm({**dati, "sezioni": [sud.pk]}, utente=limitato).is_valid()
+        assert ListaForm({**dati, "sezioni": [nord.pk]}, utente=limitato).is_valid()
+        # dal file: senza sezioni non si importa, quelle altrui sono ignorate
+        lista = Lista.objects.create(nome="Tutti", soci_attivi=True)
+        wb = _file(scambio_liste.esporta(lista, limitato))
+        with pytest.raises(scambio_liste.FileNonValido, match="sezioni"):
+            scambio_liste.prepara(scambio_liste.leggi(_salva(wb)), utente=limitato)
+        wb["Lista"]["B7"] = "Nord; Sud"
+        piano = scambio_liste.prepara(scambio_liste.leggi(_salva(wb)), utente=limitato)
+        assert piano.sezioni == [nord] and any("Sud" in a for a in piano.avvisi)
+
+    def test_modulo(self, client, utente, due_sezioni):
+        client.force_login(utente)
+        nord, _ = due_sezioni
+        r = client.post(reverse("comunicazioni:lista_nuova"),
+                        {"nome": "Nord", "soci_attivi": "on", "sezioni": [nord.pk]})  # fmt: skip
+        assert r.status_code == 302
+        lista = Lista.objects.get(nome="Nord")
+        assert list(lista.sezioni.all()) == [nord]
+        pagina = client.get(lista.get_absolute_url()).content.decode()
+        assert "Tutti i soci attivi di Nord" in pagina
 
 
 class TestViste:

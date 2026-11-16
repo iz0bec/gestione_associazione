@@ -12,7 +12,7 @@
 {% block contenuto %}
 <div class="card">
   <div class="card-body text-secondary">{{ lista.descrizione }}
-    <div class="mt-1">{% if lista.soci_in_regola %}Soci in regola con la quota · {% elif lista.soci_attivi %}Tutti i soci attivi · {% endif %}{% for c in lista.categorie.all %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% endfor %}{% if lista.organo %} Componenti di {{ lista.organo }}{% endif %}</div>
+    <div class="mt-1">{% if lista.soci_in_regola %}Soci in regola con la quota{% elif lista.soci_attivi %}Tutti i soci attivi{% endif %}{% if lista.soci_in_regola or lista.soci_attivi %}{% with sezioni=lista.sezioni.all %}{% if sezioni %} di {% for s in sezioni %}{{ s.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %} · {% endif %}{% for c in lista.categorie.all %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% endfor %}{% if lista.organo %} Componenti di {{ lista.organo }}{% endif %}</div>
   </div>
   <div class="table-responsive">
     <table class="table table-sm card-table"><thead><tr><th>Nome ({{ membri|length }})</th><th>Email</th></tr></thead>
