@@ -36,6 +36,7 @@ class Modello(models.Model):
         CONVOCAZIONE = "convocazione", "Convocazione"
         RICEVUTA = "ricevuta", "Ricevuta della quota"
         DOMANDA = "domanda", "Esito della domanda di iscrizione"
+        RICEZIONE = "ricezione", "Conferma di ricezione della domanda"
         COMPLEANNO = "compleanno", "Auguri di compleanno"
         ONOMASTICO = "onomastico", "Auguri di onomastico"
         ANZIANITA = "anzianita", "Anniversario di iscrizione"

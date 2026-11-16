@@ -70,7 +70,7 @@ Un segnaposto scritto male viene segnalato e la comunicazione non parte.
 
 ## Modelli e liste
 
-- **Modelli**: testi pronti per uso (convocazione, ricevuta, esito della domanda, compleanno, onomastico,
+- **Modelli**: testi pronti per uso (convocazione, ricevuta, conferma di ricezione ed esito della domanda, compleanno, onomastico,
   anniversario di iscrizione, ricorrenza, generico). Sono già presenti modelli di base da adattare.
 - **Liste**: unione di persone scelte, **categorie** dell'anagrafica (es. Autorità), **tutti i soci** o
   **solo quelli in regola** con la quota, **componenti di un organo**. Le liste si aggiornano da sole.

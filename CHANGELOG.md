@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Conferma di ricezione delle domande di iscrizione arrivate per email**: registrando la domanda dal
+  messaggio, una casella (spuntata) mette in coda l'email al mittente con il richiedente, il numero e la
+  data di protocollo. Modello *Conferma di ricezione della domanda* con i nuovi segnaposto
+  `{{ richiedente }}`, `{{ protocollo }}`, `{{ data_protocollo }}`; finalità istituzionale; con l'invio
+  spento resta in coda; un problema con la conferma non annulla la domanda.
+
 ## [1.0.11] - 2026-11-16
 
 Manuale di gestione documentale e pubblicazione nel catalogo del riuso.

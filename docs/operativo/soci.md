@@ -222,13 +222,26 @@ l'etichetta **iscrizione?**. Nel messaggio, prima di protocollarlo, **Domanda di
 2. un avviso segnala se la persona è **già in anagrafica** con lo stesso codice fiscale (o già socia)
    e se il mittente è già noto;
 3. si spuntano gli **allegati che formano il modulo firmato** (proposti i PDF e le immagini);
-4. si controlla l'**oggetto** della registrazione di protocollo e si preme **Registra e protocolla**.
+4. si controlla l'**oggetto** della registrazione di protocollo, si lascia spuntata (o si toglie) la
+   **conferma di ricezione** e si preme **Registra e protocolla**.
 
 In un'unica operazione il messaggio viene **protocollato in entrata** (originale e allegati come
 documenti), la domanda viene registrata con origine *email* e **collegata al protocollo**, e gli
 allegati scelti diventano la sua richiesta firmata. Se qualcosa non va (ad esempio un dato
 obbligatorio mancante) non viene salvato nulla. La domanda prosegue poi come le altre: accoglimento o
 rigetto. Nella scheda del socio, sotto la richiesta firmata, resta il numero di protocollo di arrivo.
+
+**Conferma di ricezione.** Con la casella spuntata (proposta se c'è il modello) chi ha scritto riceve
+un'email che conferma l'arrivo della domanda, con il nome del richiedente, il **numero e la data di
+protocollo**. Va al **mittente del messaggio**, anche se è diverso dal richiedente (ad esempio una
+sezione che inoltra la domanda): se l'indirizzo coincide con quello della domanda il saluto usa il nome
+del richiedente, altrimenti il nome del mittente. Il testo è nel modello *Conferma di ricezione della
+domanda* (*Comunicazioni → Modelli*), con i segnaposto `{{ richiedente }}`, `{{ protocollo }}` e
+`{{ data_protocollo }}`. È una comunicazione istituzionale (nessun consenso richiesto) e passa dalla coda
+delle email: se l'invio delle email è spento (*Sistema → Servizi di posta*) resta in coda e parte quando
+lo si accende. Un problema con la conferma (modello mancante o disattivato) non annulla la domanda: si
+vede un avviso. Se la domanda è arrivata a una PEC, la conferma parte dal normale server di invio: alcune
+caselle PEC non accettano messaggi da indirizzi non PEC.
 
 Le domande in attesa compaiono sul cruscotto. Nella domanda:
 

@@ -130,7 +130,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   senza inventare nulla, avviso dei doppioni, domanda e protocollazione in entrata in un'unica
   operazione, **richiesta firmata** sulla domanda (anche per quelle a mano o online) che passa al socio
   all'accoglimento con il riferimento al protocollo. *Da fare*: risposta di conferma di ricezione al
-  mittente (modello di Comunicazioni).
+  mittente (modello di Comunicazioni). ✅ Fatta: conferma di ricezione con il numero di protocollo.
 - Eventi e cerimonie con adesioni.
 - Scadenza dei mandati delle cariche (lo storico c'è già, punto 3 della fase 1): durata per organo,
   avvisi prima della scadenza nel cruscotto e nello scadenzario.

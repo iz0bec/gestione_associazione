@@ -68,6 +68,9 @@ SEGNAPOSTO = {
     "ricevuta": "numero della ricevuta",
     "tessera": "numero della tessera",
     "esito": "esito della domanda di iscrizione",
+    "richiedente": "nome e cognome di chi chiede l'iscrizione",
+    "protocollo": "numero di protocollo",
+    "data_protocollo": "data della registrazione di protocollo",
 }
 _RE_SEGNAPOSTO = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
 
@@ -733,6 +736,39 @@ def da_domanda(domanda, utente):
         indirizzi=[(f"{domanda.nome} {domanda.cognome}", domanda.email)], modello=modello,
         origine="domanda", origine_id=domanda.pk, contesto={**contesto, "nome": domanda.nome},
     )  # fmt: skip
+
+
+ORIGINE_RICEZIONE = "ricezione_domanda"
+
+
+def conferma_ricezione_domanda(domanda, utente, *, nome, email):
+    """Mette in coda la conferma di ricezione di una domanda di iscrizione (finalità
+    istituzionale, nessun consenso). Rieseguibile: se è già stata preparata non la ripete.
+    Parte con la coda delle email (se l'invio è spento resta in attesa)."""
+    if not email:
+        raise OperazioneNonValida("Manca l'indirizzo email a cui confermare la ricezione.")
+    gia = Invio.objects.filter(origine=ORIGINE_RICEZIONE, origine_id=domanda.pk).exclude(
+        stato=Invio.Stato.ANNULLATO
+    )
+    if invio := gia.first():
+        return invio
+    modello = _modello(Modello.Uso.RICEZIONE)
+    if modello is None:
+        raise OperazioneNonValida(
+            "Manca un modello attivo per la conferma di ricezione (Comunicazioni → Modelli)."
+        )
+    contesto = {"richiedente": f"{domanda.nome} {domanda.cognome}".strip()}
+    if domanda.protocollo_id:
+        contesto["protocollo"] = domanda.protocollo.segnatura
+        contesto["data_protocollo"] = timezone.localtime(domanda.protocollo.registrato_il).strftime(
+            "%d/%m/%Y"
+        )
+    invio = crea_invio(
+        utente, oggetto=modello.oggetto, corpo=modello.corpo, finalita=Finalita.ISTITUZIONALE,
+        indirizzi=[(nome or email, email)], modello=modello, origine=ORIGINE_RICEZIONE,
+        origine_id=domanda.pk, contesto=contesto,
+    )  # fmt: skip
+    return conferma(invio, utente)
 
 
 def prossimi_anniversari(giorni=7):

@@ -181,3 +181,64 @@ class TestPercorso:
         domanda.refresh_from_db()
         assert domanda.modulo_firmato
         assert c.get(f"/soci/domande/{domanda.pk}/modulo-firmato.pdf").status_code == 200
+
+
+class TestConfermaRicezione:
+    _post = TestPercorso._post
+
+    def _registra(self, client_ruolo, mittente="Mario Rossi <mario@example.org>", **extra):
+        m = _messaggio(mittente=mittente)
+        c = client_ruolo("Segretario")
+        assert (
+            'name="conferma_ricezione" checked'
+            in c.get(f"/soci/domande/da-messaggio/{m.pk}/").content.decode()
+        )
+        r = c.post(f"/soci/domande/da-messaggio/{m.pk}/", self._post(m, **extra), follow=True)
+        return r, DomandaIscrizione.objects.get()
+
+    def test_in_coda_con_il_protocollo(self, client_ruolo):
+        from apps.comunicazioni import servizi as com
+        from apps.comunicazioni.models import Invio
+
+        r, domanda = self._registra(client_ruolo, conferma_ricezione="on")
+        invio = Invio.objects.get(origine=com.ORIGINE_RICEZIONE, origine_id=domanda.pk)
+        assert invio.stato == Invio.Stato.IN_CODA and invio.finalita == "istituzionale"
+        d = invio.destinatari.get()
+        assert d.email == "mario@example.org" and d.nome == "Mario"
+        oggetto, testo = com.messaggio(invio, d).subject, com.messaggio(invio, d).body
+        assert domanda.protocollo.segnatura in testo and "Mario Rossi" in testo
+        assert "{{" not in testo + oggetto
+        assert "Conferma di ricezione" in r.content.decode()
+        # rieseguibile: non ne prepara una seconda
+        utente = domanda.protocollo.creato_da
+        m = MessaggioRicevuto.objects.get(protocollo=domanda.protocollo)
+        assert servizi.conferma_ricezione(domanda, m, utente) == invio
+
+    def test_mittente_diverso_dal_richiedente(self, client_ruolo):
+        from apps.comunicazioni.models import Invio
+
+        self._registra(
+            client_ruolo, mittente="Sezione di Montebello <sezione@example.org>",
+            conferma_ricezione="on",
+        )  # fmt: skip
+        d = Invio.objects.get().destinatari.get()
+        assert d.email == "sezione@example.org" and d.nome == "Sezione di Montebello"
+
+    def test_senza_spunta_nessuna_conferma(self, client_ruolo):
+        from apps.comunicazioni.models import Invio
+
+        self._registra(client_ruolo)
+        assert not Invio.objects.exists()
+
+    def test_senza_modello_la_domanda_resta(self, client_ruolo):
+        from apps.comunicazioni.models import Invio, Modello
+
+        Modello.objects.filter(uso=Modello.Uso.RICEZIONE).update(attivo=False)
+        m = _messaggio()
+        c = client_ruolo("Segretario")
+        r = c.post(
+            f"/soci/domande/da-messaggio/{m.pk}/",
+            self._post(m, conferma_ricezione="on"), follow=True,
+        )  # fmt: skip
+        assert DomandaIscrizione.objects.exists() and not Invio.objects.exists()
+        assert "Conferma di ricezione non inviata" in r.content.decode()

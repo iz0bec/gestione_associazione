@@ -932,6 +932,24 @@ def domanda_da_messaggio(messaggio, form, utente, *, oggetto, allegati_modulo=()
     return domanda
 
 
+def conferma_ricezione(domanda, messaggio, utente):
+    """Conferma di ricezione a chi ha mandato la domanda per email (il mittente del messaggio,
+    che può essere diverso dal richiedente): in coda con le altre email. Restituisce l'invio."""
+    from email.utils import parseaddr
+
+    from apps.comunicazioni import servizi as comunicazioni
+
+    email = messaggio.mittente_email
+    if domanda.email and email and email.lower() == domanda.email.lower():
+        nome = domanda.nome
+    else:
+        nome = parseaddr(messaggio.mittente)[0].strip()
+    try:
+        return comunicazioni.conferma_ricezione_domanda(domanda, utente, nome=nome, email=email)
+    except comunicazioni.OperazioneNonValida as e:
+        raise OperazioneNonValida(" ".join(e.messages)) from None
+
+
 # --- esportazioni ------------------------------------------------------------------------
 
 INTESTAZIONE_LIBRO = [

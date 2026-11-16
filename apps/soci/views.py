@@ -900,6 +900,7 @@ class DomandaDaMessaggioView(PermessoMixin, CreateView):
                 for i, a in enumerate(self.messaggio.allegati or [])
             ],
             mittente_noto=protocollo_servizi.soggetto_per_indirizzo(self.messaggio.mittente_email),
+            conferma_proposta=_modello_ricezione_attivo(),
             esistente=(
                 Soggetto.objects.filter(codice_fiscale__iexact=valori["codice_fiscale"]).first()
                 if valori.get("codice_fiscale")
@@ -926,7 +927,36 @@ class DomandaDaMessaggioView(PermessoMixin, CreateView):
             f"Domanda registrata e messaggio protocollato con il n. "
             f"{self.object.protocollo.segnatura}.",
         )
+        if self.request.POST.get("conferma_ricezione") == "on":
+            self._conferma_ricezione()
         return redirect(self.object)
+
+    def _conferma_ricezione(self):
+        """Dopo la registrazione: un problema con la conferma non annulla la domanda."""
+        from apps.comunicazioni.servizi import invio_attivo
+
+        try:
+            invio = servizi.conferma_ricezione(self.object, self.messaggio, self.request.user)
+        except OperazioneNonValida as e:
+            messages.warning(
+                self.request, f"Conferma di ricezione non inviata: {' '.join(e.messages)}"
+            )
+            return
+        destinatario = invio.destinatari.first()
+        if invio_attivo():
+            messages.info(self.request, f"Conferma di ricezione in coda per {destinatario.email}.")
+        else:
+            messages.info(
+                self.request,
+                f"Conferma di ricezione per {destinatario.email} preparata: partirà quando "
+                "sarà acceso l'invio delle email (Sistema → Servizi di posta).",
+            )
+
+
+def _modello_ricezione_attivo():
+    from apps.comunicazioni.models import Modello
+
+    return Modello.objects.filter(uso=Modello.Uso.RICEZIONE, attivo=True).exists()
 
 
 class ModuloDomandaView(PermessoMixin, View):
