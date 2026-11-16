@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.12] - 2026-11-16
+
+Conferma di ricezione delle domande di iscrizione arrivate per email.
+
 ### Aggiunto
 - **Conferma di ricezione delle domande di iscrizione arrivate per email**: registrando la domanda dal
   messaggio, una casella (spuntata) mette in coda l'email al mittente con il richiedente, il numero e la
