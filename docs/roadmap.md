@@ -45,6 +45,7 @@
 | **1.0.10** ✅ | liste di distribuzione e buste DL nel protocollo, modelli di registrazione; firme e timbri nelle stampe (anche generici), foglio prestampato | GitHub, GitLab |
 | **1.0.11** ✅ | manuale di gestione documentale (AgID) composto dalla configurazione, adozione protocollata, consultazione e pubblicazione; publiccode.yml | GitHub, GitLab |
 | **1.0.12** ✅ | conferma di ricezione delle domande di iscrizione arrivate per email, con il numero di protocollo | GitHub, GitLab |
+| **1.0.13** ✅ | liste di destinatari in Excel (modifica fuori linea e reimportazione), conservazione dei backup a rotazione con backup esclusi, tetto di spazio e controllo del disco, ripristino che torna allo stato precedente se non riesce | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

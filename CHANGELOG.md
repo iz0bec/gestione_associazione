@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.13] - 2026-11-16
+
+Liste di destinatari in Excel, conservazione dei backup a rotazione, ripristino che torna indietro.
+
 ### Aggiunto
 - **Liste di destinatari in Excel**: *Esporta in Excel* dalla pagina della lista (fogli Lista,
   Persone, Destinatari attuali, Istruzioni) per modificarla fuori linea; *Liste → Importa da Excel*
