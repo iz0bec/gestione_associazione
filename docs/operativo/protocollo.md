@@ -135,8 +135,11 @@ destinatario, email; poi direzione, classificazione, stato (validi/annullati), a
 ![La posta da protocollare, con la selezione per lo scarto in blocco](immagini/posta.jpg)
 
 Se sono configurate le caselle email o PEC, i messaggi arrivano in **Posta da protocollare**
-(automaticamente ogni 15 minuti, oppure con **Scarica ora**). Le caselle sono lette in **sola lettura**:
-sul server non viene cancellato né segnato nulla.
+(automaticamente ogni 15 minuti, oppure con **Scarica ora**). Sul server non viene cancellato né
+segnato come letto nulla: i messaggi scaricati vengono **spostati nella cartella `PROCESSATA`** della
+casella (creata al primo scaricamento, visibile anche dalla webmail), così nella posta in arrivo restano
+solo quelli non ancora acquisiti. La cartella si cambia nella scheda della casella; lasciandola vuota i
+messaggi restano dove sono.
 
 Per ogni messaggio:
 - si legge il testo (sempre in solo testo, per sicurezza; l'originale completo è scaricabile come `.eml`)
@@ -211,7 +214,7 @@ la toglie dalla pagina pubblica; le versioni restano agli atti.
   (organizzazione, soci, organi sociali, contabilità, patrimonio, eventi, rapporti con enti...), da
   adattare. Le voci non più usate si disattivano.
 - **Caselle** (da *Posta da protocollare → Caselle*): server IMAP, porta (993), utente, password,
-  cartella. La password è salvata **cifrata**; serve che l'amministratore di sistema abbia configurato la
+  cartella da leggere e cartella dei messaggi scaricati (`PROCESSATA`). La password è salvata **cifrata**; serve che l'amministratore di sistema abbia configurato la
   chiave di cifratura. Per la PEC segnare *è una PEC*. Per **spedire** da una casella si spunta *usata
   anche per spedire* e si indica il server SMTP (stesso utente e password): per la PEC di Aruba
   `smtps.pec.aruba.it`, porta 465 con SSL (per la lettura `imaps.pec.aruba.it`, porta 993). L'indirizzo

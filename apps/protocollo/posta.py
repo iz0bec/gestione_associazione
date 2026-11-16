@@ -3,9 +3,10 @@
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
 # * Descrizione: Scaricamento dei messaggi dalle caselle IMAP (email e PEC) per la
-# *              protocollazione. La casella è aperta in sola lettura: nulla viene
-# *              cancellato o segnato come letto sul server. Le ricevute PEC dei
-# *              protocolli spediti si agganciano da sole alla spedizione.
+# *              protocollazione. Nulla viene cancellato né segnato come letto: i
+# *              messaggi scaricati si spostano nella cartella «processata» della
+# *              casella (creata se manca). Le ricevute PEC dei protocolli spediti
+# *              si agganciano da sole alla spedizione.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -34,6 +35,7 @@ log = logging.getLogger(__name__)
 
 DIMENSIONE_MASSIMA = 50 * 1024 * 1024  # messaggi più grandi non vengono scaricati
 TIMEOUT = 30
+LOTTO_SPOSTAMENTO = 200  # UID per comando di spostamento
 
 
 class ErroreCasella(Exception):
@@ -157,32 +159,93 @@ def salva_messaggio(casella, grezzo: bytes):
     return messaggio
 
 
+def _quota(nome):
+    """Nome di cartella IMAP fra virgolette (imaplib non quota gli argomenti di UID MOVE)."""
+    return '"' + nome.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _capacita(conn):
+    stato, dati = conn.capability()
+    if stato != "OK" or not dati or not dati[0]:
+        return set()
+    return {c.upper() for c in dati[0].decode(errors="replace").split()}
+
+
+def _assicura_cartella(conn, cartella):
+    """Crea la cartella se non esiste (e la sottoscrive, per vederla nel client di posta)."""
+    stato, _ = conn.status(_quota(cartella), "(MESSAGES)")
+    if stato == "OK":
+        return False
+    stato, dati = conn.create(_quota(cartella))
+    if stato != "OK":
+        raise ErroreCasella(f"Impossibile creare la cartella «{cartella}»: {dati}")
+    with contextlib.suppress(imaplib.IMAP4.error):
+        conn.subscribe(_quota(cartella))
+    log.info("Creata la cartella %s", cartella)
+    return True
+
+
+def _sposta(conn, uids, cartella):
+    """Sposta i messaggi (per UID) nella cartella: MOVE, oppure COPY con cancellazione dei soli
+    messaggi copiati (UID EXPUNGE). Senza nessuna delle due non si tocca nulla."""
+    _assicura_cartella(conn, cartella)
+    capacita = _capacita(conn)
+    if "MOVE" not in capacita and "UIDPLUS" not in capacita:
+        raise ErroreCasella(
+            "Il server non permette di spostare i messaggi (mancano MOVE e UIDPLUS): "
+            "lasciare vuota la cartella dei messaggi scaricati."
+        )
+    for i in range(0, len(uids), LOTTO_SPOSTAMENTO):
+        insieme = b",".join(uids[i : i + LOTTO_SPOSTAMENTO]).decode()
+        if "MOVE" in capacita:
+            stato, dati = conn.uid("MOVE", insieme, _quota(cartella))
+        else:
+            stato, dati = conn.uid("COPY", insieme, _quota(cartella))
+            if stato == "OK":
+                stato, dati = conn.uid("STORE", insieme, "+FLAGS.SILENT", r"(\Deleted)")
+            if stato == "OK":
+                stato, dati = conn.uid("EXPUNGE", insieme)
+        if stato != "OK":
+            raise ErroreCasella(f"Spostamento nella cartella «{cartella}» non riuscito: {dati}")
+
+
 def scarica_casella(casella):
-    """Scarica i messaggi degli ultimi `casella.giorni` giorni non ancora presenti."""
+    """Scarica i messaggi degli ultimi `casella.giorni` giorni non ancora presenti e sposta
+    quelli conservati (nuovi o già scaricati) nella cartella dei messaggi scaricati."""
     conn = _connetti(casella)
+    archivio = casella.cartella_processata.strip()
     nuovi = 0
+    conservati = []
     try:
-        stato, _ = conn.select(f'"{casella.cartella}"', readonly=True)
+        stato, _ = conn.select(_quota(casella.cartella), readonly=not archivio)
         if stato != "OK":
             raise ErroreCasella(f"Cartella «{casella.cartella}» non trovata.")
         dal = (timezone.localdate() - timedelta(days=casella.giorni)).strftime("%d-%b-%Y")
         stato, dati = conn.uid("SEARCH", None, f"SINCE {dal}")
         if stato != "OK":
             raise ErroreCasella("Ricerca dei messaggi non riuscita.")
-        for uid in dati[0].split():
-            stato, dimensione = conn.uid("FETCH", uid, "(RFC822.SIZE)")
-            try:
-                byte = int(dimensione[0].decode().rsplit("RFC822.SIZE", 1)[1].strip(" )"))
-            except (IndexError, ValueError, AttributeError):
-                byte = 0
-            if byte > DIMENSIONE_MASSIMA:
-                log.warning("Casella %s: messaggio UID %s troppo grande, ignorato", casella, uid)
-                continue
-            stato, parti = conn.uid("FETCH", uid, "(BODY.PEEK[])")
-            if stato != "OK" or not parti or not isinstance(parti[0], tuple):
-                continue
-            if salva_messaggio(casella, parti[0][1]) is not None:
-                nuovi += 1
+        try:
+            for uid in dati[0].split():
+                stato, dimensione = conn.uid("FETCH", uid, "(RFC822.SIZE)")
+                try:
+                    byte = int(dimensione[0].decode().rsplit("RFC822.SIZE", 1)[1].strip(" )"))
+                except (IndexError, ValueError, AttributeError):
+                    byte = 0
+                if byte > DIMENSIONE_MASSIMA:
+                    log.warning(
+                        "Casella %s: messaggio UID %s troppo grande, ignorato", casella, uid
+                    )
+                    continue
+                stato, parti = conn.uid("FETCH", uid, "(BODY.PEEK[])")
+                if stato != "OK" or not parti or not isinstance(parti[0], tuple):
+                    continue
+                if salva_messaggio(casella, parti[0][1]) is not None:
+                    nuovi += 1
+                conservati.append(uid)  # salvato ora o già presente: si può spostare
+        finally:
+            # anche dopo un errore: si spostano quelli già conservati nel programma
+            if archivio and conservati:
+                _sposta(conn, conservati, archivio)
     finally:
         with contextlib.suppress(OSError, imaplib.IMAP4.error):
             conn.logout()
@@ -194,7 +257,7 @@ def verifica_casella(casella):
     restituisce un messaggio con i messaggi presenti e quelli nel periodo da scaricare."""
     conn = _connetti(casella)
     try:
-        stato, dati = conn.select(f'"{casella.cartella}"', readonly=True)
+        stato, dati = conn.select(_quota(casella.cartella), readonly=True)
         if stato != "OK":
             raise ErroreCasella(
                 f"Accesso riuscito, ma la cartella «{casella.cartella}» non esiste."
@@ -207,6 +270,10 @@ def verifica_casella(casella):
         stato, trovati = conn.uid("SEARCH", None, f"SINCE {dal}")
         recenti = len(trovati[0].split()) if stato == "OK" and trovati and trovati[0] else 0
         gia = MessaggioRicevuto.objects.filter(casella=casella).count()
+        archivio = casella.cartella_processata.strip()
+        if archivio:
+            esiste = conn.status(_quota(archivio), "(MESSAGES)")[0] == "OK"
+            capacita = _capacita(conn)
     finally:
         with contextlib.suppress(OSError, imaplib.IMAP4.error):
             conn.logout()
@@ -215,6 +282,13 @@ def verifica_casella(casella):
         parti.append(f"{totale} messaggi in tutto")
     parti.append(f"{recenti} negli ultimi {casella.giorni} giorni")
     parti.append(f"{gia} già scaricati nel programma")
+    if archivio:
+        parti.append(
+            f"i messaggi scaricati vanno nella cartella «{archivio}»"
+            + ("" if esiste else " (sarà creata al primo scaricamento)")
+        )
+        if "MOVE" not in capacita and "UIDPLUS" not in capacita:
+            parti.append("ATTENZIONE: il server non permette di spostarli (mancano MOVE e UIDPLUS)")
     return "; ".join(parti) + "."
 
 

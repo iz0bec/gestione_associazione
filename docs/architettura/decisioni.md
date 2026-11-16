@@ -138,10 +138,10 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 - **Non è** conservazione a norma (AgID): per obblighi di conservazione sostitutiva i registri e i
   documenti vanno versati a un conservatore accreditato.
 
-## ADR-016 - Posta in ingresso: IMAP in sola lettura, solo testo
+## ADR-016 - Posta in ingresso: IMAP senza cancellazioni, solo testo
 
-- **Scelta**: lettura IMAP con `readonly` e `BODY.PEEK` (nessuna modifica alla casella, compatibile con
-  l'uso del client di posta); deduplica per Message-ID; per la PEC si estrae il messaggio originale da
+- **Scelta**: lettura IMAP con `BODY.PEEK` (i messaggi non diventano «letti»); dalla 1.0.19 i messaggi
+  scaricati si **spostano** nella cartella `PROCESSATA` (vedi ADR-027), altrimenti `readonly`; deduplica per Message-ID; per la PEC si estrae il messaggio originale da
   `postacert.eml`. Il testo HTML viene ridotto a testo e mai reso nel browser.
 - **Motivo**: nel Protocollo ANCR originale il corpo HTML delle email ha richiesto correzioni di sicurezza
   (XSS); mostrare solo testo elimina il problema alla radice. POP3 non è supportato (cancellerebbe o
@@ -279,3 +279,14 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   script per Proxmox che crea un LXC non privilegiato e lo riusa: un solo percorso di installazione da
   mantenere.
 
+## ADR-027 - Posta scaricata spostata nella cartella PROCESSATA
+
+- **Scelta**: dopo lo scaricamento i messaggi (nuovi o già presenti nel programma) si spostano nella cartella
+  della casella indicata in `cartella_processata` (predefinita `PROCESSATA`, creata e sottoscritta se manca);
+  vuota = comportamento precedente in sola lettura. Si usa `UID MOVE`; in mancanza `UID COPY` + `\Deleted` +
+  `UID EXPUNGE` dei soli messaggi copiati (UIDPLUS). Senza nessuna delle due non si sposta nulla e la casella
+  va in errore: un `EXPUNGE` generico cancellerebbe anche messaggi eliminati dall'utente.
+- **Motivo**: nella posta in arrivo restano solo i messaggi non ancora acquisiti, anche guardandola dalla
+  webmail o dal client; nulla viene cancellato e la deduplica per Message-ID resta.
+- Lo spostamento avviene dopo il salvataggio nel database, anche se lo scaricamento si interrompe a metà;
+  i messaggi troppo grandi (oltre 50 MB) restano dove sono.

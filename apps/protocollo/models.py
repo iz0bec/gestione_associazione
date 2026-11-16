@@ -13,6 +13,7 @@
 from pathlib import Path
 
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -245,6 +246,20 @@ class CasellaPosta(models.Model):
     utente = models.CharField(max_length=200)
     password_cifrata = models.TextField(editable=False, blank=True)
     cartella = models.CharField(max_length=100, default="INBOX")
+    cartella_processata = models.CharField(
+        "cartella dei messaggi scaricati",
+        max_length=100,
+        default="PROCESSATA",
+        blank=True,
+        validators=[
+            RegexValidator(
+                r"^[A-Za-z0-9][A-Za-z0-9 _.\-]*$",
+                "Solo lettere senza accenti, cifre, spazi, punti, trattini e trattini bassi.",
+            )
+        ],
+        help_text="Dopo lo scaricamento i messaggi vengono spostati in questa cartella del server "
+        "(creata se manca). Vuota: restano dove sono.",
+    )
     giorni = models.PositiveIntegerField(
         "giorni da scaricare",
         default=30,

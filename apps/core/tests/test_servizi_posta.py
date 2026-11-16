@@ -100,6 +100,12 @@ class _ImapFinto:
         assert comando == "SEARCH"  # nessun FETCH: niente viene scaricato
         return "OK", [b"1 2 3"]
 
+    def status(self, cartella, cosa):
+        return "NO", [b"cartella inesistente"]  # nessuna CREATE: la verifica non modifica nulla
+
+    def capability(self):
+        return "OK", [b"IMAP4rev1 MOVE"]
+
     def logout(self):
         self.uscito = True
 
@@ -118,6 +124,7 @@ def test_verifica_casella(client_ruolo):
     testo = r.content.decode()
     assert "accesso a imaps.example.it riuscito" in testo and "42 messaggi in tutto" in testo
     assert "3 negli ultimi 30 giorni" in testo and finto.uscito
+    assert "cartella «PROCESSATA» (sarà creata al primo scaricamento)" in testo
     assert not MessaggioRicevuto.objects.exists()
     with mock.patch.object(posta, "_connetti", return_value=_ImapFinto(cartella_ok=False)):
         testo = c.post(f"/sistema/posta/verifica/{casella.pk}/", follow=True).content.decode()

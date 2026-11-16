@@ -256,7 +256,8 @@ class CasellaForm(StileMixin, forms.ModelForm):
     class Meta:
         model = CasellaPosta
         fields = [
-            "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "giorni", "attiva",
+            "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "cartella_processata",
+            "giorni", "attiva",
             "invio", "indirizzo", "smtp_server", "smtp_porta", "smtp_ssl",
         ]  # fmt: skip
 
@@ -266,6 +267,9 @@ class CasellaForm(StileMixin, forms.ModelForm):
 
     def clean(self):
         dati = super().clean()
+        processata = (dati.get("cartella_processata") or "").strip()
+        if processata and processata.lower() == (dati.get("cartella") or "").strip().lower():
+            self.add_error("cartella_processata", "Deve essere diversa dalla cartella da leggere.")
         if not dati.get("smtp_porta"):
             dati["smtp_porta"] = 465
             self.instance.smtp_porta = 465

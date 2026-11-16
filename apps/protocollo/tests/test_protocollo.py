@@ -261,6 +261,7 @@ class TestPosta:
 
     def test_scaricamento_imap(self, monkeypatch):
         casella = _casella()
+        casella.cartella_processata = ""  # senza cartella: la casella non si modifica
         messaggi = {b"1": _email(oggetto="Uno").as_bytes(), b"2": _email(oggetto="Due").as_bytes()}
 
         class ImapFinto:
@@ -283,6 +284,144 @@ class TestPosta:
         monkeypatch.setattr(posta, "_connetti", lambda c: ImapFinto())
         assert posta.scarica_casella(casella) == 2
         assert posta.scarica_casella(casella) == 0
+
+
+class ImapConCartelle:
+    """Server IMAP finto con cartelle, UID e capacità scelte."""
+
+    def __init__(self, messaggi, capacita=("IMAP4REV1", "MOVE"), cartelle=("INBOX",)):
+        self.cartelle = {c: {} for c in cartelle}
+        self.cartelle["INBOX"] = dict(messaggi)
+        self.capacita = capacita
+        self.comandi = []
+        self.sottoscritte = []
+        self.cancellati = set()
+
+    def capability(self):
+        return "OK", [" ".join(self.capacita).encode()]
+
+    def select(self, cartella, readonly):
+        self.readonly = readonly
+        return "OK", [str(len(self.cartelle["INBOX"])).encode()]
+
+    def status(self, cartella, cosa):
+        return ("OK", [b"x"]) if cartella.strip('"') in self.cartelle else ("NO", [b"no"])
+
+    def create(self, cartella):
+        self.cartelle[cartella.strip('"')] = {}
+        return "OK", [b""]
+
+    def subscribe(self, cartella):
+        self.sottoscritte.append(cartella.strip('"'))
+        return "OK", [b""]
+
+    def _uids(self, insieme):
+        return [u.encode() for u in insieme.split(",")]
+
+    def uid(self, comando, *argomenti):
+        self.comandi.append(comando)
+        inbox = self.cartelle["INBOX"]
+        if comando == "SEARCH":
+            return "OK", [b" ".join(inbox)]
+        if comando == "FETCH":
+            uid, cosa = argomenti
+            if "SIZE" in cosa:
+                return "OK", [f"1 (UID {uid.decode()} RFC822.SIZE 1000)".encode()]
+            return "OK", [(b"1", inbox[uid])]
+        assert not self.readonly
+        insieme, *resto = argomenti
+        if comando == "MOVE":
+            for u in self._uids(insieme):
+                self.cartelle[resto[0].strip('"')][u] = inbox.pop(u)
+        elif comando == "COPY":
+            for u in self._uids(insieme):
+                self.cartelle[resto[0].strip('"')][u] = inbox[u]
+        elif comando == "STORE":
+            assert resto == ["+FLAGS.SILENT", r"(\Deleted)"]
+            self.cancellati.update(self._uids(insieme))
+        elif comando == "EXPUNGE":
+            for u in self._uids(insieme):  # solo i messaggi indicati
+                assert u in self.cancellati
+                inbox.pop(u)
+        return "OK", [b""]
+
+    def logout(self):
+        pass
+
+
+class TestCartellaProcessata:
+    def _messaggi(self):
+        return {b"1": _email(oggetto="Uno").as_bytes(), b"2": _email(oggetto="Due").as_bytes()}
+
+    def test_spostati_con_move_e_cartella_creata(self, monkeypatch):
+        casella = _casella()
+        assert casella.cartella_processata == "PROCESSATA"
+        imap = ImapConCartelle(self._messaggi())
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        assert posta.scarica_casella(casella) == 2
+        assert imap.cartelle["INBOX"] == {} and set(imap.cartelle["PROCESSATA"]) == {b"1", b"2"}
+        assert imap.sottoscritte == ["PROCESSATA"] and "MOVE" in imap.comandi
+        assert MessaggioRicevuto.objects.count() == 2
+
+    def test_gia_scaricati_spostati_comunque(self, monkeypatch):
+        casella = _casella()
+        messaggi = self._messaggi()
+        posta.salva_messaggio(casella, messaggi[b"1"])
+        imap = ImapConCartelle(messaggi, cartelle=("INBOX", "PROCESSATA"))
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        assert posta.scarica_casella(casella) == 1
+        assert imap.cartelle["INBOX"] == {} and imap.sottoscritte == []
+
+    def test_copia_e_cancella_solo_i_copiati_senza_move(self, monkeypatch):
+        imap = ImapConCartelle(self._messaggi(), capacita=("IMAP4REV1", "UIDPLUS"))
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        assert posta.scarica_casella(_casella()) == 2
+        assert imap.comandi.count("EXPUNGE") == 1 and "MOVE" not in imap.comandi
+        assert imap.cartelle["INBOX"] == {} and len(imap.cartelle["PROCESSATA"]) == 2
+
+    def test_server_senza_spostamento(self, monkeypatch):
+        imap = ImapConCartelle(self._messaggi(), capacita=("IMAP4REV1",))
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        with pytest.raises(posta.ErroreCasella, match="MOVE"):
+            posta.scarica_casella(_casella())
+        assert len(imap.cartelle["INBOX"]) == 2  # nulla toccato, ma i messaggi sono salvati
+        assert MessaggioRicevuto.objects.count() == 2
+
+    def test_errore_a_meta_sposta_quelli_salvati(self, monkeypatch):
+        imap = ImapConCartelle(self._messaggi())
+        salva = posta.salva_messaggio
+        chiamate = []
+
+        def salva_poi_errore(casella, grezzo):
+            chiamate.append(1)
+            if len(chiamate) == 2:
+                raise RuntimeError("disco pieno")
+            return salva(casella, grezzo)
+
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        monkeypatch.setattr(posta, "salva_messaggio", salva_poi_errore)
+        with pytest.raises(RuntimeError):
+            posta.scarica_casella(_casella())
+        assert list(imap.cartelle["PROCESSATA"]) == [b"1"] and list(imap.cartelle["INBOX"]) == [
+            b"2"
+        ]
+
+    def test_verifica_avvisa_della_creazione(self, monkeypatch):
+        imap = ImapConCartelle(self._messaggi())
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        esito = posta.verifica_casella(_casella())
+        assert "sarà creata" in esito and "PROCESSATA" not in imap.cartelle
+
+    def test_modulo_rifiuta_la_stessa_cartella(self, settings):
+        settings.CHIAVE_CIFRATURA = nuova_chiave()
+        form = CasellaForm({
+            "nome": "Email", "server": "imap.example.org", "porta": 993, "ssl": "on",
+            "utente": "u", "cartella": "INBOX", "cartella_processata": "inbox", "giorni": 30,
+            "nuova_password": "x",
+        })  # fmt: skip
+        assert not form.is_valid() and "cartella_processata" in form.errors
+        form = CasellaForm({**form.data, "cartella_processata": "Già fatta"})
+        assert not form.is_valid() and "cartella_processata" in form.errors
 
 
 class TestCifratura:
