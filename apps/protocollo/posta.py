@@ -4,7 +4,8 @@
 # * Email:       info@iz0bec.info
 # * Descrizione: Scaricamento dei messaggi dalle caselle IMAP (email e PEC) per la
 # *              protocollazione. La casella è aperta in sola lettura: nulla viene
-# *              cancellato o segnato come letto sul server.
+# *              cancellato o segnato come letto sul server. Le ricevute PEC dei
+# *              protocolli spediti si agganciano da sole alla spedizione.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -25,6 +26,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from . import spedizioni
 from .models import CasellaPosta, MessaggioRicevuto
 from .servizi import nome_file_sicuro
 
@@ -136,10 +138,20 @@ def salva_messaggio(casella, grezzo: bytes):
         impronta=impronta,
         allegati=_allegati(contenuto, cartella),
     )
+    # ricevuta PEC di un nostro protocollo spedito: si aggancia da sola, senza protocollarla
+    destinatario = ricevuta = None
+    if casella.pec and (ricevuta := spedizioni.ricevuta_pec(msg)):
+        destinatario = spedizioni.destinatario_della_ricevuta(ricevuta[1])
+    if destinatario is not None:
+        messaggio.stato = MessaggioRicevuto.Stato.PROTOCOLLATO
+        messaggio.protocollo = destinatario.spedizione.protocollo
+        messaggio.gestito_il = timezone.now()
     messaggio.file_eml.save(f"{impronta[:20]}.eml", ContentFile(grezzo), save=False)
     try:
         with transaction.atomic():
             messaggio.save()
+            if destinatario is not None:
+                spedizioni.applica_ricevuta(destinatario, ricevuta[0], grezzo, data)
     except IntegrityError:
         return None  # scaricato in parallelo da un altro processo
     return messaggio

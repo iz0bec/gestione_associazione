@@ -4,7 +4,8 @@
 # * Email:       info@iz0bec.info
 # * Descrizione: Modelli del registro di protocollo: registrazioni in entrata, uscita e
 # *              interne, corrispondenti, allegati con impronta, registro giornaliero,
-# *              caselle di posta e messaggi ricevuti da protocollare.
+# *              caselle di posta e messaggi ricevuti da protocollare, spedizioni per
+# *              email o PEC dei protocolli in uscita con l'esito per destinatario.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -252,6 +253,26 @@ class CasellaPosta(models.Model):
     attiva = models.BooleanField(default=True)
     ultimo_controllo = models.DateTimeField(null=True, blank=True, editable=False)
     ultimo_errore = models.CharField(max_length=500, blank=True, editable=False)
+    # spedizione dei protocolli in uscita (stesse credenziali della lettura)
+    invio = models.BooleanField(
+        "usata anche per spedire",
+        default=False,
+        help_text="I protocolli in uscita si possono spedire da questa casella (SMTP).",
+    )
+    indirizzo = models.EmailField(
+        "indirizzo del mittente",
+        blank=True,
+        help_text="Lasciare vuoto se coincide con il nome utente.",
+    )
+    smtp_server = models.CharField(
+        "server SMTP", max_length=200, blank=True, help_text="Es. smtps.pec.aruba.it"
+    )
+    smtp_porta = models.PositiveIntegerField("porta SMTP", default=465)
+    smtp_ssl = models.BooleanField(
+        "SMTP con SSL implicito",
+        default=True,
+        help_text="Porta 465: SSL; porta 587: togliere la spunta (si usa STARTTLS).",
+    )
 
     class Meta:
         verbose_name = "casella di posta"
@@ -260,6 +281,11 @@ class CasellaPosta(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def mittente(self):
+        """Indirizzo da cui partono le spedizioni."""
+        return self.indirizzo or (self.utente if "@" in self.utente else "")
 
     def imposta_password(self, password):
         from apps.core.cifratura import cifra
@@ -333,6 +359,82 @@ class MessaggioRicevuto(models.Model):
 
     def get_absolute_url(self):
         return reverse("protocollo:messaggio", args=[self.pk])
+
+
+class Spedizione(ModelloBase):
+    """Invio per email o PEC di un protocollo in uscita: un messaggio per destinatario, con
+    l'esito di ciascuno (per la PEC aggiornato dalle ricevute di accettazione e consegna)."""
+
+    class Canale(models.TextChoices):
+        EMAIL = "email", "Email"
+        PEC = "pec", "PEC"
+
+    protocollo = models.ForeignKey(Protocollo, on_delete=models.PROTECT, related_name="spedizioni")
+    canale = models.CharField(max_length=5, choices=Canale.choices)
+    casella = models.ForeignKey(
+        CasellaPosta,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="spedizioni",
+        help_text="Vuota: server di invio generale.",
+    )
+    mittente = models.CharField(max_length=254)
+    oggetto = models.CharField(max_length=600)
+    testo = models.TextField()
+    allegati = models.ManyToManyField(Allegato, blank=True, related_name="spedizioni")
+
+    class Meta:
+        verbose_name = "spedizione"
+        verbose_name_plural = "spedizioni"
+        ordering = ["-creato_il", "-id"]
+        permissions = [
+            ("spedisci_protocollo", "Può spedire per email o PEC i protocolli in uscita")
+        ]
+
+    def __str__(self):
+        return f"{self.get_canale_display()} del prot. {self.protocollo.segnatura}"
+
+    @property
+    def con_errori(self):
+        """Destinatari in errore di invio (si possono rimettere in coda)."""
+        return any(d.stato == "errore" for d in self.destinatari.all())
+
+
+class DestinatarioSpedizione(models.Model):
+    class Stato(models.TextChoices):
+        IN_ATTESA = "in_attesa", "In coda"
+        INVIATO = "inviato", "Inviato"
+        ACCETTATO = "accettato", "Accettato dal gestore"
+        CONSEGNATO = "consegnato", "Consegnato"
+        NON_ACCETTATO = "non_accettato", "Non accettato"
+        NON_CONSEGNATO = "non_consegnato", "Non consegnato"
+        ERRORE = "errore", "Errore di invio"
+
+    FINALI = (Stato.CONSEGNATO, Stato.NON_ACCETTATO, Stato.NON_CONSEGNATO, Stato.ERRORE)
+
+    spedizione = models.ForeignKey(Spedizione, on_delete=models.CASCADE, related_name="destinatari")
+    corrispondente = models.ForeignKey(
+        Corrispondente, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    nome = models.CharField(max_length=300)
+    indirizzo = models.EmailField(max_length=254)
+    stato = models.CharField(
+        max_length=15, choices=Stato.choices, default=Stato.IN_ATTESA, db_index=True
+    )
+    message_id = models.CharField(max_length=300, blank=True, db_index=True)
+    tentativi = models.PositiveSmallIntegerField(default=0)
+    dettaglio = models.CharField(max_length=500, blank=True)
+    inviato_il = models.DateTimeField(null=True, blank=True)
+    aggiornato_il = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "destinatario della spedizione"
+        verbose_name_plural = "destinatari della spedizione"
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.nome} <{self.indirizzo}>"
 
 
 class ModelloProtocollo(models.Model):

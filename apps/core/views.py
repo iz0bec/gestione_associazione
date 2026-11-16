@@ -203,7 +203,7 @@ class ServiziPostaView(PermessoMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         from apps.comunicazioni.models import Destinatario, Invio
-        from apps.protocollo.models import CasellaPosta
+        from apps.protocollo.models import CasellaPosta, DestinatarioSpedizione
 
         ctx = super().get_context_data(**kwargs)
         ctx.update(
@@ -212,6 +212,9 @@ class ServiziPostaView(PermessoMixin, UpdateView):
                 invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
             ).count(),
             caselle=CasellaPosta.objects.all(),
+            protocolli_in_coda=DestinatarioSpedizione.objects.filter(
+                stato=DestinatarioSpedizione.Stato.IN_ATTESA
+            ).count(),
         )
         return ctx
 
@@ -226,10 +229,13 @@ class VerificaCasellaView(PermessoMixin, View):
 
         from apps.protocollo.models import CasellaPosta
         from apps.protocollo.posta import ErroreCasella, verifica_casella
+        from apps.protocollo.spedizioni import verifica_invio
 
         casella = get_object_or_404(CasellaPosta, pk=pk)
         try:
             esito = verifica_casella(casella)
+            if casella.invio and casella.smtp_server:
+                esito = f"{esito[:-1]}; {verifica_invio(casella)} (nessun messaggio spedito)."
         except ErroreCasella as e:
             messages.error(request, f"{casella}: {e}")
         except Exception as e:  # noqa: BLE001 - es. password non decifrabile

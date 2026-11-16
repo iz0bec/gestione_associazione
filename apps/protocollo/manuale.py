@@ -102,6 +102,9 @@ def contesto(manuale=None, *, bozza=True, versione=None, giorno=None, pubblico=F
         "utenti": [] if pubblico else _utenti(),
         "titolario": Classificazione.objects.order_by("codice"),
         "caselle": CasellaPosta.objects.order_by("nome"),
+        "caselle_invio": CasellaPosta.objects.filter(invio=True)
+        .exclude(smtp_server="")
+        .order_by("nome"),
         "mezzi": Protocollo.Mezzo.choices,
         "modelli": ModelloProtocollo.objects.filter(attivo=True),
         "estensioni": ", ".join(sorted(settings.PROTOCOLLO_ESTENSIONI)),

@@ -67,6 +67,7 @@ PROTOCOLLO_OPERATIVO = [
     "protocollo.view_registrogiornaliero",
     "protocollo.view_messaggioricevuto",
     "protocollo.gestisci_posta",
+    "protocollo.spedisci_protocollo",
 ]
 PROTOCOLLO_RESPONSABILE = [
     *PROTOCOLLO_OPERATIVO,

@@ -26,7 +26,7 @@ permessi `600`, mai nel repository.
 | `SECURE_HSTS_SECONDS` | | `0` | con `HTTPS=true`, durata HSTS (es. 31536000) |
 | `CSRF_TRUSTED_ORIGINS` | | - | origini https ammesse per i moduli, es. `https://gestione.example.it` |
 | `PROXY_COUNT` | | `0` | numero di reverse proxy fidati (per IP reali e protocollo) |
-| `EMAIL_HOST`, `EMAIL_PORT` | | `localhost`, `587` | server SMTP |
+| `EMAIL_HOST`, `EMAIL_PORT` | | `localhost`, `587` | server SMTP generale (comunicazioni, ricevute, recupero password). Le caselle del protocollo «usate anche per spedire», come la PEC, hanno il proprio SMTP configurato dall'interfaccia |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | | - | credenziali SMTP |
 | `EMAIL_USE_TLS` / `EMAIL_USE_SSL` | | `true` / `false` | cifratura SMTP (STARTTLS su 587 / SSL su 465) |
 | `EMAIL_BACKEND` | | smtp (console con DEBUG) | backend email Django |
@@ -43,6 +43,7 @@ permessi `600`, mai nel repository.
 | `COMUNICAZIONI_LOTTO` | | `30` | email spedite a ogni giro della coda (ogni minuto): adattarlo ai limiti del proprio server SMTP |
 | `CHIAVE_CIFRATURA` | per le caselle di posta | - | chiave Fernet per le password salvate nel database; generarla con `manage.py genera_chiave_cifratura`. Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
 | `PROTOCOLLO_ALLEGATO_MAX_MB` | | `25` | dimensione massima di un documento protocollato |
+| `PROTOCOLLO_SPEDIZIONE_MAX_MB` | | `20` | totale dei documenti allegati a una spedizione per email o PEC di un protocollo (nel messaggio crescono di circa un terzo) |
 | `PROTOCOLLO_ESTENSIONI` | | pdf, p7m, xml, eml, office, immagini, zip | estensioni ammesse per i documenti (separate da virgola) |
 
 Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (default 8000).
@@ -52,8 +53,8 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 | Comando | Quando | Cosa fa |
 |---|---|---|
 | `manage.py pianificatore` | sempre attivo (servizio) | esegue i comandi seguenti alle scadenze |
-| `manage.py invia_coda` | ogni minuto | prepara auguri e promemoria di rinnovo del giorno e spedisce le email in coda (se l'invio è attivo) |
-| `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo (sola lettura) |
+| `manage.py invia_coda` | ogni minuto | prepara auguri e promemoria di rinnovo del giorno e spedisce le email in coda, compresi i protocolli da spedire per email o PEC (se l'invio è attivo) |
+| `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo (sola lettura) e aggancia le ricevute PEC ai protocolli spediti |
 | `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
 | `manage.py conservazione_dati` | ogni notte | con l'anonimizzazione automatica attiva, anonimizza le persone oltre il termine di conservazione (`--elenco`: solo il conteggio) |
 | `manage.py manuale_pdf` | a richiesta | genera il manuale operativo in PDF (`--uscita file.pdf`) |

@@ -255,10 +255,25 @@ class CasellaForm(StileMixin, forms.ModelForm):
 
     class Meta:
         model = CasellaPosta
-        fields = ["nome", "pec", "server", "porta", "ssl", "utente", "cartella", "giorni", "attiva"]
+        fields = [
+            "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "giorni", "attiva",
+            "invio", "indirizzo", "smtp_server", "smtp_porta", "smtp_ssl",
+        ]  # fmt: skip
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["smtp_porta"].required = False
 
     def clean(self):
         dati = super().clean()
+        if not dati.get("smtp_porta"):
+            dati["smtp_porta"] = 465
+            self.instance.smtp_porta = 465
+        if dati.get("invio"):
+            if not (dati.get("smtp_server") or "").strip():
+                self.add_error("smtp_server", "Indicare il server SMTP per spedire.")
+            if not dati.get("indirizzo") and "@" not in (dati.get("utente") or ""):
+                self.add_error("indirizzo", "Indicare l'indirizzo da cui partono i messaggi.")
         if not cifratura_disponibile():
             raise forms.ValidationError(
                 "Manca la chiave di cifratura (CHIAVE_CIFRATURA): chiedere all'amministratore di "
@@ -272,6 +287,68 @@ class CasellaForm(StileMixin, forms.ModelForm):
         if self.cleaned_data.get("nuova_password"):
             self.instance.imposta_password(self.cleaned_data["nuova_password"])
         return super().save(commit)
+
+
+class SpedizioneForm(StileMixin, forms.Form):
+    """Spedizione per email o PEC di un protocollo in uscita: da quale casella, a chi (indirizzo
+    modificabile per ciascun destinatario), testo e documenti."""
+
+    da = forms.ChoiceField(label="Spedisci da")
+    testo = forms.CharField(
+        label="Testo del messaggio",
+        widget=forms.Textarea(attrs={"rows": 8}),
+        help_text="L'oggetto del messaggio è quello del protocollo, con numero e data.",
+    )
+    documenti = forms.ModelMultipleChoiceField(
+        label="Documenti allegati",
+        queryset=None,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, protocollo, caselle, proposti, url_ricarica=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if url_ricarica:  # cambiando casella si ripropongono gli indirizzi (PEC o email)
+            self.fields["da"].widget.attrs.update({
+                "hx-get": url_ricarica, "hx-trigger": "change", "hx-include": "closest form",
+                "hx-target": "#modulo-spedizione", "hx-select": "#modulo-spedizione",
+                "hx-swap": "outerHTML",
+            })  # fmt: skip
+        scelte = [
+            (str(c.pk), f"{c.nome} - {c.mittente}{' (PEC)' if c.pec else ''}") for c in caselle
+        ]
+        scelte.append(("", "Server di invio generale (email)"))
+        self.fields["da"].choices = scelte
+        self.fields["da"].required = False
+        self.fields["documenti"].queryset = protocollo.allegati.all()
+        self.righe = []
+        for i, p in enumerate(proposti):
+            scelto, indirizzo = f"dest_{i}", f"indirizzo_{i}"
+            self.fields[scelto] = forms.BooleanField(
+                label=p["nome"], required=False, initial=bool(p["indirizzo"])
+            )
+            self.fields[indirizzo] = forms.CharField(
+                label=f"Indirizzo di {p['nome']}", required=False, initial=p["indirizzo"],
+                max_length=254, widget=forms.EmailInput(attrs={"placeholder": "nessun indirizzo"}),
+            )  # fmt: skip
+            self.righe.append((p, scelto, indirizzo))
+
+    def campi_destinatari(self):
+        return [(p, self[s], self[i]) for p, s, i in self.righe]
+
+    def destinatari(self):
+        return [
+            (p["corrispondente"], p["nome"], self.cleaned_data[i])
+            for p, s, i in self.righe
+            if self.cleaned_data.get(s)
+        ]
+
+    def clean(self):
+        dati = super().clean()
+        for p, s, i in self.righe:
+            if dati.get(s) and not (dati.get(i) or "").strip():
+                self.add_error(i, f"Indicare l'indirizzo di {p['nome']}.")
+        return dati
 
 
 class ClassificazioneForm(StileMixin, forms.ModelForm):

@@ -18,6 +18,7 @@
     </div>
   </div>
   {% endif %}
+  {% if puo_spedire %}<a class="btn" href="{% url 'protocollo:spedisci' protocollo.pk %}"><i class="ti ti-send me-1"></i>Spedisci</a>{% endif %}
   {% if not protocollo.annullato %}
     {% if perms.protocollo.add_protocollo and protocollo.direzione == "entrata" %}<a class="btn" href="{% url 'protocollo:nuovo' %}?risposta={{ protocollo.pk }}"><i class="ti ti-arrow-back-up me-1"></i>Rispondi</a>{% endif %}
     {% if perms.protocollo.annulla_protocollo %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
@@ -71,6 +72,34 @@
       </form>
       {% endif %}
     </div>
+
+    {% if spedizioni %}
+    <div class="card mt-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-send me-2"></i>Spedizioni</h2></div>
+      <div class="list-group list-group-flush">
+        {% for s in spedizioni %}
+        <div class="list-group-item">
+          <div class="d-flex align-items-center mb-1">
+            <div class="flex-fill">
+              <span class="badge {% if s.canale == 'pec' %}bg-blue-lt{% else %}bg-secondary-lt{% endif %}">{{ s.get_canale_display }}</span>
+              <span class="small text-secondary">{{ s.creato_il|date:"d/m/Y H:i" }} · da {{ s.mittente }} · {{ s.creato_da|default:"sistema" }}{% if s.allegati.all %} · {{ s.allegati.all|length }} document{{ s.allegati.all|length|pluralize:"o,i" }}{% endif %}</span>
+            </div>
+            {% if puo_spedire and s.con_errori %}
+            <form method="post" action="{% url 'protocollo:riprova_spedizione' s.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Rimette in coda i destinatari in errore di invio"><i class="ti ti-reload me-1"></i>Riprova</button></form>{% endif %}
+          </div>
+          <ul class="list-unstyled mb-0 small">
+            {% for d in s.destinatari.all %}
+            <li><span class="badge {% if d.stato == 'consegnato' %}bg-green-lt{% elif d.stato == 'inviato' or d.stato == 'accettato' %}bg-azure-lt{% elif d.stato == 'in_attesa' %}bg-yellow-lt{% else %}bg-red-lt{% endif %}">{{ d.get_stato_display }}</span>
+              {{ d.nome }} &lt;{{ d.indirizzo }}&gt;{% if d.aggiornato_il %} <span class="text-secondary">· {{ d.aggiornato_il|date:"d/m/Y H:i" }}</span>{% endif %}
+              {% if d.dettaglio and d.stato != "consegnato" and d.stato != "accettato" %}<div class="text-secondary">{{ d.dettaglio|truncatechars:200 }}</div>{% endif %}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+      {% if not invio_attivo %}<div class="card-footer small text-warning">L'invio delle email è spento: i messaggi in coda partiranno alla riattivazione.</div>{% endif %}
+    </div>
+    {% endif %}
 
     {% if storia is not None %}
     <div class="card mt-3">

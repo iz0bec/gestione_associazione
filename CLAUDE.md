@@ -65,6 +65,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Protocollo: sequenza `protocollo` (annuale); registrazione solo con `servizi.registra_protocollo`;
   campi immutabili dopo la registrazione (si annulla); documenti solo aggiunti con `aggiungi_allegato`
   (nome su disco = impronta). Riservati: filtrare sempre con `Protocollo.objects.visibili_a(user)`.
+  Spedizione per email/PEC solo con `protocollo.spedizioni` (`prepara_spedizione` → `spedisci`, coda in
+  `invia_coda`): unica eccezione a `crea_invio`; ricevute PEC agganciate per `X-Riferimento-Message-ID`.
 - Download di file: `FileResponse` come allegato con `Content-Security-Policy: default-src 'none'; sandbox`.
 - Segreti nel DB: `apps.core.cifratura.cifra/decifra` (chiave `CHIAVE_CIFRATURA`, mai nel DB).
 - Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.

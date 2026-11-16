@@ -89,6 +89,41 @@ postale manca o è incompleto la scheda lo segnala e la colonna `Avviso` lo indi
 scheda anagrafica per le spedizioni successive, oppure a mano sulla busta. Ogni scaricamento è
 registrato nel registro delle attività.
 
+## Spedire per email o PEC
+
+Un protocollo **in uscita** si spedisce dalla sua scheda con **Spedisci** (serve il permesso di
+spedire, che hanno l'addetto al protocollo e i ruoli superiori). Nel modulo:
+
+- **Spedisci da**: una casella configurata per l'invio (per la **PEC** la casella PEC dell'ente)
+  oppure il **server di invio generale** (solo email ordinaria). Se il protocollo è registrato con
+  mezzo PEC viene proposta la casella PEC;
+- **Destinatari**: quelli del protocollo, ciascuno con l'indirizzo proposto dall'anagrafica (la PEC
+  quando si spedisce da una casella PEC, altrimenti l'email) e modificabile; si tolgono quelli da non
+  raggiungere (per esempio chi riceve per posta). Parte **un messaggio per destinatario**, così
+  nessuno vede gli indirizzi degli altri e ogni PEC ha le proprie ricevute;
+- **Testo**: è proposto quello del protocollo, o una lettera di trasmissione standard;
+- **Documenti allegati**: quelli del protocollo, tutti spuntati (al massimo 20 MB in tutto).
+
+L'**oggetto** del messaggio è quello del protocollo con numero e data: «Prot. n. 2026-00042 del
+16/11/2026 - ...». Si possono fare più spedizioni dello stesso protocollo (per esempio a un
+destinatario aggiunto dopo); oggetto e corrispondenti del protocollo non cambiano.
+
+Nella scheda, il riquadro **Spedizioni** riporta per ogni destinatario l'esito:
+
+| Esito | Significato |
+|---|---|
+| In coda | in attesa di partire (anche con l'invio delle email spento in *Sistema → Servizi di posta*) |
+| Inviato | consegnato al server di invio; per l'email ordinaria non ci sono altre conferme |
+| Accettato dal gestore | PEC: ricevuta di accettazione del proprio gestore |
+| Consegnato | PEC: ricevuta di avvenuta consegna nella casella del destinatario |
+| Non accettato / Non consegnato | PEC: il gestore ha rifiutato il messaggio o non è riuscito a consegnarlo |
+| Errore di invio | il server non ha accettato il messaggio dopo tre tentativi: **Riprova** lo rimette in coda |
+
+Le **ricevute PEC** arrivano nella casella PEC e, quando la casella viene letta, si **agganciano da
+sole** alla spedizione: aggiornano l'esito e diventano documenti del protocollo (`ricevuta
+avvenuta-consegna - indirizzo.eml`, con la firma del gestore). Non compaiono fra la posta da
+protocollare. Per questo la casella PEC che spedisce deve avere anche la **lettura attiva**.
+
 ## Cercare
 
 Il registro si filtra mentre si scrive: numero (`42` o `2026-42`), parole dell'oggetto o del testo, mittente,
@@ -177,4 +212,8 @@ la toglie dalla pagina pubblica; le versioni restano agli atti.
   adattare. Le voci non più usate si disattivano.
 - **Caselle** (da *Posta da protocollare → Caselle*): server IMAP, porta (993), utente, password,
   cartella. La password è salvata **cifrata**; serve che l'amministratore di sistema abbia configurato la
-  chiave di cifratura. Per la PEC segnare *è una PEC*.
+  chiave di cifratura. Per la PEC segnare *è una PEC*. Per **spedire** da una casella si spunta *usata
+  anche per spedire* e si indica il server SMTP (stesso utente e password): per la PEC di Aruba
+  `smtps.pec.aruba.it`, porta 465 con SSL (per la lettura `imaps.pec.aruba.it`, porta 993). L'indirizzo
+  del mittente si indica solo se diverso dal nome utente. *Sistema → Servizi di posta → Verifica*
+  prova sia la lettura sia l'invio, senza spedire nulla.

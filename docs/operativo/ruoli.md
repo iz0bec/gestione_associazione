@@ -64,7 +64,7 @@ In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 
 ### Protocollo
 
-| Ruolo | Registro | Registra, aggiunge documenti, posta | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle | Manuale di gestione |
+| Ruolo | Registro | Registra, aggiunge documenti, posta, spedisce per email/PEC | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle | Manuale di gestione |
 |---|---|---|---|---|---|---|---|
 | Amministratore di sistema | consulta | sì | sì | sì | sì | modifica (anche i modelli) | prepara e adotta |
 | Presidente | consulta | - (vede la posta) | - | sì | sì | consulta titolario e modelli | consulta |

@@ -29,6 +29,12 @@ urlpatterns = [
         views.SpedizioneView.as_view(),
         name="spedizione",
     ),
+    path("<int:pk>/spedisci/", views.SpedisciView.as_view(), name="spedisci"),
+    path(
+        "spedizioni/<int:pk>/riprova/",
+        views.RiprovaSpedizioneView.as_view(),
+        name="riprova_spedizione",
+    ),
     path("allegati/<int:pk>/", views.ScaricaAllegatoView.as_view(), name="allegato"),
     path("registri/", views.RegistriView.as_view(), name="registri"),
     path("registri/<int:pk>/", views.ScaricaRegistroView.as_view(), name="registro"),

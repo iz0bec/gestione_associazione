@@ -37,7 +37,7 @@ from apps.core.models import EventoAudit, Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
 
-from . import buste, servizi
+from . import buste, servizi, spedizioni
 from .filtri import ProtocolloFilter
 from .forms import (
     AllegatiForm,
@@ -48,6 +48,7 @@ from .forms import (
     ModificaForm,
     ProtocollaMessaggioForm,
     ProtocolloForm,
+    SpedizioneForm,
 )
 from .models import (
     Allegato,
@@ -58,6 +59,7 @@ from .models import (
     ModelloProtocollo,
     Protocollo,
     RegistroGiornaliero,
+    Spedizione,
 )
 from .servizi import OperazioneNonValida
 
@@ -127,6 +129,13 @@ class DettaglioView(PermessoMixin, _ProtocolloVisibileMixin, DetailView):
             righe = buste.righe_destinatari(p)
             ctx["spedizione"] = [r for r in righe if r["Avviso"]]
             ctx["su_carta"] = len(righe) if buste.solo_senza_email(p) else None
+        ctx["spedizioni"] = p.spedizioni.select_related("casella", "creato_da").prefetch_related(
+            "destinatari", "allegati"
+        )
+        ctx["puo_spedire"] = spedizioni.puo_spedire(p) and self.request.user.has_perm(
+            spedizioni.PERMESSO
+        )
+        ctx["invio_attivo"] = spedizioni.invio_attivo()
         if self.request.user.has_perm("core.view_eventoaudit"):
             ctx["storia"] = EventoAudit.objects.filter(
                 oggetto_tipo=ContentType.objects.get_for_model(Protocollo), oggetto_id=str(p.pk)
@@ -338,6 +347,111 @@ class SpedizioneView(PermessoMixin, _ProtocolloVisibileMixin, View):
         risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
         risposta["X-Content-Type-Options"] = "nosniff"
         return risposta
+
+
+class SpedisciView(PermessoMixin, _ProtocolloVisibileMixin, TemplateView):
+    """Spedizione per email o PEC di un protocollo in uscita."""
+
+    permission_required = spedizioni.PERMESSO
+    template_name = "protocollo/spedisci.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.has_perm(self.permission_required):
+            self.p = self.protocollo(kwargs["pk"])
+            if not spedizioni.puo_spedire(self.p):
+                messages.error(request, "Si spediscono solo i protocolli in uscita non annullati.")
+                return redirect(self.p)
+        return super().dispatch(request, *args, **kwargs)
+
+    def _casella(self, valore):
+        caselle = list(spedizioni.caselle_invio())
+        if valore is None:  # proposta: la PEC se il protocollo è per PEC, altrimenti l'email
+            pec = self.p.mezzo == Protocollo.Mezzo.PEC
+            scelta = next((c for c in caselle if c.pec == pec), None)
+            return caselle, scelta
+        return caselle, next((c for c in caselle if str(c.pk) == str(valore)), None)
+
+    def _form(self, dati=None, valore=None):
+        caselle, casella = self._casella(valore)
+        proposti = spedizioni.indirizzi_proposti(self.p, pec=bool(casella and casella.pec))
+        iniziali = {
+            "da": str(casella.pk) if casella else "",
+            "testo": spedizioni.testo_proposto(self.p),
+            "documenti": list(self.p.allegati.values_list("pk", flat=True)),
+        }
+        if self.request.htmx and dati is None:  # ricarica per il cambio di casella
+            iniziali["testo"] = self.request.GET.get("testo") or iniziali["testo"]
+            iniziali["documenti"] = self.request.GET.getlist("documenti") or iniziali["documenti"]
+        form = SpedizioneForm(
+            dati, initial=iniziali, protocollo=self.p, caselle=caselle, proposti=proposti,
+            url_ricarica=reverse("protocollo:spedisci", args=[self.p.pk]),
+        )  # fmt: skip
+        return form, casella
+
+    def get(self, request, *args, **kwargs):
+        form, _ = self._form(valore=request.GET.get("da"))
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def post(self, request, *args, **kwargs):
+        form, casella = self._form(request.POST, valore=request.POST.get("da", ""))
+        if form.is_valid():
+            try:
+                sped = spedizioni.prepara_spedizione(
+                    self.p, request.user, casella=casella, destinatari=form.destinatari(),
+                    testo=form.cleaned_data["testo"], allegati=form.cleaned_data["documenti"],
+                )  # fmt: skip
+            except OperazioneNonValida as e:
+                _errore(request, e)
+            else:
+                _esito_spedizione(request, sped)
+                return redirect(self.p)
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(
+            protocollo=self.p,
+            invio_attivo=spedizioni.invio_attivo(),
+            massimo_mb=settings.PROTOCOLLO_SPEDIZIONE_MAX_MB,
+        )
+        return ctx
+
+
+def _esito_spedizione(request, sped):
+    """Invio immediato (se l'invio è acceso), con l'esito per l'utente."""
+    totale = sped.destinatari.count()
+    if not spedizioni.invio_attivo():
+        messages.warning(request, f"Spedizione in coda ({totale} destinatari): l'invio delle "
+                                  "email è spento in Sistema → Servizi di posta.")  # fmt: skip
+        return
+    inviati, errori = spedizioni.spedisci(sped)
+    if errori:
+        messages.error(request, f"Spediti {inviati} messaggi su {totale}; {errori} non riusciti: "
+                                "si riprova in automatico, l'errore è nella scheda.")  # fmt: skip
+    else:
+        canale = sped.get_canale_display()
+        seguito = " Le ricevute di accettazione e consegna si aggiungono da sole." if sped.canale \
+            == Spedizione.Canale.PEC else ""  # fmt: skip
+        messages.success(request, f"{canale} spedita a {inviati} destinatari.{seguito}")
+
+
+class RiprovaSpedizioneView(PermessoMixin, View):
+    permission_required = spedizioni.PERMESSO
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        sped = get_object_or_404(
+            Spedizione.objects.select_related("protocollo"),
+            pk=pk,
+            protocollo__in=Protocollo.objects.visibili_a(request.user),
+        )
+        try:
+            spedizioni.riprova(sped, request.user)
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        else:
+            _esito_spedizione(request, sped)
+        return redirect(sped.protocollo)
 
 
 class EsportaView(PermessoMixin, View):

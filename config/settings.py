@@ -209,6 +209,8 @@ COMUNICAZIONI_LOTTO = env.int("COMUNICAZIONI_LOTTO", default=30)
 
 # Protocollo: dimensione massima di un allegato ed estensioni ammesse
 PROTOCOLLO_ALLEGATO_MAX_MB = env.int("PROTOCOLLO_ALLEGATO_MAX_MB", default=25)
+# documenti di una spedizione per email/PEC (la codifica nel messaggio aggiunge circa un terzo)
+PROTOCOLLO_SPEDIZIONE_MAX_MB = env.int("PROTOCOLLO_SPEDIZIONE_MAX_MB", default=20)
 PROTOCOLLO_ESTENSIONI = env.list(
     "PROTOCOLLO_ESTENSIONI",
     default=[

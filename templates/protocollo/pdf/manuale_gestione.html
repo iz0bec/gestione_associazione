@@ -155,7 +155,10 @@ le registrazioni si riportano nel sistema; nelle note si indica il numero di eme
 lettere prodotte dai modelli di stampa lo riportano in automatico). La registrazione indica i destinatari, anche tramite
 liste di distribuzione, con l'indirizzo adatto al mezzo: PEC o email per gli invii elettronici, indirizzo postale per
 posta, raccomandata e consegna a mano. Per le spedizioni su carta il sistema produce le buste e l'elenco dei destinatari.
-Le comunicazioni inviate per email dal sistema possono essere protocollate in automatico. I documenti interni
+Le comunicazioni inviate per email dal sistema possono essere protocollate in automatico.
+{% if caselle_invio %}I protocolli in uscita si spediscono per email o PEC direttamente dal sistema ({% for c in caselle_invio %}{{ c.nome }}{% if c.pec %}, PEC{% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}),
+un messaggio per destinatario con il numero e la data di protocollo nell'oggetto; l'esito di ogni invio resta nella
+registrazione e le ricevute PEC di accettazione e di consegna ne diventano documenti.{% endif %} I documenti interni
 rilevanti (tra organi, atti di nomina, adozione di regolamenti) si registrano con direzione «interno».</p>
 
 <h2>7. Classificazione e fascicolazione</h2>
