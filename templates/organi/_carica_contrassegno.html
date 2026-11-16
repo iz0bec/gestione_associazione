@@ -1,0 +1,23 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Caricamento (o sostituzione) di una firma o di un timbro, uso nelle stampe e rimozione.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<div class="d-flex flex-wrap gap-2 align-items-start">
+  <details class="carica-contrassegno">
+    <summary class="btn btn-sm"><i class="ti ti-upload me-1"></i>{% if oggetto %}Sostituisci{% else %}Carica{% endif %}</summary>
+    <form class="mt-2" method="post" enctype="multipart/form-data" action="{% if tipo == 'firma' %}{% url 'organi:carica_firma' azione_url %}{% else %}{% url 'organi:carica_timbro' azione_url %}{% endif %}">{% csrf_token %}
+      <input class="form-control form-control-sm mb-2" type="file" name="immagine" accept="image/png,image/jpeg" required aria-label="Immagine">
+      <label class="form-check mb-2"><input class="form-check-input" type="checkbox" name="sfondo_trasparente" checked><span class="form-check-label small">Togli lo sfondo bianco</span></label>
+      {% if tipo == "firma" %}<input class="form-control form-control-sm mb-2" type="text" name="autorizzazione" maxlength="200" placeholder="Autorizzazione (es. scritta del 12/11/2026)" value="{{ oggetto.autorizzazione|default:'' }}" aria-label="Autorizzazione dell'interessato">{% endif %}
+      <button class="btn btn-sm btn-primary" type="submit">Carica</button>
+    </form>
+  </details>
+  {% if oggetto %}
+  <form method="post" action="{% url 'organi:uso_firma' tipo oggetto.pk %}">{% csrf_token %}
+    {% if oggetto.attiva %}<button class="btn btn-sm" type="submit" name="azione" value="disattiva">Non usare</button>{% else %}<button class="btn btn-sm" type="submit" name="azione" value="attiva">Usa nelle stampe</button>{% endif %}
+  </form>
+  <form method="post" action="{% url 'organi:uso_firma' tipo oggetto.pk %}" data-conferma="Togliere l'immagine? Si potrà caricare di nuovo.">{% csrf_token %}
+    <button class="btn btn-sm btn-ghost-danger" type="submit" name="azione" value="togli">Togli</button>
+  </form>
+  {% endif %}
+</div>

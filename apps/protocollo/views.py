@@ -37,12 +37,13 @@ from apps.core.models import EventoAudit, Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
 
-from . import servizi
+from . import buste, servizi
 from .filtri import ProtocolloFilter
 from .forms import (
     AllegatiForm,
     CasellaForm,
     ClassificazioneForm,
+    ModelloProtocolloForm,
     ModificaForm,
     ProtocollaMessaggioForm,
     ProtocolloForm,
@@ -52,6 +53,7 @@ from .models import (
     CasellaPosta,
     Classificazione,
     MessaggioRicevuto,
+    ModelloProtocollo,
     Protocollo,
     RegistroGiornaliero,
 )
@@ -119,6 +121,10 @@ class DettaglioView(PermessoMixin, _ProtocolloVisibileMixin, DetailView):
         p = self.object
         ctx["risposte"] = p.risposte.visibili_a(self.request.user)
         ctx["form_allegati"] = AllegatiForm()
+        if buste.con_buste(p):
+            righe = buste.righe_destinatari(p)
+            ctx["spedizione"] = [r for r in righe if r["Avviso"]]
+            ctx["su_carta"] = len(righe) if buste.solo_senza_email(p) else None
         if self.request.user.has_perm("core.view_eventoaudit"):
             ctx["storia"] = EventoAudit.objects.filter(
                 oggetto_tipo=ContentType.objects.get_for_model(Protocollo), oggetto_id=str(p.pk)
@@ -131,8 +137,16 @@ class NuovoView(PermessoMixin, FormView):
     form_class = ProtocolloForm
     template_name = "protocollo/nuovo.html"
 
+    def _modello(self):
+        pk = self.request.GET.get("modello", "")
+        if pk.isdigit():
+            return ModelloProtocollo.objects.filter(pk=pk, attivo=True).first()
+        return None
+
     def get_initial(self):
         iniziali = {"direzione": self.request.GET.get("direzione", Protocollo.Direzione.ENTRATA)}
+        if modello := self._modello():
+            iniziali.update(modello.valori())
         if risposta := self.request.GET.get("risposta"):
             p = Protocollo.objects.visibili_a(self.request.user).filter(pk=risposta).first()
             if p:
@@ -162,6 +176,8 @@ class NuovoView(PermessoMixin, FormView):
             valore = form[campo].value() or []
             ids = [getattr(v, "pk", v) for v in valore]
             ctx[f"scelti_{campo}"] = Soggetto.objects.filter(pk__in=ids)
+        ctx["modelli"] = ModelloProtocollo.objects.filter(attivo=True)
+        ctx["modello_scelto"] = self._modello()
         ctx["estensioni"] = ", ".join(sorted(settings.PROTOCOLLO_ESTENSIONI))
         ctx["max_mb"] = settings.PROTOCOLLO_ALLEGATO_MAX_MB
         return ctx
@@ -294,6 +310,32 @@ class RicevutaView(PermessoMixin, _ProtocolloVisibileMixin, View):
             {"p": p, "organizzazione": Organizzazione.corrente()},
             f"protocollo_{p.anno}_{p.numero:05d}.pdf",
         )
+
+
+class SpedizioneView(PermessoMixin, _ProtocolloVisibileMixin, View):
+    """Destinatari in CSV e buste DL in Word per le spedizioni su carta."""
+
+    permission_required = "protocollo.view_protocollo"
+    TIPI = {
+        "csv": "text/csv; charset=utf-8",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+
+    def get(self, request, pk, formato):
+        p = self.protocollo(pk)
+        if formato not in ("csv", "stampa-unione", "buste") or not buste.con_buste(p):
+            raise Http404("Nessuna spedizione su carta per questo protocollo.")
+        if formato == "csv":
+            dati, nome = buste.csv_destinatari(p, request.user)
+            tipo = self.TIPI["csv"]
+        else:
+            dati, nome = buste.docx_buste(p, request.user, compilate=formato == "buste")
+            tipo = self.TIPI["docx"]
+        risposta = HttpResponse(dati, content_type=tipo)
+        risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        risposta["X-Content-Type-Options"] = "nosniff"
+        return risposta
 
 
 class EsportaView(PermessoMixin, View):
@@ -580,4 +622,36 @@ class ClassificazioneModificaView(PermessoMixin, _ConfigMixin, UpdateView):
     extra_context = {
         "titolo": "Voce del titolario",
         "indietro": reverse_lazy("protocollo:classificazioni"),
+    }
+
+
+class ModelliView(PermessoMixin, ListView):
+    permission_required = "protocollo.view_modelloprotocollo"
+    template_name = "protocollo/modelli.html"
+    context_object_name = "modelli"
+
+    def get_queryset(self):
+        return ModelloProtocollo.objects.select_related("classificazione").prefetch_related("liste")
+
+
+class ModelloNuovoView(PermessoMixin, _ConfigMixin, CreateView):
+    permission_required = "protocollo.add_modelloprotocollo"
+    form_class = ModelloProtocolloForm
+    template_name = "protocollo/modulo_config.html"
+    success_url = reverse_lazy("protocollo:modelli")
+    extra_context = {
+        "titolo": "Nuovo modello di registrazione",
+        "indietro": reverse_lazy("protocollo:modelli"),
+    }
+
+
+class ModelloModificaView(PermessoMixin, _ConfigMixin, UpdateView):
+    permission_required = "protocollo.change_modelloprotocollo"
+    model = ModelloProtocollo
+    form_class = ModelloProtocolloForm
+    template_name = "protocollo/modulo_config.html"
+    success_url = reverse_lazy("protocollo:modelli")
+    extra_context = {
+        "titolo": "Modello di registrazione",
+        "indietro": reverse_lazy("protocollo:modelli"),
     }

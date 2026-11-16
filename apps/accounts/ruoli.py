@@ -54,7 +54,11 @@ SOCI_TESORERIA = [
     "soci.change_listinotessere",
 ]
 
-PROTOCOLLO_LETTURA = ["protocollo.view_protocollo", "protocollo.view_classificazione"]
+PROTOCOLLO_LETTURA = [
+    "protocollo.view_protocollo",
+    "protocollo.view_classificazione",
+    "protocollo.view_modelloprotocollo",
+]
 PROTOCOLLO_OPERATIVO = [
     *PROTOCOLLO_LETTURA,
     "protocollo.add_protocollo",
@@ -70,6 +74,8 @@ PROTOCOLLO_RESPONSABILE = [
     "protocollo.vedi_riservati",
     "protocollo.add_classificazione",
     "protocollo.change_classificazione",
+    "protocollo.add_modelloprotocollo",
+    "protocollo.change_modelloprotocollo",
     "protocollo.view_casellaposta",
     "protocollo.add_casellaposta",
     "protocollo.change_casellaposta",
@@ -177,6 +183,7 @@ CALENDARIO_GESTIONE = [
 
 RUOLI = {
     "Amministratore di sistema": [
+        "organi.gestisci_firme",
         *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
@@ -210,6 +217,7 @@ RUOLI = {
         *DOCUMENTI_GESTIONE,
     ],
     "Presidente": [
+        "organi.gestisci_firme",
         *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
@@ -234,6 +242,7 @@ RUOLI = {
         *DOCUMENTI_STAMPA,
     ],
     "Segretario": [
+        "organi.gestisci_firme",
         *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
@@ -268,6 +277,7 @@ RUOLI = {
     # responsabile di una sezione: le assegnazioni in «sezioni» dell'utente limitano soci,
     # tessere e domande alla sua sezione; nessun accesso ai moduli della federazione
     "Presidente di sezione": [
+        "organi.gestisci_firme",  # solo firme e timbro della propria sezione
         *ANAGRAFICA_SCRITTURA,
         *SOCI_LETTURA,
         "soci.add_socio",

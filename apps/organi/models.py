@@ -510,3 +510,83 @@ class Delibera(models.Model):
         if not self.numero:
             return ""
         return f"{self.verbale.riunione.organo.sigla} {self.numero}/{self.anno}"
+
+
+# --- firme e timbri per le stampe ------------------------------------------------------------
+
+
+def percorso_contrassegno(istanza, nome):
+    """Nome casuale: le immagini non sono raggiungibili per indirizzo e non si servono in rete."""
+    from apps.core.immagini import nome_casuale
+
+    return nome_casuale("organi/firme", "png")
+
+
+class _Contrassegno(models.Model):
+    immagine = models.FileField(upload_to=percorso_contrassegno, max_length=255)
+    impronta = models.CharField("impronta SHA-256", max_length=64)
+    attiva = models.BooleanField(
+        "usa nelle stampe", default=True, help_text="Spenta: l'immagine resta ma non si stampa."
+    )
+    caricata_il = models.DateTimeField(auto_now=True)
+    caricata_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        abstract = True
+
+
+class FirmaGrafica(_Contrassegno):
+    """Immagine della firma di una persona, stampata sopra il suo nome quando firma un documento
+    (in qualunque carica o come rappresentante legale). È una riproduzione grafica, non una
+    firma digitale: si carica solo con l'autorizzazione dell'interessato."""
+
+    soggetto = models.OneToOneField(
+        Soggetto,
+        on_delete=models.CASCADE,
+        related_name="firma_grafica",
+        limit_choices_to={"tipo": "persona"},
+        verbose_name="persona",
+    )
+    autorizzazione = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Come l'interessato ha autorizzato l'uso, es. «autorizzazione scritta del "
+        "12/11/2026, prot. 2026-00045».",
+    )
+
+    class Meta:
+        verbose_name = "firma grafica"
+        verbose_name_plural = "firme grafiche"
+        permissions = [("gestisci_firme", "Può caricare le firme e i timbri per le stampe")]
+
+    def __str__(self):
+        return f"Firma di {self.soggetto.nome_completo}"
+
+
+class Timbro(_Contrassegno):
+    """Timbro dell'associazione (sezione vuota) o di una sezione, accanto alle firme."""
+
+    sezione = models.ForeignKey(
+        "soci.Sezione",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="timbri",
+        help_text="Vuota = l'associazione (federazione).",
+    )
+
+    class Meta:
+        verbose_name = "timbro"
+        verbose_name_plural = "timbri"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sezione"], nulls_distinct=False, name="timbro_unico_per_ente"
+            )
+        ]
+
+    def __str__(self):
+        if self.sezione_id:
+            return f"Timbro della sezione di {self.sezione.nome}"
+        return "Timbro dell'associazione"

@@ -27,5 +27,6 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 12. [Documenti e modelli di stampa](documenti.md) - lettere e attestati su carta intestata, per una persona, una lista o una categoria, con protocollazione in uscita
 13. [Utenti e ruoli](utenti.md) - account, password temporanee, secondo fattore obbligatorio per ruolo
 14. [Calendario](calendario.md) - prossimi impegni e calendario sul telefono e sul computer (iCal)
+15. [Firme e timbri](firme-e-timbri.md) - come acquisire firma e timbro, caricarli e usarli nelle stampe; firma e timbro generici
 
 Sono pronti tutti i moduli previsti per la 0.0.1.

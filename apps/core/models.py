@@ -98,6 +98,17 @@ class Organizzazione(models.Model):
     configurata = models.BooleanField(
         "configurazione iniziale completata", default=False, editable=False
     )
+    # firme e timbri nelle stampe quando manca l'immagine caricata (Organi sociali → Firme e timbri)
+    firma_generica = models.BooleanField(
+        "firma generica",
+        default=True,
+        help_text="Se manca l'immagine della firma, il nome di chi firma in corsivo sopra la riga.",
+    )
+    timbro_generico = models.BooleanField(
+        "timbro generico",
+        default=True,
+        help_text="Se manca l'immagine del timbro, un timbro tondo con la denominazione dell'ente.",
+    )
     informativa_privacy = models.TextField(
         "informativa privacy",
         blank=True,

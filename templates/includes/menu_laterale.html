@@ -51,6 +51,10 @@
         <li class="nav-item{% if nome == 'organi' %} active{% endif %}">
           <a class="nav-link" href="{% url 'organi:organi' %}"><span class="nav-link-icon"><i class="ti ti-gavel"></i></span><span class="nav-link-title">Organi sociali</span></a>
         </li>
+        {% elif perms.organi.gestisci_firme %}
+        <li class="nav-item{% if nome == 'organi' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'organi:firme' %}"><span class="nav-link-icon"><i class="ti ti-signature"></i></span><span class="nav-link-title">Firme e timbri</span></a>
+        </li>
         {% endif %}
         {% if perms.comunicazioni.view_invio %}
         <li class="nav-item{% if nome == 'comunicazioni' and 'anniversari' not in request.resolver_match.url_name and request.resolver_match.url_name != 'auguri' %} active{% endif %}">

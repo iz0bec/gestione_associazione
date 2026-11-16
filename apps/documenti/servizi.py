@@ -55,8 +55,7 @@ def segnaposto_sconosciuti(*testi):
     return sorted(trovati - set(SEGNAPOSTO_STAMPA))
 
 
-def in_carica(ruolo):
-    """Nome («Mario Rossi», con il titolo) di chi ricopre oggi il ruolo, o stringa vuota."""
+def _in_carica_oggi(ruolo):
     from apps.organi.models import Carica
 
     oggi = timezone.localdate()
@@ -67,7 +66,41 @@ def in_carica(ruolo):
         .order_by("-dal")
         .first()
     )
-    return carica.soggetto.intestazione if carica else ""
+    return carica.soggetto if carica else None
+
+
+def in_carica(ruolo):
+    """Nome («Mario Rossi», con il titolo) di chi ricopre oggi il ruolo, o stringa vuota."""
+    soggetto = _in_carica_oggi(ruolo)
+    return soggetto.intestazione if soggetto else ""
+
+
+def firme_grafiche(modello):
+    """(firma principale, seconda firma o None) con l'immagine caricata o la firma generica.
+
+    Il nome scritto nel modello non è collegato a una persona: niente immagine, al più la firma
+    generica se attiva.
+    """
+    from apps.organi.firme import Firma, con_immagini
+
+    principale = firma_legale(modello)
+    if principale is None and modello.firma_nome:
+        principale = Firma(modello.firma_ruolo, modello.firma_nome)
+    elif principale is None:
+        s = _in_carica_oggi("presidente")
+        principale = Firma(modello.firma_ruolo, s.intestazione if s else "", s.pk if s else None)
+    elenco = [principale]
+    if modello.seconda_firma:
+        s = _in_carica_oggi(modello.seconda_firma)
+        elenco.append(
+            Firma(
+                modello.get_seconda_firma_display(),
+                s.intestazione if s else "",
+                s.pk if s else None,
+            )
+        )
+    elenco = con_immagini(elenco)
+    return elenco[0], (elenco[1] if len(elenco) > 1 else None)
 
 
 def firma_legale(modello):
@@ -191,6 +224,20 @@ def _contesto_pdf(modello, soggetti, protocollo=None):
         "protocollo": protocollo,
         "seconda_firma": seconda_firma(modello),
         "stemmi": stemmi(modello, org),
+        **_grafica(modello),
+    }
+
+
+def _grafica(modello):
+    from apps.organi.firme import timbro
+
+    principale, seconda = firme_grafiche(modello)
+    con_firma = bool(qualifica_firmatario(modello) or principale.nome)
+    return {
+        "firma_grafica": principale,
+        "seconda_grafica": seconda,
+        # l'attestato solenne ha già il sigillo fra le firme
+        "timbro": timbro() if con_firma and modello.tipo != modello.Tipo.BENEMERENZA else None,
     }
 
 
@@ -218,7 +265,14 @@ def stampa(modello, soggetti, utente, *, protocolla=False, mezzo="posta"):
     protocollo = None
     if protocolla:
         oggetto = componi(modello.titolo, _contesto(None, "")) or modello.nome
-        corrispondenti = [prot.corrispondente_da_soggetto(s, "destinatario") for s in soggetti]
+        from apps.protocollo.buste import MEZZI_POSTALI
+
+        corrispondenti = [
+            prot.corrispondente_da_soggetto(
+                s, "destinatario", pec_preferita=mezzo == "pec", postale=mezzo in MEZZI_POSTALI
+            )
+            for s in soggetti
+        ]
         direzione = Protocollo.Direzione.USCITA if soggetti else Protocollo.Direzione.INTERNO
         if not soggetti:
             org = Organizzazione.corrente()

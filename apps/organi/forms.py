@@ -287,3 +287,13 @@ class DeliberaForm(StileMixin, forms.ModelForm):
         ):
             self.add_error("esito", "I favorevoli non superano i contrari.")
         return dati
+
+
+class ContrassegnoForm(forms.Form):
+    """Caricamento di una firma o di un timbro (scansione o foto, PNG o JPEG)."""
+
+    immagine = forms.ImageField(
+        widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg"})
+    )
+    sfondo_trasparente = forms.BooleanField(required=False, initial=True)
+    autorizzazione = forms.CharField(max_length=200, required=False)

@@ -5,6 +5,39 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Modelli di registrazione del protocollo** (Protocollo → Altro → *Modelli di registrazione*):
+  direzione, mezzo, classificazione, oggetto, testo e liste di distribuzione; in *Nuova registrazione*
+  il pulsante **Parti da un modello** li precompila (segnaposto `{{ anno }}`, `{{ anno_precedente }}`,
+  `{{ data }}`, `{{ organizzazione }}`). Sette modelli di base da adattare.
+- **Firme e timbri nelle stampe** (Organi sociali → *Firme e timbri*): immagine della firma per
+  persona (vale in ogni carica e come rappresentante legale, con l'autorizzazione annotata) e timbro
+  dell'associazione e di ogni sezione. Le immagini (PNG o JPEG, da scanner o telefono) sono ripulite:
+  sfondo bianco reso trasparente, margini ritagliati, metadati tolti. Compaiono in calce a ricevute,
+  convocazioni, rendiconto, libro soci, inventario, lettere e attestati; si possono sospendere o
+  togliere, mai pubblicate in rete. Stampa di prova in PDF e guida su come acquisirle.
+- **Firma e timbro generici**, se manca l'immagine: nome in corsivo sopra la riga (font Great Vibes,
+  OFL) e timbro tondo con denominazione e località o sezione. Accesi in partenza (si spengono in
+  *Firme e timbri*); le cariche vacanti restano senza firma.
+- **Foglio prestampato** in PDF per firma (riquadri 60 × 20 mm, con la dichiarazione di autorizzazione
+  da firmare) e timbro (45 × 45 mm), bordi in azzurro chiaro tolti con lo sfondo; indicazioni per lo
+  scanner (300 dpi, colore o grigi, PNG) e rifiuto delle immagini troppo piccole.
+- Permesso *Firme e timbri* per amministratore di sistema, presidente e segretario; il **presidente
+  di sezione** gestisce il timbro della propria sezione e le firme di chi vi ricopre una carica.
+- **Liste di distribuzione nel protocollo**: nella registrazione in uscita si scelgono una o più
+  liste (Comunicazioni → Liste); i componenti diventano destinatari, una volta sola e senza le persone
+  decedute.
+- **Buste DL e destinatari in CSV** (scheda del protocollo → *Buste*): buste 220 × 110 mm in Word già
+  compilate, oppure documento per la stampa unione con l'elenco dei destinatari in CSV. Per posta,
+  raccomandata e consegna a mano valgono per tutti i destinatari; per email e PEC solo per quelli senza
+  indirizzo email. Avviso per gli indirizzi postali mancanti o incompleti.
+- Destinatari non in anagrafica con indirizzo postale: `Nome; indirizzo`.
+
+### Modificato
+- Per posta, raccomandata e consegna a mano il protocollo registra l'**indirizzo postale** dei
+  destinatari dell'anagrafica (prima l'email, quando c'era); così anche le lettere protocollate dai
+  modelli di stampa.
+
 ## [1.0.9] - 2026-11-16
 
 Testo del protocollo.

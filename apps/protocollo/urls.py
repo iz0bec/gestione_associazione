@@ -24,6 +24,11 @@ urlpatterns = [
     path("<int:pk>/annulla/", views.AnnullaView.as_view(), name="annulla"),
     path("<int:pk>/allegati/", views.AllegatiView.as_view(), name="allegati"),
     path("<int:pk>/ricevuta.pdf", views.RicevutaView.as_view(), name="ricevuta"),
+    path(
+        "<int:pk>/spedizione/<str:formato>/",
+        views.SpedizioneView.as_view(),
+        name="spedizione",
+    ),
     path("allegati/<int:pk>/", views.ScaricaAllegatoView.as_view(), name="allegato"),
     path("registri/", views.RegistriView.as_view(), name="registri"),
     path("registri/<int:pk>/", views.ScaricaRegistroView.as_view(), name="registro"),
@@ -43,6 +48,9 @@ urlpatterns = [
     path("caselle/nuova/", views.CasellaNuovaView.as_view(), name="casella_nuova"),
     path("caselle/<int:pk>/", views.CasellaModificaView.as_view(), name="casella_modifica"),
     path("titolario/", views.ClassificazioniView.as_view(), name="classificazioni"),
+    path("modelli/", views.ModelliView.as_view(), name="modelli"),
+    path("modelli/nuovo/", views.ModelloNuovoView.as_view(), name="modello_nuovo"),
+    path("modelli/<int:pk>/", views.ModelloModificaView.as_view(), name="modello"),
     path(
         "titolario/nuova/", views.ClassificazioneNuovaView.as_view(), name="classificazione_nuova"
     ),

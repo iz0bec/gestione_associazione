@@ -1,0 +1,19 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Stampa di prova delle firme e del timbro di oggi (associazione o sezione).
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% load firme %}
+{% block titolo %}Prova di stampa delle firme{% endblock %}
+{% block stile %}  .sezione-prova { margin-top: 26pt; font-size: 12pt; }{% endblock %}
+{% block contenuto %}
+<h1>Prova di stampa delle firme{% if sezione %} - sezione di {{ sezione.nome }}{% endif %}</h1>
+<p>Questa pagina mostra come appaiono in calce ai documenti le firme di chi è in carica oggi e il timbro
+{% if sezione %}della sezione{% else %}dell'associazione{% endif %}. Non è un documento ufficiale.</p>
+<p>Testo di esempio di una comunicazione: lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+{% firme "presidente" "segretario?" "tesoriere?" sezione=sezione %}
+<h2 class="sezione-prova">Legale rappresentante (atti del titolare del trattamento)</h2>
+{% firme "rappresentante_legale" sezione=sezione %}
+{% endblock %}

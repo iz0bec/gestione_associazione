@@ -18,8 +18,9 @@
   .attestato .luogo-data { margin-top: 30pt; }
   .documento h1 { font-size: 15pt; }
   .luogo-data { margin-top: 16pt; }
-  .firma { margin: 26pt 0 0 105mm; text-align: center; }
-  .firma .spazio { height: 16mm; }
+  .chiusura { display: flex; justify-content: flex-end; align-items: center; gap: 10mm; margin-top: 26pt; page-break-inside: avoid; }
+  .firma { width: 65mm; text-align: center; }
+  .firma .spazio { height: 16mm; display: flex; align-items: flex-end; justify-content: center; }
 {% endblock %}
 {% block contenuto %}
 {% for p in pagine %}
@@ -44,7 +45,7 @@
     {% if modello.tipo == "attestato" %}<div class="luogo-data">{{ luogo_data }}</div>{% endif %}
   {% endif %}
   {% if firma_ruolo or firma_nome %}
-  <div class="firma">{{ firma_ruolo }}<div class="spazio"></div>{{ firma_nome }}</div>
+  <div class="chiusura">{% include "pdf/_timbro.html" %}<div class="firma">{{ firma_ruolo }}<div class="spazio">{% include "pdf/_firma_grafica.html" with f=firma_grafica %}</div>{{ firma_nome }}</div></div>
   {% endif %}
 </div>
 {% endfor %}

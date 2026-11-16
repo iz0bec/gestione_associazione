@@ -58,7 +58,8 @@ valori prima e dopo; le presenze delle riunioni già aperte non cambiano.
 **Firme sulle stampe.** Le cariche registrate qui firmano le stampe: in calce compaiono la qualifica,
 lo spazio per la firma e il **nome di chi era in carica alla data del documento** (un verbale del
 2025 porta il presidente del 2025, anche se oggi è un altro). Se la carica era vacante resta lo
-spazio per la firma senza nome: il programma non inventa mai un firmatario.
+spazio per la firma senza nome: il programma non inventa mai un firmatario. L'immagine della firma
+e il timbro si caricano in *Firme e timbri* (vedi [Firme e timbri](firme-e-timbri.md)).
 
 | Stampa | Firme |
 |---|---|

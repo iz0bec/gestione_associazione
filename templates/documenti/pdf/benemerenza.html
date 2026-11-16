@@ -52,7 +52,7 @@
   .firme { margin-top: auto; padding-top: 3mm; display: flex; align-items: flex-end; justify-content: space-between; }
   .firma { width: 72mm; text-align: center; }
   .firma .ruolo { font-family: "Cinzel AS", "DejaVu Serif", serif; font-size: 10pt; letter-spacing: 1pt; color: #6f531c; }
-  .firma .spazio { height: 13mm; border-bottom: .6pt solid #b08a3e; margin: 0 6mm; }
+  .firma .spazio { height: 13mm; border-bottom: .6pt solid #b08a3e; margin: 0 6mm; display: flex; align-items: flex-end; justify-content: center; }
   .firma .nome { font-style: italic; font-size: 12.5pt; margin-top: 1.2mm; min-height: 5mm; }
   .sigillo { width: 27mm; margin-bottom: -2mm; }
   .protocollo { position: absolute; left: 16mm; bottom: 15mm; font-family: "DejaVu Sans", sans-serif; font-size: 6.5pt; color: #6b6b6b; }
@@ -84,9 +84,9 @@
     <div class="luogo-data">{{ luogo_data }}</div>
 
     <div class="firme">
-      <div class="firma">{% if seconda_firma %}<div class="ruolo">{{ seconda_firma.ruolo }}</div><div class="spazio"></div><div class="nome">{{ seconda_firma.nome }}</div>{% endif %}</div>
+      <div class="firma">{% if seconda_firma %}<div class="ruolo">{{ seconda_firma.ruolo }}</div><div class="spazio">{% include "pdf/_firma_grafica.html" with f=seconda_grafica %}</div><div class="nome">{{ seconda_firma.nome }}</div>{% endif %}</div>
       <img class="sigillo" src="risorsa:static/img/attestato/sigillo.svg" alt="">
-      <div class="firma">{% if firma_ruolo or firma_nome %}<div class="ruolo">{{ firma_ruolo }}</div><div class="spazio"></div><div class="nome">{{ firma_nome }}</div>{% endif %}</div>
+      <div class="firma">{% if firma_ruolo or firma_nome %}<div class="ruolo">{{ firma_ruolo }}</div><div class="spazio">{% include "pdf/_firma_grafica.html" with f=firma_grafica %}</div><div class="nome">{{ firma_nome }}</div>{% endif %}</div>
     </div>
   </div>
 </div>

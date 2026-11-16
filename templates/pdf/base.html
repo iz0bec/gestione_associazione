@@ -30,6 +30,12 @@
   .firma-calce .qualifica { font-size: 9.5pt; }
   .firma-calce .spazio-firma { height: 14mm; border-bottom: .6pt solid #333; margin: 0 4mm; }
   .firma-calce .nome-firma { font-size: 9.5pt; margin-top: 2pt; min-height: 11pt; }
+  @font-face { font-family: "Firma GA"; src: url("risorsa:static/vendor/fonts/GreatVibes-Regular.ttf"); }
+  .spazio-firma { display: flex; align-items: flex-end; justify-content: center; }
+  .immagine-firma { max-height: 17mm; max-width: 56mm; margin-bottom: -2.5mm; }
+  .firma-generica { font-family: "Firma GA", cursive; font-size: 17pt; line-height: 1; color: #1b2a5e; margin-bottom: -1mm; white-space: nowrap; }
+  .timbro-calce { width: 30mm; height: 30mm; align-self: center; opacity: .9; }
+  .timbro-calce img, .timbro-calce svg { width: 30mm; height: 30mm; object-fit: contain; }
   {% block stile %}{% endblock %}
 </style>
 </head>

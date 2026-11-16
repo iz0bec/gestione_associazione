@@ -2,6 +2,17 @@
 {% block titolo %}Nuova registrazione{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
 {% block titolo_pagina %}Nuova registrazione di protocollo{% endblock %}
+{% block azioni %}
+{% if modelli %}
+<div class="dropdown">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-template me-1"></i>{% if modello_scelto %}{{ modello_scelto.nome }}{% else %}Parti da un modello{% endif %}</button>
+  <div class="dropdown-menu dropdown-menu-end">
+    {% for m in modelli %}<a class="dropdown-item" href="?modello={{ m.pk }}">{% include "protocollo/_badge_direzione.html" with p=m %}<span class="ms-2">{{ m.nome }}</span></a>{% endfor %}
+    {% if perms.protocollo.view_modelloprotocollo %}<div class="dropdown-divider"></div><a class="dropdown-item" href="{% url 'protocollo:modelli' %}"><i class="ti ti-settings me-2"></i>Gestisci i modelli</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
 {% block contenuto %}
 <form method="post" enctype="multipart/form-data" class="card" novalidate data-modulo-protocollo>{% csrf_token %}
   <div class="card-body">
@@ -23,6 +34,7 @@
         <legend class="h3">Destinatari</legend>
         {% include "protocollo/_scelta_corrispondenti.html" with campo="destinatari" scelti=scelti_destinatari campo_altri=form.destinatari_altri %}
         {% for e in form.destinatari.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        <div class="mt-3">{{ form.liste.as_field_group }}{% if perms.comunicazioni.view_lista %}<small class="form-hint"><a href="{% url 'comunicazioni:liste' %}">Gestisci le liste di distribuzione</a></small>{% endif %}</div>
       </fieldset>
     </div>
     <fieldset>

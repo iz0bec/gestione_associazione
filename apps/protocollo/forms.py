@@ -15,10 +15,11 @@ from django import forms
 
 from apps.anagrafica.forms import CampoData
 from apps.anagrafica.models import Soggetto
+from apps.comunicazioni.models import Lista
 from apps.core.cifratura import cifratura_disponibile
 from apps.core.forms import StileMixin
 
-from .models import CasellaPosta, Classificazione, Corrispondente, Protocollo
+from .models import CasellaPosta, Classificazione, Corrispondente, ModelloProtocollo, Protocollo
 
 
 class InputFileMultiplo(forms.ClearableFileInput):
@@ -57,11 +58,16 @@ class CampoSegnatura(forms.CharField):
 
 
 def leggi_corrispondenti_liberi(testo, ruolo):
-    """Una riga per corrispondente: «Nome», «Nome <email>» oppure solo l'indirizzo email."""
+    """Una riga per corrispondente: «Nome», «Nome <email>», solo l'indirizzo email oppure
+    «Nome; indirizzo postale» (es. «Prefettura; Piazza Pagano 1, 85100 Potenza (PZ)»)."""
     risultato = []
     for riga in (testo or "").splitlines():
         riga = riga.strip()
         if not riga:
+            continue
+        if ";" in riga and "@" not in riga:
+            nome, _, indirizzo = (p.strip() for p in riga.partition(";"))
+            risultato.append({"ruolo": ruolo, "descrizione": nome, "indirizzo": indirizzo})
             continue
         nome, indirizzo = parseaddr(riga)
         if "@" in indirizzo and indirizzo in riga:
@@ -88,9 +94,17 @@ class ProtocolloForm(StileMixin, forms.ModelForm):
         label="Altri mittenti",
         required=False,
         widget=forms.Textarea(attrs={"rows": 2}),
-        help_text="Non in anagrafica: uno per riga, es. «Mario Rossi &lt;mario@example.org&gt;».",
+        help_text="Non in anagrafica: uno per riga, es. «Mario Rossi &lt;mario@example.org&gt;» "
+        "oppure, per la posta, «Prefettura; Piazza Pagano 1, 85100 Potenza (PZ)».",
     )
     destinatari = _SceltaSoggetti(label="Destinatari dall'anagrafica")
+    liste = forms.ModelMultipleChoiceField(
+        label="Liste di distribuzione",
+        queryset=Lista.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="I componenti delle liste scelte diventano destinatari, una volta sola ciascuno.",
+    )
     destinatari_altri = forms.CharField(
         label="Altri destinatari",
         required=False,
@@ -135,13 +149,20 @@ class ProtocolloForm(StileMixin, forms.ModelForm):
         dati = super().clean()
         direzione = dati.get("direzione")
         self.corrispondenti = []
+        mezzo = dati.get("mezzo")
         for ruolo, campo in (
             (Corrispondente.Ruolo.MITTENTE, "mittenti"),
             (Corrispondente.Ruolo.DESTINATARIO, "destinatari"),
         ):
-            for s in dati.get(campo) or []:
-                pec = dati.get("mezzo") == Protocollo.Mezzo.PEC
-                self.corrispondenti.append(_da_soggetto(s, ruolo, pec))
+            soggetti = list(dati.get(campo) or [])
+            if campo == "destinatari" and direzione != Protocollo.Direzione.ENTRATA:
+                soggetti += _componenti(dati.get("liste") or [])
+            visti = set()
+            for s in soggetti:
+                if s.pk in visti:
+                    continue
+                visti.add(s.pk)
+                self.corrispondenti.append(_da_soggetto(s, ruolo, mezzo))
             self.corrispondenti += leggi_corrispondenti_liberi(dati.get(f"{campo}_altri"), ruolo)
         ruoli = {c["ruolo"] for c in self.corrispondenti}
         if direzione == Protocollo.Direzione.ENTRATA and Corrispondente.Ruolo.MITTENTE not in ruoli:
@@ -159,10 +180,23 @@ class ProtocolloForm(StileMixin, forms.ModelForm):
         return d
 
 
-def _da_soggetto(soggetto, ruolo, pec):
+def _da_soggetto(soggetto, ruolo, mezzo):
+    from .buste import MEZZI_POSTALI
     from .servizi import corrispondente_da_soggetto
 
-    return corrispondente_da_soggetto(soggetto, ruolo, pec_preferita=pec)
+    return corrispondente_da_soggetto(
+        soggetto, ruolo, pec_preferita=mezzo == Protocollo.Mezzo.PEC, postale=mezzo in MEZZI_POSTALI
+    )
+
+
+def _componenti(liste):
+    """Componenti attuali delle liste (persone decedute escluse), in ordine alfabetico."""
+    from apps.comunicazioni.servizi import soggetti_lista
+
+    ids = set()
+    for lista in liste:
+        ids |= set(soggetti_lista(lista).values_list("pk", flat=True))
+    return list(Soggetto.objects.filter(pk__in=ids, data_decesso__isnull=True))
 
 
 class ModificaForm(StileMixin, forms.ModelForm):
@@ -237,3 +271,23 @@ class ClassificazioneForm(StileMixin, forms.ModelForm):
     class Meta:
         model = Classificazione
         fields = ["codice", "descrizione", "attiva"]
+
+
+class ModelloProtocolloForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = ModelloProtocollo
+        fields = [
+            "nome", "direzione", "mezzo", "classificazione", "oggetto", "testo", "liste",
+            "riservato", "ordine", "attivo",
+        ]  # fmt: skip
+        widgets = {
+            "oggetto": forms.Textarea(attrs={"rows": 2, "maxlength": 500}),
+            "testo": forms.Textarea(attrs={"rows": 6}),
+            "liste": forms.CheckboxSelectMultiple,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["classificazione"].queryset = Classificazione.objects.filter(attiva=True)
+        self.fields["classificazione"].empty_label = "— nessuna —"
+        self.fields["direzione"].choices = Protocollo.Direzione.choices

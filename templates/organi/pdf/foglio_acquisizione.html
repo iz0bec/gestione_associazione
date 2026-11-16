@@ -1,0 +1,60 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Foglio prestampato per acquisire firma o timbro: riquadri alla misura di stampa,
+               bordi azzurro chiaro (tolti con lo sfondo), istruzioni per lo scanner e, per la
+               firma, autorizzazione all'uso della riproduzione grafica.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Foglio per {% if tipo == "firma" %}la firma{% else %}il timbro{% endif %}{% endblock %}
+{% block stile %}
+  h1 { font-size: 15pt; margin: 0 0 2pt; }
+  .chi { font-size: 10.5pt; margin-bottom: 6pt; }
+  .istruzioni { font-size: 8.6pt; line-height: 1.35; margin: 0 0 7pt; padding-left: 12pt; }
+  .istruzioni li { margin-bottom: 1.5pt; }
+  .griglia { display: flex; flex-wrap: wrap; gap: 7mm 12mm; margin: 2mm 0 6mm; }
+  /* misure reali: stampare al 100% (dimensione effettiva) */
+  .riquadro { position: relative; border: .5mm dashed #dcebfb; }
+  .riquadro-firma { width: 60mm; height: 20mm; }
+  .riquadro-timbro { width: 45mm; height: 45mm; }
+  .numero { position: absolute; top: -3.4mm; left: 0; font-size: 6.5pt; color: #c9def5; }
+  .righello { font-size: 7.5pt; color: #555; margin: 0 0 2mm; }
+  .righello span { display: inline-block; width: 50mm; border-top: .3mm solid #555; margin-right: 2mm; vertical-align: middle; }
+  .autorizzazione { border-top: .3mm solid #999; padding-top: 4mm; font-size: 9.5pt; line-height: 1.45; page-break-inside: avoid; }
+  .autorizzazione h2 { font-size: 11pt; margin: 0 0 3pt; }
+  .righe-firma { display: flex; justify-content: space-between; margin-top: 12mm; font-size: 9pt; }
+  .righe-firma div { width: 70mm; border-top: .3mm solid #333; padding-top: 1mm; text-align: center; }
+{% endblock %}
+{% block contenuto %}
+<h1>Foglio per {% if tipo == "firma" %}la firma{% else %}il timbro{% endif %}</h1>
+<div class="chi">
+  {% if tipo == "firma" %}{% if persona %}<strong>{{ persona.intestazione }}</strong>{% if ruoli %} · {{ ruoli|join:" · " }}{% endif %}{% else %}Nome e cognome: ______________________________________{% endif %}
+  {% else %}<strong>{% if sezione %}Sezione di {{ sezione.nome }}{% else %}{{ organizzazione.denominazione }}{% endif %}</strong>{% endif %}
+</div>
+<ol class="istruzioni">
+  <li><strong>Stampare questo foglio al 100%</strong> («dimensione effettiva», non «adatta alla pagina»): il segmento qui sotto deve misurare 5 cm.</li>
+  {% if tipo == "firma" %}
+  <li>Firmare <strong>dentro</strong> alcuni riquadri, alla grandezza abituale, senza toccare i bordi, con penna <strong>nera o blu scuro</strong> a tratto pieno (pennarello fine o roller; no matita, no biro chiara). Il riquadro ha le proporzioni dello spazio della firma nelle stampe.</li>
+  {% else %}
+  <li>Imprimere il timbro <strong>al centro</strong> di alcuni riquadri, con il tampone ben inchiostrato e una pressione uniforme, senza muoverlo.</li>
+  {% endif %}
+  <li><strong>Scanner</strong>: 300 dpi (600 dpi per un tratto molto sottile), a colori o in scala di grigi (non «bianco e nero»), formato PNG o JPEG alla qualità più alta; scala 100%, senza OCR né «ottimizzazione testo». <strong>Telefono</strong>: app di scansione dei documenti, foglio intero in piano, luce diffusa, niente ombre né flash.</li>
+  <li>Ritagliare il riquadro venuto meglio <strong>stando appena dentro il bordo azzurro</strong>: il programma toglie da solo il bianco della carta e i margini (e il bordo chiaro, se resta).</li>
+  <li>Caricare il file in <em>Organi sociali → Firme e timbri</em> con «Togli lo sfondo bianco» attivo, poi controllare la <em>Stampa di prova</em>.</li>
+</ol>
+<div class="righello"><span></span>5 cm</div>
+<div class="griglia">
+  {% for n in riquadri %}<div class="riquadro riquadro-{{ tipo }}"><span class="numero">{{ n }}</span></div>{% endfor %}
+</div>
+{% if tipo == "firma" %}
+<div class="autorizzazione">
+  <h2>Autorizzazione all'uso della riproduzione grafica della firma</h2>
+  Io sottoscritto/a {% if persona %}<strong>{{ persona.intestazione }}</strong>{% else %}_______________________________________{% endif %}
+  autorizzo {{ organizzazione.denominazione }} a conservare la riproduzione grafica della firma apposta in questo foglio
+  e a stamparla in calce ai documenti che firmo per le cariche che ricopro, fino alla revoca, che posso comunicare in
+  qualsiasi momento. So che si tratta di una riproduzione grafica e non di una firma digitale, che l'immagine non viene
+  pubblicata e che, alla cessazione della carica o con la revoca, viene tolta.
+  <div class="righe-firma"><div>Luogo e data</div><div>Firma</div></div>
+</div>
+{% endif %}
+{% endblock %}

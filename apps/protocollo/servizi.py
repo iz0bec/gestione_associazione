@@ -112,8 +112,13 @@ def aggiungi_allegato(protocollo, file, utente, *, nome=None, principale=False, 
 # --- registrazione -------------------------------------------------------------------------
 
 
-def corrispondente_da_soggetto(soggetto, ruolo, pec_preferita=False):
-    indirizzo = (soggetto.pec if pec_preferita else "") or soggetto.email or soggetto.pec
+def corrispondente_da_soggetto(soggetto, ruolo, pec_preferita=False, postale=False):
+    """Corrispondente con l'indirizzo adatto al mezzo: postale (posta, raccomandata, a mano),
+    PEC se richiesta, altrimenti email; in mancanza, quello che c'è."""
+    if postale and soggetto.indirizzo_completo:
+        indirizzo = soggetto.indirizzo_completo
+    else:
+        indirizzo = (soggetto.pec if pec_preferita else "") or soggetto.email or soggetto.pec
     if not indirizzo and soggetto.indirizzo_completo:
         indirizzo = soggetto.indirizzo_completo
     return {

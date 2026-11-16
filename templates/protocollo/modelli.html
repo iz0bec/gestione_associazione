@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modelli di registrazione del protocollo: direzione, mezzo, classificazione, oggetto,
+               testo e liste di distribuzione da cui partire con «Parti da un modello».
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Modelli di registrazione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
+{% block titolo_pagina %}Modelli di registrazione{% endblock %}
+{% block azioni %}
+{% if perms.protocollo.add_modelloprotocollo %}<a class="btn btn-primary" href="{% url 'protocollo:modello_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo modello</a>{% endif %}
+{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Modello</th><th class="d-none d-md-table-cell">Direzione e mezzo</th><th class="d-none d-lg-table-cell">Oggetto</th><th></th></tr></thead>
+      <tbody>
+      {% for m in modelli %}
+        <tr class="{% if not m.attivo %}text-secondary{% endif %}">
+          <td><span class="fw-medium">{{ m.nome }}</span>{% if m.riservato %} <span class="badge bg-dark-lt">riservato</span>{% endif %}{% if not m.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}
+            {% if m.liste.all %}<div class="small text-secondary">Liste: {{ m.liste.all|join:", " }}</div>{% endif %}</td>
+          <td class="d-none d-md-table-cell">{% include "protocollo/_badge_direzione.html" with p=m %} <span class="text-secondary small">{{ m.get_mezzo_display }}{% if m.classificazione %} · {{ m.classificazione.codice }}{% endif %}</span></td>
+          <td class="d-none d-lg-table-cell small">{{ m.oggetto|truncatechars:90 }}</td>
+          <td class="text-end text-nowrap">
+            {% if perms.protocollo.add_protocollo and m.attivo %}<a class="btn btn-sm" href="{% url 'protocollo:nuovo' %}?modello={{ m.pk }}"><i class="ti ti-stamp me-1"></i>Usa</a>{% endif %}
+            {% if perms.protocollo.change_modelloprotocollo %}<a class="btn btn-sm" href="{% url 'protocollo:modello' m.pk %}">Modifica</a>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-secondary text-center py-4">Nessun modello.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer small text-secondary">
+    In <em>Nuova registrazione</em> il pulsante <strong>Parti da un modello</strong> compila direzione, mezzo, classificazione, oggetto, testo e liste
+    di distribuzione, tutto modificabile prima di registrare. <code>{% templatetag openvariable %} anno {% templatetag closevariable %}</code>,
+    <code>{% templatetag openvariable %} anno_precedente {% templatetag closevariable %}</code>, <code>{% templatetag openvariable %} data {% templatetag closevariable %}</code> e
+    <code>{% templatetag openvariable %} organizzazione {% templatetag closevariable %}</code> diventano i valori del giorno.
+  </div>
+</div>
+{% endblock %}

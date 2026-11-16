@@ -1,0 +1,5 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Timbro dell'ente accanto alle firme: immagine caricata o timbro tondo generico (SVG).
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}{% if timbro %}<div class="timbro-calce">{% if timbro.immagine %}<img src="risorsa:media/{{ timbro.immagine }}" alt="Timbro">{% else %}{{ timbro.svg|safe }}{% endif %}</div>{% endif %}

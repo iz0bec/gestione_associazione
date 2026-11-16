@@ -7,6 +7,7 @@
 | htmx | 2.0.11 | 0BSD | `htmx/` |
 | Cinzel (font, variabile) | 2.000 | SIL OFL 1.1 | `fonts/Cinzel-VF.ttf`, `fonts/OFL-Cinzel.txt` |
 | EB Garamond (font, variabile) | 1.001 | SIL OFL 1.1 | `fonts/EBGaramond-*.ttf`, `fonts/OFL-EBGaramond.txt` |
+| Great Vibes (font) | 1.103 | SIL OFL 1.1 | `fonts/GreatVibes-Regular.ttf`, `fonts/OFL-GreatVibes.txt` |
 
 Per aggiornare: scaricare con `npm pack <pacchetto>@<versione>`, copiare gli stessi file e
 aggiornare questa tabella e `docs/sistema/licenze-terze-parti.md`.
@@ -14,5 +15,7 @@ aggiornare questa tabella e `docs/sistema/licenze-terze-parti.md`.
 Nei file minificati di Tabler sono stati tolti i commenti `sourceMappingURL`: le mappe sorgente non
 sono incluse e `collectstatic` (archiviazione con manifesto) si fermerebbe cercandole.
 
-I font servono solo ai PDF dell'attestato solenne (`templates/documenti/pdf/benemerenza.html`);
-sono le versioni ufficiali dei progetti NDISCOVER/Cinzel e octaviopardo/EBGaramond12, non modificate.
+Cinzel ed EB Garamond servono ai PDF dell'attestato solenne (`templates/documenti/pdf/benemerenza.html`),
+Great Vibes alla firma generica in calce alle stampe (`templates/pdf/_firme.html`); sono le versioni
+ufficiali dei progetti NDISCOVER/Cinzel, octaviopardo/EBGaramond12 e googlefonts/great-vibes (dal
+repository google/fonts), non modificate.

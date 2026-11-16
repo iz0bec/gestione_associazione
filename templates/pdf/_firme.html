@@ -1,6 +1,7 @@
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
-  Descrizione: Blocco firme in calce ai PDF (tag {% firme %}): qualifica, spazio per la firma, nome
-               di chi era in carica alla data del documento (vuoto se la carica era vacante).
+  Descrizione: Blocco firme in calce ai PDF (tag {% firme %}): qualifica, firma (immagine caricata,
+               nome in corsivo se è attiva la firma generica, altrimenti spazio per firmare a mano),
+               nome di chi era in carica alla data del documento; timbro dell'ente se c'è.
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
-{% endcomment %}<div class="firme-calce">{% for f in firme %}<div class="firma-calce"><div class="qualifica">{{ f.qualifica }}</div><div class="spazio-firma"></div><div class="nome-firma">{{ f.nome }}</div></div>{% endfor %}</div>
+{% endcomment %}<div class="firme-calce">{% include "pdf/_timbro.html" %}{% for f in firme %}<div class="firma-calce"><div class="qualifica">{{ f.qualifica }}</div><div class="spazio-firma">{% include "pdf/_firma_grafica.html" %}</div><div class="nome-firma">{{ f.nome }}</div></div>{% endfor %}</div>

@@ -74,6 +74,8 @@ Un segnaposto scritto male viene segnalato e la comunicazione non parte.
   anniversario di iscrizione, ricorrenza, generico). Sono già presenti modelli di base da adattare.
 - **Liste**: unione di persone scelte, **categorie** dell'anagrafica (es. Autorità), **tutti i soci** o
   **solo quelli in regola** con la quota, **componenti di un organo**. Le liste si aggiornano da sole.
+  Si usano anche nel **protocollo in uscita** (liste di distribuzione), con le buste per chi non ha
+  l'email.
 
 ## Dagli altri moduli
 

@@ -64,25 +64,26 @@ In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 
 ### Protocollo
 
-| Ruolo | Registro | Registra, aggiunge documenti, posta | Annulla | Riservati | Esporta e registri | Titolario e caselle |
+| Ruolo | Registro | Registra, aggiunge documenti, posta | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle |
 |---|---|---|---|---|---|---|
-| Amministratore di sistema | consulta | sì | sì | sì | sì | modifica |
-| Presidente | consulta | - (vede la posta) | - | sì | sì | consulta il titolario |
-| Segretario | consulta | sì | sì | sì | sì | modifica |
-| Addetto protocollo | consulta | sì | - | - | sì | consulta il titolario |
-| Tesoriere, Consigliere | consulta | - | - | - | - | consulta il titolario |
+| Amministratore di sistema | consulta | sì | sì | sì | sì | modifica (anche i modelli) |
+| Presidente | consulta | - (vede la posta) | - | sì | sì | consulta titolario e modelli |
+| Segretario | consulta | sì | sì | sì | sì | modifica (anche i modelli) |
+| Addetto protocollo | consulta | sì | - | - | sì | consulta titolario e modelli |
+| Tesoriere, Consigliere | consulta | - | - | - | - | consulta titolario e modelli |
 | Revisore | consulta | - | - | - | sì | consulta il titolario |
 
 L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (segretario).
 
 ### Organi sociali
 
-| Ruolo | Consulta organi, riunioni, verbali, delibere | Prepara e convoca riunioni | Presenze e verbali | Cariche, rappresentante legale, modelli di convocazione | Regole degli organi |
-|---|---|---|---|---|---|
-| Amministratore di sistema | sì | sì | sì | sì | sì |
-| Presidente | sì | sì | sì | - | - |
-| Segretario | sì | sì | sì | sì | - |
-| Tesoriere, Addetto protocollo, Consigliere, Revisore | sì | - | - | - | - |
+| Ruolo | Consulta organi, riunioni, verbali, delibere | Prepara e convoca riunioni | Presenze e verbali | Cariche, rappresentante legale, modelli di convocazione | Regole degli organi | Firme e timbri |
+|---|---|---|---|---|---|---|
+| Amministratore di sistema | sì | sì | sì | sì | sì | sì |
+| Presidente | sì | sì | sì | - | - | sì |
+| Segretario | sì | sì | sì | sì | - | sì |
+| Tesoriere, Addetto protocollo, Consigliere, Revisore | sì | - | - | - | - | - |
+| Presidente di sezione | - | - | - | - | - | solo la propria sezione |
 
 ### Comunicazioni e anniversari
 

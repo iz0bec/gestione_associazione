@@ -9,6 +9,7 @@
       {% if perms.protocollo.esporta_protocollo %}<a class="dropdown-item" href="{% url 'protocollo:esporta' %}?{{ request.GET.urlencode }}"><i class="ti ti-file-spreadsheet me-2"></i>Esporta CSV</a>{% endif %}
       {% if perms.protocollo.view_registrogiornaliero %}<a class="dropdown-item" href="{% url 'protocollo:registri' %}"><i class="ti ti-calendar-stats me-2"></i>Registri giornalieri</a>{% endif %}
       <a class="dropdown-item" href="{% url 'protocollo:classificazioni' %}"><i class="ti ti-list-tree me-2"></i>Titolario</a>
+      {% if perms.protocollo.view_modelloprotocollo %}<a class="dropdown-item" href="{% url 'protocollo:modelli' %}"><i class="ti ti-template me-2"></i>Modelli di registrazione</a>{% endif %}
     </div>
   </div>
   {% if perms.protocollo.add_protocollo %}

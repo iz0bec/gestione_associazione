@@ -33,6 +33,7 @@ from . import servizi
 from .firme import situazione_rappresentanza
 from .forms import (
     CaricaForm,
+    ContrassegnoForm,
     DeliberaForm,
     FineCaricaForm,
     ModelloConvocazioneForm,
@@ -46,11 +47,13 @@ from .forms import (
 from .models import (
     Carica,
     Delibera,
+    FirmaGrafica,
     ModelloConvocazione,
     Organo,
     Presenza,
     RappresentanteLegale,
     Riunione,
+    Timbro,
     Verbale,
 )
 from .servizi import OperazioneNonValida
@@ -717,3 +720,212 @@ class DelibereView(PermessoMixin, ListView):
         ctx["organo_scelto"] = self.request.GET.get("organo", "")
         ctx["q"] = self.request.GET.get("q", "")
         return ctx
+
+
+# --- firme e timbri per le stampe ------------------------------------------------------------
+
+
+class FirmeView(PermessoMixin, TemplateView):
+    """Firme (per persona) e timbri (per ente) da stampare in calce ai documenti."""
+
+    permission_required = "organi.gestisci_firme"
+    template_name = "organi/firme.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.core.models import Organizzazione
+
+        from . import timbro_generico
+
+        org = Organizzazione.corrente()
+        utente = self.request.user
+        timbri = [
+            (sezione, timbro, timbro_generico.svg(org, sezione))
+            for sezione, timbro in servizi.timbri_per_ente(utente)
+        ]
+        return super().get_context_data(
+            firmatari=servizi.firmatari(utente=utente),
+            timbri=timbri,
+            organizzazione=org,
+            tutto=servizi.gestisce_tutto(utente),
+            **kwargs,
+        )
+
+
+def _contrassegno(tipo, pk, utente):
+    from django.core.exceptions import PermissionDenied
+
+    modello = {"firma": FirmaGrafica, "timbro": Timbro}.get(tipo)
+    if modello is None:
+        raise Http404
+    oggetto = get_object_or_404(modello, pk=pk)
+    if not servizi.puo_gestire_contrassegno(utente, oggetto):
+        raise PermissionDenied("Firma o timbro di un'altra sezione.")
+    return oggetto
+
+
+def _vietato(messaggio):
+    from django.core.exceptions import PermissionDenied
+
+    raise PermissionDenied(messaggio)
+
+
+class CaricaFirmaView(PermessoMixin, View):
+    permission_required = "organi.gestisci_firme"
+    http_method_names = ["post"]
+
+    def post(self, request, soggetto):
+        from apps.anagrafica.models import Soggetto
+
+        persona = get_object_or_404(Soggetto, pk=soggetto)
+        if not servizi.puo_gestire_firma(request.user, persona):
+            _vietato("La persona non ha cariche nella sezione.")
+        form = ContrassegnoForm(request.POST, request.FILES)
+        if not form.is_valid():
+            messages.error(request, "Scegliere un'immagine PNG o JPEG valida.")
+            return redirect("organi:firme")
+        try:
+            servizi.carica_firma(
+                persona, form.cleaned_data["immagine"], request.user,
+                sfondo_trasparente=form.cleaned_data["sfondo_trasparente"],
+                autorizzazione=form.cleaned_data["autorizzazione"],
+            )  # fmt: skip
+            messages.success(request, f"Firma di {persona.nome_completo} caricata.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect("organi:firme")
+
+
+class CaricaTimbroView(PermessoMixin, View):
+    permission_required = "organi.gestisci_firme"
+    http_method_names = ["post"]
+
+    def post(self, request, sezione):
+        from apps.soci.models import Sezione
+
+        ente = get_object_or_404(Sezione, pk=sezione) if sezione else None
+        if not servizi.puo_gestire_timbro(request.user, ente):
+            _vietato("Timbro di un altro ente.")
+        form = ContrassegnoForm(request.POST, request.FILES)
+        if not form.is_valid():
+            messages.error(request, "Scegliere un'immagine PNG o JPEG valida.")
+            return redirect("organi:firme")
+        try:
+            servizi.carica_timbro(
+                ente, form.cleaned_data["immagine"], request.user,
+                sfondo_trasparente=form.cleaned_data["sfondo_trasparente"],
+            )  # fmt: skip
+            messages.success(request, "Timbro caricato.")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        return redirect("organi:firme")
+
+
+class UsoContrassegnoView(PermessoMixin, View):
+    """Accende o spegne l'uso nelle stampe, oppure toglie l'immagine."""
+
+    permission_required = "organi.gestisci_firme"
+    http_method_names = ["post"]
+
+    def post(self, request, tipo, pk):
+        oggetto = _contrassegno(tipo, pk, request.user)
+        azione = request.POST.get("azione")
+        if azione == "togli":
+            servizi.togli_contrassegno(oggetto, request.user)
+            messages.success(request, f"{oggetto} tolto.")
+        elif azione in ("attiva", "disattiva"):
+            servizi.imposta_uso(oggetto, azione == "attiva", request.user)
+        return redirect("organi:firme")
+
+
+class GenericiView(PermessoMixin, View):
+    permission_required = "organi.gestisci_firme"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        if not servizi.gestisce_tutto(request.user):
+            _vietato("Impostazione dell'intera associazione.")
+        servizi.imposta_generici(
+            request.user,
+            firma_generica=request.POST.get("firma_generica") == "on",
+            timbro_generico=request.POST.get("timbro_generico") == "on",
+        )
+        messages.success(request, "Impostazioni salvate.")
+        return redirect("organi:firme")
+
+
+class ImmagineContrassegnoView(PermessoMixin, View):
+    """Anteprima per chi gestisce le firme: mai raggiungibile senza permesso."""
+
+    permission_required = "organi.gestisci_firme"
+
+    def get(self, request, tipo, pk):
+        from apps.core.immagini import risposta_immagine
+
+        risposta = risposta_immagine(_contrassegno(tipo, pk, request.user).immagine)
+        risposta["Cache-Control"] = "private, no-store"
+        return risposta
+
+
+class ProvaFirmeView(PermessoMixin, View):
+    """PDF di prova: il blocco firme di oggi per l'associazione o una sezione."""
+
+    permission_required = "organi.gestisci_firme"
+
+    def get(self, request):
+        from apps.core.models import Organizzazione
+        from apps.core.pdf import risposta_pdf
+        from apps.soci.models import Sezione
+
+        sezione = None
+        if request.GET.get("sezione"):
+            sezione = get_object_or_404(Sezione, pk=request.GET["sezione"])
+        elif not servizi.gestisce_tutto(request.user):  # presidente di sezione: la sua
+            enti = servizi.timbri_per_ente(request.user)
+            sezione = enti[0][0] if enti else None
+        if not servizi.puo_gestire_timbro(request.user, sezione):
+            _vietato("Sezione non consentita.")
+        return risposta_pdf(
+            "organi/pdf/prova_firme.html",
+            {"organizzazione": Organizzazione.corrente(), "sezione": sezione},
+            "prova_firme.pdf",
+        )
+
+
+class FoglioAcquisizioneView(PermessoMixin, View):
+    """Foglio A4 da stampare al 100%: riquadri della misura giusta per firma o timbro, istruzioni
+    per lo scanner e, per la firma, l'autorizzazione all'uso da firmare."""
+
+    permission_required = "organi.gestisci_firme"
+
+    def get(self, request, tipo):
+        from apps.anagrafica.models import Soggetto
+        from apps.core.models import Organizzazione
+        from apps.core.pdf import risposta_pdf
+        from apps.soci.models import Sezione
+
+        contesto = {
+            "organizzazione": Organizzazione.corrente(),
+            "tipo": tipo,
+            "oggi": timezone.localdate(),
+        }
+        if tipo == "firma":
+            persona = None
+            if request.GET.get("soggetto"):
+                persona = get_object_or_404(Soggetto, pk=request.GET["soggetto"], tipo="persona")
+                if not servizi.puo_gestire_firma(request.user, persona):
+                    _vietato("La persona non ha cariche nella sezione.")
+                contesto["ruoli"] = next(
+                    (r["ruoli"] for r in servizi.firmatari(utente=request.user)
+                     if r["soggetto"].pk == persona.pk), [],
+                )  # fmt: skip
+            contesto.update(persona=persona, riquadri=range(1, 7))
+        elif tipo == "timbro":
+            sezione = None
+            if request.GET.get("sezione"):
+                sezione = get_object_or_404(Sezione, pk=request.GET["sezione"])
+            if not servizi.puo_gestire_timbro(request.user, sezione):
+                _vietato("Timbro di un altro ente.")
+            contesto.update(sezione=sezione, riquadri=range(1, 7))
+        else:
+            raise Http404
+        return risposta_pdf("organi/pdf/foglio_acquisizione.html", contesto, f"foglio_{tipo}.pdf")

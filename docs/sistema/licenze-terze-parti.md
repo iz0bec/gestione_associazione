@@ -56,6 +56,7 @@ Versioni esatte di tutte le dipendenze (anche indirette) in `uv.lock`.
 | htmx | 2.0.11 | 0BSD |
 | Cinzel (font, attestati) | 2.000 | SIL OFL 1.1 |
 | EB Garamond (font, attestati) | 1.001 | SIL OFL 1.1 |
+| Great Vibes (font, firma generica nelle stampe) | 1.103 | SIL OFL 1.1 |
 
 I font sono distribuiti con i rispettivi testi di licenza in `static/vendor/fonts/`. Gli
 ornamenti dell'attestato (`static/img/attestato/*.svg`) sono disegnati per il progetto (CC0) e si rigenerano con

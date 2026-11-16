@@ -38,6 +38,7 @@ PAGINE_PER_SEZIONE = {
     "soci:sezione_modifica": "sistema#sezioni",
     "protocollo": "protocollo",
     "organi": "organi",
+    "organi:firme": "firme-e-timbri",
     "comunicazioni": "comunicazioni",
     "tesoreria": "tesoreria",
     "patrimonio": "patrimonio",

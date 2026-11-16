@@ -42,10 +42,23 @@ e la data e l'ora di registrazione, assegnati automaticamente.
 4. **Mittenti** (entrata) o **destinatari** (uscita): cercare nell'anagrafica scrivendo nome, ente o
    email e cliccare il risultato; compare un'etichetta (togliendo la spunta lo si esclude). Chi non è
    in anagrafica si scrive nel riquadro sotto, uno per riga: `Prefettura di Potenza <prefettura@pec.it>`
-   oppure solo il nome. Per una PEC viene proposto l'indirizzo PEC del soggetto.
+   oppure solo il nome; per la posta anche `Prefettura di Potenza; Piazza Pagano 1, 85100 Potenza (PZ)`
+   (nome e indirizzo separati da `;`). Per una PEC viene proposto l'indirizzo PEC del soggetto, per
+   posta, raccomandata o consegna a mano l'indirizzo postale. Con **Liste di distribuzione** (in
+   uscita) si aggiungono tutti i componenti delle liste scelte, una volta sola ciascuno e senza le
+   persone decedute; le liste si creano in *Comunicazioni → Liste*.
 5. **Documento**: data del documento, numero di protocollo del mittente, data di ricezione (se diversa),
    **in risposta a** (numero come `2026-00012`), i **file** (il primo è il documento principale).
 6. **Registra**: compaiono numero, data e ora.
+
+**Parti da un modello** (in alto nella nuova registrazione) compila direzione, mezzo, classificazione,
+oggetto, testo e liste di distribuzione da un modello di registrazione: si completano i puntini (`...`),
+i corrispondenti e i documenti, poi si registra. I modelli si gestiscono in *Altro → Modelli di
+registrazione* (responsabile del protocollo e segretario); ce ne sono alcuni di base da adattare
+(convocazione dell'assemblea, invito a una cerimonia, richiesta di patrocinio, composizione degli organi,
+trasmissione del rendiconto, richiesta di contributo, domanda di iscrizione ricevuta). Nell'oggetto e nel
+testo `{{ anno }}`, `{{ anno_precedente }}`, `{{ data }}` e `{{ organizzazione }}` diventano i valori del
+giorno.
 
 Dalla scheda di un protocollo in entrata, **Rispondi** apre una registrazione in uscita già collegata,
 con oggetto e destinatari precompilati. Dalla scheda anagrafica di un ente o di una persona si vedono i
@@ -53,6 +66,28 @@ suoi protocolli e si può registrare direttamente un'entrata o un'uscita.
 
 **Ricevuta**: PDF con numero, data, oggetto e corrispondenti, da consegnare a chi porta un documento
 a mano o da apporre sul documento cartaceo.
+
+## Buste e spedizioni su carta
+
+Nella scheda di un protocollo in uscita compare il pulsante **Buste** quando qualcuno lo riceve su
+carta: con posta, raccomandata o consegna a mano tutti i destinatari; con email o PEC solo quelli
+**senza indirizzo email** (il pulsante ne riporta il numero, es. «Buste (3 senza email)»). Si scarica:
+
+- **Buste DL compilate (Word)**: una busta 220 × 110 mm per destinatario, già pronta da stampare, con
+  il mittente in alto a sinistra, il numero di protocollo, la dicitura «RACCOMANDATA» quando serve e il
+  destinatario nella finestra a destra;
+- **Busta DL per la stampa unione (Word)** ed **Elenco dei destinatari (CSV)**: per chi preferisce la
+  stampa unione. In Word: *Lettere → Inizia stampa unione → Lettere*, poi *Seleziona destinatari → Usa
+  elenco esistente* e scegliere il CSV (separatore punto e virgola, codifica UTF-8); *Anteprima
+  risultati* per controllare e *Finalizza e unisci → Modifica singoli documenti* o *Stampa documenti*.
+  In LibreOffice: *Strumenti → Stampa in serie guidata*, scegliendo il CSV come origine dati.
+
+Il CSV ha le colonne `Nominativo`, `Qualifica`, `Indirizzo`, `CAP`, `Comune`, `Provincia` e
+`Riga1`…`Riga4` (le righe della busta, senza righe vuote nel mezzo), utili anche per etichette o
+modulistica di Poste. Gli indirizzi sono quelli **registrati nel protocollo**. Se un indirizzo
+postale manca o è incompleto la scheda lo segnala e la colonna `Avviso` lo indica: si completa la
+scheda anagrafica per le spedizioni successive, oppure a mano sulla busta. Ogni scaricamento è
+registrato nel registro delle attività.
 
 ## Cercare
 

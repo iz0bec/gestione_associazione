@@ -7,6 +7,17 @@
 {% block azioni %}
 <div class="btn-list">
   <a class="btn" href="{% url 'protocollo:ricevuta' protocollo.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
+  {% if spedizione is not None %}
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-mail me-1"></i>Buste{% if su_carta %} ({{ su_carta }} senza email){% endif %}</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% if su_carta %}<h6 class="dropdown-header">Solo i destinatari senza email</h6>{% endif %}
+      <a class="dropdown-item" href="{% url 'protocollo:spedizione' protocollo.pk 'buste' %}"><i class="ti ti-file-word me-2"></i>Buste DL compilate (Word)</a>
+      <a class="dropdown-item" href="{% url 'protocollo:spedizione' protocollo.pk 'stampa-unione' %}"><i class="ti ti-file-word me-2"></i>Busta DL per la stampa unione (Word)</a>
+      <a class="dropdown-item" href="{% url 'protocollo:spedizione' protocollo.pk 'csv' %}"><i class="ti ti-file-spreadsheet me-2"></i>Elenco dei destinatari (CSV)</a>
+    </div>
+  </div>
+  {% endif %}
   {% if not protocollo.annullato %}
     {% if perms.protocollo.add_protocollo and protocollo.direzione == "entrata" %}<a class="btn" href="{% url 'protocollo:nuovo' %}?risposta={{ protocollo.pk }}"><i class="ti ti-arrow-back-up me-1"></i>Rispondi</a>{% endif %}
     {% if perms.protocollo.annulla_protocollo %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
@@ -16,6 +27,7 @@
 {% endblock %}
 {% block contenuto %}
 {% if protocollo.annullato %}<div class="alert alert-danger">Annullato il {{ protocollo.annullato_il|date:"d/m/Y H:i" }}{% if protocollo.annullato_da %} da {{ protocollo.annullato_da }}{% endif %}: {{ protocollo.motivo_annullamento }}</div>{% endif %}
+{% if spedizione %}<div class="alert alert-warning">Indirizzo postale mancante o incompleto per {{ spedizione|length }} destinatar{{ spedizione|length|pluralize:"io,i" }}: {% for r in spedizione %}{{ r.Nominativo }}{% if not forloop.last %}, {% endif %}{% endfor %}. Nelle buste restano da completare a mano.</div>{% endif %}
 <div class="row row-cards">
   <div class="col-lg-8">
     <div class="card">

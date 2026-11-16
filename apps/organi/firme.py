@@ -6,10 +6,12 @@
 # *              dalle cariche degli Organi sociali (dell'associazione o di una sezione).
 # *              Una carica vacante lascia lo spazio per la firma senza nome: mai nomi inventati.
 # *              «rappresentante_legale»: quello indicato (anche esterno), altrimenti il presidente.
+# *              Immagini: firma della persona e timbro dell'ente se caricati e attivi; altrimenti,
+# *              se richiesto in Organizzazione, firma generica (nome in corsivo) e timbro tondo.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 
 from django.db.models import Case, IntegerField, Q, Value, When
@@ -30,6 +32,15 @@ RAPPRESENTANTE = "rappresentante_legale"
 class Firma:
     qualifica: str
     nome: str = ""  # vuoto: carica vacante, si firma a mano
+    soggetto_id: int | None = field(default=None, compare=False)
+    immagine: str = field(default="", compare=False)  # percorso in MEDIA_ROOT della firma
+    generica: bool = field(default=False, compare=False)  # nome in corsivo al posto della firma
+
+
+@dataclass(frozen=True)
+class TimbroStampa:
+    immagine: str = ""  # percorso in MEDIA_ROOT, oppure
+    svg: str = ""  # timbro generico
 
 
 def _giorno(valore):
@@ -96,10 +107,14 @@ def legale_rappresentante(giorno=None, sezione=None):
     sezione senza l'uno né l'altro, quello dell'associazione. None se manca anche quello."""
     nomina = rappresentante_legale_al(giorno, sezione)
     if nomina:
-        return Firma(nomina.qualifica or QUALIFICHE[RAPPRESENTANTE], nomina.soggetto.intestazione)
+        return Firma(
+            nomina.qualifica or QUALIFICHE[RAPPRESENTANTE],
+            nomina.soggetto.intestazione,
+            nomina.soggetto_id,
+        )
     presidente = in_carica_al("presidente", giorno, sezione)
     if presidente:
-        return Firma(QUALIFICHE["presidente"], presidente.intestazione)
+        return Firma(QUALIFICHE["presidente"], presidente.intestazione, presidente.pk)
     if sezione is not None:  # sezione senza nomina né presidente: vale quello dell'associazione
         return legale_rappresentante(giorno, None)
     return None
@@ -133,10 +148,10 @@ def _firma(ruolo, giorno, sezione):
     persona = in_carica_al(ruolo, giorno, sezione)
     if persona is None:
         return None
-    return Firma(QUALIFICHE.get(ruolo, ruolo.capitalize()), persona.intestazione)
+    return Firma(QUALIFICHE.get(ruolo, ruolo.capitalize()), persona.intestazione, persona.pk)
 
 
-def firme(*ruoli, giorno=None, sezione=None):
+def firme(*ruoli, giorno=None, sezione=None, immagini=True):
     """Firme per i ruoli indicati. «tesoriere|presidente» = il primo in carica fra i due
     (es. ricevute del tesoriere, firmate dal presidente se il tesoriere non c'è);
     «rappresentante_legale» = chi rappresenta l'ente (vedi legale_rappresentante);
@@ -157,4 +172,45 @@ def firme(*ruoli, giorno=None, sezione=None):
             firma = Firma(QUALIFICHE.get(primo, primo.capitalize()))
         if firma not in risultato:
             risultato.append(firma)
-    return risultato
+    return con_immagini(risultato) if immagini else risultato
+
+
+def con_immagini(elenco):
+    """Aggiunge a ogni firma l'immagine caricata (se attiva) o il segno della firma generica."""
+    from apps.core.models import Organizzazione
+
+    from .models import FirmaGrafica
+
+    ids = [f.soggetto_id for f in elenco if f.soggetto_id]
+    caricate = dict(
+        FirmaGrafica.objects.filter(soggetto_id__in=ids, attiva=True).values_list(
+            "soggetto_id", "immagine"
+        )
+    )
+    generica = Organizzazione.corrente().firma_generica
+    return [
+        replace(f, immagine=caricate.get(f.soggetto_id, ""))
+        if f.soggetto_id in caricate
+        else replace(f, generica=generica and bool(f.nome))
+        for f in elenco
+    ]
+
+
+def timbro(sezione=None):
+    """Timbro dell'ente (associazione o sezione) per le stampe, o None.
+
+    Quello caricato e attivo; altrimenti il timbro generico se richiesto. Una sezione senza
+    timbro proprio non prende quello dell'associazione (riporterebbe un altro ente).
+    """
+    from apps.core.models import Organizzazione
+
+    from . import timbro_generico
+    from .models import Timbro
+
+    caricato = Timbro.objects.filter(sezione=sezione, attiva=True).first()
+    if caricato:
+        return TimbroStampa(immagine=caricato.immagine.name)
+    org = Organizzazione.corrente()
+    if org.timbro_generico:
+        return TimbroStampa(svg=timbro_generico.svg(org, sezione))
+    return None

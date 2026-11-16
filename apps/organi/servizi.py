@@ -24,11 +24,13 @@ from apps.core.numerazione import prossimo_numero
 from .models import (
     Carica,
     Delibera,
+    FirmaGrafica,
     Organo,
     Presenza,
     PuntoOdg,
     RappresentanteLegale,
     Riunione,
+    Timbro,
     Verbale,
 )
 
@@ -708,3 +710,193 @@ def crea_organi_sezione(sezione, utente):
         registra(Azione.CREAZIONE, organo, utente=utente, sezione=str(sezione))
         creati.append(organo)
     return creati
+
+
+# --- firme e timbri per le stampe ------------------------------------------------------------
+
+RUOLI_FIRMATARI = [
+    "presidente",
+    "vicepresidente",
+    "segretario",
+    "tesoriere",
+    "presidente_controllo",
+]
+
+
+def _salva_immagine(contrassegno, file, utente, sfondo_trasparente):
+    """Immagine ripulita (PNG senza metadati, sfondo trasparente, ritagliata) al posto della
+    precedente, che si cancella dal disco solo a transazione conclusa."""
+    from django.core.files.storage import default_storage
+
+    from apps.core.immagini import ImmagineNonValida, ripulisci_contrassegno
+
+    try:
+        png = ripulisci_contrassegno(file, sfondo_trasparente=sfondo_trasparente)
+    except ImmagineNonValida as e:
+        raise OperazioneNonValida(e.messages) from None
+    dati = png.read()
+    precedente = contrassegno.immagine.name if contrassegno.immagine else ""
+    contrassegno.impronta = hashlib.sha256(dati).hexdigest()
+    contrassegno.immagine.save("contrassegno.png", ContentFile(dati), save=False)
+    contrassegno.attiva = True
+    contrassegno.caricata_da = utente
+    contrassegno.save()
+    if precedente:
+        transaction.on_commit(lambda: default_storage.delete(precedente))
+
+
+def _elimina_dopo(nome):
+    from django.core.files.storage import default_storage
+
+    if nome:
+        transaction.on_commit(lambda: default_storage.delete(nome))
+
+
+@transaction.atomic
+def carica_firma(soggetto, file, utente, *, sfondo_trasparente=True, autorizzazione=""):
+    if not soggetto.is_persona:
+        raise OperazioneNonValida("La firma si carica per una persona, non per un ente.")
+    firma = FirmaGrafica.objects.filter(soggetto=soggetto).first()
+    nuova = firma is None
+    firma = firma or FirmaGrafica(soggetto=soggetto)
+    firma.autorizzazione = (autorizzazione or "").strip()[:200]
+    _salva_immagine(firma, file, utente, sfondo_trasparente)
+    registra(
+        Azione.CREAZIONE if nuova else Azione.MODIFICA,
+        firma,
+        utente=utente,
+        descrizione=f"Firma grafica di {soggetto.nome_completo}",
+        impronta=firma.impronta,
+        autorizzazione=firma.autorizzazione,
+    )
+    return firma
+
+
+@transaction.atomic
+def carica_timbro(sezione, file, utente, *, sfondo_trasparente=True):
+    timbro = Timbro.objects.filter(sezione=sezione).first()
+    nuovo = timbro is None
+    timbro = timbro or Timbro(sezione=sezione)
+    _salva_immagine(timbro, file, utente, sfondo_trasparente)
+    registra(
+        Azione.CREAZIONE if nuovo else Azione.MODIFICA,
+        timbro,
+        utente=utente,
+        descrizione=str(timbro),
+        impronta=timbro.impronta,
+    )
+    return timbro
+
+
+@transaction.atomic
+def imposta_uso(contrassegno, attiva, utente):
+    """Accende o spegne l'uso nelle stampe (l'immagine resta)."""
+    if contrassegno.attiva != attiva:
+        contrassegno.attiva = attiva
+        contrassegno.save(update_fields=["attiva"])
+        registra(
+            Azione.MODIFICA, contrassegno, utente=utente, descrizione=str(contrassegno),
+            usa_nelle_stampe=attiva,
+        )  # fmt: skip
+
+
+@transaction.atomic
+def togli_contrassegno(contrassegno, utente):
+    descrizione = str(contrassegno)
+    _elimina_dopo(contrassegno.immagine.name)
+    registra(Azione.ELIMINAZIONE, contrassegno, utente=utente, descrizione=descrizione)
+    contrassegno.delete()
+
+
+@transaction.atomic
+def imposta_generici(utente, *, firma_generica, timbro_generico):
+    org = Organizzazione.corrente()
+    prima = (org.firma_generica, org.timbro_generico)
+    org.firma_generica, org.timbro_generico = firma_generica, timbro_generico
+    org.save(update_fields=["firma_generica", "timbro_generico"])
+    if prima != (firma_generica, timbro_generico):
+        registra(
+            Azione.MODIFICA, org, utente=utente, descrizione="Firme e timbri generici",
+            firma_generica=firma_generica, timbro_generico=timbro_generico,
+        )  # fmt: skip
+
+
+def _sezioni(utente):
+    """Id delle sezioni a cui è limitato l'utente (presidente di sezione), None = tutte."""
+    from apps.soci import sezioni
+
+    return sezioni.id_sezioni(utente) if utente is not None else None
+
+
+def firmatari(giorno=None, utente=None):
+    """Chi può comparire oggi in calce alle stampe: cariche con firma (presidente, segretario,
+    tesoriere...) e rappresentanti legali in carica, più chi ha già una firma caricata.
+
+    Per un utente limitato alle sue sezioni: solo cariche e rappresentanti di quelle sezioni.
+    """
+    from django.db.models import Q
+
+    from apps.anagrafica.models import Soggetto
+
+    giorno = giorno or timezone.localdate()
+    ids = _sezioni(utente)
+    ruoli = {}
+    cariche = (
+        Carica.objects.filter(ruolo__in=RUOLI_FIRMATARI, dal__lte=giorno)
+        .filter(Q(al__isnull=True) | Q(al__gt=giorno))
+        .select_related("organo__sezione")
+    )
+    rappresentanti = RappresentanteLegale.objects.filter(dal__lte=giorno).filter(
+        Q(al__isnull=True) | Q(al__gt=giorno)
+    )
+    if ids is not None:
+        cariche = cariche.filter(organo__sezione__in=ids)
+        rappresentanti = rappresentanti.filter(sezione__in=ids)
+    for c in cariche:
+        ente = f" (sezione di {c.organo.sezione.nome})" if c.organo.sezione_id else ""
+        ruoli.setdefault(c.soggetto_id, []).append(f"{c.get_ruolo_display()} - {c.organo}{ente}")
+    for r in rappresentanti.select_related("sezione"):
+        ruoli.setdefault(r.soggetto_id, []).append(f"{r.qualifica} ({r.ambito})")
+    firme = FirmaGrafica.objects.all()
+    if ids is not None:
+        firme = firme.filter(soggetto__in=list(ruoli))
+    firme = {f.soggetto_id: f for f in firme}
+    persone = Soggetto.objects.filter(pk__in=set(ruoli) | set(firme))
+    return [
+        {"soggetto": p, "ruoli": ruoli.get(p.pk, []), "firma": firme.get(p.pk)}
+        for p in persone.order_by("cognome", "nome")
+    ]
+
+
+def timbri_per_ente(utente=None):
+    """[(sezione o None, timbro o None)] per l'associazione e le sezioni attive (per un utente
+    limitato, solo le sue sezioni)."""
+    from apps.soci.models import Sezione
+
+    ids = _sezioni(utente)
+    timbri = {t.sezione_id: t for t in Timbro.objects.all()}
+    attive = Sezione.objects.filter(attiva=True)
+    sezioni = [None, *attive] if ids is None else list(attive.filter(pk__in=ids))
+    return [(s, timbri.get(s.pk if s else None)) for s in sezioni]
+
+
+def puo_gestire_firma(utente, soggetto):
+    if _sezioni(utente) is None:
+        return True
+    return any(r["soggetto"].pk == soggetto.pk for r in firmatari(utente=utente))
+
+
+def puo_gestire_timbro(utente, sezione):
+    ids = _sezioni(utente)
+    return ids is None or (sezione is not None and sezione.pk in ids)
+
+
+def puo_gestire_contrassegno(utente, contrassegno):
+    if isinstance(contrassegno, Timbro):
+        return puo_gestire_timbro(utente, contrassegno.sezione)
+    return puo_gestire_firma(utente, contrassegno.soggetto)
+
+
+def gestisce_tutto(utente):
+    """Associazione e interruttori generali: solo chi non è limitato a una sezione."""
+    return _sezioni(utente) is None

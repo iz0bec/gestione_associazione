@@ -121,7 +121,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   nome di chi era in carica **alla data del documento**; firme alternative («tesoriere, altrimenti
   presidente») e facoltative («tesoriere se c'è»); carica vacante = spazio senza nome. Su ricevute,
   rendiconto, libro soci, inventario, ricevuta di protocollo, dati personali, convocazioni.
-  *Da fare*: immagine della firma (caricata nella carica, servita solo ai PDF).
+  ✅ Immagine della firma (per persona) e timbro (per ente), con firma e timbro generici e la
+  guida per acquisirli (*Organi sociali → Firme e timbri*).
 - ✅ **Domande di iscrizione arrivate per email** (`apps/soci/estrazione.py`): etichetta
   *iscrizione?* sulla posta, dati recuperati dal testo, dai PDF allegati (campi e testo) e dal mittente
   senza inventare nulla, avviso dei doppioni, domanda e protocollazione in entrata in un'unica

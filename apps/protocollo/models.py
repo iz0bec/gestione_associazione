@@ -333,3 +333,74 @@ class MessaggioRicevuto(models.Model):
 
     def get_absolute_url(self):
         return reverse("protocollo:messaggio", args=[self.pk])
+
+
+class ModelloProtocollo(models.Model):
+    """Registrazione tipica da cui partire: direzione, mezzo, classificazione, oggetto, testo e
+    liste di distribuzione precompilati (tutto modificabile prima di registrare)."""
+
+    nome = models.CharField(max_length=120, unique=True)
+    direzione = models.CharField(
+        max_length=8, choices=Protocollo.Direzione.choices, default=Protocollo.Direzione.USCITA
+    )
+    mezzo = models.CharField(
+        max_length=15, choices=Protocollo.Mezzo.choices, default=Protocollo.Mezzo.EMAIL
+    )
+    classificazione = models.ForeignKey(
+        Classificazione, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    oggetto = models.CharField(
+        max_length=500,
+        help_text="{{ anno }}, {{ anno_precedente }}, {{ data }} e {{ organizzazione }} diventano "
+        "i valori del giorno; i puntini (...) ricordano cosa completare.",
+    )
+    testo = models.TextField(
+        blank=True, help_text="Corpo del messaggio, con gli stessi segnaposto."
+    )
+    liste = models.ManyToManyField(
+        "comunicazioni.Lista",
+        blank=True,
+        related_name="+",
+        verbose_name="liste di distribuzione",
+        help_text="Destinatari proposti (solo per uscita e interno).",
+    )
+    riservato = models.BooleanField(default=False)
+    ordine = models.PositiveSmallIntegerField(default=0)
+    attivo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "modello di registrazione"
+        verbose_name_plural = "modelli di registrazione"
+        ordering = ["ordine", "nome"]
+
+    def __str__(self):
+        return self.nome
+
+    def get_absolute_url(self):
+        return reverse("protocollo:modelli")
+
+    def valori(self, oggi=None):
+        """Valori iniziali per una nuova registrazione, con i segnaposto sostituiti."""
+        from django.utils import timezone
+
+        from apps.comunicazioni.servizi import componi
+        from apps.core.models import Organizzazione
+
+        oggi = oggi or timezone.localdate()
+        contesto = {
+            "anno": oggi.year,
+            "anno_precedente": oggi.year - 1,
+            "data": oggi.strftime("%d/%m/%Y"),
+            "organizzazione": Organizzazione.corrente().denominazione,
+        }
+        valori = {
+            "direzione": self.direzione,
+            "mezzo": self.mezzo,
+            "classificazione": self.classificazione_id,
+            "oggetto": componi(self.oggetto, contesto)[:500],
+            "testo": componi(self.testo, contesto),
+            "riservato": self.riservato,
+        }
+        if self.direzione != Protocollo.Direzione.ENTRATA:
+            valori["liste"] = list(self.liste.values_list("pk", flat=True))
+        return valori

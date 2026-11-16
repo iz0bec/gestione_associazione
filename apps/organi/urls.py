@@ -77,4 +77,18 @@ urlpatterns = [
     path("riunioni/<int:pk>/verbale/chiudi/", views.ChiudiVerbaleView.as_view(), name="chiudi"),
     path("riunioni/<int:pk>/verbale.pdf", views.VerbalePdfView.as_view(), name="verbale_pdf"),
     path("delibere/", views.DelibereView.as_view(), name="delibere"),
+    path("firme/", views.FirmeView.as_view(), name="firme"),
+    path("firme/prova.pdf", views.ProvaFirmeView.as_view(), name="prova_firme"),
+    path(
+        "firme/foglio-<str:tipo>.pdf", views.FoglioAcquisizioneView.as_view(), name="foglio_firme"
+    ),
+    path("firme/generiche/", views.GenericiView.as_view(), name="firme_generiche"),
+    path("firme/persona/<int:soggetto>/", views.CaricaFirmaView.as_view(), name="carica_firma"),
+    path("firme/timbro/<int:sezione>/", views.CaricaTimbroView.as_view(), name="carica_timbro"),
+    path("firme/<str:tipo>/<int:pk>/", views.UsoContrassegnoView.as_view(), name="uso_firma"),
+    path(
+        "firme/<str:tipo>/<int:pk>/immagine.png",
+        views.ImmagineContrassegnoView.as_view(),
+        name="immagine_firma",
+    ),
 ]
