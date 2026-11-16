@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.19] - 2026-11-16
+
+Posta scaricata spostata nella cartella PROCESSATA della casella.
+
+### Modificato
+- **Posta scaricata spostata nella cartella `PROCESSATA`** della casella IMAP (email e PEC), creata al
+  primo scaricamento se manca: nella posta in arrivo restano solo i messaggi non ancora acquisiti. Nulla
+  viene cancellato né segnato come letto; si usa MOVE (o copia e cancellazione dei soli messaggi
+  copiati, con UIDPLUS). La cartella si cambia nella scheda della casella; vuota, i messaggi restano dove
+  sono. *Verifica* in *Servizi di posta* indica la cartella e se sarà creata.
+
 ## [1.0.18] - 2026-11-16
 
 Spedizione dei protocolli in uscita per email e PEC, con le ricevute PEC agganciate.
