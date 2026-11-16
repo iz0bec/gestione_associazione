@@ -282,7 +282,8 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 ## ADR-027 - Posta scaricata spostata nella cartella PROCESSATA
 
 - **Scelta**: dopo lo scaricamento i messaggi (nuovi o già presenti nel programma) si spostano nella cartella
-  della casella indicata in `cartella_processata` (predefinita `PROCESSATA`, creata e sottoscritta se manca);
+  della casella indicata in `cartella_processata` (predefinita `PROCESSATA`, creata e sottoscritta se manca,
+  con il prefisso del namespace personale letto con NAMESPACE: `INBOX.PROCESSATA` su Aruba/Courier);
   vuota = comportamento precedente in sola lettura. Si usa `UID MOVE`; in mancanza `UID COPY` + `\Deleted` +
   `UID EXPUNGE` dei soli messaggi copiati (UIDPLUS). Senza nessuna delle due non si sposta nulla e la casella
   va in errore: un `EXPUNGE` generico cancellerebbe anche messaggi eliminati dall'utente.

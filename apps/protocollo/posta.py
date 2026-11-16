@@ -16,6 +16,7 @@ import email
 import hashlib
 import imaplib
 import logging
+import re
 import ssl
 from datetime import timedelta
 from email import policy
@@ -171,6 +172,24 @@ def _capacita(conn):
     return {c.upper() for c in dati[0].decode(errors="replace").split()}
 
 
+def nome_sul_server(conn, cartella):
+    """Nome completo della cartella nel namespace personale del server (es. Aruba e Courier
+    vogliono «INBOX.PROCESSATA»): si chiede al server con NAMESPACE, se lo supporta."""
+    if cartella.upper().startswith("INBOX"):
+        return cartella
+    try:
+        stato, dati = conn.namespace()
+    except (imaplib.IMAP4.error, AttributeError):
+        return cartella
+    if stato != "OK" or not dati or not dati[0]:
+        return cartella
+    trovato = re.match(rb'\s*\(\("([^"]*)"', dati[0])
+    prefisso = trovato.group(1).decode(errors="replace") if trovato else ""
+    if prefisso and not cartella.startswith(prefisso):
+        return prefisso + cartella
+    return cartella
+
+
 def _assicura_cartella(conn, cartella):
     """Crea la cartella se non esiste (e la sottoscrive, per vederla nel client di posta)."""
     stato, _ = conn.status(_quota(cartella), "(MESSAGES)")
@@ -188,6 +207,7 @@ def _assicura_cartella(conn, cartella):
 def _sposta(conn, uids, cartella):
     """Sposta i messaggi (per UID) nella cartella: MOVE, oppure COPY con cancellazione dei soli
     messaggi copiati (UID EXPUNGE). Senza nessuna delle due non si tocca nulla."""
+    cartella = nome_sul_server(conn, cartella)
     _assicura_cartella(conn, cartella)
     capacita = _capacita(conn)
     if "MOVE" not in capacita and "UIDPLUS" not in capacita:
@@ -272,6 +292,7 @@ def verifica_casella(casella):
         gia = MessaggioRicevuto.objects.filter(casella=casella).count()
         archivio = casella.cartella_processata.strip()
         if archivio:
+            archivio = nome_sul_server(conn, archivio)
             esiste = conn.status(_quota(archivio), "(MESSAGES)")[0] == "OK"
             capacita = _capacita(conn)
     finally:

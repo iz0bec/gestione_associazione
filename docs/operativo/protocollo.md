@@ -137,7 +137,8 @@ destinatario, email; poi direzione, classificazione, stato (validi/annullati), a
 Se sono configurate le caselle email o PEC, i messaggi arrivano in **Posta da protocollare**
 (automaticamente ogni 15 minuti, oppure con **Scarica ora**). Sul server non viene cancellato né
 segnato come letto nulla: i messaggi scaricati vengono **spostati nella cartella `PROCESSATA`** della
-casella (creata al primo scaricamento, visibile anche dalla webmail), così nella posta in arrivo restano
+casella (creata al primo scaricamento, visibile anche dalla webmail; con Aruba si chiama
+`INBOX.PROCESSATA`, cioè una sottocartella della posta in arrivo), così nella posta in arrivo restano
 solo quelli non ancora acquisiti. La cartella si cambia nella scheda della casella; lasciandola vuota i
 messaggi restano dove sono.
 

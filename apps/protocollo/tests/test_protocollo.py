@@ -289,7 +289,8 @@ class TestPosta:
 class ImapConCartelle:
     """Server IMAP finto con cartelle, UID e capacità scelte."""
 
-    def __init__(self, messaggi, capacita=("IMAP4REV1", "MOVE"), cartelle=("INBOX",)):
+    def __init__(self, messaggi, capacita=("IMAP4REV1", "MOVE"), cartelle=("INBOX",), prefisso=""):
+        self.prefisso = prefisso
         self.cartelle = {c: {} for c in cartelle}
         self.cartelle["INBOX"] = dict(messaggi)
         self.capacita = capacita
@@ -300,6 +301,9 @@ class ImapConCartelle:
     def capability(self):
         return "OK", [" ".join(self.capacita).encode()]
 
+    def namespace(self):
+        return "OK", [f'(("{self.prefisso}" ".")) NIL NIL'.encode()]
+
     def select(self, cartella, readonly):
         self.readonly = readonly
         return "OK", [str(len(self.cartelle["INBOX"])).encode()]
@@ -308,7 +312,10 @@ class ImapConCartelle:
         return ("OK", [b"x"]) if cartella.strip('"') in self.cartelle else ("NO", [b"no"])
 
     def create(self, cartella):
-        self.cartelle[cartella.strip('"')] = {}
+        nome = cartella.strip('"')
+        if not nome.startswith(self.prefisso):
+            return "NO", [b"Client tried to access nonexistent namespace."]
+        self.cartelle[nome] = {}
         return "OK", [b""]
 
     def subscribe(self, cartella):
@@ -362,6 +369,15 @@ class TestCartellaProcessata:
         assert imap.cartelle["INBOX"] == {} and set(imap.cartelle["PROCESSATA"]) == {b"1", b"2"}
         assert imap.sottoscritte == ["PROCESSATA"] and "MOVE" in imap.comandi
         assert MessaggioRicevuto.objects.count() == 2
+
+    def test_namespace_del_server(self, monkeypatch):
+        """Aruba (Courier): le cartelle stanno sotto «INBOX.»."""
+        imap = ImapConCartelle(self._messaggi(), prefisso="INBOX.")
+        monkeypatch.setattr(posta, "_connetti", lambda c: imap)
+        assert posta.scarica_casella(_casella()) == 2
+        assert set(imap.cartelle["INBOX.PROCESSATA"]) == {b"1", b"2"}
+        assert imap.sottoscritte == ["INBOX.PROCESSATA"]
+        assert "«INBOX.PROCESSATA» (sarà creata" not in posta.verifica_casella(_casella())
 
     def test_gia_scaricati_spostati_comunque(self, monkeypatch):
         casella = _casella()

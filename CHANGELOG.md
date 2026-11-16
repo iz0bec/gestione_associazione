@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.20] - 2026-11-16
+
+Cartella PROCESSATA nel namespace del server (Aruba).
+
+### Corretto
+- La cartella dei messaggi scaricati si crea nel **namespace personale** del server, letto con il
+  comando NAMESPACE: con Aruba (e i server Courier) diventa `INBOX.PROCESSATA`. Con la 1.0.19 la
+  creazione di `PROCESSATA` era rifiutata («nonexistent namespace») e i messaggi, pur scaricati,
+  restavano nella posta in arrivo.
+
 ## [1.0.19] - 2026-11-16
 
 Posta scaricata spostata nella cartella PROCESSATA della casella.
