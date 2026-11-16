@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.14] - 2026-11-16
+
+Indirizzo postale nelle liste di destinatari in Excel.
+
 ### Aggiunto
 - Liste in Excel: **indirizzo postale** nel foglio Persone (indirizzo, CAP, comune, provincia,
   nazione). All'importazione completa solo i campi vuoti delle schede esistenti e segnala i valori
