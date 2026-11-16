@@ -51,7 +51,7 @@ class ProtocolloQuerySet(models.QuerySet):
 
 
 class Protocollo(ModelloBase):
-    """Registrazione di protocollo. Numero, data, oggetto e corrispondenti non si modificano:
+    """Registrazione di protocollo. Numero, data, oggetto, testo e corrispondenti non si modificano:
     un errore si corregge annullando la registrazione e registrandone una nuova."""
 
     class Direzione(models.TextChoices):
@@ -76,6 +76,10 @@ class Protocollo(ModelloBase):
     direzione = models.CharField(max_length=8, choices=Direzione.choices)
     mezzo = models.CharField(max_length=15, choices=Mezzo.choices, default=Mezzo.EMAIL)
     oggetto = models.CharField(max_length=500)
+    testo = models.TextField(
+        blank=True,
+        help_text="Corpo del messaggio (email, PEC, messaggistica) o trascrizione del documento.",
+    )
     data_documento = models.DateField("data del documento", null=True, blank=True)
     riferimento_mittente = models.CharField(
         "protocollo del mittente",

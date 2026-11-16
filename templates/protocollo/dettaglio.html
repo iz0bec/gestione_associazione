@@ -32,6 +32,7 @@
           {% if protocollo.risposta_a %}<div class="datagrid-item"><div class="datagrid-title">In risposta a</div><div class="datagrid-content"><a href="{{ protocollo.risposta_a.get_absolute_url }}">{{ protocollo.risposta_a.segnatura }}</a></div></div>{% endif %}
           {% for r in risposte %}<div class="datagrid-item"><div class="datagrid-title">Risposta</div><div class="datagrid-content"><a href="{{ r.get_absolute_url }}">{{ r.segnatura }}</a></div></div>{% endfor %}
         </div>
+        {% if protocollo.testo %}<hr><div class="testo-messaggio">{{ protocollo.testo }}</div>{% endif %}
         {% if protocollo.note %}<hr><div class="text-secondary">{{ protocollo.note|linebreaksbr }}</div>{% endif %}
       </div>
       <div class="card-footer text-secondary small">Registrato da {{ protocollo.creato_da|default:"sistema" }}</div>

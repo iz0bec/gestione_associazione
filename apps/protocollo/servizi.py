@@ -390,6 +390,7 @@ def protocolla_messaggio(
             "direzione": Protocollo.Direzione.ENTRATA,
             "mezzo": Protocollo.Mezzo.PEC if messaggio.casella.pec else Protocollo.Mezzo.EMAIL,
             "oggetto": oggetto,
+            "testo": messaggio.testo,
             "data_documento": timezone.localtime(messaggio.data).date() if messaggio.data else None,
             "classificazione": classificazione,
             "riservato": riservato,

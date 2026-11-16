@@ -248,6 +248,7 @@ class TestPosta:
         assert m.stato == "protocollato" and m.protocollo == p
         assert p.corrispondenti.get().soggetto == comune and p.direzione == "entrata"
         assert sorted(a.nome for a in p.allegati.all()) == ["domanda.pdf", "messaggio.eml"]
+        assert p.testo and p.testo == m.testo
         with pytest.raises(OperazioneNonValida):
             servizi.protocolla_messaggio(m, utente, oggetto="di nuovo")
 
@@ -314,6 +315,7 @@ class TestViste:
                 "direzione": "entrata",
                 "mezzo": "pec",
                 "oggetto": "  Invito   alla cerimonia ",
+                "testo": "Gentile presidente,\r\nla invitiamo alla cerimonia.\r\n",
                 "mittenti": [comune.pk],
                 "mittenti_altri": "Prefettura <prefettura@example.org>\nCarabinieri",
                 "allegati": [_pdf("invito.pdf"), _pdf("programma.pdf", b"%PDF-1.4 b")],
@@ -325,6 +327,11 @@ class TestViste:
             "Comune di Avigliano", "Prefettura", "Carabinieri",
         ]  # fmt: skip
         assert p.allegati.get(principale=True).nome == "invito.pdf"
+        assert p.testo == "Gentile presidente,\nla invitiamo alla cerimonia."
+        dettaglio = client.get(p.get_absolute_url())
+        assert "la invitiamo alla cerimonia" in dettaglio.text
+        elenco = client.get(reverse("protocollo:elenco"), {"q": "invitiamo"})
+        assert p.oggetto in elenco.text
 
     def test_modifica_solo_dati_accessori(self, client, crea_utente, utente):
         p = _registra(utente)
@@ -332,10 +339,15 @@ class TestViste:
         client.force_login(segretario)
         client.post(
             reverse("protocollo:modifica", args=[p.pk]),
-            {"oggetto": "cambiato", "note": "nota", "riservato": "on"},
+            {"oggetto": "cambiato", "testo": "cambiato", "note": "nota", "riservato": "on"},
         )
         p.refresh_from_db()
-        assert p.oggetto == "Richiesta patrocinio" and p.note == "nota" and p.riservato
+        assert (
+            p.testo == ""
+            and p.oggetto == "Richiesta patrocinio"
+            and p.note == "nota"
+            and p.riservato
+        )
 
     def test_pagine(self, client, utente, comune, settings):
         settings.CHIAVE_CIFRATURA = nuova_chiave()

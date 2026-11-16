@@ -107,12 +107,13 @@ class ProtocolloForm(StileMixin, forms.ModelForm):
     class Meta:
         model = Protocollo
         fields = [
-            "direzione", "mezzo", "oggetto", "data_documento", "riferimento_mittente",
+            "direzione", "mezzo", "oggetto", "testo", "data_documento", "riferimento_mittente",
             "data_ricezione", "classificazione", "riservato", "note",
         ]  # fmt: skip
         widgets = {
             "direzione": forms.RadioSelect,
             "oggetto": forms.Textarea(attrs={"rows": 2, "maxlength": 500}),
+            "testo": forms.Textarea(attrs={"rows": 6}),
             "data_documento": CampoData,
             "data_ricezione": CampoData,
             "note": forms.Textarea(attrs={"rows": 2}),
@@ -126,6 +127,9 @@ class ProtocolloForm(StileMixin, forms.ModelForm):
 
     def clean_oggetto(self):
         return " ".join(self.cleaned_data["oggetto"].split())
+
+    def clean_testo(self):
+        return self.cleaned_data["testo"].replace("\r\n", "\n").strip()
 
     def clean(self):
         dati = super().clean()

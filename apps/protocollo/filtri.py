@@ -68,6 +68,7 @@ class ProtocolloFilter(django_filters.FilterSet):
                 | Q(corrispondenti__indirizzo__icontains=parola)
                 | Q(riferimento_mittente__icontains=parola)
                 | Q(note__icontains=parola)
+                | Q(testo__icontains=parola)
             )
         return queryset.distinct()
 

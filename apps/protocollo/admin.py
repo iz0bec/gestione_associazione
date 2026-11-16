@@ -30,7 +30,7 @@ class ClassificazioneAdmin(admin.ModelAdmin):
 class ProtocolloAdmin(SolaLettura):
     list_display = ["segnatura", "registrato_il", "direzione", "oggetto", "annullato"]
     list_filter = ["anno", "direzione", "annullato"]
-    search_fields = ["oggetto"]
+    search_fields = ["oggetto", "testo"]
 
 
 @admin.register(RegistroGiornaliero)

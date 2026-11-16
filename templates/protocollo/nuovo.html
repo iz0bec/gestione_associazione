@@ -11,6 +11,7 @@
       <div class="col-lg-3">{{ form.mezzo.as_field_group }}</div>
       <div class="col-lg-3">{{ form.classificazione.as_field_group }}</div>
       <div class="col-12">{{ form.oggetto.as_field_group }}</div>
+      <div class="col-12">{{ form.testo.as_field_group }}</div>
     </div>
     <div class="row">
       <fieldset class="col-lg-6" data-direzioni="entrata interno">
@@ -39,7 +40,7 @@
   </div>
   <div class="card-footer d-flex align-items-center">
     <a class="btn btn-link" href="{% url 'protocollo:elenco' %}">Annulla</a>
-    <span class="text-secondary small ms-auto me-3 d-none d-md-inline">Numero e data sono assegnati alla registrazione; oggetto e corrispondenti non saranno più modificabili.</span>
+    <span class="text-secondary small ms-auto me-3 d-none d-md-inline">Numero e data sono assegnati alla registrazione; oggetto, testo e corrispondenti non saranno più modificabili.</span>
     <button type="submit" class="btn btn-primary"><i class="ti ti-stamp me-1"></i>Registra</button>
   </div>
 </form>

@@ -17,7 +17,7 @@ e la data e l'ora di registrazione, assegnati automaticamente.
 
 ## Regole da conoscere
 
-- Numero, data, direzione, **oggetto e corrispondenti non si modificano** dopo la registrazione.
+- Numero, data, direzione, **oggetto, testo e corrispondenti non si modificano** dopo la registrazione.
   Se c'è un errore si **annulla** la registrazione (con il motivo) e se ne fa una nuova: il numero
   annullato resta nel registro e non viene riutilizzato.
 - Si possono sempre aggiornare i dati accessori: classificazione, collegamento a un altro protocollo,
@@ -36,6 +36,9 @@ e la data e l'ora di registrazione, assegnati automaticamente.
 1. **Direzione**: entrata (ricevuto), uscita (spedito), interno (es. comunicazione tra organi).
 2. **Mezzo**: email, PEC, posta, raccomandata, a mano...
 3. **Oggetto**: chiaro e completo, perché non si potrà correggere.
+   **Testo** (facoltativo): il corpo di un'email, di una PEC o di un messaggio (WhatsApp, SMS...)
+   incollato così com'è, oppure la trascrizione di una comunicazione a voce o di un biglietto.
+   Serve quando il contenuto non è in un file da allegare; si cerca come l'oggetto.
 4. **Mittenti** (entrata) o **destinatari** (uscita): cercare nell'anagrafica scrivendo nome, ente o
    email e cliccare il risultato; compare un'etichetta (togliendo la spunta lo si esclude). Chi non è
    in anagrafica si scrive nel riquadro sotto, uno per riga: `Prefettura di Potenza <prefettura@pec.it>`
@@ -53,7 +56,7 @@ a mano o da apporre sul documento cartaceo.
 
 ## Cercare
 
-Il registro si filtra mentre si scrive: numero (`42` o `2026-42`), parole dell'oggetto, mittente,
+Il registro si filtra mentre si scrive: numero (`42` o `2026-42`), parole dell'oggetto o del testo, mittente,
 destinatario, email; poi direzione, classificazione, stato (validi/annullati), anno e periodo.
 **Esporta CSV** scarica le registrazioni filtrate (operazione registrata).
 
@@ -70,7 +73,7 @@ Per ogni messaggio:
   e si aprono gli allegati;
 - **Protocolla**: si conferma o si migliora l'oggetto, si sceglie la classificazione; il mittente viene
   riconosciuto se la sua email o PEC è in anagrafica. Il messaggio originale e gli allegati diventano i
-  documenti del protocollo;
+  documenti del protocollo e il testo del messaggio diventa il **testo** della registrazione;
 - **Domanda di iscrizione**: per le richieste di iscrizione (etichetta *iscrizione?* nell'elenco),
   registra la domanda con i dati recuperati dal messaggio e protocolla in un colpo solo (vedi il
   manuale *Soci*, *Domande arrivate per email*);
