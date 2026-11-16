@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.16] - 2026-11-16
+
+Sezioni nelle liste e nel libro soci; stampe ed esportazioni che seguono i filtri.
+
 ### Corretto
 - Elenco dei soci: **Stampa ed esporta** segue i filtri scelti. Il libro soci in PDF stampava sempre
   tutto anche con una sezione selezionata, e dopo un filtro applicato senza ricaricare la pagina
