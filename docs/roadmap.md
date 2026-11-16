@@ -47,6 +47,7 @@
 | **1.0.12** ✅ | conferma di ricezione delle domande di iscrizione arrivate per email, con il numero di protocollo | GitHub, GitLab |
 | **1.0.13** ✅ | liste di destinatari in Excel (modifica fuori linea e reimportazione), conservazione dei backup a rotazione con backup esclusi, tetto di spazio e controllo del disco, ripristino che torna allo stato precedente se non riesce | GitHub, GitLab |
 | **1.0.14** ✅ | indirizzo postale nel foglio Persone delle liste in Excel (completa solo i campi vuoti, segnala i valori diversi) | GitHub, GitLab |
+| **1.0.15** ✅ | lettere in PDF e buste DL per i destinatari senza email delle comunicazioni; indirizzi postali e motivo nel foglio Destinatari delle liste in Excel | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

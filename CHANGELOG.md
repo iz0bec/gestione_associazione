@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.15] - 2026-11-16
+
+Lettere e buste per chi non ha l'email; indirizzi dei soci nelle liste esportate.
+
 ### Aggiunto
 - **Comunicazioni su carta** per chi non ha l'email: nella pagina dell'invio, lettere in PDF (una
   per persona, con i segnaposto risolti e l'indirizzo nella finestra della busta), buste DL in Word
