@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.11] - 2026-11-16
+
+Manuale di gestione documentale e pubblicazione nel catalogo del riuso.
+
 ### Aggiunto
 - **Manuale di gestione documentale** (Protocollo → Altro → *Manuale di gestione*), sul modello delle
   Linee guida AgID: composto dalla configurazione reale (sezioni, ruoli e utenti abilitati, caselle,
