@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.9] - 2026-11-16
+
+Testo del protocollo.
+
+### Aggiunto
+- **Testo del protocollo**: nella nuova registrazione un campo per il corpo di email, PEC o messaggi
+  (o la trascrizione di una comunicazione) quando il contenuto non è in un file da allegare. Come
+  l'oggetto non si modifica dopo la registrazione; è mostrato nel dettaglio e si cerca nel registro e
+  nella ricerca globale. Protocollando un messaggio della posta il testo viene riportato in automatico.
+
 ## [1.0.8] - 2026-11-10
 
 Correzione nelle comunicazioni.
