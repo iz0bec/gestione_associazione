@@ -83,7 +83,7 @@ Un segnaposto scritto male viene segnalato e la comunicazione non parte.
    - **Lista**: nome, descrizione, soci (tutti o solo in regola: «sì»/«no»), organo, categorie
      (separate da punto e virgola) e il *codice lista*, che non va modificato;
    - **Persone**: le persone e gli enti scelti uno per uno (codice, tipo, cognome o denominazione,
-     nome, codice fiscale, email);
+     nome, codice fiscale, email e indirizzo postale: indirizzo, CAP, comune, provincia, nazione);
    - **Destinatari**: chi riceve oggi le comunicazioni della lista, solo da consultare;
    - **Istruzioni**.
 2. Si lavora sul file anche senza collegamento: per togliere qualcuno si cancella la riga, per
@@ -98,6 +98,11 @@ anagrafica è solo segnalato, a meno di spuntare **Crea in anagrafica le persone
 permesso di inserire schede): la scheda nasce con i soli dati del file e senza consensi, quindi riceve
 solo le comunicazioni istituzionali finché non si registra il consenso. Organi e categorie sconosciuti
 sono segnalati e ignorati. Esportazione e importazione restano nel registro attività.
+
+Gli **indirizzi postali** servono per le buste di chi non ha l'email. Delle schede già presenti si
+**completano solo i campi vuoti**: un valore diverso da quello in anagrafica è segnalato
+nell'anteprima e resta com'è (si corregge nella scheda). Un CAP o una provincia non validi sono
+segnalati e ignorati; un CAP a cui Excel ha tolto lo zero iniziale viene ricomposto.
 
 ## Dagli altri moduli
 

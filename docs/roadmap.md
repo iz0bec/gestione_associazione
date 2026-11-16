@@ -144,6 +144,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   (giornalieri, settimanali, mensili), con tetto di spazio, controllo del disco e backup esclusi
   dalla rotazione.
 - ✅ Liste di destinatari in Excel: esportazione per la modifica fuori linea e reimportazione con anteprima.
+- **Backup incrementali dei documenti**: i file del protocollo non cambiano mai (il nome è
+  l'impronta), quindi si salvano una volta sola e i backup vi fanno riferimento; oggi ogni backup
+  li contiene tutti (ad Avigliano circa 190 MB a backup).
 - **Utenti connessi**: chi sta usando il gestionale in questo momento (per l'amministratore).
 - **Chat interna** fra gli utenti del gestionale.
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).

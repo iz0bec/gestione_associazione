@@ -35,7 +35,13 @@ CAMPI_LISTA = [
     ("organo", "Componenti in carica dell'organo"),
     ("categorie", "Categorie dell'anagrafica"),
 ]
-COLONNE_PERSONE = ["Codice", "Tipo", "Cognome o denominazione", "Nome", "Codice fiscale", "Email"]
+COLONNE_PERSONE = [
+    "Codice", "Tipo", "Cognome o denominazione", "Nome", "Codice fiscale", "Email",
+    "Indirizzo", "CAP", "Comune", "Provincia", "Nazione",
+]  # fmt: skip
+POSTALI = ["indirizzo", "cap", "comune", "provincia", "nazione"]
+ETICHETTE_POSTALI = {"indirizzo": "indirizzo", "cap": "CAP", "comune": "comune",
+                     "provincia": "provincia", "nazione": "nazione"}  # fmt: skip
 
 ISTRUZIONI = [
     "Come modificare la lista fuori linea",
@@ -52,7 +58,10 @@ ISTRUZIONI = [
     "  - Per aggiungere qualcuno basta una riga con il codice fiscale o l'email di una scheda già",
     "    presente in anagrafica; il codice resta vuoto.",
     "  - Chi non è in anagrafica viene segnalato nell'anteprima; si può chiedere di creare la",
-    "    scheda (Tipo «persona» o «ente», cognome o denominazione, email).",
+    "    scheda (Tipo «persona» o «ente», cognome o denominazione, email, indirizzo postale).",
+    "  - Indirizzo, CAP, comune, provincia (sigla) e nazione (IT, FR...): servono per le buste di",
+    "    chi non ha l'email. Delle schede già presenti si completano solo i campi vuoti; un valore",
+    "    diverso da quello in anagrafica viene segnalato e non cambia: si corregge nella scheda.",
     "",
     "Foglio «Destinatari»: chi riceve oggi le comunicazioni della lista (soci, categorie, organo",
     "e persone scelte). È solo da consultare: all'importazione viene ignorato.",
@@ -111,8 +120,10 @@ def esporta(lista, utente):
         wp.append([
             s.pk, "persona" if persona else "ente", s.cognome if persona else s.denominazione,
             s.nome if persona else "", s.codice_fiscale or "", s.email,
+            s.indirizzo, s.cap, s.comune, s.provincia, s.nazione,
         ])  # fmt: skip
-    for lettera, larghezza in zip("ABCDEF", (10, 10, 30, 22, 20, 32), strict=True):
+    larghezze = (10, 10, 30, 22, 20, 32, 36, 8, 24, 10, 9)
+    for lettera, larghezza in zip("ABCDEFGHIJK", larghezze, strict=True):
         wp.column_dimensions[lettera].width = larghezza
 
     wd = wb.create_sheet(FOGLIO_DESTINATARI)
@@ -256,15 +267,48 @@ def _trova(codice, cf, email):
     return None, ""
 
 
-def _scheda_nuova(tipo, cognome, nome, cf, email):
+def _postale(valori):
+    """Indirizzo postale dalle colonne del file, normalizzato (CAP a 5 cifre, sigle maiuscole)."""
+    d = dict(zip(POSTALI, (_testo(v) for v in valori), strict=True))
+    if d["cap"].isdigit() and len(d["cap"]) < 5:  # Excel toglie gli zeri iniziali
+        d["cap"] = d["cap"].zfill(5)
+    d["provincia"], d["nazione"] = d["provincia"].upper(), d["nazione"].upper()
+    return {k: v for k, v in d.items() if v}
+
+
+def _completamenti(soggetto, postale):
+    """(campi vuoti da completare, campi diversi lasciati com'erano, campi non validi)."""
+    completa, diversi, errati = {}, [], []
+    for campo, valore in postale.items():
+        attuale = getattr(soggetto, campo) or ""
+        if campo == "nazione" and attuale == "IT" and not soggetto.indirizzo:
+            attuale = ""  # valore predefinito, non un dato inserito
+        if attuale == valore:
+            continue
+        if attuale:
+            diversi.append(ETICHETTE_POSTALI[campo])
+            continue
+        try:
+            Soggetto._meta.get_field(campo).clean(valore, soggetto)
+        except ValidationError:
+            errati.append(f"{ETICHETTE_POSTALI[campo]} «{valore}» non valido")
+            continue
+        completa[campo] = valore
+    return completa, diversi, errati
+
+
+def _scheda_nuova(tipo, cognome, nome, cf, email, postale=None):
     """Scheda da creare con i soli dati del file; errori di validazione come testo."""
     tipo = _norma(tipo) or "persona"
     if tipo not in ("persona", "ente"):
         return None, f"tipo «{tipo}» non riconosciuto (persona o ente)"
+    postale = postale or {}
     if tipo == "persona":
-        s = Soggetto(tipo=tipo, cognome=cognome, nome=nome, codice_fiscale=cf or None, email=email)
+        s = Soggetto(tipo=tipo, cognome=cognome, nome=nome, codice_fiscale=cf or None, email=email,
+                     **postale)  # fmt: skip
     else:
-        s = Soggetto(tipo=tipo, denominazione=cognome, codice_fiscale=cf or None, email=email)
+        s = Soggetto(tipo=tipo, denominazione=cognome, codice_fiscale=cf or None, email=email,
+                     **postale)  # fmt: skip
     try:
         s.full_clean()
     except ValidationError as e:
@@ -320,8 +364,9 @@ def prepara(fogli, *, crea_schede=False):
 
     righe, visti = [], set()
     for numero, riga in enumerate(fogli[FOGLIO_PERSONE][1:], start=2):
-        riga = (list(riga) + [None] * 6)[:6]
-        cod, tipo, cognome, nome_p, cf, email = (_testo(c) for c in riga)
+        riga = (list(riga) + [None] * 11)[:11]
+        cod, tipo, cognome, nome_p, cf, email = (_testo(c) for c in riga[:6])
+        postale = _postale(riga[6:])
         cf, email = cf.upper(), email.lower()
         if not any((cod, cognome, nome_p, cf, email)):
             continue
@@ -331,7 +376,15 @@ def prepara(fogli, *, crea_schede=False):
             if s.pk in visti:
                 continue
             visti.add(s.pk)
-            righe.append(Riga(numero, s.nome_completo, "abbinata", soggetto=s))
+            completa, diversi, errati = _completamenti(s, postale)
+            note = []
+            if completa:
+                note.append("completerà: " + ", ".join(ETICHETTE_POSTALI[c] for c in completa))
+            if diversi:
+                note.append("diverso in anagrafica, non modificato: " + ", ".join(diversi))
+            note += errati
+            righe.append(Riga(numero, s.nome_completo, "abbinata", "; ".join(note),
+                              soggetto=s, dati={"completa": completa}))  # fmt: skip
         elif motivo.startswith("più schede"):
             righe.append(Riga(numero, etichetta, "ambigua", motivo))
         elif cod:
@@ -339,7 +392,7 @@ def prepara(fogli, *, crea_schede=False):
         elif not crea_schede:
             righe.append(Riga(numero, etichetta, "non_trovata", "non presente in anagrafica"))
         else:
-            nuova, errore = _scheda_nuova(tipo, cognome, nome_p, cf, email)
+            nuova, errore = _scheda_nuova(tipo, cognome, nome_p, cf, email, postale)
             if nuova is None:
                 righe.append(Riga(numero, etichetta, "scartata", errore))
             else:
@@ -349,7 +402,7 @@ def prepara(fogli, *, crea_schede=False):
                 visti.add(chiave)
                 righe.append(Riga(numero, etichetta, "nuova", "scheda da creare in anagrafica",
                                   dati={"tipo": nuova.tipo, "cognome": cognome, "nome": nome_p,
-                                        "cf": cf, "email": email}))  # fmt: skip
+                                        "cf": cf, "email": email, "postale": postale}))  # fmt: skip
 
     piano = Piano(
         lista=lista, nome=nome, descrizione=descrizione,
@@ -386,12 +439,24 @@ def applica(piano, utente):
     lista.save()
 
     soggetti = [r.soggetto for r in piano.righe if r.esito == "abbinata"]
-    creati = 0
+    creati = completate = 0
     for r in piano.righe:
+        if r.esito == "abbinata" and r.dati.get("completa"):
+            s = Soggetto.objects.select_for_update().get(pk=r.soggetto.pk)
+            campi = {c: v for c, v in r.dati["completa"].items() if not getattr(s, c)
+                     or (c == "nazione" and not s.indirizzo)}  # fmt: skip
+            if campi:
+                for c, v in campi.items():
+                    setattr(s, c, v)
+                s.save(update_fields=[*campi, "modificato_il"])
+                registra(Azione.MODIFICA, s, utente=utente, origine="importazione lista",
+                         lista=lista.pk, completati=campi)  # fmt: skip
+                completate += 1
         if r.esito != "nuova":
             continue
         d = r.dati
-        s, errore = _scheda_nuova(d["tipo"], d["cognome"], d["nome"], d["cf"], d["email"])
+        s, errore = _scheda_nuova(d["tipo"], d["cognome"], d["nome"], d["cf"], d["email"],
+                                  d.get("postale"))  # fmt: skip
         if s is None:
             raise ValidationError(f"Riga {r.numero}: {errore}")
         s.save()
@@ -402,6 +467,7 @@ def applica(piano, utente):
     lista.categorie.set(piano.categorie)
 
     dettagli = {"origine": "importazione da Excel", "schede_create": creati,
+                "schede_completate": completate,
                 "persone": len(soggetti)}  # fmt: skip
     if prima:
         dettagli["prima"] = prima

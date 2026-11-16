@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Liste in Excel: **indirizzo postale** nel foglio Persone (indirizzo, CAP, comune, provincia,
+  nazione). All'importazione completa solo i campi vuoti delle schede esistenti e segnala i valori
+  diversi senza cambiarli; le schede nuove nascono con l'indirizzo del file.
+
 ## [1.0.13] - 2026-11-16
 
 Liste di destinatari in Excel, conservazione dei backup a rotazione, ripristino che torna indietro.

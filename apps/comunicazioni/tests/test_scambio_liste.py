@@ -114,6 +114,40 @@ class TestImportazione:
         ente = Soggetto.objects.get(denominazione="Comune di Prova")
         assert ente.tipo == "ente" and ente in nuova.soggetti.all()
 
+    def test_indirizzi_postali(self, lista, utente):
+        rossi = Soggetto.objects.get(cognome="Rossi")
+        rossi.comune = "Avigliano"
+        rossi.save()
+        wb = _file(scambio_liste.esporta(lista, utente))
+        wp = wb["Persone"]
+        assert [c.value for c in wp[1]][6:] == [
+            "Indirizzo",
+            "CAP",
+            "Comune",
+            "Provincia",
+            "Nazione",
+        ]
+        for riga in wp.iter_rows(min_row=2):
+            if riga[2].value == "Rossi":
+                riga[6].value, riga[7].value, riga[8].value = "Via Roma 1", 85021, "Potenza"
+                riga[9].value = "pz"
+            else:  # Bianchi
+                riga[7].value = "123456"
+        wp.append([None, "ente", "Prefettura", None, None, "pref@example.org",
+                   "Piazza Mario Pagano", "85100", "Potenza", "PZ", "IT"])  # fmt: skip
+        piano = scambio_liste.prepara(scambio_liste.leggi(_salva(wb)), crea_schede=True)
+        esiti = {r.descrizione: r.dettaglio for r in piano.righe}
+        assert "completerà: indirizzo, CAP, provincia" in esiti["Rossi Mario"]
+        assert "diverso in anagrafica, non modificato: comune" in esiti["Rossi Mario"]
+        assert "CAP «123456» non valido" in esiti["Bianchi Mario"]
+        scambio_liste.applica(piano, utente)
+        rossi.refresh_from_db()
+        assert (rossi.indirizzo, rossi.cap, rossi.comune, rossi.provincia) == (
+            "Via Roma 1", "85021", "Avigliano", "PZ")  # fmt: skip
+        assert Soggetto.objects.get(cognome="Bianchi").cap == ""
+        pref = Soggetto.objects.get(denominazione="Prefettura")
+        assert (pref.cap, pref.comune, pref.provincia) == ("85100", "Potenza", "PZ")
+
     def test_nome_di_un_altra_lista(self, lista, utente):
         Lista.objects.create(nome="Altra")
         wb = _file(scambio_liste.esporta(lista, utente))
