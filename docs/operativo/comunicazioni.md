@@ -84,7 +84,9 @@ Un segnaposto scritto male viene segnalato e la comunicazione non parte.
      (separate da punto e virgola) e il *codice lista*, che non va modificato;
    - **Persone**: le persone e gli enti scelti uno per uno (codice, tipo, cognome o denominazione,
      nome, codice fiscale, email e indirizzo postale: indirizzo, CAP, comune, provincia, nazione);
-   - **Destinatari**: chi riceve oggi le comunicazioni della lista, solo da consultare;
+   - **Destinatari**: chi riceve oggi le comunicazioni della lista, **compresi i soci, le categorie
+     e l'organo**, con email, indirizzo postale e il motivo per cui è nella lista (scelto, socio,
+     categoria, organo). È solo da consultare: all'importazione viene ignorato;
    - **Istruzioni**.
 2. Si lavora sul file anche senza collegamento: per togliere qualcuno si cancella la riga, per
    aggiungere qualcuno già in anagrafica basta il codice fiscale o l'email.
@@ -98,6 +100,9 @@ anagrafica è solo segnalato, a meno di spuntare **Crea in anagrafica le persone
 permesso di inserire schede): la scheda nasce con i soli dati del file e senza consensi, quindi riceve
 solo le comunicazioni istituzionali finché non si registra il consenso. Organi e categorie sconosciuti
 sono segnalati e ignorati. Esportazione e importazione restano nel registro attività.
+
+Il foglio *Persone* contiene solo chi è stato scelto uno per uno: in una lista fatta di soci è
+vuoto, e i soci (con i loro indirizzi) sono nel foglio *Destinatari*.
 
 Gli **indirizzi postali** servono per le buste di chi non ha l'email. Delle schede già presenti si
 **completano solo i campi vuoti**: un valore diverso da quello in anagrafica è segnalato

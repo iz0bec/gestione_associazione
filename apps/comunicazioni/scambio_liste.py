@@ -39,6 +39,10 @@ COLONNE_PERSONE = [
     "Codice", "Tipo", "Cognome o denominazione", "Nome", "Codice fiscale", "Email",
     "Indirizzo", "CAP", "Comune", "Provincia", "Nazione",
 ]  # fmt: skip
+COLONNE_DESTINATARI = [
+    "Codice", "Nome", "Email", "Indirizzo", "CAP", "Comune", "Provincia", "Nazione",
+    "Nella lista perché",
+]  # fmt: skip
 POSTALI = ["indirizzo", "cap", "comune", "provincia", "nazione"]
 ETICHETTE_POSTALI = {"indirizzo": "indirizzo", "cap": "CAP", "comune": "comune",
                      "provincia": "provincia", "nazione": "nazione"}  # fmt: skip
@@ -64,7 +68,9 @@ ISTRUZIONI = [
     "    diverso da quello in anagrafica viene segnalato e non cambia: si corregge nella scheda.",
     "",
     "Foglio «Destinatari»: chi riceve oggi le comunicazioni della lista (soci, categorie, organo",
-    "e persone scelte). È solo da consultare: all'importazione viene ignorato.",
+    "e persone scelte), con email, indirizzo postale e il motivo per cui è nella lista. È solo da",
+    "consultare: all'importazione viene ignorato. Soci, categorie e organo si aggiornano da soli;",
+    "gli indirizzi si correggono nelle schede dell'anagrafica.",
     "",
     "Poi: Comunicazioni → Liste → Importa da Excel. Prima di salvare si vede l'anteprima.",
 ]
@@ -93,7 +99,7 @@ def esporta(lista, utente):
     from openpyxl import Workbook
     from openpyxl.styles import Font
 
-    from .servizi import soggetti_lista
+    from .servizi import motivi_lista
 
     wb = Workbook()
     ws = wb.active
@@ -128,11 +134,16 @@ def esporta(lista, utente):
 
     wd = wb.create_sheet(FOGLIO_DESTINATARI)
     wd.append([f"Destinatari al {timezone.localdate():%d/%m/%Y} (solo consultazione)"])
-    wd.append(["Nome", "Email"])
-    for s in soggetti_lista(lista).order_by("cognome", "denominazione", "nome"):
-        wd.append([s.nome_completo, s.email or "senza email"])
-    wd.column_dimensions["A"].width = 40
-    wd.column_dimensions["B"].width = 36
+    wd.append(COLONNE_DESTINATARI)
+    motivi = motivi_lista(lista)
+    for s in Soggetto.objects.filter(pk__in=motivi).order_by("cognome", "denominazione", "nome"):
+        wd.append([
+            s.pk, s.nome_completo, s.email or "senza email", s.indirizzo, s.cap, s.comune,
+            s.provincia, s.nazione, ", ".join(motivi[s.pk]),
+        ])  # fmt: skip
+    larghezze = (10, 36, 32, 36, 8, 24, 10, 9, 30)
+    for lettera, larghezza in zip("ABCDEFGHI", larghezze, strict=True):
+        wd.column_dimensions[lettera].width = larghezza
 
     wi = wb.create_sheet(FOGLIO_ISTRUZIONI)
     for riga in ISTRUZIONI:

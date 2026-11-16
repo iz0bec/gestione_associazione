@@ -144,22 +144,34 @@ def motivo_esclusione(soggetto, finalita, con_consenso):
     return ""
 
 
-def soggetti_lista(lista, anno=None):
+def motivi_lista(lista, anno=None):
+    """{id del soggetto: [perché è nella lista]}: scelto, categoria, soci, organo."""
     from apps.soci.models import Socio
 
     anno = anno or timezone.localdate().year
-    ids = set(lista.soggetti.values_list("pk", flat=True))
-    ids |= set(
-        Soggetto.objects.filter(categorie__in=lista.categorie.all()).values_list("pk", flat=True)
-    )
+    motivi = {}
+
+    def aggiungi(ids, motivo):
+        for pk in ids:
+            motivi.setdefault(pk, []).append(motivo)
+
+    aggiungi(lista.soggetti.values_list("pk", flat=True), "scelto")
+    for c in lista.categorie.all():
+        aggiungi(c.soggetti.values_list("pk", flat=True), f"categoria {c.nome}")
     if lista.soci_attivi or lista.soci_in_regola:
         soci = Socio.objects.attivi()
         if lista.soci_in_regola:
             soci = soci.in_regola(anno)
-        ids |= set(soci.values_list("soggetto_id", flat=True))
+        motivo = "socio in regola" if lista.soci_in_regola else "socio"
+        aggiungi(soci.values_list("soggetto_id", flat=True), motivo)
     if lista.organo_id:
-        ids |= set(lista.organo.cariche_al().values_list("soggetto_id", flat=True))
-    return Soggetto.objects.filter(pk__in=ids)
+        aggiungi(lista.organo.cariche_al().values_list("soggetto_id", flat=True),
+                 str(lista.organo))  # fmt: skip
+    return motivi
+
+
+def soggetti_lista(lista, anno=None):
+    return Soggetto.objects.filter(pk__in=motivi_lista(lista, anno))
 
 
 def leggi_indirizzi(testo):

@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- Liste in Excel: il foglio **Destinatari** (chi riceve davvero: soci, categorie, organo e persone
+  scelte) ha ora codice, email, **indirizzo postale** e il motivo per cui ciascuno è nella lista.
+  Prima l'indirizzo c'era solo nel foglio Persone, che contiene i soli scelti uno per uno: una lista
+  di soci risultava senza indirizzi.
+
 ## [1.0.14] - 2026-11-16
 
 Indirizzo postale nelle liste di destinatari in Excel.

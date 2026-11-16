@@ -67,6 +67,17 @@ class TestEsportazione:
         assert cognomi == ["Bianchi", "Rossi"]
         assert EventoAudit.objects.filter(azione="esportazione").exists()
 
+    def test_destinatari_con_indirizzi_e_motivo(self, lista, utente):
+        verdi = persona("Verdi", indirizzo="Via Roma 1", cap="85021", comune="Avigliano",
+                        provincia="PZ")  # fmt: skip
+        verdi.categorie.add(Categoria.objects.get(nome="Autorità"))
+        lista.soggetti.add(verdi)
+        wd = _file(scambio_liste.esporta(lista, utente))["Destinatari"]
+        assert [c.value for c in wd[2]] == scambio_liste.COLONNE_DESTINATARI
+        righe = {r[1]: r for r in wd.iter_rows(min_row=3, values_only=True)}
+        assert righe["Verdi Mario"][3:8] == ("Via Roma 1", "85021", "Avigliano", "PZ", "IT")
+        assert righe["Verdi Mario"][8] == "scelto, categoria Autorità"
+
     def test_nessuna_formula(self, utente):
         lista = Lista.objects.create(nome="=SOMMA(A1)")
         wb = _file(scambio_liste.esporta(lista, utente))
