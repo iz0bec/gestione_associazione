@@ -15,7 +15,8 @@
   .riepilogo { width: 60%; margin-top: 10pt; page-break-inside: avoid; }
 {% endblock %}
 {% block contenuto %}
-<h1>Libro soci <span class="piccolo">aggiornato al {{ oggi|date:"d/m/Y" }}</span></h1>
+<h1>{% if elenco %}Elenco soci{% else %}Libro soci{% endif %} <span class="piccolo">aggiornato al {{ oggi|date:"d/m/Y" }}</span></h1>
+{% if criteri %}<p class="piccolo">{{ criteri|join:" · "|capfirst }}</p>{% endif %}
 {% if gruppi %}
   {% for g in gruppi %}
   <section class="sezione">
@@ -23,7 +24,7 @@
     {% include "soci/pdf/_tabella_libro.html" with soci=g.soci %}
   </section>
   {% endfor %}
-  <section class="riepilogo">
+  {% if gruppi|length > 1 %}<section class="riepilogo">
     <h2>Riepilogo per sezione</h2>
     <table>
       <thead><tr><th>Codice</th><th>Sezione</th><th class="destra">Iscrizioni</th></tr></thead>
@@ -32,10 +33,10 @@
       <tr><th></th><th>Totale</th><th class="destra">{{ soci|length }}</th></tr>
       </tbody>
     </table>
-  </section>
+  </section>{% endif %}
 {% else %}
   {% include "soci/pdf/_tabella_libro.html" %}
 {% endif %}
-<p class="piccolo">Libro degli associati tenuto ai sensi dell'art. 15 del D.Lgs. 117/2017. Totale iscrizioni: {{ soci|length }}.</p>
+<p class="piccolo">{% if elenco %}Estratto del libro degli associati con i criteri indicati. Totale: {{ soci|length }}.{% else %}Libro degli associati tenuto ai sensi dell'art. 15 del D.Lgs. 117/2017. Totale iscrizioni: {{ soci|length }}.{% endif %}</p>
 {% firme "presidente" %}
 {% endblock %}

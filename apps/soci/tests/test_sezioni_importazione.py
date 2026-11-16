@@ -136,6 +136,37 @@ def test_libro_soci_per_sezione(client, capo, ordinario, nord):
     assert len(sezioni_csv) == 3 and len(blocchi) == len(set(blocchi)) == 2  # contigue
 
 
+def test_stampe_seguono_i_filtri(client, capo, ordinario, nord):
+    from unittest import mock
+
+    from django.http import HttpResponse
+
+    servizi.ammetti_socio(Soggetto.objects.create(cognome="Alfa"), ordinario, capo)
+    b = servizi.ammetti_socio(
+        Soggetto.objects.create(cognome="Beta"), ordinario, capo, sezione=nord
+    )
+    servizi.ammetti_socio(Soggetto.objects.create(cognome="Delta"), ordinario, capo, sezione=nord)
+    servizi.cessa_socio(b, capo, data_cessazione=date.today(), causa=Socio.Cessazione.DIMISSIONI)
+    client.force_login(capo)
+    pagina = client.get(reverse("soci:elenco") + f"?sezione={nord.pk}").content.decode()
+    assert 'data-filtri="filtri-soci"' in pagina and 'id="filtri-soci"' in pagina
+    assert f"libro-soci.pdf?sezione={nord.pk}" in pagina
+
+    def contesto(url):
+        with mock.patch("apps.soci.views.risposta_pdf", return_value=HttpResponse()) as pdf:
+            client.get(url)
+        return pdf.call_args.args[1]
+
+    # libro: tutta la sezione, compresi i cessati
+    c = contesto(reverse("soci:libro_pdf") + f"?sezione={nord.pk}")
+    assert sorted(s.soggetto.cognome for s in c["soci"]) == ["Beta", "Delta"]
+    assert c["criteri"] == ["sezione: Sezione Nord"] and not c["elenco"]
+    # elenco: come a schermo (attivi della sezione)
+    c = contesto(reverse("soci:libro_pdf") + f"?elenco=1&sezione={nord.pk}&stato=attivo")
+    assert [s.soggetto.cognome for s in c["soci"]] == ["Delta"]
+    assert c["criteri"][:2] == ["sezione: Sezione Nord", "stato: attivo"] and c["elenco"]
+
+
 class TestListino:
     def test_quote_per_anno_e_costo_acquisto(self, capo, ordinario):
         ordinario.quota_annua = D("25")

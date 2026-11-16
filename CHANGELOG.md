@@ -5,7 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- Elenco dei soci: **Stampa ed esporta** segue i filtri scelti. Il libro soci in PDF stampava sempre
+  tutto anche con una sezione selezionata, e dopo un filtro applicato senza ricaricare la pagina
+  CSV ed Excel usavano ancora i filtri precedenti: ora gli indirizzi si compongono al clic.
+
 ### Aggiunto
+- **Elenco filtrato in PDF**: i soli soci mostrati, con i criteri (sezione, stato, tipologia, quota,
+  ricerca) scritti in testa.
 - **Libro soci per sezione**: con più sezioni il PDF ha una parte per sezione (nome, codice, numero
   di iscrizioni), ciascuna da una pagina nuova e in ordine di numero, più il riepilogo per sezione;
   anche il CSV del libro soci è ordinato per sezione. Con una sola sezione non cambia nulla.

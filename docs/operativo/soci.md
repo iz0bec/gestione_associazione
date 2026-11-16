@@ -281,9 +281,13 @@ proprie sezioni). Ogni consultazione è registrata.
 | Stampa | Dove | Chi |
 |---|---|---|
 | **Libro soci** (PDF, A4 orizzontale, tutti gli iscritti compresi i cessati; con più sezioni una parte per sezione, da pagina nuova, e il riepilogo finale) | Soci → Stampa ed esporta | presidente, segretario, amministratore |
-| **Elenco filtrato** (CSV per Excel, con sezione e matricola) | Soci → Stampa ed esporta | come sopra |
+| **Elenco filtrato** (PDF, con i criteri in testa; CSV per Excel, con sezione e matricola) | Soci → Stampa ed esporta | come sopra |
 | **Per un'altra installazione** (Excel di scambio, vedi sotto) | Soci → Stampa ed esporta | come sopra |
 | **Ricevuta** (PDF) | tessera pagata | tutti i ruoli che vedono le tessere |
+
+Stampe ed esportazioni seguono i **filtri della pagina** al momento del clic: il libro soci prende
+solo la **sezione** scelta (è il registro completo, compresi i cessati); l'elenco filtrato in PDF e
+in CSV e l'Excel per un'altra installazione prendono tutti i filtri.
 
 Ogni stampa ed esportazione è registrata nel registro attività.
 

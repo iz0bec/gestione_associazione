@@ -127,6 +127,31 @@
     stampa(link.href);
   });
 
+  // Collegamenti che seguono i filtri della pagina (data-filtri="id del modulo"; con
+  // data-filtri-campi="a,b" solo quei campi): l'indirizzo si ricompone al momento dell'uso,
+  // perché i filtri cambiano senza ricaricare la pagina (htmx)
+  function conFiltri(link) {
+    var modulo = document.getElementById(link.getAttribute("data-filtri"));
+    if (!modulo) return;
+    var campi = (link.getAttribute("data-filtri-campi") || "").split(",").filter(Boolean);
+    var url = new URL(link.href, window.location.href);
+    var fissi = new URLSearchParams(link.getAttribute("data-filtri-fissi") || "");
+    var parametri = new URLSearchParams(fissi);
+    new FormData(modulo).forEach(function (valore, nome) {
+      if (typeof valore !== "string" || valore === "") return;
+      if (campi.length && campi.indexOf(nome) === -1) return;
+      parametri.append(nome, valore);
+    });
+    url.search = parametri.toString();
+    link.href = url.toString();
+  }
+  ["pointerdown", "keydown", "focusin", "click"].forEach(function (tipo) {
+    document.addEventListener(tipo, function (ev) {
+      var link = ev.target.closest && ev.target.closest("a[data-filtri]");
+      if (link) conFiltri(link);
+    }, true);
+  });
+
   // Select che inviano il modulo al cambio (es. scelta dell'anno)
   document.addEventListener("change", function (ev) {
     if (ev.target.matches("select[data-invio-automatico]") && ev.target.form) {

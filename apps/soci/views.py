@@ -742,10 +742,21 @@ _PER_SEZIONE = ("sezione__ordine", "sezione__nome")
 class LibroSociPdfView(PermessoMixin, View):
     permission_required = "soci.esporta_libro_soci"
 
+    """Libro soci completo (tutti gli stati), della sezione scelta; con ?elenco=1 i soli soci
+    mostrati nell'elenco, con gli stessi filtri e i criteri scritti in testa."""
+
     def get(self, request):
         soci = _soci(request).select_related("soggetto", "tipologia", "sezione")
-        if (sezione := request.GET.get("sezione", "")).isdigit():
+        criteri = []
+        elenco = request.GET.get("elenco") == "1"
+        if elenco:
+            filtro = SocioFilter(request.GET, queryset=soci, request=request)
+            soci = filtro.qs
+            criteri = _criteri(filtro)
+        elif (sezione := request.GET.get("sezione", "")).isdigit():
             soci = soci.filter(sezione_id=int(sezione))
+            if s := Sezione.objects.filter(pk=int(sezione)).first():
+                criteri = [f"sezione: {s.nome}"]
         per_sezione = sezioni.multisezione()
         soci = list(soci.order_by(*(_PER_SEZIONE if per_sezione else ()), "numero"))
         gruppi = []
@@ -754,13 +765,36 @@ class LibroSociPdfView(PermessoMixin, View):
                 if not gruppi or gruppi[-1]["sezione"] != s.sezione:
                     gruppi.append({"sezione": s.sezione, "soci": []})
                 gruppi[-1]["soci"].append(s)
-        registra(Azione.ESPORTAZIONE, descrizione=f"Libro soci PDF ({len(soci)} iscritti)")
+        cosa = "Elenco soci" if elenco else "Libro soci"
+        registra(Azione.ESPORTAZIONE, descrizione=f"{cosa} PDF ({len(soci)} iscritti)",
+                 criteri=criteri)  # fmt: skip
         return risposta_pdf(
             "soci/pdf/libro_soci.html",
             {"soci": soci, "gruppi": gruppi, "organizzazione": Organizzazione.corrente(),
-             "oggi": date.today()},
-            f"libro_soci_{date.today():%Y%m%d}.pdf",
+             "oggi": date.today(), "elenco": elenco, "criteri": criteri},
+            f"{'elenco' if elenco else 'libro'}_soci_{date.today():%Y%m%d}.pdf",
         )  # fmt: skip
+
+
+def _criteri(filtro):
+    """Filtri scelti, in parole, per l'intestazione dell'elenco stampato."""
+    if not filtro.form.is_valid():
+        return []
+    d = filtro.form.cleaned_data
+    criteri = []
+    if d.get("sezione"):
+        criteri.append(f"sezione: {d['sezione'].nome}")
+    stati = dict([*Socio.Stato.choices, ("tutti", "tutti gli stati")])
+    if d.get("stato"):
+        criteri.append(f"stato: {stati.get(d['stato'], d['stato']).lower()}")
+    if d.get("tipologia"):
+        criteri.append(f"tipologia {d['tipologia']}")
+    if d.get("quota"):
+        testo = "in regola" if d["quota"] == "in_regola" else "non in regola"
+        criteri.append(f"quota {d.get('anno') or date.today().year}: {testo}")
+    if d.get("q"):
+        criteri.append(f"ricerca «{d['q']}»")
+    return criteri
 
 
 class SociScambioView(PermessoMixin, View):
