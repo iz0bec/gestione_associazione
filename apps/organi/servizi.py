@@ -809,15 +809,20 @@ def togli_contrassegno(contrassegno, utente):
 
 
 @transaction.atomic
-def imposta_generici(utente, *, firma_generica, timbro_generico):
+def imposta_generici(utente, *, firma_generica=None, timbro_generico=None):
+    """Firma e timbro generici; None = lascia com'è (le due impostazioni stanno in pagine
+    diverse: firme in Organi sociali, timbro in Sistema → Organizzazione)."""
     org = Organizzazione.corrente()
     prima = (org.firma_generica, org.timbro_generico)
-    org.firma_generica, org.timbro_generico = firma_generica, timbro_generico
+    if firma_generica is not None:
+        org.firma_generica = firma_generica
+    if timbro_generico is not None:
+        org.timbro_generico = timbro_generico
     org.save(update_fields=["firma_generica", "timbro_generico"])
-    if prima != (firma_generica, timbro_generico):
+    if prima != (org.firma_generica, org.timbro_generico):
         registra(
             Azione.MODIFICA, org, utente=utente, descrizione="Firme e timbri generici",
-            firma_generica=firma_generica, timbro_generico=timbro_generico,
+            firma_generica=org.firma_generica, timbro_generico=org.timbro_generico,
         )  # fmt: skip
 
 

@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato
+- **Timbri degli enti in Sistema → Organizzazione**, solo per l'amministratore di sistema (nuovo
+  permesso `organi.gestisci_timbri`): caricamento, uso nelle stampe, timbro generico, foglio di
+  acquisizione. In *Firme e timbri* restano le firme; i timbri si vedono in anteprima. Presidente,
+  segretario e presidente di sezione non cambiano più i timbri.
+
+### Corretto
+- *Non usare* e *Togli* di un timbro non funzionavano: l'indirizzo coincideva con quello del
+  caricamento.
+
 ## [1.0.16] - 2026-11-16
 
 Sezioni nelle liste e nel libro soci; stampe ed esportazioni che seguono i filtri.

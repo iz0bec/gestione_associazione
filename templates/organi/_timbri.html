@@ -1,0 +1,37 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Timbri degli enti (associazione e sezioni): si gestiscono in Sistema → Organizzazione
+               (solo amministratore di sistema); fra le firme si vedono in sola lettura.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<div class="card" id="timbri">
+  <div class="card-header"><h2 class="card-title"><i class="ti ti-stamp me-2"></i>Timbri</h2>
+    {% if not modifica %}<div class="card-actions small text-secondary">Si impostano in {% if perms.organi.gestisci_timbri %}<a href="{% url 'core:organizzazione' %}#timbri">Sistema → Organizzazione</a>{% else %}Sistema → Organizzazione (amministratore di sistema){% endif %}</div>{% endif %}
+  </div>
+  {% if modifica %}
+  <form class="card-body border-bottom" method="post" action="{% url 'organi:timbro_generico' %}">{% csrf_token %}
+    <label class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="timbro_generico"{% if organizzazione.timbro_generico %} checked{% endif %}><span class="form-check-label"><strong>Timbro generico</strong> se manca l'immagine: timbro tondo con la denominazione dell'ente e la località o la sezione</span></label>
+    <button class="btn btn-sm" type="submit">Salva</button>
+  </form>
+  {% endif %}
+  <div class="list-group list-group-flush">
+    {% for sezione, timbro, generico in timbri %}
+    <div class="list-group-item">
+      <div class="row align-items-center g-3">
+        <div class="col-auto">
+          {% if timbro %}<img class="anteprima-contrassegno anteprima-timbro" src="{% url 'organi:immagine_firma' 'timbro' timbro.pk %}" alt="Timbro">
+          {% elif organizzazione.timbro_generico %}<span class="anteprima-contrassegno anteprima-timbro d-inline-block" title="Timbro generico">{{ generico|safe }}</span>
+          {% else %}<span class="anteprima-contrassegno anteprima-timbro d-inline-flex align-items-center justify-content-center text-secondary"><i class="ti ti-photo-off fs-1"></i></span>{% endif %}
+        </div>
+        <div class="col">
+          <div class="fw-medium">{% if sezione %}Sezione di {{ sezione.nome }}{% else %}Associazione{% endif %}</div>
+          <div class="text-secondary small">{% if timbro %}{% if timbro.attiva %}nelle stampe{% else %}<span class="text-warning">caricato ma non usato nelle stampe</span>{% endif %} · caricato il {{ timbro.caricata_il|date:"d/m/Y" }}{% elif organizzazione.timbro_generico %}timbro generico{% else %}nessun timbro{% endif %}</div>
+          {% if modifica %}<div class="small"><a href="{% url 'organi:foglio_firme' 'timbro' %}{% if sezione %}?sezione={{ sezione.pk }}{% endif %}" target="_blank" rel="noopener"><i class="ti ti-file-download me-1"></i>Foglio per il timbro</a> · <a href="{% url 'organi:prova_firme' %}{% if sezione %}?sezione={{ sezione.pk }}{% endif %}" target="_blank" rel="noopener">Stampa di prova</a></div>{% endif %}
+        </div>
+        {% if modifica %}<div class="col-12 col-lg-auto">
+          {% include "organi/_carica_contrassegno.html" with azione_url=sezione.pk|default:0 tipo="timbro" oggetto=timbro %}
+        </div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

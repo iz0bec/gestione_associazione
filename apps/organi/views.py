@@ -763,6 +763,24 @@ def _contrassegno(tipo, pk, utente):
     return oggetto
 
 
+def _ritorno(tipo):
+    """Firme in Organi sociali; timbri in Sistema → Organizzazione."""
+    from django.urls import reverse
+
+    if tipo == "timbro":
+        return redirect(reverse("core:organizzazione") + "#timbri")
+    return redirect("organi:firme")
+
+
+class _PermessoPerTipoMixin:
+    """Firma: organi.gestisci_firme; timbro: organi.gestisci_timbri (amministratore)."""
+
+    def get_permission_required(self):
+        if self.kwargs.get("tipo") == "timbro":
+            return ("organi.gestisci_timbri",)
+        return ("organi.gestisci_firme",)
+
+
 def _vietato(messaggio):
     from django.core.exceptions import PermissionDenied
 
@@ -796,7 +814,7 @@ class CaricaFirmaView(PermessoMixin, View):
 
 
 class CaricaTimbroView(PermessoMixin, View):
-    permission_required = "organi.gestisci_firme"
+    permission_required = "organi.gestisci_timbri"
     http_method_names = ["post"]
 
     def post(self, request, sezione):
@@ -808,7 +826,7 @@ class CaricaTimbroView(PermessoMixin, View):
         form = ContrassegnoForm(request.POST, request.FILES)
         if not form.is_valid():
             messages.error(request, "Scegliere un'immagine PNG o JPEG valida.")
-            return redirect("organi:firme")
+            return _ritorno("timbro")
         try:
             servizi.carica_timbro(
                 ente, form.cleaned_data["immagine"], request.user,
@@ -817,13 +835,12 @@ class CaricaTimbroView(PermessoMixin, View):
             messages.success(request, "Timbro caricato.")
         except OperazioneNonValida as e:
             _errore(request, e)
-        return redirect("organi:firme")
+        return _ritorno("timbro")
 
 
-class UsoContrassegnoView(PermessoMixin, View):
+class UsoContrassegnoView(_PermessoPerTipoMixin, PermessoMixin, View):
     """Accende o spegne l'uso nelle stampe, oppure toglie l'immagine."""
 
-    permission_required = "organi.gestisci_firme"
     http_method_names = ["post"]
 
     def post(self, request, tipo, pk):
@@ -834,7 +851,7 @@ class UsoContrassegnoView(PermessoMixin, View):
             messages.success(request, f"{oggetto} tolto.")
         elif azione in ("attiva", "disattiva"):
             servizi.imposta_uso(oggetto, azione == "attiva", request.user)
-        return redirect("organi:firme")
+        return _ritorno(tipo)
 
 
 class GenericiView(PermessoMixin, View):
@@ -845,23 +862,42 @@ class GenericiView(PermessoMixin, View):
         if not servizi.gestisce_tutto(request.user):
             _vietato("Impostazione dell'intera associazione.")
         servizi.imposta_generici(
-            request.user,
-            firma_generica=request.POST.get("firma_generica") == "on",
-            timbro_generico=request.POST.get("timbro_generico") == "on",
+            request.user, firma_generica=request.POST.get("firma_generica") == "on"
         )
         messages.success(request, "Impostazioni salvate.")
         return redirect("organi:firme")
 
 
-class ImmagineContrassegnoView(PermessoMixin, View):
-    """Anteprima per chi gestisce le firme: mai raggiungibile senza permesso."""
+class TimbroGenericoView(PermessoMixin, View):
+    permission_required = "organi.gestisci_timbri"
+    http_method_names = ["post"]
 
-    permission_required = "organi.gestisci_firme"
+    def post(self, request):
+        servizi.imposta_generici(
+            request.user, timbro_generico=request.POST.get("timbro_generico") == "on"
+        )
+        messages.success(request, "Impostazione del timbro salvata.")
+        return _ritorno("timbro")
+
+
+class ImmagineContrassegnoView(PermessoMixin, View):
+    """Anteprima per chi gestisce firme o timbri: mai raggiungibile senza permesso. Il timbro si
+    vede anche fra le firme (sola lettura) e si gestisce in Sistema → Organizzazione."""
+
+    def has_permission(self):
+        u = self.request.user
+        if self.kwargs.get("tipo") == "timbro":
+            return u.has_perm("organi.gestisci_timbri") or u.has_perm("organi.gestisci_firme")
+        return u.has_perm("organi.gestisci_firme")
 
     def get(self, request, tipo, pk):
         from apps.core.immagini import risposta_immagine
 
-        risposta = risposta_immagine(_contrassegno(tipo, pk, request.user).immagine)
+        if tipo == "timbro" and request.user.has_perm("organi.gestisci_timbri"):
+            oggetto = get_object_or_404(Timbro, pk=pk)
+        else:
+            oggetto = _contrassegno(tipo, pk, request.user)
+        risposta = risposta_immagine(oggetto.immagine)
         risposta["Cache-Control"] = "private, no-store"
         return risposta
 
@@ -920,6 +956,8 @@ class FoglioAcquisizioneView(PermessoMixin, View):
                 )  # fmt: skip
             contesto.update(persona=persona, riquadri=range(1, 7))
         elif tipo == "timbro":
+            if not request.user.has_perm("organi.gestisci_timbri"):
+                _vietato("I timbri si gestiscono in Sistema → Organizzazione.")
             sezione = None
             if request.GET.get("sezione"):
                 sezione = get_object_or_404(Sezione, pk=request.GET["sezione"])

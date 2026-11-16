@@ -199,14 +199,16 @@ class TestPagina:
         client.post(reverse("organi:uso_firma", args=["firma", firma.pk]), {"azione": "disattiva"})
         firma.refresh_from_db()
         assert not firma.attiva
-        client.post(reverse("organi:carica_timbro", args=[0]), {"immagine": _scansione()})
+        r = client.post(reverse("organi:carica_timbro", args=[0]), {"immagine": _scansione()})
         assert Timbro.objects.filter(sezione=None).exists()
+        assert r.url == reverse("core:organizzazione") + "#timbri"
         r = client.get(reverse("organi:foglio_firme", args=["firma"]), {"soggetto": presidente.pk})
         assert r.status_code == 200 and r.content[:4] == b"%PDF"
         r = client.get(reverse("organi:foglio_firme", args=["timbro"]))
         assert r.status_code == 200
         assert client.get(reverse("organi:foglio_firme", args=["altro"])).status_code == 404
-        client.post(reverse("organi:firme_generiche"), {"timbro_generico": "on"})
+        client.post(reverse("organi:firme_generiche"), {})  # solo la firma generica
+        client.post(reverse("organi:timbro_generico"), {"timbro_generico": "on"})
         org = Organizzazione.corrente()
         assert org.timbro_generico and not org.firma_generica
         r = client.get(reverse("organi:prova_firme"))
@@ -222,6 +224,33 @@ class TestPagina:
         assert r.status_code == 403
         r = client.get(reverse("organi:immagine_firma", args=["altro", firma.pk]))
         assert r.status_code == 403
+
+    def test_timbri_solo_amministratore(self, client, crea_utente, amministratore):
+        segretario = crea_utente("segr", ruoli=["Segretario"])
+        assert not segretario.has_perm("organi.gestisci_timbri")
+        assert amministratore.has_perm("organi.gestisci_timbri")
+        timbro_ente = servizi.carica_timbro(None, _scansione(), amministratore)
+        client.force_login(segretario)
+        pagina = client.get(reverse("organi:firme")).text
+        assert "Si impostano in" in pagina and "carica_timbro" not in pagina
+        assert reverse("organi:carica_timbro", args=[0]) not in pagina
+        r = client.get(reverse("organi:immagine_firma", args=["timbro", timbro_ente.pk]))
+        assert r.status_code == 200  # anteprima in sola lettura
+        assert client.post(reverse("organi:carica_timbro", args=[0]),
+                           {"immagine": _scansione()}).status_code == 403  # fmt: skip
+        uso = reverse("organi:uso_firma", args=["timbro", timbro_ente.pk])
+        assert client.post(uso, {"azione": "togli"}).status_code == 403
+        assert client.post(reverse("organi:timbro_generico"), {}).status_code == 403
+        assert client.get(reverse("organi:foglio_firme", args=["timbro"])).status_code == 403
+        organizzazione = client.get(reverse("core:organizzazione"))
+        assert organizzazione.status_code == 200 and 'id="timbri"' not in organizzazione.text
+        client.force_login(amministratore)
+        pagina = client.get(reverse("core:organizzazione")).text
+        assert 'id="timbri"' in pagina and reverse("organi:carica_timbro", args=[0]) in pagina
+        r = client.post(uso, {"azione": "disattiva"})
+        assert r.url.endswith("#timbri")
+        timbro_ente.refresh_from_db()
+        assert not timbro_ente.attiva
 
     def test_ruoli_con_il_permesso(self, crea_utente):
         ruoli = ("Amministratore di sistema", "Presidente", "Segretario", "Presidente di sezione")
@@ -272,18 +301,12 @@ class TestPresidenteDiSezione:
             reverse("organi:carica_firma", args=[altra.pk]), {"immagine": _scansione()}
         )
         assert r.status_code == 403
-        assert (
-            client_sezione.post(
-                reverse("organi:carica_timbro", args=[sezioni[0].pk]), {"immagine": _scansione()}
-            ).status_code
-            == 302
-        )
-        for sezione in (0, sezioni[1].pk):
+        for sezione in (0, sezioni[0].pk, sezioni[1].pk):  # i timbri: solo l'amministratore
             r = client_sezione.post(
                 reverse("organi:carica_timbro", args=[sezione]), {"immagine": _scansione()}
             )
             assert r.status_code == 403
-        assert Timbro.objects.count() == 1
+        assert Timbro.objects.count() == 0
         firma_altrui = servizi.carica_firma(altra, _scansione(), amministratore)
         r = client_sezione.get(reverse("organi:immagine_firma", args=["firma", firma_altrui.pk]))
         assert r.status_code == 403

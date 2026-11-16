@@ -28,7 +28,6 @@
       <div class="card-header"><h2 class="card-title"><i class="ti ti-wand me-2"></i>Se manca l'immagine</h2></div>
       <div class="card-body">
         <label class="form-check form-switch"><input class="form-check-input" type="checkbox" name="firma_generica"{% if organizzazione.firma_generica %} checked{% endif %}><span class="form-check-label"><strong>Firma generica</strong>: il nome di chi firma in corsivo sopra la riga (altrimenti lo spazio resta vuoto per firmare a mano)</span></label>
-        <label class="form-check form-switch"><input class="form-check-input" type="checkbox" name="timbro_generico"{% if organizzazione.timbro_generico %} checked{% endif %}><span class="form-check-label"><strong>Timbro generico</strong>: timbro tondo con la denominazione dell'ente e la località o la sezione</span></label>
         <div class="form-hint">Le cariche vacanti restano senza nome e senza firma.</div>
       </div>
       <div class="card-footer text-end"><button class="btn" type="submit">Salva</button></div>
@@ -37,30 +36,7 @@
   {% endif %}
 
   <div class="col-12">
-    <div class="card">
-      <div class="card-header"><h2 class="card-title"><i class="ti ti-stamp me-2"></i>Timbri</h2></div>
-      <div class="list-group list-group-flush">
-        {% for sezione, timbro, generico in timbri %}
-        <div class="list-group-item">
-          <div class="row align-items-center g-3">
-            <div class="col-auto">
-              {% if timbro %}<img class="anteprima-contrassegno anteprima-timbro" src="{% url 'organi:immagine_firma' 'timbro' timbro.pk %}" alt="Timbro">
-              {% elif organizzazione.timbro_generico %}<span class="anteprima-contrassegno anteprima-timbro d-inline-block" title="Timbro generico">{{ generico|safe }}</span>
-              {% else %}<span class="anteprima-contrassegno anteprima-timbro d-inline-flex align-items-center justify-content-center text-secondary"><i class="ti ti-photo-off fs-1"></i></span>{% endif %}
-            </div>
-            <div class="col">
-              <div class="fw-medium">{% if sezione %}Sezione di {{ sezione.nome }}{% else %}Associazione{% endif %}</div>
-              <div class="text-secondary small">{% if timbro %}{% if timbro.attiva %}nelle stampe{% else %}<span class="text-warning">caricato ma non usato nelle stampe</span>{% endif %} · caricato il {{ timbro.caricata_il|date:"d/m/Y" }}{% elif organizzazione.timbro_generico %}timbro generico{% else %}nessun timbro{% endif %}</div>
-              <div class="small"><a href="{% url 'organi:foglio_firme' 'timbro' %}{% if sezione %}?sezione={{ sezione.pk }}{% endif %}" target="_blank" rel="noopener"><i class="ti ti-file-download me-1"></i>Foglio per il timbro</a>{% if sezione %} · <a href="{% url 'organi:prova_firme' %}?sezione={{ sezione.pk }}" target="_blank" rel="noopener">Stampa di prova della sezione</a>{% endif %}</div>
-            </div>
-            <div class="col-12 col-lg-auto">
-              {% include "organi/_carica_contrassegno.html" with azione_url=sezione.pk|default:0 tipo="timbro" oggetto=timbro %}
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
+    {% include "organi/_timbri.html" with modifica=False %}
   </div>
 
   <div class="col-12">

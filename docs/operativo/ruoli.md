@@ -83,10 +83,13 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 | Ruolo | Consulta organi, riunioni, verbali, delibere | Prepara e convoca riunioni | Presenze e verbali | Cariche, rappresentante legale, modelli di convocazione | Regole degli organi | Firme e timbri |
 |---|---|---|---|---|---|---|
 | Amministratore di sistema | sì | sì | sì | sì | sì | sì |
-| Presidente | sì | sì | sì | - | - | sì |
-| Segretario | sì | sì | sì | sì | - | sì |
+| Presidente | sì | sì | sì | - | - | firme |
+| Segretario | sì | sì | sì | sì | - | firme |
 | Tesoriere, Addetto protocollo, Consigliere, Revisore | sì | - | - | - | - | - |
-| Presidente di sezione | - | - | - | - | - | solo la propria sezione |
+| Presidente di sezione | - | - | - | - | - | firme della propria sezione |
+
+I **timbri** degli enti (associazione e sezioni) li gestisce solo l'**amministratore di sistema**, da
+*Sistema → Organizzazione* (permesso `organi.gestisci_timbri`).
 
 ### Comunicazioni e anniversari
 

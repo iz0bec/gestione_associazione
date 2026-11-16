@@ -14,10 +14,13 @@
 Le stampe del programma (ricevute delle quote, convocazioni, ricevute di protocollo, rendiconto,
 libro soci, inventario, lettere e attestati dei *Modelli di stampa*) hanno in calce la qualifica e
 il nome di chi firma. Qui si aggiungono l'**immagine della firma** di ogni persona e il **timbro**
-dell'associazione e di ogni sezione. Si gestiscono in *Organi sociali → Firme e timbri*; possono
-farlo l'amministratore di sistema, il presidente e il segretario per tutta la struttura, e il
-**presidente di sezione** solo per la propria sezione (il timbro della sezione e le firme di chi vi
-ricopre una carica; per lui la voce *Firme e timbri* è direttamente nel menu).
+dell'associazione e di ogni sezione.
+
+- Le **firme** si gestiscono in *Organi sociali → Firme e timbri*: l'amministratore di sistema, il
+  presidente e il segretario per tutta la struttura, il **presidente di sezione** solo per chi ricopre
+  una carica nella propria sezione (per lui la voce è direttamente nel menu).
+- I **timbri** degli enti si gestiscono in **Sistema → Organizzazione**, riquadro *Timbri*, solo
+  dall'**amministratore di sistema**. Fra le firme si vedono in anteprima, senza poterli cambiare.
 
 ## Prima di cominciare
 
@@ -87,9 +90,10 @@ perché stampata sarebbe sgranata: in quel caso rifate la scansione a 300 dpi.
 
 ## Caricare l'immagine
 
-1. *Organi sociali → Firme e timbri*. Nella parte **Firme** compaiono le persone in carica che firmano
+1. Per le firme *Organi sociali → Firme e timbri*: compaiono le persone in carica che firmano
    (presidente, vicepresidente, segretario, tesoriere, presidente dell'organo di controllo, dell'associazione
-   e delle sezioni) e i rappresentanti legali; nella parte **Timbri** l'associazione e ogni sezione attiva.
+   e delle sezioni) e i rappresentanti legali. Per i timbri *Sistema → Organizzazione*, riquadro
+   **Timbri**: l'associazione e ogni sezione attiva.
 2. Accanto alla persona o all'ente: **Carica**, scegliete il file (PNG o JPEG, al massimo 15 MB).
 3. Lasciate attivo **Togli lo sfondo bianco**: il bianco del foglio diventa trasparente, così la firma
    si appoggia alla riga senza un rettangolo bianco intorno. Toglietelo solo se l'immagine è già un PNG
@@ -111,8 +115,9 @@ la tiene ma non la stampa più (es. durante una sostituzione); **Usa nelle stamp
 ## Firma e timbro generici
 
 Se per qualcuno l'immagine manca, il programma usa firma e timbro **generici**. Sono **accesi in
-partenza**; nel riquadro **Se manca l'immagine** (solo per chi gestisce tutta la struttura) si possono
-spegnere:
+partenza** e si possono spegnere: la firma generica nel riquadro **Se manca l'immagine** di *Firme e
+timbri* (solo per chi gestisce tutta la struttura), il timbro generico nel riquadro *Timbri* di
+*Sistema → Organizzazione* (amministratore di sistema).
 
 - **Firma generica**: sopra la riga compare il nome di chi firma in corsivo. Se è spenta, resta lo
   spazio vuoto per firmare a penna.

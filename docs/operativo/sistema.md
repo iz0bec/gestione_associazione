@@ -20,6 +20,12 @@ breve compare in alto nel menu. Ogni modifica è registrata.
 
 Questi dati si inseriscono la prima volta con la [configurazione guidata](configurazione-iniziale.md).
 
+### Timbri
+
+In fondo alla pagina, solo per l'**amministratore di sistema**, il riquadro **Timbri**: il timbro
+dell'associazione e di ogni sezione (carica, sostituisci, non usare, togli), il foglio per acquisirlo,
+la stampa di prova e l'interruttore del **timbro generico**. Come acquisirli: [Firme e timbri](firme-e-timbri.md).
+
 ### Modulo di richiesta di adesione (Allegato A)
 
 Nella stessa pagina si impostano i testi del modulo di adesione e consenso, usati sia per il modulo

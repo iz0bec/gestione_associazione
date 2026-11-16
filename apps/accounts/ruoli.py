@@ -185,6 +185,7 @@ CALENDARIO_GESTIONE = [
 RUOLI = {
     "Amministratore di sistema": [
         "organi.gestisci_firme",
+        "organi.gestisci_timbri",  # timbri degli enti: solo da Sistema → Organizzazione
         *CALENDARIO_GESTIONE,
         *ANAGRAFICA_SCRITTURA,
         "anagrafica.esporta_soggetti",
@@ -278,7 +279,7 @@ RUOLI = {
     # responsabile di una sezione: le assegnazioni in «sezioni» dell'utente limitano soci,
     # tessere e domande alla sua sezione; nessun accesso ai moduli della federazione
     "Presidente di sezione": [
-        "organi.gestisci_firme",  # solo firme e timbro della propria sezione
+        "organi.gestisci_firme",  # solo le firme della propria sezione (i timbri: amministratore)
         *ANAGRAFICA_SCRITTURA,
         *SOCI_LETTURA,
         "soci.add_socio",

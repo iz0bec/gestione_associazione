@@ -84,7 +84,10 @@ urlpatterns = [
     ),
     path("firme/generiche/", views.GenericiView.as_view(), name="firme_generiche"),
     path("firme/persona/<int:soggetto>/", views.CaricaFirmaView.as_view(), name="carica_firma"),
-    path("firme/timbro/<int:sezione>/", views.CaricaTimbroView.as_view(), name="carica_timbro"),
+    path(
+        "firme/carica-timbro/<int:sezione>/", views.CaricaTimbroView.as_view(), name="carica_timbro"
+    ),
+    path("firme/timbro-generico/", views.TimbroGenericoView.as_view(), name="timbro_generico"),
     path("firme/<str:tipo>/<int:pk>/", views.UsoContrassegnoView.as_view(), name="uso_firma"),
     path(
         "firme/<str:tipo>/<int:pk>/immagine.png",

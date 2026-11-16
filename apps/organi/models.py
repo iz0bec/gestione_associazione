@@ -580,6 +580,7 @@ class Timbro(_Contrassegno):
     class Meta:
         verbose_name = "timbro"
         verbose_name_plural = "timbri"
+        permissions = [("gestisci_timbri", "Può caricare e gestire i timbri degli enti")]
         constraints = [
             models.UniqueConstraint(
                 fields=["sezione"], nulls_distinct=False, name="timbro_unico_per_ente"

@@ -119,6 +119,20 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
     def get_object(self, queryset=None):
         return Organizzazione.corrente()
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if self.request.user.has_perm("organi.gestisci_timbri"):  # solo amministratore
+            from apps.organi import servizi as organi
+            from apps.organi import timbro_generico
+
+            org = self.object
+            ctx["organizzazione"] = org
+            ctx["timbri"] = [
+                (sezione, timbro, timbro_generico.svg(org, sezione))
+                for sezione, timbro in organi.timbri_per_ente(self.request.user)
+            ]
+        return ctx
+
     def form_valid(self, form):
         from .immagini import ImmagineNonValida, ripulisci
 
