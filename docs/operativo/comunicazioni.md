@@ -77,6 +77,28 @@ Un segnaposto scritto male viene segnalato e la comunicazione non parte.
   Si usano anche nel **protocollo in uscita** (liste di distribuzione), con le buste per chi non ha
   l'email.
 
+### Modificare una lista fuori linea (Excel)
+
+1. Dalla pagina della lista, **Esporta in Excel**. Il file ha quattro fogli:
+   - **Lista**: nome, descrizione, soci (tutti o solo in regola: «sì»/«no»), organo, categorie
+     (separate da punto e virgola) e il *codice lista*, che non va modificato;
+   - **Persone**: le persone e gli enti scelti uno per uno (codice, tipo, cognome o denominazione,
+     nome, codice fiscale, email);
+   - **Destinatari**: chi riceve oggi le comunicazioni della lista, solo da consultare;
+   - **Istruzioni**.
+2. Si lavora sul file anche senza collegamento: per togliere qualcuno si cancella la riga, per
+   aggiungere qualcuno già in anagrafica basta il codice fiscale o l'email.
+3. **Liste → Importa da Excel**: si carica il file e si vede l'**anteprima** (impostazioni, persone
+   abbinate, aggiunte e tolte, righe non riconosciute). Nulla cambia finché non si conferma.
+
+Il *codice lista* indica quale lista aggiornare; se manca, si aggiorna la lista con lo stesso nome o se
+ne crea una nuova. Le persone sono riconosciute per **codice**, poi **codice fiscale**, poi **email**
+(solo se una sola scheda ha quell'email: altrimenti la riga è segnalata come ambigua). Chi non è in
+anagrafica è solo segnalato, a meno di spuntare **Crea in anagrafica le persone non trovate** (serve il
+permesso di inserire schede): la scheda nasce con i soli dati del file e senza consensi, quindi riceve
+solo le comunicazioni istituzionali finché non si registra il consenso. Organi e categorie sconosciuti
+sono segnalati e ignorati. Esportazione e importazione restano nel registro attività.
+
 ## Dagli altri moduli
 
 - **Riunione convocata** → *Invia per email*: la lettera di convocazione in PDF a tutti gli aventi diritto.

@@ -2,7 +2,7 @@
 {% block titolo %}Liste{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a></div>{% endblock %}
 {% block titolo_pagina %}Liste di destinatari{% endblock %}
-{% block azioni %}{% if perms.comunicazioni.add_lista %}<a class="btn btn-primary" href="{% url 'comunicazioni:lista_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova lista</a>{% endif %}{% endblock %}
+{% block azioni %}<div class="btn-list">{% if perms.comunicazioni.change_lista %}<a class="btn" href="{% url 'comunicazioni:lista_importa' %}"><i class="ti ti-file-import me-1"></i>Importa da Excel</a>{% endif %}{% if perms.comunicazioni.add_lista %}<a class="btn btn-primary" href="{% url 'comunicazioni:lista_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova lista</a>{% endif %}</div>{% endblock %}
 {% block contenuto %}
 <div class="card">
   <div class="list-group list-group-flush">

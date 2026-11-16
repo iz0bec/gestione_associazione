@@ -9,12 +9,13 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+import base64
 from datetime import date
 
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Count, Prefetch, Q
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -31,9 +32,10 @@ from apps.anagrafica.models import Soggetto
 from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.views import PermessoMixin
 
-from . import anniversari, servizi
+from . import anniversari, scambio_liste, servizi
 from .forms import (
     AutomazioneForm,
+    ImportaListaForm,
     InvioForm,
     ListaForm,
     ModelloForm,
@@ -399,6 +401,80 @@ class ListaNuovaView(PermessoMixin, _ListaMixin, CreateView):
 class ListaModificaView(PermessoMixin, _ListaMixin, UpdateView):
     permission_required = "comunicazioni.change_lista"
     model = Lista
+
+
+class ListaEsportaView(PermessoMixin, View):
+    """La lista in Excel, da modificare fuori linea e reimportare."""
+
+    permission_required = "comunicazioni.view_lista"
+
+    def get(self, request, pk):
+        from django.utils.text import slugify
+
+        lista = get_object_or_404(Lista, pk=pk)
+        contenuto = scambio_liste.esporta(lista, request.user)
+        nome = f"lista_{slugify(lista.nome) or lista.pk}_{date.today():%Y%m%d}.xlsx"
+        risposta = HttpResponse(contenuto, content_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))  # fmt: skip
+        risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        return risposta
+
+
+class ListaImportaView(PermessoMixin, FormView):
+    """Caricamento del file Excel, anteprima (nulla viene salvato) e conferma."""
+
+    permission_required = "comunicazioni.change_lista"
+    form_class = ImportaListaForm
+    template_name = "comunicazioni/lista_importa.html"
+    CHIAVE = "importa_lista"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["puo_creare_schede"] = self.request.user.has_perm("anagrafica.add_soggetto")
+        return kwargs
+
+    def _prepara(self, contenuto, crea_schede):
+        piano = scambio_liste.prepara(scambio_liste.leggi(contenuto), crea_schede=crea_schede)
+        if piano.nuova and not self.request.user.has_perm("comunicazioni.add_lista"):
+            raise scambio_liste.FileNonValido("Non si possono creare liste nuove.")
+        return piano
+
+    def form_valid(self, form):
+        contenuto = form.cleaned_data["file"].read()
+        crea = bool(form.cleaned_data.get("crea_schede"))
+        try:
+            piano = self._prepara(contenuto, crea)
+        except scambio_liste.FileNonValido as e:
+            form.add_error("file", e)
+            return self.form_invalid(form)
+        self.request.session[self.CHIAVE] = {
+            "contenuto": base64.b64encode(contenuto).decode("ascii"),
+            "nome": form.cleaned_data["file"].name,
+            "crea_schede": crea,
+        }
+        return self.render_to_response(self.get_context_data(
+            piano=piano, conteggi=piano.riepilogo(), nome_file=form.cleaned_data["file"].name
+        ))  # fmt: skip
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("azione") != "esegui":
+            return super().post(request, *args, **kwargs)
+        dati = request.session.pop(self.CHIAVE, None)
+        if not dati:
+            messages.error(request, "Anteprima scaduta: caricare di nuovo il file.")
+            return redirect("comunicazioni:lista_importa")
+        try:
+            piano = self._prepara(base64.b64decode(dati["contenuto"]), dati["crea_schede"])
+            lista, creati = scambio_liste.applica(piano, request.user)
+        except ValidationError as e:
+            _errore(request, e)
+            return redirect("comunicazioni:lista_importa")
+        testo = f"Lista «{lista}» importata."
+        if creati:
+            testo += f" {creati} schede nuove in anagrafica."
+        messages.success(request, testo)
+        return redirect(lista)
 
 
 # --- anniversari -------------------------------------------------------------------------------

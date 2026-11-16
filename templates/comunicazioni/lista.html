@@ -4,6 +4,7 @@
 {% block titolo_pagina %}{{ lista }}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
+  <a class="btn" href="{% url 'comunicazioni:lista_esporta' lista.pk %}"><i class="ti ti-file-spreadsheet me-1"></i>Esporta in Excel</a>
   {% if perms.comunicazioni.change_lista %}<a class="btn" href="{% url 'comunicazioni:lista_modifica' lista.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
   {% if perms.comunicazioni.add_invio %}<a class="btn btn-primary" href="{% url 'comunicazioni:nuovo' %}?lista={{ lista.pk }}"><i class="ti ti-mail me-1"></i>Scrivi alla lista</a>{% endif %}
 </div>

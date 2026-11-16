@@ -120,6 +120,31 @@ class ListaForm(StileMixin, forms.ModelForm):
         self.fields["organo"].empty_label = "— nessuno —"
 
 
+class ImportaListaForm(StileMixin, forms.Form):
+    file = forms.FileField(
+        label="File Excel della lista (.xlsx)",
+        help_text="Esportato da una lista con «Esporta in Excel» e modificato fuori linea.",
+        widget=forms.FileInput(attrs={"accept": ".xlsx"}),
+    )
+    crea_schede = forms.BooleanField(
+        label="Crea in anagrafica le persone non trovate",
+        required=False,
+        help_text="Con i soli dati del file (tipo, cognome o denominazione, nome, codice fiscale, "
+        "email). Senza spunta sono solo segnalate.",
+    )
+
+    def __init__(self, *args, puo_creare_schede=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not puo_creare_schede:
+            del self.fields["crea_schede"]
+
+    def clean_file(self):
+        f = self.cleaned_data["file"]
+        if f.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("Il file supera 5 MB.")
+        return f
+
+
 class RicorrenzaForm(StileMixin, forms.ModelForm):
     class Meta:
         model = Ricorrenza

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Importazione di una lista di destinatari da Excel: caricamento, anteprima, conferma
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Importa lista{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:liste' %}">Liste</a></div>{% endblock %}
+{% block titolo_pagina %}Importa una lista da Excel{% endblock %}
+{% block contenuto %}
+{% if piano %}
+<div class="card mb-3">
+  <div class="card-header">
+    <h3 class="card-title">Anteprima: nulla è stato ancora salvato</h3>
+    <div class="card-actions text-secondary small">{{ nome_file }}</div>
+  </div>
+  <div class="card-body">
+    <p class="mb-2">{% if piano.nuova %}Verrà creata la <strong>nuova lista «{{ piano.nome }}»</strong>.{% else %}Verrà aggiornata la lista <a href="{{ piano.lista.get_absolute_url }}">«{{ piano.lista }}»</a>{% if piano.lista.nome != piano.nome %}, che si chiamerà <strong>«{{ piano.nome }}»</strong>{% endif %}.{% endif %}</p>
+    <dl class="row small mb-2">
+      <dt class="col-sm-4">Descrizione</dt><dd class="col-sm-8">{{ piano.descrizione|default:"—" }}</dd>
+      <dt class="col-sm-4">Soci</dt><dd class="col-sm-8">{% if piano.soci_in_regola %}solo i soci in regola con la quota{% elif piano.soci_attivi %}tutti i soci attivi{% else %}—{% endif %}</dd>
+      <dt class="col-sm-4">Organo</dt><dd class="col-sm-8">{{ piano.organo|default:"—" }}</dd>
+      <dt class="col-sm-4">Categorie</dt><dd class="col-sm-8">{% for c in piano.categorie %}<span class="badge bg-{{ c.colore }}-lt me-1">{{ c.nome }}</span>{% empty %}—{% endfor %}</dd>
+    </dl>
+    {% for a in piano.avvisi %}<div class="alert alert-warning py-2 mb-2">{{ a }}</div>{% endfor %}
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge bg-blue-lt">{{ conteggi.abbinata }} persone abbinate all'anagrafica</span>
+      {% if conteggi.nuova %}<span class="badge bg-green-lt">{{ conteggi.nuova }} schede nuove</span>{% endif %}
+      {% if conteggi.non_trovata %}<span class="badge bg-yellow-lt">{{ conteggi.non_trovata }} non trovate (saltate)</span>{% endif %}
+      {% if conteggi.ambigua %}<span class="badge bg-yellow-lt">{{ conteggi.ambigua }} ambigue (saltate)</span>{% endif %}
+      {% if conteggi.scartata %}<span class="badge bg-red-lt">{{ conteggi.scartata }} scartate</span>{% endif %}
+      {% if not piano.nuova %}<span class="badge bg-green-lt">+{{ piano.aggiunte|length }} aggiunte</span><span class="badge bg-red-lt">−{{ piano.tolte|length }} tolte</span>{% endif %}
+    </div>
+  </div>
+  {% if piano.tolte %}
+  <div class="card-body border-top small"><strong>Tolte dalla lista:</strong> {% for s in piano.tolte %}<a href="{{ s.get_absolute_url }}">{{ s.nome_completo }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+  {% endif %}
+  <div class="table-responsive">
+    <table class="table table-sm table-vcenter card-table">
+      <thead><tr><th>Riga</th><th>Persona o ente</th><th>Esito</th><th>Dettaglio</th></tr></thead>
+      <tbody>
+      {% for r in piano.righe %}
+        <tr>
+          <td class="text-secondary">{{ r.numero }}</td>
+          <td>{% if r.soggetto %}<a href="{{ r.soggetto.get_absolute_url }}">{{ r.descrizione }}</a>{% else %}{{ r.descrizione }}{% endif %}</td>
+          <td>{% if r.esito == "abbinata" %}<span class="badge bg-blue-lt">abbinata</span>{% elif r.esito == "nuova" %}<span class="badge bg-green-lt">nuova scheda</span>{% elif r.esito == "non_trovata" %}<span class="badge bg-yellow-lt">non trovata</span>{% elif r.esito == "ambigua" %}<span class="badge bg-yellow-lt">ambigua</span>{% else %}<span class="badge bg-red-lt">scartata</span>{% endif %}</td>
+          <td class="small text-secondary">{{ r.dettaglio }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-secondary">Nessuna persona scelta una per una.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer d-flex">
+    <a class="btn btn-link" href="{% url 'comunicazioni:lista_importa' %}">Annulla</a>
+    <form method="post" class="ms-auto" data-conferma="Salvare la lista come indicato nell'anteprima?">{% csrf_token %}
+      <input type="hidden" name="azione" value="esegui">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-file-import me-1"></i>Conferma l'importazione</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" class="card" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      <div class="card-header"><h3 class="card-title">{% if piano %}Carica un altro file{% else %}File da importare{% endif %}</h3></div>
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-eye me-1"></i>Mostra l'anteprima</button></div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body small">
+        <h4>Come funziona</h4>
+        <ol class="mb-0">
+          <li>Dalla pagina della lista, <strong>Esporta in Excel</strong>.</li>
+          <li>Si modifica il file anche senza collegamento: impostazioni nel foglio «Lista», persone ed enti nel foglio «Persone» (istruzioni nel foglio «Istruzioni»).</li>
+          <li>Si importa qui: il codice della lista nel file dice quale aggiornare; senza codice si crea una lista nuova (o si aggiorna quella con lo stesso nome).</li>
+        </ol>
+        <p class="mt-2 mb-0 text-secondary">Le persone sono riconosciute per codice, codice fiscale o email. L'importazione sostituisce le persone scelte e le impostazioni della lista: chi non è più nel file viene tolto.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
