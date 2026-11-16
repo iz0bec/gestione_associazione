@@ -49,6 +49,7 @@
 | **1.0.14** ✅ | indirizzo postale nel foglio Persone delle liste in Excel (completa solo i campi vuoti, segnala i valori diversi) | GitHub, GitLab |
 | **1.0.15** ✅ | lettere in PDF e buste DL per i destinatari senza email delle comunicazioni; indirizzi postali e motivo nel foglio Destinatari delle liste in Excel | GitHub, GitLab |
 | **1.0.16** ✅ | liste limitate ai soci di una o più sezioni; libro soci raggruppato per sezione; stampe ed esportazioni dell'elenco soci che seguono i filtri, elenco filtrato in PDF | GitHub, GitLab |
+| **1.0.17** ✅ | timbri degli enti in Sistema → Organizzazione, solo amministratore di sistema; corretti «Non usare» e «Togli» dei timbri | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

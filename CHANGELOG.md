@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.17] - 2026-11-16
+
+Timbri degli enti in Sistema → Organizzazione, solo per l'amministratore di sistema.
+
 ### Modificato
 - **Timbri degli enti in Sistema → Organizzazione**, solo per l'amministratore di sistema (nuovo
   permesso `organi.gestisci_timbri`): caricamento, uso nelle stampe, timbro generico, foglio di
