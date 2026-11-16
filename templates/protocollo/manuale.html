@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Manuale di gestione documentale: dati organizzativi, bozza aggiornata e adozione
+               (protocollata con il PDF allegato).
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Manuale di gestione{% endblock %}
+{% block sopratitolo %}{% if perms.protocollo.view_protocollo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endif %}{% endblock %}
+{% block titolo_pagina %}Manuale di gestione documentale{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if versioni %}<a class="btn" href="{% url 'protocollo:manuale_versione' versioni.0.versione %}" target="_blank" rel="noopener"><i class="ti ti-book-2 me-1"></i>Versione in vigore ({{ versioni.0.versione }})</a>{% endif %}
+  {% if perms.protocollo.view_protocollo %}<a class="btn" href="{% url 'protocollo:manuale_pdf' %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Bozza aggiornata</a>{% endif %}
+  {% if perms.protocollo.gestisci_manuale %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#adotta"><i class="ti ti-circle-check me-1"></i>Adotta e protocolla</button>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-book-2 me-2"></i>Versioni adottate</h2></div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Versione</th><th>Adottata il</th><th class="d-none d-md-table-cell">Atto di adozione</th>{% if perms.protocollo.view_protocollo %}<th>Protocollo</th>{% endif %}<th></th></tr></thead>
+          <tbody>
+          {% for v in versioni %}
+            <tr>
+              <td><span class="fw-medium">{{ v.versione }}</span>{% if forloop.first %} <span class="badge bg-green-lt">in vigore</span>{% endif %}{% if v.pubblicata %} <span class="badge bg-blue-lt">pubblicata</span>{% endif %}</td>
+              <td>{{ v.adottata_il|date:"d/m/Y" }}</td>
+              <td class="d-none d-md-table-cell">{{ v.atto_adozione|default:"—" }}</td>
+              {% if perms.protocollo.view_protocollo %}<td><a href="{{ v.protocollo.get_absolute_url }}">{{ v.protocollo.segnatura }}</a></td>{% endif %}
+              <td class="text-end"><a class="btn btn-sm" href="{% url 'protocollo:manuale_versione' v.versione %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Apri</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-secondary text-center py-4">Nessuna versione adottata.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer d-flex flex-wrap align-items-center gap-2">
+        <span class="small text-secondary flex-fill">Le versioni adottate sono consultabili da tutti gli utenti (anche dalla pagina di aiuto, pulsante <strong>?</strong>){% if pubblicato %} e da chiunque nella <a href="{% url 'documenti_pubblici' %}" target="_blank" rel="noopener">pagina dei documenti pubblici</a>, senza l'elenco degli utenti né gli account delle caselle{% endif %}.</span>
+        {% if perms.protocollo.gestisci_manuale and versioni %}
+        <form method="post" action="{% url 'protocollo:manuale_pubblica' %}"{% if pubblicato %} data-conferma="Togliere il manuale dalla pagina dei documenti pubblici?"{% endif %}>{% csrf_token %}
+          {% if pubblicato %}<button class="btn btn-sm" type="submit" name="azione" value="ritira"><i class="ti ti-world-off me-1"></i>Ritira dalla pubblicazione</button>
+          {% else %}<button class="btn btn-sm btn-primary" type="submit" name="azione" value="pubblica"><i class="ti ti-world-upload me-1"></i>Pubblica la versione {{ versioni.0.versione }} fra i documenti pubblici</button>{% endif %}
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% if perms.protocollo.view_protocollo %}
+<div class="alert alert-info">
+  Il manuale descrive come l'ente riceve, registra, classifica, spedisce e conserva i documenti. È <strong>obbligatorio per le
+  pubbliche amministrazioni</strong> (Linee guida AgID sulla formazione, gestione e conservazione dei documenti informatici) e
+  consigliato a ogni associazione che tiene un protocollo. Il programma lo compone con la <strong>configurazione reale</strong>
+  (ruoli e utenti abilitati, titolario, caselle di posta, regole del registro, backup): qui si indicano solo i dati
+  organizzativi. Leggete la bozza, adattatela con le disposizioni aggiuntive e fatela approvare; poi <em>Adotta e protocolla</em>
+  ne registra la versione definitiva come protocollo interno con il PDF allegato.
+</div>
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-header"><h2 class="card-title">Dati organizzativi</h2></div>
+      <div class="card-body">
+        {% if perms.protocollo.gestisci_manuale %}{{ form }}{% else %}
+        <dl class="row mb-0">
+          <dt class="col-5">Responsabile</dt><dd class="col-7">{{ manuale.responsabile|default:"—" }}</dd>
+          <dt class="col-5">Vicario</dt><dd class="col-7">{{ manuale.vicario|default:"—" }}</dd>
+          <dt class="col-5">Responsabile della conservazione</dt><dd class="col-7">{{ manuale.responsabile_conservazione|default:"—" }}</dd>
+          <dt class="col-5">Conservazione</dt><dd class="col-7">{{ manuale.conservatore|default:"—" }}</dd>
+          <dt class="col-5">Atto di adozione</dt><dd class="col-7">{{ manuale.atto_adozione|default:"—" }}</dd>
+        </dl>{% endif %}
+      </div>
+      {% if perms.protocollo.gestisci_manuale %}<div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>{% endif %}
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Stato</h2></div>
+      <div class="card-body">
+        {% if manuale.versione %}
+        <p>Versione <strong>{{ manuale.versione }}</strong> adottata il {{ manuale.adottato_il|date:"d/m/Y" }}{% if manuale.protocollo %}, protocollo n. <a href="{{ manuale.protocollo.get_absolute_url }}">{{ manuale.protocollo.segnatura }}</a>{% endif %}.</p>
+        <p class="text-secondary small mb-0">Quando cambiano organizzazione, titolario, caselle o ruoli, la bozza si aggiorna da sola: adottate una nuova versione.</p>
+        {% else %}
+        <p class="mb-0">Nessuna versione adottata.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if perms.protocollo.gestisci_manuale %}
+<div class="modal fade" id="adotta" tabindex="-1" aria-labelledby="titolo-adotta" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'protocollo:manuale_adotta' %}">{% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title h3" id="titolo-adotta">Adotta il manuale</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
+      <div class="modal-body">
+        Si registra la <strong>versione {{ manuale.versione|add:1 }}</strong> con la configurazione di oggi: un protocollo interno
+        «Adozione del manuale di gestione documentale» con il PDF allegato{% if manuale.atto_adozione %} e l'atto «{{ manuale.atto_adozione }}»{% endif %}.
+        Fatelo dopo l'approvazione dell'organo competente.
+        {% if pubblicato %}<p class="mt-3 mb-0 text-secondary">La nuova versione sostituirà quella pubblicata fra i documenti pubblici.</p>
+        {% else %}<label class="form-check mt-3 mb-0"><input class="form-check-input" type="checkbox" name="pubblica"><span class="form-check-label">Pubblica subito nella <strong>pagina dei documenti pubblici</strong> (si può fare anche dopo; senza l'elenco nominativo degli utenti e gli account delle caselle)</span></label>{% endif %}
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-link" data-bs-dismiss="modal">Indietro</button><button type="submit" class="btn btn-primary">Adotta e protocolla</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

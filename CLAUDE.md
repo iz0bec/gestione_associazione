@@ -97,6 +97,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Domande da email: `soci.servizi.domanda_da_messaggio` (protocolla + domanda + modulo firmato, tutto o niente);
   recupero dati in `apps/soci/estrazione.py` (mai valori inventati); il modulo firmato della domanda passa al socio
   in `accogli_domanda`.
+- Manuale di gestione documentale: `apps/protocollo/manuale.py` lo compone dalla configurazione reale
+  (mai dati inventati: ciò che manca resta «[da indicare]»); l'adozione si protocolla con `manuale.adotta`.
 - Ogni modulo nuovo: test, pagina in `docs/operativo/` (con voce in `PAGINE_PER_SEZIONE`), aggiornamento di `docs/sistema/` se servono
   configurazioni, voce in `CHANGELOG.md`, tabella ruoli in `docs/operativo/ruoli.md`.
 
@@ -113,6 +115,7 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   remote `github` (accesso con `gh`, account iz0bec). A ogni release: `git push github main` e il tag,
   poi `gh release create vX --prerelease` con le note del CHANGELOG (le rc sono «anteprima»).
   Dalla 1.0.0 le release su GitHub sono stabili (non pre-release), con il manuale PDF allegato.
+  A ogni release aggiornare anche `softwareVersion` e `releaseDate` in `publiccode.yml` (catalogo del riuso).
 
 ## Stato
 

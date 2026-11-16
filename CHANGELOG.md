@@ -5,6 +5,20 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Manuale di gestione documentale** (Protocollo → Altro → *Manuale di gestione*), sul modello delle
+  Linee guida AgID: composto dalla configurazione reale (sezioni, ruoli e utenti abilitati, caselle,
+  regole del registro, annullamento, riservati, registro giornaliero, backup, titolario) più i dati
+  organizzativi (responsabile e vicario, conservazione, atto di adozione, disposizioni aggiuntive);
+  bozza in PDF con le parti da completare; **Adotta e protocolla** registra ogni versione come
+  protocollo interno con il PDF allegato. Indica anche cosa il sistema non copre delle regole tecniche
+  per le pubbliche amministrazioni. Le versioni adottate sono **consultabili da tutti gli utenti**
+  (storico nella pagina del manuale e collegamento nell'aiuto); la versione in vigore si **pubblica**
+  fra i documenti pubblici all'adozione o in qualsiasi momento dopo (e si ritira), nella variante senza
+  l'elenco degli utenti né gli account delle caselle conservata all'adozione; una nuova versione
+  sostituisce quella pubblicata.
+- `publiccode.yml` per il catalogo del riuso di Developers Italia.
+
 ## [1.0.10] - 2026-11-16
 
 Liste di distribuzione e buste nel protocollo, modelli di registrazione, firme e timbri nelle stampe.

@@ -43,6 +43,7 @@ from .forms import (
     AllegatiForm,
     CasellaForm,
     ClassificazioneForm,
+    ManualeGestioneForm,
     ModelloProtocolloForm,
     ModificaForm,
     ProtocollaMessaggioForm,
@@ -52,6 +53,7 @@ from .models import (
     Allegato,
     CasellaPosta,
     Classificazione,
+    ManualeGestione,
     MessaggioRicevuto,
     ModelloProtocollo,
     Protocollo,
@@ -655,3 +657,108 @@ class ModelloModificaView(PermessoMixin, _ConfigMixin, UpdateView):
         "titolo": "Modello di registrazione",
         "indietro": reverse_lazy("protocollo:modelli"),
     }
+
+
+# --- manuale di gestione documentale ---------------------------------------------------------
+
+
+class ManualeGestioneView(PermessoMixin, UpdateView):
+    """Dati organizzativi del manuale; il resto si compone dalla configurazione reale."""
+
+    permission_required = "protocollo.view_manualegestione"
+    form_class = ManualeGestioneForm
+    template_name = "protocollo/manuale.html"
+
+    def get_object(self, queryset=None):
+        return ManualeGestione.corrente()
+
+    def get_context_data(self, **kwargs):
+        from . import manuale
+
+        return super().get_context_data(
+            versioni=manuale.versioni(), pubblicato=manuale.pubblicato(), **kwargs
+        )
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.has_perm("protocollo.gestisci_manuale"):
+            from django.core.exceptions import PermissionDenied
+
+            raise PermissionDenied
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        dettagli = campi_modificati(form)
+        risposta = super().form_valid(form)
+        if dettagli.get("campi"):
+            registra(Azione.MODIFICA, self.object, **dettagli)
+        messages.success(self.request, "Dati del manuale salvati.")
+        return risposta
+
+    def get_success_url(self):
+        return reverse("protocollo:manuale")
+
+
+class ManualeGestionePdfView(PermessoMixin, View):
+    """Bozza aggiornata alla configurazione di oggi (la versione adottata è nel protocollo)."""
+
+    permission_required = "protocollo.view_protocollo"
+
+    def get(self, request):
+        from . import manuale
+
+        risposta = HttpResponse(manuale.pdf(bozza=True), content_type="application/pdf")
+        risposta["Content-Disposition"] = 'inline; filename="manuale_gestione_bozza.pdf"'
+        return risposta
+
+
+class ManualeGestioneAdottaView(PermessoMixin, View):
+    permission_required = "protocollo.gestisci_manuale"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        from . import manuale
+
+        try:
+            m = manuale.adotta(request.user, pubblica=request.POST.get("pubblica") == "on")
+        except OperazioneNonValida as e:
+            _errore(request, e)
+            return redirect("protocollo:manuale")
+        messages.success(
+            request,
+            f"Manuale adottato (versione {m.versione}), protocollo n. {m.protocollo.segnatura}.",
+        )
+        return redirect("protocollo:manuale")
+
+
+class VersioneManualeView(PermessoMixin, View):
+    """PDF di una versione adottata: consultabile da tutti gli utenti."""
+
+    permission_required = "protocollo.view_manualegestione"
+
+    def get(self, request, versione):
+        from .models import VersioneManuale
+
+        v = get_object_or_404(VersioneManuale.objects.select_related("allegato"), versione=versione)
+        return _scarica(v.allegato.file, v.allegato.nome, "application/pdf", in_linea=True)
+
+
+class PubblicazioneManualeView(PermessoMixin, View):
+    """Pubblica la versione in vigore fra i documenti pubblici, oppure la ritira."""
+
+    permission_required = "protocollo.gestisci_manuale"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        from . import manuale
+
+        if request.POST.get("azione") == "ritira":
+            manuale.ritira(request.user)
+            messages.success(request, "Manuale tolto dalla pagina dei documenti pubblici.")
+            return redirect("protocollo:manuale")
+        try:
+            v = manuale.pubblica_in_vigore(request.user)
+        except OperazioneNonValida as e:
+            _errore(request, e)
+        else:
+            messages.success(request, f"Versione {v.versione} pubblicata fra i documenti pubblici.")
+        return redirect("protocollo:manuale")

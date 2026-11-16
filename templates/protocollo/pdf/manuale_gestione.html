@@ -1,0 +1,221 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Manuale di gestione documentale (protocollo), composto dalla configurazione reale
+               dell'installazione e dai dati organizzativi; struttura ispirata alle Linee guida AgID
+               sulla formazione, gestione e conservazione dei documenti informatici.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% load firme %}
+{% block titolo %}Manuale di gestione documentale{% endblock %}
+{% block stile %}
+  h1 { font-size: 19pt; margin: 30mm 0 4mm; }
+  h2 { font-size: 12.5pt; margin: 14pt 0 4pt; page-break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 9pt 0 3pt; page-break-after: avoid; }
+  p, li { font-size: 9.6pt; line-height: 1.45; }
+  p { margin: 0 0 5pt; text-align: justify; }
+  ul, ol { margin: 0 0 6pt; padding-left: 14pt; }
+  .copertina { page-break-after: always; }
+  .copertina .sotto { font-size: 12pt; color: #333; margin-bottom: 18mm; }
+  .copertina table td { padding: 2pt 8pt 2pt 0; font-size: 10pt; vertical-align: top; }
+  .bozza { color: #b42318; font-weight: bold; font-size: 11pt; border: .4mm solid #b42318; padding: 2mm 3mm; display: inline-block; margin-bottom: 8mm; }
+  table.dati { width: 100%; border-collapse: collapse; margin: 3pt 0 8pt; font-size: 8.6pt; page-break-inside: auto; }
+  table.dati th, table.dati td { border: .2mm solid #bbb; padding: 2pt 3pt; text-align: left; vertical-align: top; }
+  table.dati th { background: #f1f3f5; }
+  table.dati td.si { text-align: center; }
+  .nota { font-size: 8.8pt; color: #444; }
+  .da-compilare { color: #b42318; }
+  .nuova-pagina { page-break-before: always; }
+  .integrazioni h1, .integrazioni h2, .integrazioni h3 { font-size: 10.5pt; margin: 8pt 0 3pt; }
+{% endblock %}
+{% block contenuto %}
+{% with da_compilare='<span class="da-compilare">[da indicare]</span>' %}
+<div class="copertina">
+  <h1>Manuale di gestione documentale</h1>
+  <div class="sotto">Protocollo, flussi documentali e archivio di {{ organizzazione.denominazione }}</div>
+  {% if bozza %}<div class="bozza">BOZZA - non ancora adottata</div>{% endif %}
+  <table>
+    <tr><td>Ente</td><td><strong>{{ organizzazione.denominazione }}</strong>{% if organizzazione.codice_fiscale %} · C.F. {{ organizzazione.codice_fiscale }}{% endif %}</td></tr>
+    <tr><td>Sede</td><td>{{ organizzazione.indirizzo }}{% if organizzazione.comune %}, {{ organizzazione.cap }} {{ organizzazione.comune }}{% if organizzazione.provincia %} ({{ organizzazione.provincia }}){% endif %}{% endif %}</td></tr>
+    {% if organizzazione.pec %}<tr><td>PEC</td><td>{{ organizzazione.pec }}</td></tr>{% endif %}
+    <tr><td>Versione</td><td>{% if bozza %}bozza del {{ giorno|date:"d/m/Y" }}{% if versione %} (ultima adottata: {{ versione }}){% endif %}{% else %}{{ versione }} del {{ giorno|date:"d/m/Y" }}{% endif %}</td></tr>
+    <tr><td>Atto di adozione</td><td>{% if manuale.atto_adozione %}{{ manuale.atto_adozione }}{% else %}{{ da_compilare|safe }}{% endif %}</td></tr>
+    <tr><td>Responsabile della gestione documentale</td><td>{% if manuale.responsabile %}{{ manuale.responsabile.intestazione }}{% else %}{{ da_compilare|safe }}{% endif %}</td></tr>
+    <tr><td>Vicario</td><td>{% if manuale.vicario %}{{ manuale.vicario.intestazione }}{% else %}{{ da_compilare|safe }}{% endif %}</td></tr>
+    <tr><td>Sistema</td><td>Gestione Associazione {{ app_versione }}</td></tr>
+  </table>
+</div>
+
+<h2>1. Ambito di applicazione</h2>
+<p>Il manuale descrive come {{ organizzazione.denominazione }} (di seguito «l'ente») forma, registra, classifica,
+gestisce e conserva i documenti ricevuti, spediti e interni, e come usa il registro di protocollo. Ne è stata seguita
+la struttura indicata dalle <em>Linee guida sulla formazione, gestione e conservazione dei documenti informatici</em>
+dell'Agenzia per l'Italia digitale, e le regole sul protocollo del d.P.R. 28 dicembre 2000, n. 445 (artt. 53-57),
+nei limiti in cui si applicano a un ente associativo.</p>
+<p>Si applica a tutte le persone che, per incarico dell'ente, ricevono, registrano o spediscono documenti. Le
+indicazioni sull'uso del sistema descrivono la configurazione in vigore alla data del manuale: i dati delle
+tabelle (ruoli, utenti, titolario, caselle) sono ricavati direttamente dal sistema.</p>
+
+<h3>1.1 Area organizzativa omogenea e unità organizzative</h3>
+<p>L'ente costituisce un'unica <strong>area organizzativa omogenea</strong> (AOO) con un unico registro di
+protocollo, numerato in modo progressivo e unico per anno solare.{% if sezioni %} Le sezioni sono unità
+organizzative della stessa AOO: usano lo stesso registro, e gli utenti limitati a una sezione operano solo sui dati
+della propria sezione nei moduli che lo prevedono.{% endif %}</p>
+{% if sezioni %}
+<table class="dati"><tr><th>Codice</th><th>Unità organizzativa (sezione)</th></tr>
+{% for s in sezioni %}<tr><td>{{ s.codice }}</td><td>{{ s.nome }}</td></tr>{% endfor %}</table>
+{% endif %}
+
+<h3>1.2 Definizioni</h3>
+<ul>
+  <li><strong>Documento</strong>: rappresentazione di atti, fatti o dati, su carta o informatica, ricevuta, spedita o interna.</li>
+  <li><strong>Registrazione di protocollo</strong>: memorizzazione nel registro dei dati che identificano un documento, con
+  numero progressivo e data, non modificabili.</li>
+  <li><strong>Segnatura</strong>: anno e numero di protocollo, nella forma <em>AAAA-NNNNN</em>, riportati sul documento.</li>
+  <li><strong>Classificazione</strong>: attribuzione della voce del titolario.</li>
+  <li><strong>Impronta</strong>: sequenza SHA-256 calcolata sul file, che ne attesta l'integrità.</li>
+</ul>
+
+<h2>2. Ruoli e responsabilità</h2>
+<p>Il <strong>responsabile della gestione documentale</strong> {% if manuale.responsabile %}è <strong>{{ manuale.responsabile.intestazione }}</strong>{% else %}{{ da_compilare|safe }}{% endif %}{% if manuale.vicario %}, sostituito in caso di assenza da <strong>{{ manuale.vicario.intestazione }}</strong>{% endif %}.
+Cura l'applicazione del manuale, abilita gli utenti al protocollo con il ruolo adatto, autorizza gli annullamenti,
+verifica la produzione del registro giornaliero e propone gli aggiornamenti del manuale e del titolario.</p>
+<p>Il responsabile della conservazione {% if manuale.responsabile_conservazione %}è <strong>{{ manuale.responsabile_conservazione.intestazione }}</strong>{% else %}{{ da_compilare|safe }}{% endif %}
+(vedi il capitolo 9).</p>
+<p>Gli utenti accedono con credenziali personali e non cedibili; le capacità dipendono dal ruolo assegnato:</p>
+<table class="dati">
+  <tr><th>Ruolo</th>{% for c in capacita %}<th>{{ c }}</th>{% endfor %}<th>Secondo fattore obbligatorio</th></tr>
+  {% for r in ruoli %}<tr><td>{{ r.nome }}</td>{% for v in r.valori %}<td class="si">{% if v %}sì{% else %}-{% endif %}</td>{% endfor %}<td class="si">{% if r.mfa %}sì{% else %}no{% endif %}</td></tr>{% endfor %}
+</table>
+<p class="nota">{% if pubblico %}L'elenco nominativo degli utenti abilitati è tenuto agli atti dell'ente e non è pubblicato.{% else %}L'elenco nominativo degli utenti abilitati è nell'allegato A.{% endif %}</p>
+
+<h2>3. Il sistema di gestione documentale</h2>
+<p>Il registro di protocollo è tenuto con <strong>Gestione Associazione</strong> (versione {{ app_versione }}),
+software libero rilasciato in pubblico dominio (CC0 1.0), installato su un server dell'ente o da esso incaricato.
+Il sistema:</p>
+<ul>
+  <li>assegna il numero di protocollo in modo automatico, progressivo e senza salti nell'anno (dal 1° gennaio riparte da 1), nello stesso momento in cui salva la registrazione;</li>
+  <li>rende <strong>immodificabili</strong>, dopo la registrazione, numero, data e ora, direzione, oggetto, testo e corrispondenti; si possono solo aggiornare i dati accessori (classificazione, collegamenti, riservatezza, note), con traccia di ogni modifica;</li>
+  <li>conserva i documenti allegati con la loro <strong>impronta SHA-256</strong>; i documenti si possono solo aggiungere, mai sostituire o cancellare;</li>
+  <li>registra in un <strong>registro delle attività</strong> accessi, registrazioni, modifiche, annullamenti, esportazioni e scaricamenti, con utente, data e indirizzo;</li>
+  <li>richiede, per i ruoli indicati al capitolo 2, il secondo fattore di autenticazione (app o passkey), e blocca i tentativi di accesso ripetuti;</li>
+  <li>non pubblica mai i documenti in rete: si scaricano solo da utenti autorizzati.</li>
+</ul>
+
+<h2>4. Documenti ricevuti</h2>
+<h3>4.1 Canali di ricezione</h3>
+<p>L'ente riceve documenti attraverso questi mezzi, registrati nel campo «mezzo»:
+{% for valore, nome in mezzi %}{{ nome|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+{% if caselle %}
+<p>Le caselle di posta elettronica collegate al sistema, da cui la posta viene scaricata in automatico per essere
+esaminata e protocollata, sono:</p>
+<table class="dati"><tr><th>Casella</th><th>Tipo</th>{% if not pubblico %}<th>Account</th>{% endif %}<th>Stato</th></tr>
+{% for c in caselle %}<tr><td>{{ c.nome }}</td><td>{% if c.pec %}PEC{% else %}posta elettronica{% endif %}</td>{% if not pubblico %}<td>{{ c.utente }}</td>{% endif %}<td>{% if c.attiva %}attiva{% else %}sospesa{% endif %}</td></tr>{% endfor %}</table>
+{% else %}
+<p>Nessuna casella di posta è collegata al sistema: i messaggi ricevuti per email o PEC si salvano in formato .eml e si
+allegano alla registrazione.</p>
+{% endif %}
+<h3>4.2 Esame e registrazione</h3>
+<p>La posta scaricata resta «da esaminare» finché un utente abilitato la <strong>protocolla</strong> (il messaggio originale
+in formato .eml, gli allegati e il testo diventano i documenti della registrazione; per una PEC si considera il messaggio
+originale contenuto nella busta) oppure la <strong>scarta</strong> indicando il motivo (pubblicità, messaggi non pertinenti,
+duplicati). Lo scarto si può annullare.</p>
+<p>I documenti su carta si registrano il giorno stesso della ricezione o, al più tardi, il primo giorno lavorativo
+successivo, indicando la data di ricezione se diversa; il documento si scansiona e si allega e si conserva l'originale
+cartaceo. A chi consegna un documento a mano si può rilasciare la <strong>ricevuta di protocollazione</strong>.</p>
+<p>Si allegano file nei formati {{ estensioni }}, fino a {{ max_mb }} MB ciascuno; per la conservazione nel lungo periodo
+sono preferiti PDF (meglio PDF/A), XML, TXT e i formati aperti per immagini.</p>
+
+<h2>5. La registrazione di protocollo</h2>
+<p>Ogni registrazione contiene, come elementi obbligatori e non modificabili: numero e data e ora di registrazione,
+assegnati dal sistema; direzione (entrata, uscita, interno); mittenti o destinatari, con l'indirizzo usato al momento della
+registrazione; oggetto; impronta dei documenti allegati. Sono elementi facoltativi: testo del messaggio, mezzo, data e
+protocollo del documento del mittente, data di ricezione, classificazione, collegamento a un protocollo precedente
+(«in risposta a»), note.</p>
+<p>L'oggetto deve essere chiaro, completo e comprensibile anche a distanza di tempo, senza abbreviazioni non comuni;
+mittenti e destinatari si scelgono di preferenza dall'anagrafica unica dell'ente, in modo che restino collegati alla
+scheda della persona o dell'ente.</p>
+{% if modelli %}<p>Per le registrazioni ricorrenti sono disponibili modelli che precompilano direzione, mezzo, classificazione e
+oggetto: {% for m in modelli %}«{{ m.nome }}»{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+<h3>5.1 Documenti riservati</h3>
+<p>Le registrazioni che contengono dati particolari (art. 9 del Regolamento UE 2016/679), dati giudiziari o informazioni
+la cui conoscenza può recare pregiudizio sono marcate come <strong>riservate</strong>: sono visibili solo agli utenti con il
+relativo permesso (capitolo 2) e nel registro giornaliero ne è omesso l'oggetto.</p>
+<h3>5.2 Annullamento</h3>
+<p>Una registrazione errata non si modifica: si <strong>annulla</strong> indicando il motivo, e si registra di nuovo il
+documento. La registrazione annullata resta leggibile nel registro con l'indicazione «annullato», la data, l'autore e il
+motivo; il numero non viene riutilizzato. L'annullamento è riservato ai ruoli indicati al capitolo 2.</p>
+<h3>5.3 Registro di emergenza</h3>
+<p>Se il sistema non è disponibile per un tempo che impedisce la registrazione, il responsabile autorizza la tenuta di un
+registro di emergenza su carta (data e ora di inizio e fine dell'interruzione, causa, numerazione propria). Al ripristino
+le registrazioni si riportano nel sistema; nelle note si indica il numero di emergenza.</p>
+
+<h2>6. Documenti spediti e interni</h2>
+<p>I documenti in uscita si protocollano prima della spedizione; il numero di protocollo si riporta sul documento (le
+lettere prodotte dai modelli di stampa lo riportano in automatico). La registrazione indica i destinatari, anche tramite
+liste di distribuzione, con l'indirizzo adatto al mezzo: PEC o email per gli invii elettronici, indirizzo postale per
+posta, raccomandata e consegna a mano. Per le spedizioni su carta il sistema produce le buste e l'elenco dei destinatari.
+Le comunicazioni inviate per email dal sistema possono essere protocollate in automatico. I documenti interni
+rilevanti (tra organi, atti di nomina, adozione di regolamenti) si registrano con direzione «interno».</p>
+
+<h2>7. Classificazione e fascicolazione</h2>
+<p>I documenti si classificano secondo il <strong>titolario</strong> dell'ente, riportato {% if pubblico %}in allegato{% else %}nell'allegato B{% endif %}; il titolario si
+aggiorna con lo stesso atto che aggiorna il manuale. I documenti di una stessa pratica si collegano tra loro con il campo
+«in risposta a»; la ricerca per classificazione, corrispondente e testo consente di ricostruire la pratica.</p>
+
+<h2>8. Registro giornaliero di protocollo</h2>
+<p>Ogni notte il sistema produce, per il giorno concluso, il <strong>registro giornaliero</strong> in PDF con tutte le
+registrazioni del giorno (annullate comprese) e ne calcola l'impronta; il registro non si modifica più.
+{% if ultimo_registro %}Alla data del manuale sono stati prodotti {{ registri }} registri giornalieri, l'ultimo del
+{{ ultimo_registro.data|date:"d/m/Y" }}.{% else %}Alla data del manuale non sono ancora stati prodotti registri giornalieri.{% endif %}
+Il responsabile verifica che il servizio dei lavori pianificati sia attivo e che i registri siano trasmessi alla
+conservazione (capitolo 9).</p>
+
+<h2>9. Conservazione, sicurezza e continuità</h2>
+<p>Il sistema esegue {% if backup.automatico %}ogni giorno alle ore {{ backup.ora }}{% else %}su richiesta{% endif %} un
+<strong>backup completo</strong> (database e documenti, con impronte di verifica), conservando gli ultimi {{ backup.conserva }}
+backup sul server. I backup non sono cifrati: vanno copiati periodicamente su un supporto esterno custodito in luogo
+diverso dal server, con accesso limitato, e il loro ripristino va provato almeno una volta l'anno. Le credenziali delle
+caselle di posta sono conservate cifrate.</p>
+<p>Il sistema <strong>non è un sistema di conservazione</strong> ai sensi delle Linee guida AgID: per i documenti e i
+registri da conservare nel lungo periodo l'ente provvede così:
+{% if manuale.conservatore %}<strong>{{ manuale.conservatore }}</strong>{% else %}{{ da_compilare|safe }}{% endif %}.</p>
+<p>I dati personali contenuti nei documenti sono trattati secondo il Regolamento UE 2016/679 e l'informativa dell'ente;
+i termini di conservazione dei dati delle persone sono stabiliti in <em>Sistema → Conservazione dei dati</em>, fermi
+restando gli obblighi di conservazione dei documenti amministrativi.</p>
+
+<h2>10. Rapporto con le regole tecniche</h2>
+<p>Il sistema realizza i requisiti essenziali del protocollo informatico: numerazione progressiva unica e non
+modificabile, data e ora di registrazione assegnate dal sistema, immodificabilità dei dati obbligatori, annullamento
+motivato e tracciato, impronta dei documenti, registro giornaliero con impronta, riservatezza, tracciamento delle
+operazioni e accessi personali. Non realizza invece, e l'ente ne tiene conto nei rapporti con le pubbliche amministrazioni:</p>
+<ul>
+  <li>la segnatura di protocollo in formato XML e l'interoperabilità automatica tra sistemi di protocollo di AOO diverse;</li>
+  <li>l'invio automatico del registro giornaliero al sistema di conservazione: va trasmesso dall'ente come indicato al capitolo 9;</li>
+  <li>la conservazione digitale, la firma digitale e la marca temporale dei documenti, che si apportano con strumenti esterni.</li>
+</ul>
+
+{% if integrazioni %}
+<h2>11. Disposizioni organizzative dell'ente</h2>
+<div class="integrazioni">{{ integrazioni|safe }}</div>
+{% endif %}
+
+<h2>{% if integrazioni %}12{% else %}11{% endif %}. Approvazione e aggiornamento</h2>
+<p>Il manuale è adottato con {% if manuale.atto_adozione %}{{ manuale.atto_adozione }}{% else %}{{ da_compilare|safe }}{% endif %}{% if not bozza %} e registrato nel protocollo
+dell'ente{% endif %}. Si aggiorna quando cambiano l'organizzazione, il titolario, le caselle collegate o il sistema; ogni
+versione adottata è conservata come documento protocollato. È reso disponibile a tutti gli utenti abilitati.</p>
+{% firme "presidente" giorno=giorno timbro=False %}
+
+{% if not pubblico %}<h2 class="nuova-pagina">Allegato A - Utenti abilitati al protocollo</h2>
+<table class="dati">
+  <tr><th>Nome</th><th>Utente</th><th>Ruoli</th>{% for c in capacita|slice:"1:" %}<th>{{ c }}</th>{% endfor %}</tr>
+  {% for u in utenti %}<tr><td>{{ u.nome }}{% if u.sezioni %}<br><span class="nota">solo {{ u.sezioni }}</span>{% endif %}</td><td>{{ u.utente }}</td><td>{{ u.ruoli }}</td>{% for v in u.valori|slice:"1:" %}<td class="si">{% if v %}sì{% else %}-{% endif %}</td>{% endfor %}</tr>
+  {% empty %}<tr><td colspan="9">Nessun utente abilitato.</td></tr>{% endfor %}
+</table>
+
+{% endif %}
+<h2{% if pubblico %} class="nuova-pagina"{% endif %}>{% if pubblico %}Allegato{% else %}Allegato B{% endif %} - Titolario di classificazione</h2>
+<table class="dati"><tr><th>Codice</th><th>Voce</th><th>Stato</th></tr>
+{% for v in titolario %}<tr><td>{{ v.codice }}</td><td>{{ v.descrizione }}</td><td>{% if v.attiva %}in uso{% else %}non più in uso{% endif %}</td></tr>{% endfor %}</table>
+{% endwith %}
+{% endblock %}

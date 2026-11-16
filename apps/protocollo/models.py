@@ -404,3 +404,97 @@ class ModelloProtocollo(models.Model):
         if self.direzione != Protocollo.Direzione.ENTRATA:
             valori["liste"] = list(self.liste.values_list("pk", flat=True))
         return valori
+
+
+class ManualeGestione(models.Model):
+    """Dati organizzativi del manuale di gestione documentale (uno per installazione).
+
+    Il resto del manuale (sistema, ruoli, titolario, caselle, regole del registro) si compone
+    dalla configurazione reale al momento della stampa; ogni adozione si protocolla come
+    registrazione interna con il PDF allegato.
+    """
+
+    responsabile = models.ForeignKey(
+        Soggetto, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        limit_choices_to={"tipo": "persona"},
+        verbose_name="responsabile della gestione documentale",
+    )  # fmt: skip
+    vicario = models.ForeignKey(
+        Soggetto, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        limit_choices_to={"tipo": "persona"}, verbose_name="vicario del responsabile",
+    )  # fmt: skip
+    responsabile_conservazione = models.ForeignKey(
+        Soggetto, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        limit_choices_to={"tipo": "persona"}, verbose_name="responsabile della conservazione",
+    )  # fmt: skip
+    conservatore = models.CharField(
+        "conservazione dei documenti",
+        max_length=255,
+        blank=True,
+        help_text="Chi conserva registri e documenti nel lungo periodo, es. «conservatore "
+        "qualificato X, contratto del ...» oppure «copie periodiche su supporto esterno».",
+    )
+    atto_adozione = models.CharField(
+        "atto di adozione",
+        max_length=200,
+        blank=True,
+        help_text="Es. «delibera del Consiglio direttivo n. 5 del 20/11/2026».",
+    )
+    integrazioni = models.TextField(
+        "disposizioni aggiuntive",
+        blank=True,
+        help_text="Regole organizzative proprie dell'ente (orari, uffici, casi particolari), "
+        "riportate in un capitolo del manuale. Ammessi grassetto, elenchi e titoli Markdown.",
+    )
+    versione = models.PositiveIntegerField(default=0, editable=False)
+    adottato_il = models.DateField(null=True, blank=True, editable=False)
+    protocollo = models.ForeignKey(
+        Protocollo, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        editable=False, verbose_name="protocollo dell'ultima adozione",
+    )  # fmt: skip
+    documento_pubblico = models.ForeignKey(
+        "core.DocumentoPubblico", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="+", editable=False,
+    )  # fmt: skip
+
+    class Meta:
+        verbose_name = "manuale di gestione"
+        verbose_name_plural = "manuale di gestione"
+        permissions = [
+            ("gestisci_manuale", "Può preparare e adottare il manuale di gestione documentale")
+        ]
+
+    def __str__(self):
+        return f"Manuale di gestione documentale (versione {self.versione or 'bozza'})"
+
+    @classmethod
+    def corrente(cls):
+        manuale, _ = cls.objects.get_or_create(pk=1)
+        return manuale
+
+
+class VersioneManuale(models.Model):
+    """Versione adottata del manuale di gestione: il PDF è l'allegato del protocollo di adozione,
+    consultabile da tutti gli utenti (e, se scelto, pubblicato fra i documenti pubblici)."""
+
+    versione = models.PositiveIntegerField(unique=True)
+    adottata_il = models.DateField()
+    atto_adozione = models.CharField("atto di adozione", max_length=200, blank=True)
+    protocollo = models.ForeignKey(Protocollo, on_delete=models.PROTECT, related_name="+")
+    allegato = models.ForeignKey(Allegato, on_delete=models.PROTECT, related_name="+")
+    allegato_pubblico = models.ForeignKey(
+        Allegato, null=True, blank=True, on_delete=models.PROTECT, related_name="+",
+        help_text="Variante per la pubblicazione (senza utenti né account), prodotta all'adozione.",
+    )  # fmt: skip
+    adottata_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    pubblicata = models.BooleanField("pubblicata fra i documenti pubblici", default=False)
+
+    class Meta:
+        verbose_name = "versione del manuale di gestione"
+        verbose_name_plural = "versioni del manuale di gestione"
+        ordering = ["-versione"]
+
+    def __str__(self):
+        return f"Manuale di gestione documentale, versione {self.versione}"

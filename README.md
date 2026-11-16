@@ -46,6 +46,21 @@ L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/an
 - **Interfaccia semplice**: ricerca istantanea, tema chiaro/scuro, utilizzabile da
   smartphone; nessuna risorsa caricata da Internet.
 - **Privacy**: consensi per finalità con data e modalità, esportazioni registrate.
+- **Protocollo con manuale di gestione**: numerazione non modificabile, annullamento
+  motivato, impronte SHA-256, registro giornaliero, riservati; il **manuale di gestione
+  documentale** sul modello delle Linee guida AgID si compone dalla configurazione reale e
+  si adotta protocollandolo.
+
+## Riuso
+
+Essendo in pubblico dominio, il programma può essere adottato liberamente da qualsiasi
+associazione, ente del Terzo Settore o ente pubblico che ne abbia bisogno, senza licenze né
+autorizzazioni. È descritto nel file [`publiccode.yml`](publiccode.yml), lo standard del
+**catalogo del riuso di Developers Italia** (AgID e Dipartimento per la trasformazione
+digitale), dove l'autore intende pubblicarlo. Per gli enti tenuti al manuale di gestione
+documentale il programma ne prepara la bozza; il manuale stesso indica cosa il sistema non
+copre delle regole tecniche per le pubbliche amministrazioni (segnatura XML e interoperabilità
+tra protocolli, conservazione digitale a norma).
 
 ## Tecnologie
 

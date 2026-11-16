@@ -1,0 +1,134 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Descrizione del software secondo lo standard publiccode.yml (versione 0.4)
+# *              per il catalogo del riuso di Developers Italia; aggiornare softwareVersion
+# *              e releaseDate a ogni rilascio.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+publiccodeYmlVersion: "0.4"
+
+name: Gestione Associazione
+url: "https://github.com/iz0bec/gestione_associazione"
+landingURL: "https://github.com/iz0bec/gestione_associazione"
+softwareVersion: "1.0.10"
+releaseDate: "2026-11-16"
+logo: static/img/favicon.svg
+
+platforms:
+  - web
+  - linux
+
+categories:
+  - document-management
+  - crm
+  - accounting
+  - inventory-management
+  - email-management
+  - event-management
+
+developmentStatus: stable
+softwareType: standalone/web
+
+intendedAudience:
+  countries:
+    - it
+  scope:
+    - society
+    - local-authorities
+    - culture
+
+description:
+  it:
+    localisedName: Gestione Associazione
+    genericName: Gestionale per associazioni
+    shortDescription: >-
+      Gestionale web per associazioni ed enti del Terzo Settore: soci, protocollo con
+      manuale di gestione, organi sociali, tesoreria, patrimonio.
+    longDescription: |
+      Gestione Associazione è un gestionale web unico per associazioni, enti del Terzo
+      Settore e piccoli enti, nato per una sezione dell'Associazione Nazionale Combattenti
+      e Reduci e rilasciato in pubblico dominio (CC0 1.0): chiunque può installarlo,
+      modificarlo e riusarlo senza licenze né autorizzazioni.
+
+      Tutti i moduli condividono un'**anagrafica unica** di persone ed enti: la stessa
+      persona è socio, mittente o destinatario di un protocollo, componente di un organo,
+      destinatario di una comunicazione, senza archivi da riallineare.
+
+      Il **protocollo** assegna numeri progressivi annuali non modificabili, conserva i
+      documenti con l'impronta SHA-256, annulla le registrazioni solo con motivo e traccia,
+      gestisce i documenti riservati, scarica la posta elettronica e la PEC da protocollare
+      e produce ogni notte il registro giornaliero con impronta. Per le spedizioni su carta
+      prepara buste e liste di distribuzione; i modelli di registrazione precompilano le
+      registrazioni ricorrenti. Il **manuale di gestione documentale**, sul modello delle
+      Linee guida AgID sulla formazione, gestione e conservazione dei documenti informatici,
+      si compone dalla configurazione reale (ruoli e utenti abilitati, titolario, caselle,
+      regole del registro, backup) e si adotta protocollandolo; dichiara anche cosa il
+      sistema non copre delle regole tecniche per le pubbliche amministrazioni (segnatura
+      XML e interoperabilità tra protocolli, conservazione digitale a norma).
+
+      Gli altri moduli: **soci e tesseramento** (libro soci, sezioni, quote e ricevute
+      numerate, tessere, domande di iscrizione anche online e per email), **organi sociali**
+      (cariche con storico, convocazioni, presenze e deleghe, verbali e delibere),
+      **comunicazioni** (email con consensi per finalità, anniversari, auguri automatici),
+      **tesoreria** (prima nota, rendiconto per cassa), **patrimonio** (inventario, prestiti,
+      schede pubbliche con QR), **modelli di stampa** con firme e timbri in calce,
+      calendario con esportazione iCal.
+
+      La sicurezza è curata: secondo fattore di autenticazione per ruolo, registro delle
+      attività non modificabile, Content Security Policy rigorosa senza risorse esterne,
+      allegati mai pubblici, credenziali delle caselle cifrate, backup completi con verifica.
+      Funzioni GDPR: esportazione dei dati di una persona, anonimizzazione e termini di
+      conservazione.
+
+      Si installa su un server Debian o Ubuntu o in un container LXC su Proxmox con uno
+      script; il manuale operativo, in linea e in PDF, accompagna ogni modulo.
+    documentation: "https://github.com/iz0bec/gestione_associazione/tree/main/docs"
+    features:
+      - Anagrafica unica di persone ed enti condivisa da tutti i moduli
+      - Protocollo con numerazione annuale non modificabile e impronte SHA-256
+      - Posta elettronica e PEC scaricate e protocollate
+      - Registro giornaliero di protocollo in PDF con impronta
+      - Manuale di gestione documentale generato dalla configurazione
+      - Liste di distribuzione, buste DL e stampa unione
+      - Libro soci, tesseramento, quote e ricevute numerate
+      - Organi sociali con convocazioni, presenze, verbali e delibere
+      - Comunicazioni email con consensi per finalità
+      - Prima nota e rendiconto per cassa
+      - Inventario dei beni con schede pubbliche e QR
+      - Modelli di stampa con firme e timbri
+      - Secondo fattore di autenticazione e registro delle attività
+      - Esportazione e anonimizzazione dei dati personali (GDPR)
+    screenshots:
+      - static/img/manuale/cruscotto.jpg
+      - static/img/manuale/protocollo.jpg
+      - static/img/manuale/soci.jpg
+      - static/img/manuale/organi.jpg
+      - static/img/manuale/tesoreria.jpg
+
+legal:
+  license: CC0-1.0
+  repoOwner: Bartolomeo Santoro (IZ0BEC)
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Bartolomeo Santoro
+      email: info@iz0bec.info
+
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - it
+
+dependsOn:
+  open:
+    - name: PostgreSQL
+      versionMin: "15"
+    - name: Python
+      versionMin: "3.13"
+
+it:
+  countryExtensionVersion: "1.0"

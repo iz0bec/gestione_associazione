@@ -10,6 +10,7 @@
       {% if perms.protocollo.view_registrogiornaliero %}<a class="dropdown-item" href="{% url 'protocollo:registri' %}"><i class="ti ti-calendar-stats me-2"></i>Registri giornalieri</a>{% endif %}
       <a class="dropdown-item" href="{% url 'protocollo:classificazioni' %}"><i class="ti ti-list-tree me-2"></i>Titolario</a>
       {% if perms.protocollo.view_modelloprotocollo %}<a class="dropdown-item" href="{% url 'protocollo:modelli' %}"><i class="ti ti-template me-2"></i>Modelli di registrazione</a>{% endif %}
+      <a class="dropdown-item" href="{% url 'protocollo:manuale' %}"><i class="ti ti-book-2 me-2"></i>Manuale di gestione</a>
     </div>
   </div>
   {% if perms.protocollo.add_protocollo %}

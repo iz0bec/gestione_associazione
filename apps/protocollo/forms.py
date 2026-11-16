@@ -19,7 +19,14 @@ from apps.comunicazioni.models import Lista
 from apps.core.cifratura import cifratura_disponibile
 from apps.core.forms import StileMixin
 
-from .models import CasellaPosta, Classificazione, Corrispondente, ModelloProtocollo, Protocollo
+from .models import (
+    CasellaPosta,
+    Classificazione,
+    Corrispondente,
+    ManualeGestione,
+    ModelloProtocollo,
+    Protocollo,
+)
 
 
 class InputFileMultiplo(forms.ClearableFileInput):
@@ -291,3 +298,35 @@ class ModelloProtocolloForm(StileMixin, forms.ModelForm):
         self.fields["classificazione"].queryset = Classificazione.objects.filter(attiva=True)
         self.fields["classificazione"].empty_label = "— nessuna —"
         self.fields["direzione"].choices = Protocollo.Direzione.choices
+
+
+class ManualeGestioneForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = ManualeGestione
+        fields = [
+            "responsabile", "vicario", "responsabile_conservazione", "conservatore",
+            "atto_adozione", "integrazioni",
+        ]  # fmt: skip
+        widgets = {"integrazioni": forms.Textarea(attrs={"rows": 6})}
+
+    def __init__(self, *args, **kwargs):
+        from django.db.models import Q
+
+        super().__init__(*args, **kwargs)
+        # chi usa il sistema o ricopre una carica (più chi è già indicato)
+        attuali = [getattr(self.instance, f"{c}_id") for c in
+                   ("responsabile", "vicario", "responsabile_conservazione")]  # fmt: skip
+        persone = (
+            Soggetto.objects.filter(tipo="persona")
+            .filter(
+                Q(utente__isnull=False)
+                | Q(cariche__al__isnull=True)
+                | Q(pk__in=[a for a in attuali if a])
+            )
+            .distinct()
+            .order_by("cognome", "nome")
+        )
+        for campo in ("responsabile", "vicario", "responsabile_conservazione"):
+            self.fields[campo].queryset = persone
+            self.fields[campo].empty_label = "— da indicare —"
+        self.fields["responsabile"].help_text = "Persone con un account o una carica in corso."

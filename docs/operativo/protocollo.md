@@ -132,6 +132,44 @@ busta di posta certificata); la busta con le ricevute resta nel file `.eml`.
 tutte le registrazioni (per i riservati l'oggetto è omesso) e ne conserva l'impronta. I registri non si
 rigenerano: sono la fotografia di quel giorno. **Genera i mancanti** recupera eventuali giorni saltati.
 
+## Manuale di gestione
+
+*Altro → Manuale di gestione* prepara il **manuale di gestione documentale**, il documento che descrive
+come l'ente riceve, registra, classifica, spedisce e conserva i documenti. È obbligatorio per le pubbliche
+amministrazioni (Linee guida AgID sulla formazione, gestione e conservazione dei documenti informatici) e
+consigliato a ogni associazione che tiene un protocollo: dà valore al registro e aiuta chi subentra.
+
+Il programma lo compone con la **configurazione reale**: sezioni, ruoli e capacità (con il secondo fattore
+obbligatorio), utenti abilitati, caselle di posta e PEC collegate, mezzi, regole della registrazione, dei
+riservati e dell'annullamento, registro giornaliero, backup, titolario, modelli di registrazione. Un capitolo
+dice con chiarezza cosa il sistema **non** fa rispetto alle regole tecniche delle pubbliche amministrazioni
+(segnatura XML e interoperabilità tra protocolli, invio automatico del registro alla conservazione,
+conservazione digitale, firma digitale).
+
+Si indicano i dati organizzativi: **responsabile della gestione documentale** e vicario, responsabile della
+conservazione e come si conservano i documenti nel lungo periodo, atto di adozione e **disposizioni
+aggiuntive** proprie dell'ente (un capitolo libero, con grassetto ed elenchi). Le parti ancora da indicare
+compaiono in rosso nella **bozza aggiornata** (PDF).
+
+Dopo l'approvazione dell'organo competente, **Adotta e protocolla** registra la nuova versione come
+protocollo interno, con il PDF allegato e l'atto di adozione nel testo. Quando cambiano organizzazione,
+titolario, caselle o ruoli la bozza si aggiorna da sola: si adotta una nuova versione. Preparano e adottano il
+manuale amministratore di sistema e segretario.
+
+**Consultazione.** Le versioni adottate restano tutte consultabili, con data, atto e protocollo di adozione,
+nella tabella **Versioni adottate**; quella in vigore è segnata. Le vedono **tutti gli utenti**, qualunque sia
+il ruolo: anche dalla pagina di aiuto (pulsante **?**, riquadro *Documenti dell'ente*). La bozza e i dati
+organizzativi restano a chi lavora sul protocollo.
+
+**Pubblicazione.** Il manuale in vigore si può mettere nella **pagina dei documenti pubblici**, accanto a
+statuto e regolamento, consultabile da chiunque (le pubbliche amministrazioni lo pubblicano sul sito
+istituzionale): subito, spuntando *Pubblica subito* quando si adotta, oppure **in qualsiasi momento dopo**,
+con il pulsante *Pubblica la versione … fra i documenti pubblici* sotto lo storico. Si pubblica la versione
+**così com'era all'adozione**: insieme al manuale il programma conserva nel protocollo una variante senza
+l'elenco nominativo degli utenti e senza gli account delle caselle di posta, ed è quella che va in rete.
+Quando si adotta una nuova versione, quella pubblicata viene sostituita da sola. *Ritira dalla pubblicazione*
+la toglie dalla pagina pubblica; le versioni restano agli atti.
+
 ## Titolario e caselle
 
 - **Titolario** (*Protocollo → Altro → Titolario*): voci di classificazione con codice. Ne è proposto uno di base

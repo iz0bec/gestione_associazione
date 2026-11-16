@@ -20,6 +20,14 @@
         {% endfor %}
       </div>
     </div>
+    {% if manuale_gestione %}
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Documenti dell'ente</h3></div>
+      <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action" href="{% url 'protocollo:manuale_versione' manuale_gestione.versione %}" target="_blank" rel="noopener"><i class="ti ti-book-2 me-1"></i>Manuale di gestione documentale<div class="small text-secondary">versione {{ manuale_gestione.versione }} del {{ manuale_gestione.adottata_il|date:"d/m/Y" }}</div></a>
+      </div>
+    </div>
+    {% endif %}
     {% if indice %}
     <div class="card mt-3 d-none d-lg-block">
       <div class="card-header"><h3 class="card-title">In questa pagina</h3></div>

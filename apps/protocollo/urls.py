@@ -49,6 +49,17 @@ urlpatterns = [
     path("caselle/<int:pk>/", views.CasellaModificaView.as_view(), name="casella_modifica"),
     path("titolario/", views.ClassificazioniView.as_view(), name="classificazioni"),
     path("modelli/", views.ModelliView.as_view(), name="modelli"),
+    path("manuale/", views.ManualeGestioneView.as_view(), name="manuale"),
+    path("manuale/bozza.pdf", views.ManualeGestionePdfView.as_view(), name="manuale_pdf"),
+    path("manuale/adotta/", views.ManualeGestioneAdottaView.as_view(), name="manuale_adotta"),
+    path(
+        "manuale/pubblicazione/", views.PubblicazioneManualeView.as_view(), name="manuale_pubblica"
+    ),
+    path(
+        "manuale/versione-<int:versione>.pdf",
+        views.VersioneManualeView.as_view(),
+        name="manuale_versione",
+    ),
     path("modelli/nuovo/", views.ModelloNuovoView.as_view(), name="modello_nuovo"),
     path("modelli/<int:pk>/", views.ModelloModificaView.as_view(), name="modello"),
     path(

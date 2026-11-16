@@ -436,6 +436,10 @@ class AiutoView(LoginRequiredMixin, TemplateView):
         nome = kwargs.get("pagina", aiuto.INDICE)
         titolo, html, indice = aiuto.pagina(nome)
         ctx.update(pagina=nome, titolo=titolo, html=html, indice=indice, pagine=aiuto.elenco())
+        if self.request.user.has_perm("protocollo.view_manualegestione"):
+            from apps.protocollo.manuale import ultima_versione
+
+            ctx["manuale_gestione"] = ultima_versione()
         return ctx
 
 

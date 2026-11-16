@@ -76,6 +76,7 @@ PROTOCOLLO_RESPONSABILE = [
     "protocollo.change_classificazione",
     "protocollo.add_modelloprotocollo",
     "protocollo.change_modelloprotocollo",
+    "protocollo.gestisci_manuale",
     "protocollo.view_casellaposta",
     "protocollo.add_casellaposta",
     "protocollo.change_casellaposta",
@@ -323,6 +324,10 @@ RUOLI = {
         *PATRIMONIO_LETTURA,
     ],
 }
+
+# il manuale di gestione adottato è consultabile da tutti gli utenti
+for _permessi in RUOLI.values():
+    _permessi.append("protocollo.view_manualegestione")
 
 
 def configura_ruoli(verbose=False):

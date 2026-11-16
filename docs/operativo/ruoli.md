@@ -64,13 +64,16 @@ In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 
 ### Protocollo
 
-| Ruolo | Registro | Registra, aggiunge documenti, posta | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle |
-|---|---|---|---|---|---|---|
-| Amministratore di sistema | consulta | sì | sì | sì | sì | modifica (anche i modelli) |
-| Presidente | consulta | - (vede la posta) | - | sì | sì | consulta titolario e modelli |
-| Segretario | consulta | sì | sì | sì | sì | modifica (anche i modelli) |
-| Addetto protocollo | consulta | sì | - | - | sì | consulta titolario e modelli |
-| Tesoriere, Consigliere | consulta | - | - | - | - | consulta titolario e modelli |
+| Ruolo | Registro | Registra, aggiunge documenti, posta | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle | Manuale di gestione |
+|---|---|---|---|---|---|---|---|
+| Amministratore di sistema | consulta | sì | sì | sì | sì | modifica (anche i modelli) | prepara e adotta |
+| Presidente | consulta | - (vede la posta) | - | sì | sì | consulta titolario e modelli | consulta |
+| Segretario | consulta | sì | sì | sì | sì | modifica (anche i modelli) | prepara e adotta |
+| Addetto protocollo | consulta | sì | - | - | sì | consulta titolario e modelli | consulta |
+| Tesoriere, Consigliere | consulta | - | - | - | - | consulta titolario e modelli | consulta |
+
+Le versioni adottate del **manuale di gestione** sono consultabili da tutti i ruoli, compresi presidente di
+sezione e revisore; la bozza solo da chi accede al protocollo.
 | Revisore | consulta | - | - | - | sì | consulta il titolario |
 
 L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (segretario).
