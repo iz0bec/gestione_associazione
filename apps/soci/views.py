@@ -736,6 +736,9 @@ class EsportaTesseratiView(PermessoMixin, View):
 # --- stampe ed esportazioni --------------------------------------------------------------
 
 
+_PER_SEZIONE = ("sezione__ordine", "sezione__nome")
+
+
 class LibroSociPdfView(PermessoMixin, View):
     permission_required = "soci.esporta_libro_soci"
 
@@ -743,13 +746,21 @@ class LibroSociPdfView(PermessoMixin, View):
         soci = _soci(request).select_related("soggetto", "tipologia", "sezione")
         if (sezione := request.GET.get("sezione", "")).isdigit():
             soci = soci.filter(sezione_id=int(sezione))
-        soci = soci.order_by("numero")
-        registra(Azione.ESPORTAZIONE, descrizione=f"Libro soci PDF ({soci.count()} iscritti)")
+        per_sezione = sezioni.multisezione()
+        soci = list(soci.order_by(*(_PER_SEZIONE if per_sezione else ()), "numero"))
+        gruppi = []
+        if per_sezione:
+            for s in soci:
+                if not gruppi or gruppi[-1]["sezione"] != s.sezione:
+                    gruppi.append({"sezione": s.sezione, "soci": []})
+                gruppi[-1]["soci"].append(s)
+        registra(Azione.ESPORTAZIONE, descrizione=f"Libro soci PDF ({len(soci)} iscritti)")
         return risposta_pdf(
             "soci/pdf/libro_soci.html",
-            {"soci": soci, "organizzazione": Organizzazione.corrente(), "oggi": date.today()},
+            {"soci": soci, "gruppi": gruppi, "organizzazione": Organizzazione.corrente(),
+             "oggi": date.today()},
             f"libro_soci_{date.today():%Y%m%d}.pdf",
-        )
+        )  # fmt: skip
 
 
 class SociScambioView(PermessoMixin, View):
@@ -781,7 +792,8 @@ class LibroSociCsvView(PermessoMixin, View):
     def get(self, request):
         filtro = SocioFilter(request.GET, queryset=_soci(request), request=request)
         buffer = io.StringIO()
-        servizi.esporta_libro_csv(filtro.qs.order_by("numero"), buffer, request.user)
+        ordine = (*_PER_SEZIONE, "numero") if sezioni.multisezione() else ("numero",)
+        servizi.esporta_libro_csv(filtro.qs.order_by(*ordine), buffer, request.user)
         risposta = HttpResponse("﻿" + buffer.getvalue(), content_type="text/csv; charset=utf-8")
         risposta["Content-Disposition"] = f'attachment; filename="soci_{date.today():%Y%m%d}.csv"'
         return risposta

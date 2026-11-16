@@ -112,6 +112,30 @@ class TestSezioni:
         assert r.status_code == 302 and Sezione.objects.get(codice="S02").provincia == "PZ"
 
 
+def test_libro_soci_per_sezione(client, capo, ordinario, nord):
+    from unittest import mock
+
+    from django.http import HttpResponse
+
+    servizi.ammetti_socio(Soggetto.objects.create(cognome="Alfa"), ordinario, capo)
+    servizi.ammetti_socio(Soggetto.objects.create(cognome="Beta"), ordinario, capo, sezione=nord)
+    servizi.ammetti_socio(Soggetto.objects.create(cognome="Gamma"), ordinario, capo)
+    client.force_login(capo)
+    with mock.patch("apps.soci.views.risposta_pdf", return_value=HttpResponse()) as pdf:
+        client.get(reverse("soci:libro_pdf"))
+    gruppi = pdf.call_args.args[1]["gruppi"]
+    assert [[s.soggetto.cognome for s in g["soci"]] for g in gruppi] in (
+        [["Alfa", "Gamma"], ["Beta"]], [["Beta"], ["Alfa", "Gamma"]],
+    )  # fmt: skip
+    assert len({g["sezione"] for g in gruppi}) == 2
+    r = client.get(reverse("soci:libro_pdf"))
+    assert r.status_code == 200 and r.content.startswith(b"%PDF")
+    righe = client.get(reverse("soci:esporta")).content.decode("utf-8-sig").splitlines()[1:]
+    sezioni_csv = [r.split(";")[1] for r in righe]
+    blocchi = [x for i, x in enumerate(sezioni_csv) if i == 0 or x != sezioni_csv[i - 1]]
+    assert len(sezioni_csv) == 3 and len(blocchi) == len(set(blocchi)) == 2  # contigue
+
+
 class TestListino:
     def test_quote_per_anno_e_costo_acquisto(self, capo, ordinario):
         ordinario.quota_annua = D("25")

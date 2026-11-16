@@ -280,7 +280,7 @@ proprie sezioni). Ogni consultazione è registrata.
 
 | Stampa | Dove | Chi |
 |---|---|---|
-| **Libro soci** (PDF, A4 orizzontale, tutti gli iscritti compresi i cessati) | Soci → Stampa ed esporta | presidente, segretario, amministratore |
+| **Libro soci** (PDF, A4 orizzontale, tutti gli iscritti compresi i cessati; con più sezioni una parte per sezione, da pagina nuova, e il riepilogo finale) | Soci → Stampa ed esporta | presidente, segretario, amministratore |
 | **Elenco filtrato** (CSV per Excel, con sezione e matricola) | Soci → Stampa ed esporta | come sopra |
 | **Per un'altra installazione** (Excel di scambio, vedi sotto) | Soci → Stampa ed esporta | come sopra |
 | **Ricevuta** (PDF) | tessera pagata | tutti i ruoli che vedono le tessere |

@@ -6,6 +6,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Libro soci per sezione**: con più sezioni il PDF ha una parte per sezione (nome, codice, numero
+  di iscrizioni), ciascuna da una pagina nuova e in ordine di numero, più il riepilogo per sezione;
+  anche il CSV del libro soci è ordinato per sezione. Con una sola sezione non cambia nulla.
 - Liste di destinatari: **Solo i soci delle sezioni** per limitare «tutti i soci» e «soci in regola»
   a una o più sezioni (federazione); vale per invii, protocollo in uscita ed Excel (riga *Sezioni dei
   soci*, per nome o codice). Chi è abilitato solo ad alcune sezioni sceglie fra le proprie e, se
