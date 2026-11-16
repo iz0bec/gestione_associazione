@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.10] - 2026-11-16
+
+Liste di distribuzione e buste nel protocollo, modelli di registrazione, firme e timbri nelle stampe.
+
 ### Aggiunto
 - **Modelli di registrazione del protocollo** (Protocollo → Altro → *Modelli di registrazione*):
   direzione, mezzo, classificazione, oggetto, testo e liste di distribuzione; in *Nuova registrazione*

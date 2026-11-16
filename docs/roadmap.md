@@ -42,6 +42,7 @@
 | **1.0.7** ✅ | rappresentante legale (anche esterno, per tutta la struttura), modelli di convocazione, modelli privacy/GDPR | GitHub, GitLab |
 | **1.0.8** ✅ | correzione: oggetto delle comunicazioni con i segnaposto personali risolti | GitHub, GitLab |
 | **1.0.9** ✅ | testo del protocollo (corpo di email, PEC e messaggi), riportato anche dalla posta ricevuta | GitHub, GitLab |
+| **1.0.10** ✅ | liste di distribuzione e buste DL nel protocollo, modelli di registrazione; firme e timbri nelle stampe (anche generici), foglio prestampato | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
