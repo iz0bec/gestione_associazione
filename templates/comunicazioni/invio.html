@@ -26,6 +26,22 @@
       {% if invio.allegati.exists %}<div class="card-footer small">{% for a in invio.allegati.all %}<i class="ti ti-paperclip me-1"></i>{{ a.nome }} ({{ a.dimensione|filesizeformat }}) {% endfor %}</div>{% endif %}
     </div>
     {% else %}<div class="alert alert-warning">Nessun destinatario raggiungibile.</div>{% endif %}
+    {% if su_carta %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-mailbox me-2"></i>Su carta: {{ su_carta|length }} destinatar{{ su_carta|length|pluralize:"io,i" }} senza email</h2></div>
+      <div class="card-body">
+        <p class="small text-secondary">Ricevono la comunicazione per posta: lettere con gli stessi segnaposto dell'email e buste DL con l'indirizzo attuale dell'anagrafica{% if invio.protocollo %} e il numero di protocollo{% endif %}.</p>
+        {% if incompleti %}<div class="alert alert-warning py-2 small">Indirizzo postale mancante o incompleto per {% for r in incompleti %}{{ r.Nominativo }}{% if not forloop.last %}, {% endif %}{% endfor %}: completarlo nella scheda, oppure a mano sulla busta.</div>{% endif %}
+        <div class="btn-list">
+          <a class="btn btn-primary" href="{% url 'comunicazioni:carta' invio.pk 'lettere' %}"><i class="ti ti-file-type-pdf me-1"></i>Lettere (PDF)</a>
+          <a class="btn" href="{% url 'comunicazioni:carta' invio.pk 'buste' %}"><i class="ti ti-file-word me-1"></i>Buste DL (Word)</a>
+          <a class="btn" href="{% url 'comunicazioni:carta' invio.pk 'stampa-unione' %}">Buste per stampa unione</a>
+          <a class="btn" href="{% url 'comunicazioni:carta' invio.pk 'csv' %}"><i class="ti ti-file-spreadsheet me-1"></i>Elenco (CSV)</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if senza_consenso %}<div class="alert alert-secondary small">{{ senza_consenso }} destinatar{{ senza_consenso|pluralize:"io,i" }} senza email non ricev{{ senza_consenso|pluralize:"e,ono" }} nemmeno la lettera: manca il consenso per questa finalità.</div>{% endif %}
     <div class="card">
       <div class="card-body small text-secondary">
         Preparata il {{ invio.creato_il|date:"d/m/Y H:i" }}{% if invio.creato_da %} da {{ invio.creato_da }}{% else %} automaticamente{% endif %}{% if invio.confermato_il %} · confermata il {{ invio.confermato_il|date:"d/m/Y H:i" }}{% endif %}{% if invio.programmato_il %} · programmata per il {{ invio.programmato_il|date:"d/m/Y H:i" }}{% endif %}{% if invio.completato_il %} · conclusa il {{ invio.completato_il|date:"d/m/Y H:i" }}{% endif %}{% if invio.protocollo %} · <a href="{{ invio.protocollo.get_absolute_url }}">prot. {{ invio.protocollo.segnatura }}</a>{% elif invio.protocolla %} · sarà protocollata al termine{% endif %}

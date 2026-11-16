@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Comunicazioni su carta** per chi non ha l'email: nella pagina dell'invio, lettere in PDF (una
+  per persona, con i segnaposto risolti e l'indirizzo nella finestra della busta), buste DL in Word
+  compilate o per stampa unione ed elenco CSV, con l'indirizzo attuale dell'anagrafica e il numero
+  di protocollo se l'invio è protocollato. Rispetta i consensi come le email.
+
 ### Corretto
 - Liste in Excel: il foglio **Destinatari** (chi riceve davvero: soci, categorie, organo e persone
   scelte) ha ora codice, email, **indirizzo postale** e il motivo per cui ciascuno è nella lista.

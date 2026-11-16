@@ -52,6 +52,22 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 Lo stato di ogni destinatario (in attesa, inviato, errore, escluso) resta nel registro. Se il server di
 posta non risponde, il programma ritenta tre volte; poi si può usare **Ritenta gli errori**.
 
+### Chi non ha l'email: lettere e buste
+
+Nella pagina dell'invio, il riquadro **Su carta** elenca i destinatari esclusi solo perché senza email
+e offre:
+
+- **Lettere (PDF)**: una lettera per persona con l'intestazione dell'ente, l'indirizzo nella
+  posizione della finestra della busta, la data, l'oggetto e il testo con gli stessi segnaposto
+  dell'email (es. *Gentile Mario*);
+- **Buste DL (Word)** già compilate, oppure il documento per la **stampa unione** con l'**elenco
+  (CSV)**: sono le stesse buste del protocollo in uscita.
+
+L'indirizzo è quello **attuale** dell'anagrafica; se manca o è incompleto la pagina lo segnala. Se
+l'invio è protocollato, lettere e buste riportano il numero di protocollo. Vale la stessa regola
+dei consensi delle email: per le comunicazioni non istituzionali chi non ha dato il consenso non
+riceve nemmeno la lettera (la pagina dice quanti sono). Ogni scaricamento resta nel registro attività.
+
 ### Segnaposto disponibili
 
 | Segnaposto | Valore |

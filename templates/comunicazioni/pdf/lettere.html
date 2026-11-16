@@ -1,0 +1,40 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Lettere su carta di una comunicazione, una per destinatario senza email,
+               con l'indirizzo nella posizione della finestra della busta DL
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ invio.oggetto }}{% endblock %}
+{% block stile %}
+  .lettera { page-break-after: always; }
+  .lettera:last-child { page-break-after: auto; }
+  .destinatario { margin: 6mm 0 12mm 95mm; min-height: 24mm; font-size: 10.5pt; line-height: 1.35; }
+  .data { text-align: right; margin-bottom: 8pt; }
+  .oggetto { font-weight: bold; margin-bottom: 10pt; }
+  .testo { white-space: pre-wrap; line-height: 1.45; font-size: 10.5pt; }
+{% endblock %}
+{% block intestazione %}{% endblock %}
+{% block contenuto %}
+{% for l in lettere %}
+<div class="lettera">
+  <div class="intestazione">
+    {% if organizzazione.logo %}<img src="risorsa:media/{{ organizzazione.logo.name }}" alt="">{% endif %}
+    <div>
+      <div class="nome">{{ organizzazione.denominazione }}</div>
+      <div class="dati">
+        {% if organizzazione.indirizzo %}{{ organizzazione.indirizzo }}, {{ organizzazione.cap }} {{ organizzazione.comune }}{% if organizzazione.provincia %} ({{ organizzazione.provincia }}){% endif %}{% endif %}
+        {% if organizzazione.codice_fiscale %} · C.F. {{ organizzazione.codice_fiscale }}{% endif %}
+        {% if organizzazione.email %}<br>{{ organizzazione.email }}{% endif %}{% if organizzazione.pec %} · PEC {{ organizzazione.pec }}{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="destinatario">{% for r in l.indirizzo %}{{ r }}<br>{% endfor %}</div>
+  <div class="data">{% if organizzazione.comune %}{{ organizzazione.comune }}, {% endif %}{{ oggi|date:"j F Y" }}{% if riferimento %}<br><span class="piccolo">Prot. n. {{ riferimento }}</span>{% endif %}</div>
+  <div class="oggetto">Oggetto: {{ l.oggetto }}</div>
+  <div class="testo">{{ l.testo }}</div>
+</div>
+{% empty %}
+<p>Nessun destinatario su carta.</p>
+{% endfor %}
+{% endblock %}

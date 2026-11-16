@@ -32,7 +32,7 @@ from apps.anagrafica.models import Soggetto
 from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.views import PermessoMixin
 
-from . import anniversari, scambio_liste, servizi
+from . import anniversari, carta, scambio_liste, servizi
 from .forms import (
     AutomazioneForm,
     ImportaListaForm,
@@ -186,7 +186,40 @@ class InvioView(PermessoMixin, DetailView):
             email = servizi.messaggio(inv, primo)
             ctx["anteprima"] = {"a": email.to[0], "oggetto": email.subject, "testo": email.body}
         ctx["filtro"] = filtro or ""
+        ctx["su_carta"] = carta.righe(inv)
+        ctx["incompleti"] = [r for r in ctx["su_carta"] if r["Avviso"]]
+        ctx["senza_consenso"] = carta.senza_consenso(inv)
         return ctx
+
+
+class InvioCartaView(PermessoMixin, View):
+    """Destinatari senza email: elenco CSV, buste DL in Word, lettere in PDF."""
+
+    permission_required = "comunicazioni.view_invio"
+    TIPI = {
+        "csv": "text/csv; charset=utf-8",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "pdf": "application/pdf",
+    }
+
+    def get(self, request, pk, formato):
+        invio = get_object_or_404(Invio, pk=pk)
+        if formato not in ("csv", "stampa-unione", "buste", "lettere"):
+            raise Http404
+        if not carta.destinatari_su_carta(invio):
+            raise Http404("Nessun destinatario su carta per questa comunicazione.")
+        if formato == "csv":
+            dati, nome = carta.csv(invio, request.user)
+        elif formato == "lettere":
+            dati, nome = carta.lettere(invio, request.user)
+        else:
+            dati, nome = carta.docx(invio, request.user, compilate=formato == "buste")
+        tipo = self.TIPI[nome.rsplit(".", 1)[1]]
+        risposta = HttpResponse(dati, content_type=tipo)
+        risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        risposta["X-Content-Type-Options"] = "nosniff"
+        return risposta
 
 
 class _AzioneInvioView(PermessoMixin, View):

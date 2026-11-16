@@ -20,6 +20,7 @@ urlpatterns = [
     path("nuova/scelta/", views.SceltaSoggettoView.as_view(), name="scelta"),
     path("<int:pk>/", views.InvioView.as_view(), name="invio"),
     path("<int:pk>/conferma/", views.ConfermaView.as_view(), name="conferma"),
+    path("<int:pk>/carta/<str:formato>/", views.InvioCartaView.as_view(), name="carta"),
     path("<int:pk>/annulla/", views.AnnullaInvioView.as_view(), name="annulla"),
     path("<int:pk>/ritenta/", views.RitentaView.as_view(), name="ritenta"),
     path("da/riunione/<int:pk>/", views.DaRiunioneView.as_view(), name="da_riunione"),

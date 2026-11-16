@@ -2,8 +2,9 @@
 # * Progetto:    Gestione Associazione
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
-# * Descrizione: Spedizioni postali dei protocolli in uscita: elenco dei destinatari in CSV
-# *              e buste formato DL in Word (stampa unione o già compilate).
+# * Descrizione: Spedizioni postali dei protocolli in uscita (e delle comunicazioni a chi non
+# *              ha l'email): elenco dei destinatari in CSV e buste formato DL in Word
+# *              (stampa unione o già compilate).
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -76,23 +77,28 @@ def scomponi_indirizzo(testo):
     return via.strip(), m["cap"] or "", m["comune"], (m["prov"] or "").upper()
 
 
+def riga_busta(nominativo, qualifica, via, cap, comune, prov, riferimento=""):
+    """Una riga dell'elenco: colonne del CSV e righe già composte della busta."""
+    localita = " ".join(p for p in [cap, comune] if p)
+    if prov:
+        localita = f"{localita} ({prov})"
+    busta = [r for r in [nominativo, qualifica, via, localita] if r]
+    busta += [""] * (RIGHE - len(busta))
+    avviso = "" if (via and comune) else "indirizzo postale mancante o incompleto"
+    return {
+        "Protocollo": riferimento, "Nominativo": nominativo, "Qualifica": qualifica,
+        "Indirizzo": via, "CAP": cap, "Comune": comune, "Provincia": prov,
+        **{f"Riga{i}": r for i, r in enumerate(busta[:RIGHE], 1)}, "Avviso": avviso,
+    }  # fmt: skip
+
+
 def righe_destinatari(protocollo):
     righe = []
     for c in destinatari_su_carta(protocollo):
         via, cap, comune, prov = scomponi_indirizzo(c.indirizzo)
         qualifica = c.soggetto.qualifica if c.soggetto_id else ""
-        localita = " ".join(p for p in [cap, comune] if p)
-        if prov:
-            localita = f"{localita} ({prov})"
-        busta = [r for r in [c.descrizione, qualifica, via, localita] if r]
-        busta += [""] * (RIGHE - len(busta))
-        avviso = "" if (via and comune) else "indirizzo postale mancante o incompleto"
-        righe.append({
-            "Protocollo": protocollo.segnatura, "Nominativo": c.descrizione,
-            "Qualifica": qualifica, "Indirizzo": via, "CAP": cap, "Comune": comune,
-            "Provincia": prov, **{f"Riga{i}": r for i, r in enumerate(busta[:RIGHE], 1)},
-            "Avviso": avviso,
-        })  # fmt: skip
+        righe.append(riga_busta(c.descrizione, qualifica, via, cap, comune, prov,
+                                protocollo.segnatura))  # fmt: skip
     return righe
 
 
@@ -100,14 +106,18 @@ def _nome(protocollo, estensione):
     return f"destinatari_{protocollo.anno}_{protocollo.numero:05d}.{estensione}"
 
 
-def csv_destinatari(protocollo, utente):
+def csv_da_righe(righe):
     """CSV per Word, LibreOffice o Excel: separatore «;» e BOM UTF-8 (lettere accentate)."""
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=";")
     writer.writerow(COLONNE)
-    righe = righe_destinatari(protocollo)
     for r in righe:
         writer.writerow([cella_sicura(r[c]) for c in COLONNE])
+    return ("\ufeff" + buffer.getvalue()).encode("utf-8")
+
+
+def csv_destinatari(protocollo, utente):
+    righe = righe_destinatari(protocollo)
     registra(
         Azione.ESPORTAZIONE,
         protocollo,
@@ -115,7 +125,7 @@ def csv_destinatari(protocollo, utente):
         descrizione=f"Destinatari del protocollo {protocollo.segnatura} (CSV)",
         righe=len(righe),
     )
-    return ("﻿" + buffer.getvalue()).encode("utf-8"), _nome(protocollo, "csv")
+    return csv_da_righe(righe), _nome(protocollo, "csv")
 
 
 # --- buste DL (220 × 110 mm) in Word -----------------------------------------------------------
@@ -154,7 +164,7 @@ def _paragrafo(contenuto, *, sinistra=0.0, prima=0.0, destra=False, pt=None):
     return f"<w:p><w:pPr>{ppr}</w:pPr>{contenuto}</w:p>"
 
 
-def _busta(protocollo, org, indirizzo, ultima):
+def _busta(org, indirizzo, ultima, *, riferimento="", raccomandata=False):
     """Una busta: mittente in alto a sinistra, destinatario nella finestra a destra."""
     sede = " ".join(p for p in [org.cap, org.comune] if p)
     if org.provincia:
@@ -163,8 +173,9 @@ def _busta(protocollo, org, indirizzo, ultima):
     parti = [
         _paragrafo(_run(r, pt=9, grassetto=(i == 0)), pt=9) for i, r in enumerate(mittente) if r
     ]
-    parti.append(_paragrafo(_run(f"Prot. n. {protocollo.segnatura}", pt=8), pt=8))
-    if protocollo.mezzo == Protocollo.Mezzo.RACCOMANDATA:
+    if riferimento:
+        parti.append(_paragrafo(_run(f"Prot. n. {riferimento}", pt=8), pt=8))
+    if raccomandata:
         parti.append(_paragrafo(_run("RACCOMANDATA", pt=11, grassetto=True), destra=True))
     for i, riga in enumerate(indirizzo):
         parti.append(_paragrafo(riga, sinistra=100 * _MM, prima=(18 * _MM if i == 0 else 0)))
@@ -229,22 +240,12 @@ def docx_buste(protocollo, utente, *, compilate=False):
     `compilate=False`: documento principale di **stampa unione** con i campi Riga1…Riga4, da
     abbinare al CSV dei destinatari. `compilate=True`: una busta per destinatario, già pronta.
     """
-    org = Organizzazione.corrente()
+    righe = righe_destinatari(protocollo) if compilate else None
+    raccomandata = protocollo.mezzo == Protocollo.Mezzo.RACCOMANDATA
+    dati = docx_da_righe(righe, riferimento=protocollo.segnatura, raccomandata=raccomandata)
     if compilate:
-        righe = righe_destinatari(protocollo)
-        corpo = "".join(
-            _busta(
-                protocollo, org,
-                [_run(r[f"Riga{i}"]) for i in range(1, RIGHE + 1)],
-                ultima=(n == len(righe) - 1),
-            )
-            for n, r in enumerate(righe)
-        )  # fmt: skip
         nome = f"buste_{protocollo.anno}_{protocollo.numero:05d}.docx"
     else:
-        corpo = _busta(
-            protocollo, org, [_campo(f"Riga{i}") for i in range(1, RIGHE + 1)], ultima=True
-        )
         nome = f"buste_stampa_unione_{protocollo.anno}_{protocollo.numero:05d}.docx"
     registra(
         Azione.ESPORTAZIONE,
@@ -253,4 +254,20 @@ def docx_buste(protocollo, utente, *, compilate=False):
         descrizione=f"Buste del protocollo {protocollo.segnatura} (Word"
         + (")" if compilate else ", stampa unione)"),
     )
-    return _documento(corpo), nome
+    return dati, nome
+
+
+def docx_da_righe(righe=None, *, riferimento="", raccomandata=False):
+    """Buste DL in Word: con `righe` una busta compilata per riga; senza, il documento di
+    stampa unione con i campi Riga1…Riga4 da abbinare al CSV."""
+    org = Organizzazione.corrente()
+    opzioni = {"riferimento": riferimento, "raccomandata": raccomandata}
+    if righe is None:
+        campi = [_campo(f"Riga{i}") for i in range(1, RIGHE + 1)]
+        return _documento(_busta(org, campi, ultima=True, **opzioni))
+    corpo = "".join(
+        _busta(org, [_run(r[f"Riga{i}"]) for i in range(1, RIGHE + 1)],
+               ultima=(n == len(righe) - 1), **opzioni)
+        for n, r in enumerate(righe)
+    )  # fmt: skip
+    return _documento(corpo)
