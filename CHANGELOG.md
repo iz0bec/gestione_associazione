@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.29] - 2026-11-17
+
+Scadenza dei mandati e utenti connessi.
+
 ### Aggiunto
 - **Scadenza dei mandati**: durata del mandato e preavviso per organo; la scadenza di ogni carica in
   corso compare nell'organo, nel cruscotto (*Mandati in scadenza*) e nel calendario (anche iCal).
