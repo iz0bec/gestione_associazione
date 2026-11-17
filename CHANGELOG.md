@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.35] - 2026-11-18
+
+Chat interna fra gli utenti del gestionale.
+
 ### Aggiunto
 - **Chat interna** (menu *Chat* e icona nella barra in alto) fra gli utenti del gestionale, non i soci:
   conversazioni a due e di gruppo, messaggi che arrivano senza ricaricare la pagina, numero dei non

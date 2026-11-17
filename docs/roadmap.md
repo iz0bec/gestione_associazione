@@ -67,6 +67,7 @@
 | **1.0.32** ✅ | eventi e cerimonie con adesioni dalla segreteria e dal modulo pubblico | GitHub, GitLab |
 | **1.0.33** ✅ | area personale dei soci con accesso tramite collegamento via email | GitHub, GitLab |
 | **1.0.34** ✅ | messaggio della password in italiano, manuale dei backup aggiornato al formato incrementale | GitHub, GitLab |
+| **1.0.35** ✅ | chat interna fra gli utenti del gestionale (a due e di gruppo, riservata ai partecipanti) | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
