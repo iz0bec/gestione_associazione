@@ -68,6 +68,9 @@
         {% for s in servizi %}
         <div class="list-group-item small">
           <div class="d-flex align-items-center gap-2 flex-wrap">
+            <form method="post" action="{% url 'core:servizio_attivo' s.pk %}">{% csrf_token %}
+              <label class="form-check form-switch mb-0" title="{% if s.attivo %}Attivo: disattiva{% else %}Disattivato: attiva{% endif %}"><input class="form-check-input" type="checkbox" name="attivo" data-invio-automatico{% if s.attivo %} checked{% endif %} aria-label="Servizio attivo"><noscript><button class="btn btn-sm ms-2" type="submit">Salva</button></noscript></label>
+            </form>
             <strong class="flex-fill">{{ s.nome }} <span class="badge {% if s.pec %}bg-blue-lt{% else %}bg-secondary-lt{% endif %}">{{ s.get_tipo_display }}</span>{% if s.generale %} <span class="badge bg-green-lt" title="Comunicazioni, email dell'accesso, protocolli per email">server generale</span>{% endif %}{% if not s.attivo %} <span class="badge bg-secondary-lt">disattivato</span>{% endif %}</strong>
             <form method="post" action="{% url 'core:verifica_servizio' s.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nessun messaggio spedito"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
             <a class="btn btn-sm" href="{% url 'core:servizio_modifica' s.pk %}">Modifica</a>

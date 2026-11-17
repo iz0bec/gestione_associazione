@@ -5,6 +5,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- *Sistema → Servizi di posta*: interruttore **attivo/disattivato** accanto a ogni servizio di invio, senza aprire la scheda (il server generale non si disattiva).
+
 ### Corretto
 - *Sistema → Servizi di posta*: senza la chiave di cifratura il pulsante «Nuova casella» non spariva più senza spiegazione; ora resta visibile (disattivato) con un avviso che riporta, pronti da copiare, il comando che crea `CHIAVE_CIFRATURA` nel `.env` dell'installazione e quello per riavviare.
 

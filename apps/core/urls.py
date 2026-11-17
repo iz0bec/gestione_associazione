@@ -58,6 +58,11 @@ urlpatterns = [
         name="servizio_modifica",
     ),
     path(
+        "sistema/posta/invio/<int:pk>/attivo/",
+        views.ServizioInvioAttivoView.as_view(),
+        name="servizio_attivo",
+    ),
+    path(
         "sistema/posta/invio/<int:pk>/elimina/",
         views.ServizioInvioEliminaView.as_view(),
         name="servizio_elimina",

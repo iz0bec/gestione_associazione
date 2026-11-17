@@ -356,6 +356,33 @@ class ServizioInvioModificaView(_ServizioInvioMixin, PermessoMixin, UpdateView):
     pass
 
 
+class ServizioInvioAttivoView(PermessoMixin, View):
+    """Attiva o disattiva un servizio dall'elenco (il server generale resta sempre attivo)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+
+        from .models import ServizioInvio
+
+        servizio = get_object_or_404(ServizioInvio, pk=pk)
+        attivo = request.POST.get("attivo") == "on"
+        if not attivo and servizio.generale:
+            messages.error(request, f"«{servizio}» è il server generale e non si disattiva: "
+                                    "indicare prima un altro server generale.")  # fmt: skip
+            return redirect("core:servizi_posta")
+        if attivo != servizio.attivo:
+            servizio.attivo = attivo
+            servizio.save(update_fields=["attivo"])
+            registra(Azione.MODIFICA, servizio, descrizione=f"Servizio di invio {servizio}",
+                     attivo=attivo)  # fmt: skip
+        stato = "attivo" if attivo else "disattivato: non si può più scegliere per spedire"
+        messages.success(request, f"Servizio di invio «{servizio}» {stato}.")
+        return redirect("core:servizi_posta")
+
+
 class ServizioInvioEliminaView(PermessoMixin, View):
     """Elimina un servizio mai usato; uno con spedizioni si disattiva (restano nella storia)."""
 

@@ -333,3 +333,24 @@ def test_caselle_configurate_in_sistema_e_abilitate_dal_protocollo(client_ruolo,
     assert not c.attiva
     assert resp.get("/sistema/posta/caselle/nuova/").status_code == 403
     assert resp.get(f"/sistema/posta/caselle/{c.pk}/").status_code == 403
+
+
+def test_interruttore_dei_servizi(client_ruolo, settings):
+    settings.CHIAVE_CIFRATURA = nuova_chiave()
+    c = client_ruolo("Amministratore di sistema")
+    generale, pec = (
+        _servizio(generale=True),
+        _servizio(nome="PEC", tipo="pec", indirizzo="p@pec.it"),
+    )
+    assert f"/sistema/posta/invio/{pec.pk}/attivo/" in c.get("/sistema/posta/").content.decode()
+    c.post(f"/sistema/posta/invio/{pec.pk}/attivo/", {})
+    pec.refresh_from_db()
+    assert not pec.attivo and pec not in invio.servizi_attivi()
+    c.post(f"/sistema/posta/invio/{pec.pk}/attivo/", {"attivo": "on"})
+    pec.refresh_from_db()
+    assert pec.attivo
+    testo = c.post(f"/sistema/posta/invio/{generale.pk}/attivo/", {}, follow=True).content.decode()
+    generale.refresh_from_db()
+    assert generale.attivo and "non si disattiva" in testo
+    assert client_ruolo("Segretario", username="s").post(
+        f"/sistema/posta/invio/{pec.pk}/attivo/", {}).status_code == 403  # fmt: skip
