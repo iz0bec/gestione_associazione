@@ -20,8 +20,9 @@ from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
+from . import invio
 from .audit import Azione, campi_modificati, registra
-from .forms import AspettoForm, OrganizzazioneCompletaForm, ServiziPostaForm
+from .forms import AspettoForm, OrganizzazioneCompletaForm, ServizioInvioForm, ServiziPostaForm
 from .models import EventoAudit, Organizzazione
 
 
@@ -160,28 +161,8 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
         return redirect(self.success_url)
 
 
-def _stato_smtp():
-    """Configurazione dell'invio presa dalle impostazioni (mai la password)."""
-    from django.conf import settings
-
-    mailer = settings.MAILERS.get("default", {})
-    backend = mailer.get("BACKEND", "")
-    opzioni = mailer.get("OPTIONS", {})
-    smtp = backend.endswith("smtp.EmailBackend")
-    host = opzioni.get("host", "")
-    return {
-        "smtp": smtp,
-        "backend": backend.rsplit(".", 2)[-2] if "." in backend else backend,
-        "host": host,
-        "porta": opzioni.get("port", ""),
-        "utente": opzioni.get("username", ""),
-        "configurato": smtp and host not in ("", "localhost", "127.0.0.1"),
-        "mittente": settings.DEFAULT_FROM_EMAIL,
-    }
-
-
 class ServiziPostaView(PermessoMixin, UpdateView):
-    """Interruttori generali dell'invio delle email e della lettura delle caselle IMAP."""
+    """Interruttori dell'invio e della lettura, servizi di invio (SMTP) e stato delle caselle."""
 
     permission_required = "core.gestisci_servizi_posta"
     form_class = ServiziPostaForm
@@ -206,8 +187,12 @@ class ServiziPostaView(PermessoMixin, UpdateView):
         from apps.protocollo.models import CasellaPosta, DestinatarioSpedizione
 
         ctx = super().get_context_data(**kwargs)
+        from .models import ServizioInvio
+
         ctx.update(
-            smtp=_stato_smtp(),
+            smtp=invio.stato_env(),
+            servizi=ServizioInvio.objects.all(),
+            generale=invio.servizio_generale(),
             in_coda=Destinatario.objects.filter(
                 invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
             ).count(),
@@ -229,13 +214,10 @@ class VerificaCasellaView(PermessoMixin, View):
 
         from apps.protocollo.models import CasellaPosta
         from apps.protocollo.posta import ErroreCasella, verifica_casella
-        from apps.protocollo.spedizioni import verifica_invio
 
         casella = get_object_or_404(CasellaPosta, pk=pk)
         try:
             esito = verifica_casella(casella)
-            if casella.invio and casella.smtp_server:
-                esito = f"{esito[:-1]}; {verifica_invio(casella)} (nessun messaggio spedito)."
         except ErroreCasella as e:
             messages.error(request, f"{casella}: {e}")
         except Exception as e:  # noqa: BLE001 - es. password non decifrabile
@@ -246,14 +228,14 @@ class VerificaCasellaView(PermessoMixin, View):
 
 
 class VerificaSmtpView(PermessoMixin, View):
-    """Prova di accesso al server di invio (nessuna email spedita)."""
+    """Prova di accesso al server di invio del file .env (nessuna email spedita)."""
 
     permission_required = "core.gestisci_servizi_posta"
 
     def post(self, request):
         from django.core.mail import mailers
 
-        stato = _stato_smtp()
+        stato = invio.stato_env()
         if not stato["smtp"]:
             messages.warning(request, f"Nessun server SMTP: le email vanno a «{stato['backend']}».")
             return redirect("core:servizi_posta")
@@ -270,6 +252,83 @@ class VerificaSmtpView(PermessoMixin, View):
         else:
             messages.success(request, f"Server di invio {stato['host']}:{stato['porta']}: accesso "
                                       "riuscito (nessuna email spedita).")  # fmt: skip
+        return redirect("core:servizi_posta")
+
+
+class _ServizioInvioMixin:
+    permission_required = "core.gestisci_servizi_posta"
+    form_class = ServizioInvioForm
+    template_name = "core/servizio_invio.html"
+    success_url = reverse_lazy("core:servizi_posta")
+
+    def get_queryset(self):
+        from .models import ServizioInvio
+
+        return ServizioInvio.objects.all()
+
+    def form_valid(self, form):
+        nuovo = form.instance.pk is None
+        dettagli = {} if nuovo else campi_modificati(form)
+        dettagli.get("campi", {}).pop("nuova_password", None)
+        risposta = super().form_valid(form)
+        if nuovo:
+            registra(Azione.CREAZIONE, self.object, descrizione=f"Servizio di invio {self.object}")
+        elif dettagli.get("campi") or form.cleaned_data.get("nuova_password"):
+            registra(Azione.MODIFICA, self.object, descrizione=f"Servizio di invio {self.object}",
+                     password_cambiata=bool(form.cleaned_data.get("nuova_password")) or None,
+                     **dettagli)  # fmt: skip
+        messages.success(self.request, f"Servizio di invio «{self.object}» salvato.")
+        return risposta
+
+
+class ServizioInvioNuovoView(_ServizioInvioMixin, PermessoMixin, CreateView):
+    pass
+
+
+class ServizioInvioModificaView(_ServizioInvioMixin, PermessoMixin, UpdateView):
+    pass
+
+
+class ServizioInvioEliminaView(PermessoMixin, View):
+    """Elimina un servizio mai usato; uno con spedizioni si disattiva (restano nella storia)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+
+    def post(self, request, pk):
+        from django.db.models import ProtectedError
+        from django.shortcuts import get_object_or_404
+
+        from .models import ServizioInvio
+
+        servizio = get_object_or_404(ServizioInvio, pk=pk)
+        try:
+            servizio.delete()
+        except ProtectedError:
+            messages.error(request, f"«{servizio}» ha già spedito dei protocolli: non si elimina, "
+                                    "si può disattivare.")  # fmt: skip
+        else:
+            registra(Azione.ELIMINAZIONE, None, descrizione=f"Servizio di invio {servizio}")
+            messages.success(request, f"Servizio di invio «{servizio}» eliminato.")
+        return redirect("core:servizi_posta")
+
+
+class VerificaServizioView(PermessoMixin, View):
+    """Prova di accesso al server SMTP di un servizio (nessun messaggio spedito)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+
+        from .models import ServizioInvio
+
+        servizio = get_object_or_404(ServizioInvio, pk=pk)
+        try:
+            messages.success(request, f"{servizio}: {invio.verifica(servizio)}.")
+        except Exception as e:  # noqa: BLE001 - l'esito si mostra all'amministratore
+            dettaglio = f"{type(e).__name__}: {str(e)[:150]}"
+            messages.error(request, f"{servizio}: accesso a {servizio.server}:{servizio.porta} "
+                                    f"non riuscito ({dettaglio}).")  # fmt: skip
         return redirect("core:servizi_posta")
 
 

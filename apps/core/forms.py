@@ -91,6 +91,56 @@ class ServiziPostaForm(StileMixin, forms.ModelForm):
         fields = ["invio_email", "ricezione_posta"]
 
 
+class ServizioInvioForm(StileMixin, forms.ModelForm):
+    """Server SMTP per email o PEC (la password resta cifrata e non si mostra mai)."""
+
+    nuova_password = forms.CharField(
+        label="Password",
+        required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
+        help_text="Lasciare vuoto per mantenere quella salvata. È conservata cifrata.",
+    )
+
+    class Meta:
+        from .models import ServizioInvio
+
+        model = ServizioInvio
+        fields = [
+            "nome", "tipo", "indirizzo", "nome_mittente", "server", "porta", "ssl", "utente",
+            "generale", "attivo",
+        ]  # fmt: skip
+
+    def clean(self):
+        from .cifratura import cifratura_disponibile
+        from .models import ServizioInvio
+
+        dati = super().clean()
+        if not cifratura_disponibile():
+            raise forms.ValidationError(
+                "Manca la chiave di cifratura (CHIAVE_CIFRATURA): chiedere all'amministratore di "
+                "sistema di configurarla prima di salvare un servizio di invio."
+            )
+        if not self.instance.password_cifrata and not dati.get("nuova_password"):
+            self.add_error("nuova_password", "Indicare la password del servizio.")
+        if dati.get("generale"):
+            if dati.get("tipo") != ServizioInvio.Tipo.EMAIL:
+                self.add_error("generale", "Il server generale dev'essere un servizio email.")
+            if not dati.get("attivo"):
+                self.add_error("generale", "Il server generale dev'essere attivo.")
+            altro = ServizioInvio.objects.filter(generale=True).exclude(pk=self.instance.pk)
+            if altro.exists():
+                self.add_error(
+                    "generale",
+                    f"Il server generale è già «{altro.first()}»: togliere prima la spunta lì.",
+                )
+        return dati
+
+    def save(self, commit=True):
+        if self.cleaned_data.get("nuova_password"):
+            self.instance.imposta_password(self.cleaned_data["nuova_password"])
+        return super().save(commit)
+
+
 class DocumentoPubblicoForm(StileMixin, forms.ModelForm):
     nuovo_file = forms.FileField(
         label="File PDF",

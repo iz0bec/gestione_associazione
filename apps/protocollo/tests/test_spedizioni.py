@@ -18,9 +18,8 @@ from django.urls import reverse
 
 from apps.anagrafica.models import Soggetto
 from apps.core.cifratura import nuova_chiave
-from apps.core.models import Organizzazione
+from apps.core.models import Organizzazione, ServizioInvio
 from apps.protocollo import posta, servizi, spedizioni
-from apps.protocollo.forms import CasellaForm
 from apps.protocollo.models import CasellaPosta, DestinatarioSpedizione, MessaggioRicevuto
 from apps.protocollo.servizi import OperazioneNonValida
 
@@ -51,10 +50,21 @@ def comune():
 
 @pytest.fixture
 def pec():
+    """Servizio di invio PEC (Sistema → Servizi di posta)."""
+    s = ServizioInvio(
+        nome="PEC sezione", tipo="pec", indirizzo="sez@pec.example.it", server="smtps.pec.example"
+    )
+    s.imposta_password("segreta")
+    s.save()
+    return s
+
+
+@pytest.fixture
+def casella():
+    """Casella PEC letta via IMAP, in cui arrivano le ricevute."""
     c = CasellaPosta(
-        nome="PEC sezione", pec=True, server="imaps.pec.example", utente="sez@pec.example.it",
-        invio=True, smtp_server="smtps.pec.example", smtp_porta=465,
-    )  # fmt: skip
+        nome="PEC sezione", pec=True, server="imaps.pec.example", utente="sez@pec.example.it"
+    )
     c.imposta_password("segreta")
     c.save()
     return c
@@ -75,14 +85,15 @@ def _protocollo(utente, *soggetti, direzione="uscita", mezzo="pec"):
     return p
 
 
-def _spedisci(p, utente, casella=None, destinatari=None, testo="Si trasmette la lettera."):
+def _spedisci(p, utente, servizio=None, destinatari=None, testo="Si trasmette la lettera."):
     destinatari = destinatari or [
         (r["corrispondente"], r["nome"], r["indirizzo"])
-        for r in spedizioni.indirizzi_proposti(p, pec=bool(casella and casella.pec))
+        for r in spedizioni.indirizzi_proposti(p, pec=bool(servizio and servizio.pec))
     ]
     return spedizioni.prepara_spedizione(
-        p, utente, casella=casella, destinatari=destinatari, testo=testo, allegati=p.allegati.all()
-    )
+        p, utente, servizio=servizio, destinatari=destinatari, testo=testo,
+        allegati=p.allegati.all(),
+    )  # fmt: skip
 
 
 class TestPreparazione:
@@ -112,11 +123,17 @@ class TestPreparazione:
         with pytest.raises(OperazioneNonValida, match="MB"):
             _spedisci(_protocollo(utente, comune), utente)
 
-    def test_casella_senza_smtp_rifiutata(self, utente, comune, pec):
-        pec.invio = False
+    def test_servizio_disattivato_rifiutato(self, utente, comune, pec):
+        pec.attivo = False
         pec.save()
-        with pytest.raises(OperazioneNonValida, match="non è configurata"):
-            _spedisci(_protocollo(utente, comune), utente, casella=pec)
+        with pytest.raises(OperazioneNonValida, match="disattivato"):
+            _spedisci(_protocollo(utente, comune), utente, servizio=pec)
+
+    def test_server_generale_registrato(self, utente, comune, pec):
+        pec.tipo, pec.generale = "email", True
+        pec.save()
+        s = _spedisci(_protocollo(utente, comune, mezzo="email"), utente)
+        assert s.servizio == pec and s.mittente == "sez@pec.example.it" and s.canale == "email"
 
 
 class TestInvio:
@@ -130,14 +147,15 @@ class TestInvio:
         assert [a[0] for a in m.attachments] == ["lettera.pdf"]
         d = s.destinatari.get()
         assert d.stato == "inviato" and d.message_id == m.extra_headers["Message-ID"]
-        assert s.canale == "email" and s.casella is None
+        assert s.canale == "email" and s.servizio is None
+        assert s.mittente == "noreply@localhost" and m.reply_to == []
 
-    def test_pec_dalla_casella(self, utente, comune, pec, monkeypatch):
+    def test_pec_dal_servizio(self, utente, comune, pec, monkeypatch):
         usate = []
         monkeypatch.setattr(
             spedizioni, "_connessione", lambda c: usate.append(c) or mail.mailers.default
         )
-        s = _spedisci(_protocollo(utente, comune), utente, casella=pec)
+        s = _spedisci(_protocollo(utente, comune), utente, servizio=pec)
         assert spedizioni.spedisci() == (1, 0)
         assert usate == [pec] and s.canale == "pec"
         assert "sez@pec.example.it" in mail.outbox[0].from_email
@@ -188,16 +206,16 @@ def _ricevuta(tipo, riferimento, msgid):
 
 
 class TestRicevute:
-    def test_accettazione_e_consegna_agganciate(self, utente, comune, pec):
+    def test_accettazione_e_consegna_agganciate(self, utente, comune, pec, casella):
         p = _protocollo(utente, comune)
-        s = _spedisci(p, utente, casella=pec)
+        s = _spedisci(p, utente, servizio=pec)
         spedizioni.spedisci()
         d = s.destinatari.get()
         consegna = posta.salva_messaggio(
-            pec, _ricevuta("avvenuta-consegna", d.message_id, "<c@pec.example>")
+            casella, _ricevuta("avvenuta-consegna", d.message_id, "<c@pec.example>")
         )
         # l'accettazione arrivata dopo non fa tornare indietro l'esito
-        posta.salva_messaggio(pec, _ricevuta("accettazione", d.message_id, "<a@pec.example>"))
+        posta.salva_messaggio(casella, _ricevuta("accettazione", d.message_id, "<a@pec.example>"))
         d.refresh_from_db()
         assert d.stato == "consegnato"
         assert consegna.stato == "protocollato" and consegna.protocollo == p
@@ -209,25 +227,31 @@ class TestRicevute:
         ]
         assert not MessaggioRicevuto.objects.da_esaminare().exists()
 
-    def test_mancata_consegna(self, utente, comune, pec):
-        s = _spedisci(_protocollo(utente, comune), utente, casella=pec)
+    def test_mancata_consegna(self, utente, comune, pec, casella):
+        s = _spedisci(_protocollo(utente, comune), utente, servizio=pec)
         spedizioni.spedisci()
         d = s.destinatari.get()
-        posta.salva_messaggio(pec, _ricevuta("errore-consegna", d.message_id, "<e@pec.example>"))
+        posta.salva_messaggio(
+            casella, _ricevuta("errore-consegna", d.message_id, "<e@pec.example>")
+        )
         d.refresh_from_db()
         assert d.stato == DestinatarioSpedizione.Stato.NON_CONSEGNATO
 
-    def test_ricevuta_estranea_resta_da_esaminare(self, pec):
-        m = posta.salva_messaggio(pec, _ricevuta("accettazione", "<altro@x>", "<r@pec.example>"))
+    def test_ricevuta_estranea_resta_da_esaminare(self, casella):
+        m = posta.salva_messaggio(
+            casella, _ricevuta("accettazione", "<altro@x>", "<r@pec.example>")
+        )
         assert m.stato == "nuovo" and m.protocollo is None
 
-    def test_casella_non_pec_ignora_le_intestazioni(self, utente, comune, pec):
-        s = _spedisci(_protocollo(utente, comune), utente, casella=pec)
+    def test_casella_non_pec_ignora_le_intestazioni(self, utente, comune, pec, casella):
+        s = _spedisci(_protocollo(utente, comune), utente, servizio=pec)
         spedizioni.spedisci()
-        pec.pec = False
-        pec.save()
+        casella.pec = False
+        casella.save()
         d = s.destinatari.get()
-        m = posta.salva_messaggio(pec, _ricevuta("accettazione", d.message_id, "<n@pec.example>"))
+        m = posta.salva_messaggio(
+            casella, _ricevuta("accettazione", d.message_id, "<n@pec.example>")
+        )
         assert m.stato == "nuovo"
 
 
@@ -271,23 +295,8 @@ class TestViste:
         assert client.get(reverse("protocollo:spedisci", args=[p.pk])).status_code == 302
 
 
-class TestCasella:
-    def test_invio_richiede_server_smtp(self):
-        form = CasellaForm(data={
-            "nome": "PEC", "pec": "on", "server": "imaps.pec.example", "porta": 993, "ssl": "on",
-            "utente": "sez@pec.example.it", "cartella": "INBOX", "giorni": 30, "attiva": "on",
-            "nuova_password": "x", "invio": "on", "smtp_porta": 465,
-        })  # fmt: skip
-        assert not form.is_valid() and "smtp_server" in form.errors
-
-    def test_mittente(self, pec):
-        assert pec.mittente == "sez@pec.example.it"
-        pec.indirizzo = "altro@pec.example.it"
-        assert pec.mittente == "altro@pec.example.it"
-
-
 def test_messaggio_con_message_id_del_dominio(utente, comune, pec):
-    s = _spedisci(_protocollo(utente, comune), utente, casella=pec)
+    s = _spedisci(_protocollo(utente, comune), utente, servizio=pec)
     email, message_id = spedizioni.messaggio(s, s.destinatari.get())
     grezzo = message_from_bytes(email.message().as_bytes(), policy=policy.default)
     assert message_id.endswith("@pec.example.it>") and grezzo["Message-ID"] == message_id

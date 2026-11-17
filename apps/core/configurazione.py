@@ -22,6 +22,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 
+from . import invio
 from .audit import Azione, registra
 from .forms import AspettoForm, EnteForm, StileMixin
 from .models import Organizzazione
@@ -324,6 +325,6 @@ def _riepilogo():
         "sezioni": Sezione.objects.filter(attiva=True),
         "listino": listino,
         "esercizio": esercizio,
-        "email_configurata": settings.MAILERS["default"]["BACKEND"].endswith("smtp.EmailBackend"),
+        "email_configurata": invio.configurato(),
         "url_pubblico": settings.URL_PUBBLICO,
     }

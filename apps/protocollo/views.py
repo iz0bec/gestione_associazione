@@ -31,6 +31,7 @@ from django.views.generic import (
 from django_filters.views import FilterView
 
 from apps.anagrafica.models import Soggetto
+from apps.core import invio
 from apps.core.audit import Azione, campi_modificati, registra
 from apps.core.cifratura import cifratura_disponibile
 from apps.core.models import EventoAudit, Organizzazione
@@ -129,7 +130,7 @@ class DettaglioView(PermessoMixin, _ProtocolloVisibileMixin, DetailView):
             righe = buste.righe_destinatari(p)
             ctx["spedizione"] = [r for r in righe if r["Avviso"]]
             ctx["su_carta"] = len(righe) if buste.solo_senza_email(p) else None
-        ctx["spedizioni"] = p.spedizioni.select_related("casella", "creato_da").prefetch_related(
+        ctx["spedizioni"] = p.spedizioni.select_related("servizio", "creato_da").prefetch_related(
             "destinatari", "allegati"
         )
         ctx["puo_spedire"] = spedizioni.puo_spedire(p) and self.request.user.has_perm(
@@ -361,41 +362,41 @@ class SpedisciView(PermessoMixin, _ProtocolloVisibileMixin, TemplateView):
                 return redirect(self.p)
         return super().dispatch(request, *args, **kwargs)
 
-    def _casella(self, valore):
-        caselle = list(spedizioni.caselle_invio())
-        if valore is None:  # proposta: la PEC se il protocollo è per PEC, altrimenti l'email
+    def _servizio(self, valore):
+        servizi = list(invio.servizi_attivi())
+        if valore is None:  # proposta: la PEC se il protocollo è per PEC, altrimenti la generale
             pec = self.p.mezzo == Protocollo.Mezzo.PEC
-            scelta = next((c for c in caselle if c.pec == pec), None)
-            return caselle, scelta
-        return caselle, next((c for c in caselle if str(c.pk) == str(valore)), None)
+            scelta = next((s for s in servizi if s.pec), None) if pec else None
+            return servizi, scelta or next((s for s in servizi if s.generale), None)
+        return servizi, next((s for s in servizi if str(s.pk) == str(valore)), None)
 
     def _form(self, dati=None, valore=None):
-        caselle, casella = self._casella(valore)
-        proposti = spedizioni.indirizzi_proposti(self.p, pec=bool(casella and casella.pec))
+        servizi, servizio = self._servizio(valore)
+        proposti = spedizioni.indirizzi_proposti(self.p, pec=bool(servizio and servizio.pec))
         iniziali = {
-            "da": str(casella.pk) if casella else "",
+            "da": str(servizio.pk) if servizio else "",
             "testo": spedizioni.testo_proposto(self.p),
             "documenti": list(self.p.allegati.values_list("pk", flat=True)),
         }
-        if self.request.htmx and dati is None:  # ricarica per il cambio di casella
+        if self.request.htmx and dati is None:  # ricarica per il cambio di servizio
             iniziali["testo"] = self.request.GET.get("testo") or iniziali["testo"]
             iniziali["documenti"] = self.request.GET.getlist("documenti") or iniziali["documenti"]
         form = SpedizioneForm(
-            dati, initial=iniziali, protocollo=self.p, caselle=caselle, proposti=proposti,
+            dati, initial=iniziali, protocollo=self.p, servizi=servizi, proposti=proposti,
             url_ricarica=reverse("protocollo:spedisci", args=[self.p.pk]),
         )  # fmt: skip
-        return form, casella
+        return form, servizio
 
     def get(self, request, *args, **kwargs):
         form, _ = self._form(valore=request.GET.get("da"))
         return self.render_to_response(self.get_context_data(form=form))
 
     def post(self, request, *args, **kwargs):
-        form, casella = self._form(request.POST, valore=request.POST.get("da", ""))
+        form, servizio = self._form(request.POST, valore=request.POST.get("da", ""))
         if form.is_valid():
             try:
                 sped = spedizioni.prepara_spedizione(
-                    self.p, request.user, casella=casella, destinatari=form.destinatari(),
+                    self.p, request.user, servizio=servizio, destinatari=form.destinatari(),
                     testo=form.cleaned_data["testo"], allegati=form.cleaned_data["documenti"],
                 )  # fmt: skip
             except OperazioneNonValida as e:

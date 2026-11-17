@@ -47,6 +47,8 @@ PAGINE_PER_SEZIONE = {
     "calendario": "calendario",
     "utenti": "utenti",
     "core:servizi_posta": "sistema#servizi-di-posta",
+    "core:servizio_nuovo": "sistema#servizi-di-invio-smtp",
+    "core:servizio_modifica": "sistema#servizi-di-invio-smtp",
     "core:cruscotto": "primi-passi",
     "core:cerca": "primi-passi",
     "core:aiuto": INDICE,

@@ -368,3 +368,77 @@ class DocumentoPubblico(ModelloBase):
         from django.utils.text import slugify
 
         return reverse("documento_pubblico", args=[self.pk, slugify(self.titolo) or "documento"])
+
+
+class ServizioInvio(models.Model):
+    """Server di invio (SMTP) per email o PEC, gestito in Sistema → Servizi di posta.
+
+    Il servizio «generale» spedisce le comunicazioni, le email dell'accesso e le spedizioni dei
+    protocolli per email; gli altri (es. la PEC) si scelgono quando si spedisce un protocollo.
+    Senza un servizio generale vale il server del file .env.
+    """
+
+    class Tipo(models.TextChoices):
+        EMAIL = "email", "Email"
+        PEC = "pec", "PEC"
+
+    nome = models.CharField(max_length=100, help_text="Es. «PEC della federazione».")
+    tipo = models.CharField(max_length=5, choices=Tipo.choices, default=Tipo.EMAIL)
+    indirizzo = models.EmailField("indirizzo del mittente")
+    nome_mittente = models.CharField(
+        "nome del mittente",
+        max_length=200,
+        blank=True,
+        help_text="Mostrato a chi riceve. Vuoto: la denominazione dell'organizzazione.",
+    )
+    server = models.CharField("server SMTP", max_length=200, help_text="Es. smtps.pec.aruba.it")
+    porta = models.PositiveIntegerField(default=465)
+    ssl = models.BooleanField(
+        "SSL implicito",
+        default=True,
+        help_text="Porta 465: SSL; porta 587: togliere la spunta (si usa STARTTLS).",
+    )
+    utente = models.CharField(
+        "nome utente", max_length=200, blank=True, help_text="Vuoto: l'indirizzo del mittente."
+    )
+    password_cifrata = models.TextField(editable=False, blank=True)
+    generale = models.BooleanField(
+        "server generale",
+        default=False,
+        help_text="Spedisce le comunicazioni, le email dell'accesso (es. recupero password) e i "
+        "protocolli per email. Uno solo.",
+    )
+    attivo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "servizio di invio"
+        verbose_name_plural = "servizi di invio"
+        ordering = ["-generale", "tipo", "nome"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["generale"],
+                condition=models.Q(generale=True),
+                name="un_solo_servizio_generale",
+            )
+        ]
+
+    def __str__(self):
+        return self.nome
+
+    @property
+    def pec(self):
+        return self.tipo == self.Tipo.PEC
+
+    @property
+    def nome_utente(self):
+        return self.utente or self.indirizzo
+
+    def imposta_password(self, password):
+        from .cifratura import cifra
+
+        self.password_cifrata = cifra(password)
+
+    def password(self):
+        from .cifratura import decifra
+
+        return decifra(self.password_cifrata)

@@ -268,26 +268,6 @@ class CasellaPosta(models.Model):
     attiva = models.BooleanField(default=True)
     ultimo_controllo = models.DateTimeField(null=True, blank=True, editable=False)
     ultimo_errore = models.CharField(max_length=500, blank=True, editable=False)
-    # spedizione dei protocolli in uscita (stesse credenziali della lettura)
-    invio = models.BooleanField(
-        "usata anche per spedire",
-        default=False,
-        help_text="I protocolli in uscita si possono spedire da questa casella (SMTP).",
-    )
-    indirizzo = models.EmailField(
-        "indirizzo del mittente",
-        blank=True,
-        help_text="Lasciare vuoto se coincide con il nome utente.",
-    )
-    smtp_server = models.CharField(
-        "server SMTP", max_length=200, blank=True, help_text="Es. smtps.pec.aruba.it"
-    )
-    smtp_porta = models.PositiveIntegerField("porta SMTP", default=465)
-    smtp_ssl = models.BooleanField(
-        "SMTP con SSL implicito",
-        default=True,
-        help_text="Porta 465: SSL; porta 587: togliere la spunta (si usa STARTTLS).",
-    )
 
     class Meta:
         verbose_name = "casella di posta"
@@ -296,11 +276,6 @@ class CasellaPosta(models.Model):
 
     def __str__(self):
         return self.nome
-
-    @property
-    def mittente(self):
-        """Indirizzo da cui partono le spedizioni."""
-        return self.indirizzo or (self.utente if "@" in self.utente else "")
 
     def imposta_password(self, password):
         from apps.core.cifratura import cifra
@@ -386,13 +361,13 @@ class Spedizione(ModelloBase):
 
     protocollo = models.ForeignKey(Protocollo, on_delete=models.PROTECT, related_name="spedizioni")
     canale = models.CharField(max_length=5, choices=Canale.choices)
-    casella = models.ForeignKey(
-        CasellaPosta,
+    servizio = models.ForeignKey(
+        "core.ServizioInvio",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
         related_name="spedizioni",
-        help_text="Vuota: server di invio generale.",
+        help_text="Server di invio (Sistema → Servizi di posta). Vuoto: server generale.",
     )
     mittente = models.CharField(max_length=254)
     oggetto = models.CharField(max_length=600)

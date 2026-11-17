@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
-  Descrizione: Servizi di posta: interruttori dell'invio delle email e della lettura IMAP, con lo stato
+  Descrizione: Servizi di posta: interruttori, servizi di invio (SMTP) e stato delle caselle IMAP
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
 {% endcomment %}
 {% block titolo %}Servizi di posta{% endblock %}
@@ -19,25 +19,6 @@
     </form>
   </div>
   <div class="col-lg-6">
-    <div class="card mb-3">
-      <div class="card-header">
-        <h3 class="card-title"><i class="ti ti-send me-1"></i>Invio (SMTP)</h3>
-        <div class="card-actions"><span class="badge {% if object.invio_email %}bg-green-lt{% else %}bg-red-lt{% endif %}">{% if object.invio_email %}attivo{% else %}disattivato{% endif %}</span></div>
-      </div>
-      <div class="card-body">
-        <dl class="row mb-0 small">
-          <dt class="col-5">Server</dt>
-          <dd class="col-7">{% if smtp.configurato %}{{ smtp.host }}:{{ smtp.porta }}{% if smtp.utente %} ({{ smtp.utente }}){% endif %}{% elif smtp.smtp %}<span class="text-orange">non configurato</span>{% else %}{{ smtp.backend }} (nessun invio reale){% endif %}</dd>
-          <dt class="col-5">Mittente</dt><dd class="col-7">{{ smtp.mittente }}</dd>
-          <dt class="col-5">Messaggi in coda</dt><dd class="col-7">{{ in_coda }}{% if in_coda and not object.invio_email %} <span class="text-secondary">(partiranno alla riattivazione)</span>{% endif %}</dd>
-          <dt class="col-5">Protocolli da spedire</dt><dd class="col-7">{{ protocolli_in_coda }}{% if protocolli_in_coda and not object.invio_email %} <span class="text-secondary">(partiranno alla riattivazione)</span>{% endif %}</dd>
-        </dl>
-      </div>
-      <div class="card-footer d-flex align-items-center gap-2">
-        <span class="small text-secondary flex-fill">Il server SMTP si configura nel file <code>.env</code> sul server; la password non è mai mostrata.</span>
-        {% if smtp.smtp %}<form method="post" action="{% url 'core:verifica_smtp' %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>{% endif %}
-      </div>
-    </div>
     <div class="card">
       <div class="card-header">
         <h3 class="card-title"><i class="ti ti-inbox me-1"></i>Lettura (IMAP)</h3>
@@ -48,17 +29,57 @@
         {% for c in caselle %}
         <div class="list-group-item small">
           <div class="d-flex align-items-center gap-2">
-            <strong class="flex-fill">{{ c.nome }}{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}{% if c.invio %} <span class="badge bg-azure-lt" title="Spedisce i protocolli da {{ c.smtp_server }}:{{ c.smtp_porta }}">anche invio</span>{% endif %}</strong>
+            <strong class="flex-fill">{{ c.nome }}{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}</strong>
             <span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.attiva %}attiva{% else %}spenta{% endif %}</span>
-            <form method="post" action="{% url 'core:verifica_casella' c.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso (anche al server di invio, se la casella spedisce): nulla viene scaricato né spedito"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
+            <form method="post" action="{% url 'core:verifica_casella' c.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nulla viene scaricato"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
           </div>
           <div class="text-secondary">{{ c.utente }} · {{ c.server }}:{{ c.porta }} · ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
         </div>
         {% endfor %}
       </div>
       {% else %}
-      <div class="card-body small text-secondary">Nessuna casella di posta configurata (Protocollo → Posta da protocollare → Caselle).</div>
+      <div class="card-body small text-secondary">Nessuna casella di posta configurata.</div>
       {% endif %}
+      <div class="card-footer small text-secondary">Le caselle da leggere si configurano in <a href="{% url 'protocollo:caselle' %}">Protocollo → Caselle</a>.</div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-send me-1"></i>Servizi di invio (SMTP)</h3>
+        <div class="card-actions d-flex align-items-center gap-2">
+          <span class="badge {% if object.invio_email %}bg-green-lt{% else %}bg-red-lt{% endif %}">invio {% if object.invio_email %}attivo{% else %}disattivato{% endif %}</span>
+          <a class="btn btn-sm btn-primary" href="{% url 'core:servizio_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo servizio</a>
+        </div>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for s in servizi %}
+        <div class="list-group-item small">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <strong class="flex-fill">{{ s.nome }} <span class="badge {% if s.pec %}bg-blue-lt{% else %}bg-secondary-lt{% endif %}">{{ s.get_tipo_display }}</span>{% if s.generale %} <span class="badge bg-green-lt" title="Comunicazioni, email dell'accesso, protocolli per email">server generale</span>{% endif %}{% if not s.attivo %} <span class="badge bg-secondary-lt">disattivato</span>{% endif %}</strong>
+            <form method="post" action="{% url 'core:verifica_servizio' s.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nessun messaggio spedito"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
+            <a class="btn btn-sm" href="{% url 'core:servizio_modifica' s.pk %}">Modifica</a>
+            <form method="post" action="{% url 'core:servizio_elimina' s.pk %}" data-conferma="Eliminare il servizio «{{ s.nome }}»?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Elimina (solo se non ha mai spedito)"><i class="ti ti-trash"></i></button></form>
+          </div>
+          <div class="text-secondary">{{ s.indirizzo }} · {{ s.server }}:{{ s.porta }}{% if s.ssl %} SSL{% else %} STARTTLS{% endif %}{% if s.utente and s.utente != s.indirizzo %} · utente {{ s.utente }}{% endif %}</div>
+        </div>
+        {% empty %}
+        <div class="list-group-item small text-secondary">Nessun servizio di invio configurato.</div>
+        {% endfor %}
+        {% if not generale %}
+        <div class="list-group-item small">
+          <div class="d-flex align-items-center gap-2">
+            <strong class="flex-fill">Server generale dal file <code>.env</code> <span class="badge bg-secondary-lt">riserva</span></strong>
+            {% if smtp.smtp %}<form method="post" action="{% url 'core:verifica_smtp' %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>{% endif %}
+          </div>
+          <div class="text-secondary">{% if smtp.configurato %}{{ smtp.mittente }} · {{ smtp.host }}:{{ smtp.porta }}{% elif smtp.smtp %}<span class="text-orange">non configurato</span>{% else %}{{ smtp.backend }} (nessun invio reale){% endif %} · usato finché non si indica un servizio come «server generale».</div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-footer small text-secondary">
+        Messaggi in coda: {{ in_coda }} · protocolli da spedire: {{ protocolli_in_coda }}{% if not object.invio_email and in_coda|add:protocolli_in_coda %} (partiranno alla riattivazione dell'invio){% endif %}.
+        Le password sono conservate cifrate e non vengono mai mostrate.
+      </div>
     </div>
   </div>
 </div>

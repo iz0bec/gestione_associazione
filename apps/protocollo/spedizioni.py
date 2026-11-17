@@ -3,8 +3,8 @@
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
 # * Descrizione: Spedizione per email o PEC dei protocolli in uscita: preparazione, coda,
-# *              invio (un messaggio per destinatario, dal server generale o da una casella
-# *              con SMTP) e aggancio delle ricevute PEC di accettazione e consegna.
+# *              invio (un messaggio per destinatario, dal servizio di invio scelto in
+# *              Sistema → Servizi di posta) e aggancio delle ricevute PEC.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -16,22 +16,22 @@ from email.utils import formataddr, make_msgid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.core.mail import EmailMessage, mailers
+from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import timezone
 
+from apps.core import invio
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
 
-from .models import CasellaPosta, DestinatarioSpedizione, Protocollo, Spedizione
+from .models import DestinatarioSpedizione, Protocollo, Spedizione
 from .servizi import OperazioneNonValida, aggiungi_allegato
 
 log = logging.getLogger(__name__)
 
 PERMESSO = "protocollo.spedisci_protocollo"
 MAX_TENTATIVI = 3
-TIMEOUT = 30
 Stato = DestinatarioSpedizione.Stato
 
 # intestazione X-Ricevuta delle ricevute PEC (regole tecniche, DPR 68/2005)
@@ -49,10 +49,6 @@ _PESO = {
     Stato.IN_ATTESA: 0, Stato.ERRORE: 0, Stato.INVIATO: 1, Stato.ACCETTATO: 2,
     Stato.NON_ACCETTATO: 3, Stato.NON_CONSEGNATO: 3, Stato.CONSEGNATO: 4,
 }  # fmt: skip
-
-
-def caselle_invio():
-    return CasellaPosta.objects.filter(invio=True).exclude(smtp_server="").order_by("-pec", "nome")
 
 
 def puo_spedire(protocollo):
@@ -101,13 +97,15 @@ def testo_proposto(protocollo, org=None):
 
 
 def mittente_generale():
-    return settings.DEFAULT_FROM_EMAIL
+    """Indirizzo del server generale: il servizio generale o, senza, DEFAULT_FROM_EMAIL."""
+    servizio = invio.servizio_generale()
+    return servizio.indirizzo if servizio else invio.mittente_env()[1]
 
 
 @transaction.atomic
-def prepara_spedizione(protocollo, utente, *, casella, destinatari, testo, allegati):
+def prepara_spedizione(protocollo, utente, *, servizio, destinatari, testo, allegati):
     """Mette in coda la spedizione. `destinatari`: lista di (corrispondente o None, nome,
-    indirizzo); `casella`: None per il server generale (solo email)."""
+    indirizzo); `servizio`: ServizioInvio, None per il server generale."""
     if utente is not None and not utente.has_perm(PERMESSO):
         raise OperazioneNonValida("Non hai il permesso di spedire i protocolli.")
     protocollo = Protocollo.objects.select_for_update().get(pk=protocollo.pk)
@@ -115,11 +113,12 @@ def prepara_spedizione(protocollo, utente, *, casella, destinatari, testo, alleg
         raise OperazioneNonValida("Il protocollo è annullato.")
     if protocollo.direzione != Protocollo.Direzione.USCITA:
         raise OperazioneNonValida("Si spediscono solo i protocolli in uscita.")
-    if casella is not None:
-        if not casella.invio or not casella.smtp_server:
-            raise OperazioneNonValida(f"La casella «{casella}» non è configurata per spedire.")
-        if not casella.password_cifrata or not casella.mittente:
-            raise OperazioneNonValida(f"La casella «{casella}»: mancano password o indirizzo.")
+    if servizio is None:
+        servizio = invio.servizio_generale()
+    elif not servizio.attivo:
+        raise OperazioneNonValida(f"Il servizio di invio «{servizio}» è disattivato.")
+    if servizio is not None and not servizio.password_cifrata:
+        raise OperazioneNonValida(f"Il servizio di invio «{servizio}»: manca la password.")
     if not (testo or "").strip():
         raise OperazioneNonValida("Il testo del messaggio è obbligatorio.")
     righe, visti = [], set()
@@ -144,9 +143,9 @@ def prepara_spedizione(protocollo, utente, *, casella, destinatari, testo, alleg
         )
     spedizione = Spedizione.objects.create(
         protocollo=protocollo,
-        canale=Spedizione.Canale.PEC if casella and casella.pec else Spedizione.Canale.EMAIL,
-        casella=casella,
-        mittente=casella.mittente if casella else mittente_generale(),
+        canale=Spedizione.Canale.PEC if servizio and servizio.pec else Spedizione.Canale.EMAIL,
+        servizio=servizio,
+        mittente=servizio.indirizzo if servizio else mittente_generale(),
         oggetto=oggetto_messaggio(protocollo),
         testo=testo.strip(),
         creato_da=utente,
@@ -175,47 +174,29 @@ def prepara_spedizione(protocollo, utente, *, casella, destinatari, testo, alleg
 # --- invio -------------------------------------------------------------------------------------
 
 
-def smtp_casella(casella):
-    """Connessione SMTP della casella (stesse credenziali della lettura)."""
-    from django.core.mail.backends.smtp import EmailBackend
-
-    return EmailBackend(
-        alias=f"casella-{casella.pk}",
-        host=casella.smtp_server,
-        port=casella.smtp_porta,
-        username=casella.utente,
-        password=casella.password(),
-        use_ssl=casella.smtp_ssl,
-        use_tls=not casella.smtp_ssl,
-        timeout=TIMEOUT,
-    )
-
-
-def _connessione(casella):
-    # in sviluppo e nei test (backend console o in memoria) anche le caselle usano quello
-    if casella is None or not settings.MAILERS["default"]["BACKEND"].endswith("smtp.EmailBackend"):
-        return mailers.default
-    return smtp_casella(casella)
-
-
-def verifica_invio(casella):
-    """Prova di accesso al server SMTP della casella (nessun messaggio spedito)."""
-    connessione = smtp_casella(casella)
-    connessione.open()
-    connessione.close()
-    return f"accesso a {casella.smtp_server}:{casella.smtp_porta} per l'invio riuscito"
+def _connessione(servizio):
+    return invio.connessione(servizio)
 
 
 def messaggio(spedizione, destinatario, org=None):
     org = org or Organizzazione.corrente()
     dominio = spedizione.mittente.rsplit("@", 1)[-1] if "@" in spedizione.mittente else None
     message_id = make_msgid(domain=dominio)
+    servizio = spedizione.servizio
+    nome = (servizio.nome_mittente if servizio else "") or org.denominazione
+    risposte = (
+        [org.email]
+        if spedizione.canale == Spedizione.Canale.EMAIL
+        and org.email
+        and org.email.lower() != spedizione.mittente.lower()
+        else None
+    )
     email = EmailMessage(
         subject=spedizione.oggetto,
         body=spedizione.testo,
-        from_email=formataddr((org.denominazione, spedizione.mittente)),
+        from_email=formataddr((nome, spedizione.mittente)),
         to=[formataddr((destinatario.nome, destinatario.indirizzo))],
-        reply_to=[org.email] if spedizione.casella_id is None and org.email else None,
+        reply_to=risposte,
         headers={
             "Message-ID": message_id,
             "X-Gestione-Protocollo": spedizione.protocollo.segnatura,
@@ -240,7 +221,7 @@ def spedisci(spedizione=None):
         DestinatarioSpedizione.objects.filter(
             stato=Stato.IN_ATTESA, spedizione__protocollo__annullato=False
         )
-        .select_related("spedizione__protocollo", "spedizione__casella")
+        .select_related("spedizione__protocollo", "spedizione__servizio")
         .order_by("spedizione_id", "id")
     )
     if spedizione is not None:
@@ -252,10 +233,10 @@ def spedisci(spedizione=None):
         for d in in_coda:
             sped = d.spedizione
             try:
-                if sped.casella_id not in connessioni:
-                    connessioni[sped.casella_id] = _connessione(sped.casella)
+                if sped.servizio_id not in connessioni:
+                    connessioni[sped.servizio_id] = _connessione(sped.servizio)
                 email, message_id = messaggio(sped, d, org)
-                if connessioni[sped.casella_id].send_messages([email]) != 1:
+                if connessioni[sped.servizio_id].send_messages([email]) != 1:
                     raise OperazioneNonValida("Il server non ha accettato il messaggio.")
             except Exception as e:  # noqa: BLE001 - l'errore resta sul destinatario
                 d.tentativi += 1
@@ -266,7 +247,7 @@ def spedisci(spedizione=None):
                 d.save(update_fields=["tentativi", "dettaglio", "stato", "aggiornato_il"])
                 errori += 1
                 log.warning("Spedizione %s a %s non riuscita: %s", sped.pk, d.indirizzo, e)
-                connessioni.pop(sped.casella_id, None)
+                connessioni.pop(sped.servizio_id, None)
                 continue
             d.stato = Stato.INVIATO
             d.message_id = message_id

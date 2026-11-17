@@ -94,11 +94,11 @@ registrato nel registro delle attività.
 Un protocollo **in uscita** si spedisce dalla sua scheda con **Spedisci** (serve il permesso di
 spedire, che hanno l'addetto al protocollo e i ruoli superiori). Nel modulo:
 
-- **Spedisci da**: una casella configurata per l'invio (per la **PEC** la casella PEC dell'ente)
-  oppure il **server di invio generale** (solo email ordinaria). Se il protocollo è registrato con
-  mezzo PEC viene proposta la casella PEC;
+- **Spedisci da**: uno dei **servizi di invio** configurati in *Sistema → Servizi di posta* (per la
+  **PEC** quello della PEC dell'ente, per l'email ordinaria il server generale). Se il protocollo è
+  registrato con mezzo PEC viene proposto il servizio PEC;
 - **Destinatari**: quelli del protocollo, ciascuno con l'indirizzo proposto dall'anagrafica (la PEC
-  quando si spedisce da una casella PEC, altrimenti l'email) e modificabile; si tolgono quelli da non
+  quando si spedisce da un servizio PEC, altrimenti l'email) e modificabile; si tolgono quelli da non
   raggiungere (per esempio chi riceve per posta). Parte **un messaggio per destinatario**, così
   nessuno vede gli indirizzi degli altri e ogni PEC ha le proprie ricevute;
 - **Testo**: è proposto quello del protocollo, o una lettera di trasmissione standard;
@@ -122,7 +122,8 @@ Nella scheda, il riquadro **Spedizioni** riporta per ogni destinatario l'esito:
 Le **ricevute PEC** arrivano nella casella PEC e, quando la casella viene letta, si **agganciano da
 sole** alla spedizione: aggiornano l'esito e diventano documenti del protocollo (`ricevuta
 avvenuta-consegna - indirizzo.eml`, con la firma del gestore). Non compaiono fra la posta da
-protocollare. Per questo la casella PEC che spedisce deve avere anche la **lettura attiva**.
+protocollare. Per questo la PEC che spedisce deve essere configurata anche come **casella da
+leggere** (*Protocollo → Caselle*), con la lettura attiva.
 
 ## Cercare
 
@@ -216,8 +217,6 @@ la toglie dalla pagina pubblica; le versioni restano agli atti.
   adattare. Le voci non più usate si disattivano.
 - **Caselle** (da *Posta da protocollare → Caselle*): server IMAP, porta (993), utente, password,
   cartella da leggere e cartella dei messaggi scaricati (`PROCESSATA`). La password è salvata **cifrata**; serve che l'amministratore di sistema abbia configurato la
-  chiave di cifratura. Per la PEC segnare *è una PEC*. Per **spedire** da una casella si spunta *usata
-  anche per spedire* e si indica il server SMTP (stesso utente e password): per la PEC di Aruba
-  `smtps.pec.aruba.it`, porta 465 con SSL (per la lettura `imaps.pec.aruba.it`, porta 993). L'indirizzo
-  del mittente si indica solo se diverso dal nome utente. *Sistema → Servizi di posta → Verifica*
-  prova sia la lettura sia l'invio, senza spedire nulla.
+  chiave di cifratura. Per la PEC segnare *è una PEC* (per Aruba `imaps.pec.aruba.it`, porta 993).
+  Le caselle servono **solo a leggere**: i server per **spedire** (email e PEC) si configurano in
+  *Sistema → Servizi di posta* (vedi la guida del [Sistema](sistema.md#servizi-di-posta)).

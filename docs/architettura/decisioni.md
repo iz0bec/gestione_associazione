@@ -291,3 +291,16 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   webmail o dal client; nulla viene cancellato e la deduplica per Message-ID resta.
 - Lo spostamento avviene dopo il salvataggio nel database, anche se lo scaricamento si interrompe a metà;
   i messaggi troppo grandi (oltre 50 MB) restano dove sono.
+
+## ADR-028 - Servizi di invio separati dalle caselle di lettura
+
+- **Scelta**: i server SMTP sono `core.ServizioInvio` (tipo email o PEC, credenziali cifrate come le caselle),
+  gestiti in *Sistema → Servizi di posta*; le caselle (`protocollo.CasellaPosta`) servono solo a leggere.
+  Il servizio «server generale» (uno solo, email) è usato dal backend Django `apps.core.invio.Backend`
+  per comunicazioni, email dell'accesso e protocolli per email: con lui il mittente predefinito
+  (`DEFAULT_FROM_EMAIL`) diventa il suo indirizzo. Senza servizio generale vale il server del `.env`.
+- **Motivo**: un solo punto in cui si decide *come si spedisce* e un solo punto in cui si decide *cosa
+  si legge*; prima l'SMTP generale stava nel `.env` e quello della PEC dentro la casella IMAP.
+- **Migrazione**: il server del `.env` (se configurato davvero) diventa il servizio generale; le caselle
+  «anche invio» della 1.0.18 diventano servizi con le stesse credenziali e le spedizioni passate vi restano
+  collegate. Un servizio che ha spedito non si elimina (si disattiva).

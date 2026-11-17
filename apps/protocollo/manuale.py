@@ -16,7 +16,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.audit import Azione, registra
-from apps.core.models import Organizzazione
+from apps.core.models import Organizzazione, ServizioInvio
 
 from .models import (
     CasellaPosta,
@@ -102,9 +102,7 @@ def contesto(manuale=None, *, bozza=True, versione=None, giorno=None, pubblico=F
         "utenti": [] if pubblico else _utenti(),
         "titolario": Classificazione.objects.order_by("codice"),
         "caselle": CasellaPosta.objects.order_by("nome"),
-        "caselle_invio": CasellaPosta.objects.filter(invio=True)
-        .exclude(smtp_server="")
-        .order_by("nome"),
+        "servizi_invio": ServizioInvio.objects.filter(attivo=True).order_by("tipo", "nome"),
         "mezzi": Protocollo.Mezzo.choices,
         "modelli": ModelloProtocollo.objects.filter(attivo=True),
         "estensioni": ", ".join(sorted(settings.PROTOCOLLO_ESTENSIONI)),

@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato
+- **Servizi di posta riorganizzati**: *Protocollo → Caselle* serve solo a **leggere** (IMAP);
+  **come si spedisce** si configura in *Sistema → Servizi di posta*, con i nuovi **servizi di invio**
+  (SMTP, email o PEC, password cifrata, verifica dell'accesso). Il servizio **server generale** spedisce
+  comunicazioni, email dell'accesso e protocolli per email; gli altri (es. la PEC) si scelgono in
+  *Spedisci*. Il server del file `.env` resta come riserva.
+- Aggiornando, il server SMTP del `.env` diventa il server generale e le caselle «anche invio» della
+  1.0.18 diventano servizi di invio con le stesse credenziali: nulla da riconfigurare.
+
 ## [1.0.21] - 2026-11-17
 
 Mittente delle PEC ricevute e risposte via PEC.

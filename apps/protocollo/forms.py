@@ -258,26 +258,13 @@ class CasellaForm(StileMixin, forms.ModelForm):
         fields = [
             "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "cartella_processata",
             "giorni", "attiva",
-            "invio", "indirizzo", "smtp_server", "smtp_porta", "smtp_ssl",
         ]  # fmt: skip
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["smtp_porta"].required = False
 
     def clean(self):
         dati = super().clean()
         processata = (dati.get("cartella_processata") or "").strip()
         if processata and processata.lower() == (dati.get("cartella") or "").strip().lower():
             self.add_error("cartella_processata", "Deve essere diversa dalla cartella da leggere.")
-        if not dati.get("smtp_porta"):
-            dati["smtp_porta"] = 465
-            self.instance.smtp_porta = 465
-        if dati.get("invio"):
-            if not (dati.get("smtp_server") or "").strip():
-                self.add_error("smtp_server", "Indicare il server SMTP per spedire.")
-            if not dati.get("indirizzo") and "@" not in (dati.get("utente") or ""):
-                self.add_error("indirizzo", "Indicare l'indirizzo da cui partono i messaggi.")
         if not cifratura_disponibile():
             raise forms.ValidationError(
                 "Manca la chiave di cifratura (CHIAVE_CIFRATURA): chiedere all'amministratore di "
@@ -294,8 +281,8 @@ class CasellaForm(StileMixin, forms.ModelForm):
 
 
 class SpedizioneForm(StileMixin, forms.Form):
-    """Spedizione per email o PEC di un protocollo in uscita: da quale casella, a chi (indirizzo
-    modificabile per ciascun destinatario), testo e documenti."""
+    """Spedizione per email o PEC di un protocollo in uscita: da quale servizio di invio, a chi
+    (indirizzo modificabile per ciascun destinatario), testo e documenti."""
 
     da = forms.ChoiceField(label="Spedisci da")
     testo = forms.CharField(
@@ -310,18 +297,19 @@ class SpedizioneForm(StileMixin, forms.Form):
         widget=forms.CheckboxSelectMultiple,
     )
 
-    def __init__(self, *args, protocollo, caselle, proposti, url_ricarica=None, **kwargs):
+    def __init__(self, *args, protocollo, servizi, proposti, url_ricarica=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if url_ricarica:  # cambiando casella si ripropongono gli indirizzi (PEC o email)
+        if url_ricarica:  # cambiando servizio si ripropongono gli indirizzi (PEC o email)
             self.fields["da"].widget.attrs.update({
                 "hx-get": url_ricarica, "hx-trigger": "change", "hx-include": "closest form",
                 "hx-target": "#modulo-spedizione", "hx-select": "#modulo-spedizione",
                 "hx-swap": "outerHTML",
             })  # fmt: skip
         scelte = [
-            (str(c.pk), f"{c.nome} - {c.mittente}{' (PEC)' if c.pec else ''}") for c in caselle
+            (str(c.pk), f"{c.nome} - {c.indirizzo}{' (PEC)' if c.pec else ''}") for c in servizi
         ]
-        scelte.append(("", "Server di invio generale (email)"))
+        if not any(c.generale for c in servizi):
+            scelte.append(("", "Server di invio generale (email)"))
         self.fields["da"].choices = scelte
         self.fields["da"].required = False
         self.fields["documenti"].queryset = protocollo.allegati.all()

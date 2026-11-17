@@ -42,6 +42,26 @@ urlpatterns = [
     ),
     path("sistema/posta/verifica-invio/", views.VerificaSmtpView.as_view(), name="verifica_smtp"),
     path(
+        "sistema/posta/invio/nuovo/",
+        views.ServizioInvioNuovoView.as_view(),
+        name="servizio_nuovo",
+    ),
+    path(
+        "sistema/posta/invio/<int:pk>/",
+        views.ServizioInvioModificaView.as_view(),
+        name="servizio_modifica",
+    ),
+    path(
+        "sistema/posta/invio/<int:pk>/elimina/",
+        views.ServizioInvioEliminaView.as_view(),
+        name="servizio_elimina",
+    ),
+    path(
+        "sistema/posta/invio/<int:pk>/verifica/",
+        views.VerificaServizioView.as_view(),
+        name="verifica_servizio",
+    ),
+    path(
         "sistema/backup/<str:nome>/scarica/",
         viste_backup.ScaricaBackupView.as_view(),
         name="scarica_backup",

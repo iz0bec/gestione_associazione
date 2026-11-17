@@ -238,6 +238,9 @@ if _EMAIL_BACKEND.endswith("smtp.EmailBackend"):
         "use_ssl": env.bool("EMAIL_USE_SSL", default=False),
         "timeout": env.int("EMAIL_TIMEOUT", default=30),
     }
+if _EMAIL_BACKEND.endswith("smtp.EmailBackend"):
+    # servizio generale di Sistema -> Servizi di posta; il .env resta come riserva
+    _EMAIL_BACKEND = "apps.core.invio.Backend"
 MAILERS = {"default": {"BACKEND": _EMAIL_BACKEND, "OPTIONS": _EMAIL_OPZIONI}}
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@localhost")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL

@@ -26,7 +26,7 @@ permessi `600`, mai nel repository.
 | `SECURE_HSTS_SECONDS` | | `0` | con `HTTPS=true`, durata HSTS (es. 31536000) |
 | `CSRF_TRUSTED_ORIGINS` | | - | origini https ammesse per i moduli, es. `https://gestione.example.it` |
 | `PROXY_COUNT` | | `0` | numero di reverse proxy fidati (per IP reali e protocollo) |
-| `EMAIL_HOST`, `EMAIL_PORT` | | `localhost`, `587` | server SMTP generale (comunicazioni, ricevute, recupero password). Le caselle del protocollo «usate anche per spedire», come la PEC, hanno il proprio SMTP configurato dall'interfaccia |
+| `EMAIL_HOST`, `EMAIL_PORT` | | `localhost`, `587` | server SMTP **di riserva**: vale finché in *Sistema → Servizi di posta* nessun servizio di invio è «server generale». Dalla 1.0.22 l'aggiornamento lo copia lì da solo (con la password cifrata); i servizi di invio, PEC compresa, si gestiscono dall'interfaccia |
 | `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | | - | credenziali SMTP |
 | `EMAIL_USE_TLS` / `EMAIL_USE_SSL` | | `true` / `false` | cifratura SMTP (STARTTLS su 587 / SSL su 465) |
 | `EMAIL_BACKEND` | | smtp (console con DEBUG) | backend email Django |

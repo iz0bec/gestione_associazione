@@ -43,7 +43,7 @@
         <li class="mb-2"><i class="ti ti-file-import me-1"></i><a href="{% url 'soci:importa' %}">Importare i soci</a> dall'estratto Excel del registro nazionale.</li>
         <li class="mb-2"><i class="ti ti-package me-1"></i><a href="{% url 'soci:lotto_nuovo' %}">Caricare le tessere</a> ricevute dalla sede centrale.</li>
         <li class="mb-2"><i class="ti ti-inbox me-1"></i>Collegare le caselle di posta e PEC da cui protocollare.</li>
-        <li class="mb-2"><i class="ti ti-mail me-1"></i>Invio email: {% if email_configurata %}<span class="text-green">configurato</span>{% else %}<span class="text-warning">non configurato</span> (parametri EMAIL_* nel file .env){% endif %}.</li>
+        <li class="mb-2"><i class="ti ti-mail me-1"></i>Invio email: {% if email_configurata %}<span class="text-green">configurato</span>{% else %}<span class="text-warning">non configurato</span> (<a href="{% url 'core:servizi_posta' %}">Sistema → Servizi di posta</a>){% endif %}.</li>
         <li><i class="ti ti-world me-1"></i>Indirizzo pubblico per i QR: {% if url_pubblico %}<span class="text-green">{{ url_pubblico }}</span>{% else %}<span class="text-warning">non impostato</span> (URL_PUBBLICO nel file .env){% endif %}.</li>
       </ul>
     </div></div>

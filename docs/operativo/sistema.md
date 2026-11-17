@@ -70,7 +70,9 @@ finché non lo si rimette in rotazione. Vedi il [manuale di sistema](../sistema/
 
 ![Servizi di posta: interruttori, stato del server di invio e verifica delle caselle](immagini/servizi-posta.jpg)
 
-**Sistema → Servizi di posta**, solo per l'Amministratore di sistema. Due interruttori generali:
+**Sistema → Servizi di posta**, solo per l'Amministratore di sistema. È il punto in cui si
+configura **come si spedisce**; le caselle da **leggere** (email e PEC in arrivo) si configurano
+invece in *Protocollo → Caselle*. Due interruttori generali:
 
 - **Invio delle email**: spento, **nessuna email parte**. Le comunicazioni si possono ancora scrivere
   e confermare: restano *in coda* e partono quando l'invio viene riattivato. Gli **auguri** e i
@@ -81,19 +83,33 @@ finché non lo si rimette in rotazione. Vedi il [manuale di sistema](../sistema/
   né dal pianificatore né con il pulsante *Scarica ora*.
 
 Quando un servizio è spento, le pagine interessate (Comunicazioni, Promemoria di rinnovo, Posta da
-protocollare) lo segnalano con un avviso. La pagina mostra anche lo **stato**: server SMTP
-configurato (la password non è mai mostrata), mittente, messaggi in coda e caselle IMAP con
-l'ultimo controllo ed eventuali errori. Ogni modifica è annotata nel registro attività.
+protocollare) lo segnalano con un avviso.
 
-**Verifica** (accanto a ogni casella e al server di invio) fa una **prova di accesso**, anche con i
+### Servizi di invio (SMTP)
+
+Ogni **servizio di invio** è un server SMTP con cui il programma spedisce: nome, tipo (**Email** o
+**PEC**), indirizzo e nome del mittente (vuoto: la denominazione dell'organizzazione), server, porta,
+SSL, nome utente (vuoto: l'indirizzo) e password, conservata **cifrata** e mai mostrata.
+
+- Il servizio segnato come **server generale** (uno solo, di tipo email) spedisce le
+  **comunicazioni**, le **email dell'accesso** (recupero della password) e i protocolli per email.
+  Finché nessun servizio è generale vale il server indicato nel file `.env` (riga «riserva»).
+- Gli altri servizi, come la **PEC**, si scelgono in *Spedisci* dalla scheda di un protocollo in uscita.
+- Per **Aruba**: email `smtps.aruba.it`, PEC `smtps.pec.aruba.it`, porta 465 con SSL; utente e
+  password sono quelli della casella.
+- Un servizio che ha già spedito non si elimina (le spedizioni restano nella storia): si disattiva.
+
+La pagina mostra anche i **messaggi in coda** e le **caselle IMAP** con l'ultimo controllo ed
+eventuali errori. Ogni modifica è annotata nel registro attività (mai la password).
+
+**Verifica** (accanto a ogni casella e a ogni servizio di invio) fa una **prova di accesso**, anche con i
 servizi spenti: per una casella riporta quanti messaggi contiene, quanti rientrano nel periodo da
 scaricare e quanti sono già nel programma, **senza scaricare nulla** (la cartella è aperta in sola
 lettura); per il server di invio si collega e si disconnette **senza spedire email**. In caso di
 errore mostra il motivo (password errata, server o cartella sbagliati, server non raggiungibile).
 
 Utile durante il collaudo, quando il server di posta non è ancora configurato, o per fermare
-tutto in caso di problemi. Il server SMTP si configura nel file `.env` (manuale di sistema), le
-caselle IMAP in *Protocollo → Posta da protocollare*.
+tutto in caso di problemi.
 
 ## Sezioni
 
