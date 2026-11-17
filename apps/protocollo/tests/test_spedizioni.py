@@ -301,3 +301,73 @@ def test_messaggio_con_message_id_del_dominio(utente, comune, pec):
     grezzo = message_from_bytes(email.message().as_bytes(), policy=policy.default)
     assert message_id.endswith("@pec.example.it>") and grezzo["Message-ID"] == message_id
     assert grezzo["X-Gestione-Protocollo"] == s.protocollo.segnatura
+
+
+class TestRisposta:
+    """Si risponde con il servizio collegato alla casella da cui è arrivato il messaggio."""
+
+    def _arrivo(self, casella, utente):
+        busta = EmailMessage()
+        busta["From"] = "Comune <protocollo@pec.comune.example.it>"
+        busta["Subject"] = "Invito"
+        busta["Message-ID"] = "<invito@pec.comune.example.it>"
+        busta.set_content("Siete invitati.")
+        m = posta.salva_messaggio(casella, busta.as_bytes())
+        return servizi.protocolla_messaggio(m, utente, oggetto="Invito")
+
+    def _risposta(self, originale, utente, mezzo="email"):
+        return servizi.registra_protocollo(
+            {"direzione": "uscita", "mezzo": mezzo, "oggetto": "Risposta",
+             "risposta_a": originale},
+            [{"ruolo": "destinatario", "descrizione": "Comune",
+              "indirizzo": "protocollo@pec.comune.example.it"}], utente,
+        )  # fmt: skip
+
+    def test_rispondi_con_della_casella(self, utente, pec, casella):
+        generale = ServizioInvio(
+            nome="Generale", indirizzo="g@example.it", server="s", generale=True
+        )
+        generale.imposta_password("x")
+        generale.save()
+        altra_pec = ServizioInvio(nome="Altra", tipo="pec", indirizzo="a@pec.it", server="s")
+        altra_pec.imposta_password("x")
+        altra_pec.save()
+        attivi = list(ServizioInvio.objects.filter(attivo=True))
+        # anche con mezzo «email» si propone la PEC da cui è arrivato il messaggio
+        risposta = self._risposta(self._arrivo(casella, utente), utente)
+        assert casella.servizio_per_risposte() == pec  # stesso indirizzo
+        assert spedizioni.servizio_proposto(risposta, attivi) == pec
+        casella.servizio_risposta = altra_pec
+        casella.save()
+        assert spedizioni.servizio_proposto(risposta, attivi) == altra_pec
+        # protocollo non di risposta: PEC per il mezzo PEC, altrimenti il generale
+        assert spedizioni.servizio_proposto(_protocollo(utente, mezzo="email"), attivi) == generale
+        assert spedizioni.servizio_proposto(_protocollo(utente, mezzo="pec"), attivi) == altra_pec
+
+    def test_servizio_disattivato_non_proposto(self, utente, pec, casella):
+        risposta = self._risposta(self._arrivo(casella, utente), utente)
+        pec.attivo = False
+        pec.save()
+        assert casella.servizio_per_risposte() is None
+        assert spedizioni.servizio_proposto(risposta, []) is None
+
+    def test_la_risposta_eredita_il_mezzo(self, client_ruolo, casella):
+        client = client_ruolo("Addetto protocollo")
+        originale = self._arrivo(casella, client.utente)
+        Protocollo = type(originale)
+        Protocollo.objects.filter(pk=originale.pk).update(mezzo="pec")
+        r = client.get(reverse("protocollo:nuovo") + f"?risposta={originale.pk}")
+        assert r.context["form"].initial["mezzo"] == "pec"
+
+    def test_collegamento_automatico(self, client_ruolo, casella):
+        assert casella.servizio_risposta is None
+        admin = client_ruolo("Amministratore di sistema", username="admin")
+        admin.post("/sistema/posta/invio/nuovo/", {
+            "nome": "PEC sezione", "tipo": "pec", "indirizzo": "sez@pec.example.it",
+            "server": "smtps.pec.example", "porta": 465, "ssl": "on", "attivo": "on",
+            "nuova_password": "x",
+        })  # fmt: skip
+        casella.refresh_from_db()
+        assert casella.servizio_risposta.indirizzo == "sez@pec.example.it"
+        pagina = admin.get("/sistema/posta/").content.decode()
+        assert "risponde con: PEC sezione" in pagina

@@ -94,6 +94,12 @@ cartella in cui spostare i messaggi scaricati (`PROCESSATA`) e giorni da scarica
 email `imaps.aruba.it`, PEC `imaps.pec.aruba.it`, porta 993 con SSL. Una casella nuova resta spenta
 finché non la si abilita in *Protocollo → Caselle* (interruttore **Usata dal protocollo**).
 
+**Rispondi con** indica il servizio di invio con cui si risponde ai messaggi arrivati nella casella. Si
+compila da solo con il servizio che ha lo stesso indirizzo e lo stesso tipo (PEC o email), anche quando
+il servizio viene creato dopo la casella; si cambia a mano se le risposte devono partire da un altro
+indirizzo. Nell'elenco ogni casella mostra «risponde con: …», oppure un avviso se non c'è un servizio
+adatto (le risposte partirebbero dal server generale).
+
 ### Servizi di invio (SMTP)
 
 Ogni **servizio di invio** è un server SMTP con cui il programma spedisce: nome, tipo (**Email** o
@@ -104,6 +110,8 @@ SSL, nome utente (vuoto: l'indirizzo) e password, conservata **cifrata** e mai m
   **comunicazioni**, le **email dell'accesso** (recupero della password) e i protocolli per email.
   Finché nessun servizio è generale vale il server indicato nel file `.env` (riga «riserva»).
 - Gli altri servizi, come la **PEC**, si scelgono in *Spedisci* dalla scheda di un protocollo in uscita.
+- L'**interruttore** accanto a ogni servizio lo attiva o lo disattiva: un servizio disattivato non si
+  può scegliere per spedire. Il server generale non si disattiva (prima se ne indica un altro).
 - Per **Aruba**: email `smtps.aruba.it`, PEC `smtps.pec.aruba.it`, porta 465 con SSL; utente e
   password sono quelli della casella.
 - Un servizio che ha già spedito non si elimina (le spedizioni restano nella storia): si disattiva.

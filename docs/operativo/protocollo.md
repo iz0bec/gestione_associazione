@@ -61,7 +61,7 @@ testo `{{ anno }}`, `{{ anno_precedente }}`, `{{ data }}` e `{{ organizzazione }
 giorno.
 
 Dalla scheda di un protocollo in entrata, **Rispondi** apre una registrazione in uscita già collegata,
-con oggetto e destinatari precompilati. Dalla scheda anagrafica di un ente o di una persona si vedono i
+con oggetto, destinatari e **mezzo** dell'originale precompilati (a una PEC si risponde per PEC). Dalla scheda anagrafica di un ente o di una persona si vedono i
 suoi protocolli e si può registrare direttamente un'entrata o un'uscita.
 
 **Ricevuta**: PDF con numero, data, oggetto e corrispondenti, da consegnare a chi porta un documento
@@ -94,9 +94,13 @@ registrato nel registro delle attività.
 Un protocollo **in uscita** si spedisce dalla sua scheda con **Spedisci** (serve il permesso di
 spedire, che hanno l'addetto al protocollo e i ruoli superiori). Nel modulo:
 
-- **Spedisci da**: uno dei **servizi di invio** configurati in *Sistema → Servizi di posta* (per la
-  **PEC** quello della PEC dell'ente, per l'email ordinaria il server generale). Se il protocollo è
-  registrato con mezzo PEC viene proposto il servizio PEC;
+- **Spedisci da**: uno dei **servizi di invio** attivi in *Sistema → Servizi di posta*. Viene proposto:
+  1. per la **risposta a un messaggio scaricato**, il servizio *Rispondi con* della casella in cui era
+     arrivato (si risponde a una PEC dalla stessa PEC, a un'email dallo stesso indirizzo);
+  2. con mezzo **PEC**, il servizio PEC;
+  3. altrimenti il **server generale**.
+
+  La scelta si può sempre cambiare;
 - **Destinatari**: quelli del protocollo, ciascuno con l'indirizzo proposto dall'anagrafica (la PEC
   quando si spedisce da un servizio PEC, altrimenti l'email) e modificabile; si tolgono quelli da non
   raggiungere (per esempio chi riceve per posta). Parte **un messaggio per destinatario**, così

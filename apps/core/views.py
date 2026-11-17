@@ -217,7 +217,7 @@ class ServiziPostaView(PermessoMixin, UpdateView):
             in_coda=Destinatario.objects.filter(
                 invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
             ).count(),
-            caselle=CasellaPosta.objects.all(),
+            caselle=CasellaPosta.objects.select_related("servizio_risposta"),
             protocolli_in_coda=DestinatarioSpedizione.objects.filter(
                 stato=DestinatarioSpedizione.Stato.IN_ATTESA
             ).count(),
@@ -322,6 +322,16 @@ class CasellaModificaView(_CasellaMixin, PermessoMixin, UpdateView):
     pass
 
 
+def _collega_caselle(servizio):
+    """Le caselle con lo stesso indirizzo e senza «Rispondi con» rispondono con questo servizio."""
+    from apps.protocollo.models import CasellaPosta
+
+    if servizio.attivo:
+        CasellaPosta.objects.filter(
+            servizio_risposta__isnull=True, pec=servizio.pec, utente__iexact=servizio.indirizzo
+        ).update(servizio_risposta=servizio)
+
+
 class _ServizioInvioMixin:
     permission_required = "core.gestisci_servizi_posta"
     form_class = ServizioInvioForm
@@ -338,6 +348,7 @@ class _ServizioInvioMixin:
         dettagli = {} if nuovo else campi_modificati(form)
         dettagli.get("campi", {}).pop("nuova_password", None)
         risposta = super().form_valid(form)
+        _collega_caselle(self.object)
         if nuovo:
             registra(Azione.CREAZIONE, self.object, descrizione=f"Servizio di invio {self.object}")
         elif dettagli.get("campi") or form.cleaned_data.get("nuova_password"):

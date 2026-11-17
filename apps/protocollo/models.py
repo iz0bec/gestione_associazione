@@ -272,6 +272,16 @@ class CasellaPosta(models.Model):
     )
     ultimo_controllo = models.DateTimeField(null=True, blank=True, editable=False)
     ultimo_errore = models.CharField(max_length=500, blank=True, editable=False)
+    servizio_risposta = models.ForeignKey(
+        "core.ServizioInvio",
+        verbose_name="rispondi con",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="caselle",
+        help_text="Servizio di invio proposto per rispondere ai messaggi arrivati qui. "
+        "Vuoto: quello con lo stesso indirizzo della casella.",
+    )
 
     class Meta:
         verbose_name = "casella di posta"
@@ -280,6 +290,28 @@ class CasellaPosta(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def indirizzo(self):
+        return self.utente if "@" in self.utente else ""
+
+    def servizio_stesso_indirizzo(self):
+        """Servizio di invio attivo con indirizzo e tipo (PEC o email) della casella."""
+        from apps.core.models import ServizioInvio
+
+        if not self.indirizzo:
+            return None
+        tipo = ServizioInvio.Tipo.PEC if self.pec else ServizioInvio.Tipo.EMAIL
+        return ServizioInvio.objects.filter(
+            attivo=True, tipo=tipo, indirizzo__iexact=self.indirizzo
+        ).first()
+
+    def servizio_per_risposte(self):
+        """«Rispondi con» se attivo, altrimenti il servizio con lo stesso indirizzo."""
+        scelto = self.servizio_risposta
+        if scelto is not None and scelto.attivo:
+            return scelto
+        return self.servizio_stesso_indirizzo()
 
     def imposta_password(self, password):
         from apps.core.cifratura import cifra

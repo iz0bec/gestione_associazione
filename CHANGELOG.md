@@ -5,11 +5,21 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.24] - 2026-11-17
+
+Risposte dal servizio giusto e interruttore dei servizi di invio.
+
 ### Aggiunto
+- **Rispondi con** nella scheda di ogni casella (*Sistema → Servizi di posta*): il servizio di invio con
+  cui si risponde ai messaggi arrivati lì. Si compila da solo con il servizio dello stesso indirizzo e
+  tipo (anche per le caselle esistenti); l'elenco mostra «risponde con: …» o un avviso se manca.
+- **Spedire una risposta**: *Spedisci* propone il servizio *Rispondi con* della casella in cui era
+  arrivato il messaggio (a una PEC dalla stessa PEC, a un'email dallo stesso indirizzo), poi la PEC per
+  il mezzo PEC, poi il server generale. *Rispondi* copia anche il **mezzo** dell'originale.
 - *Sistema → Servizi di posta*: interruttore **attivo/disattivato** accanto a ogni servizio di invio, senza aprire la scheda (il server generale non si disattiva).
 
 ### Corretto
-- *Sistema → Servizi di posta*: senza la chiave di cifratura il pulsante «Nuova casella» non spariva più senza spiegazione; ora resta visibile (disattivato) con un avviso che riporta, pronti da copiare, il comando che crea `CHIAVE_CIFRATURA` nel `.env` dell'installazione e quello per riavviare.
+- *Sistema → Servizi di posta*: senza la chiave di cifratura il pulsante «Nuova casella» spariva senza spiegazione; ora resta visibile (disattivato) con un avviso che riporta, pronti da copiare, il comando che crea `CHIAVE_CIFRATURA` nel `.env` dell'installazione e quello per riavviare.
 
 ## [1.0.23] - 2026-11-17
 

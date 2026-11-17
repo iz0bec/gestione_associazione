@@ -164,6 +164,7 @@ class NuovoView(PermessoMixin, FormView):
                     in_risposta_a=p.segnatura,
                     oggetto=f"Risposta: {p.oggetto}"[:500],
                     direzione=Protocollo.Direzione.USCITA,
+                    mezzo=p.mezzo,  # si risponde con lo stesso mezzo (PEC a una PEC)
                     classificazione=p.classificazione,
                     destinatari=[c.soggetto for c in p.mittenti if c.soggetto],
                     destinatari_altri="\n".join(
@@ -362,10 +363,8 @@ class SpedisciView(PermessoMixin, _ProtocolloVisibileMixin, TemplateView):
 
     def _servizio(self, valore):
         servizi = list(invio.servizi_attivi())
-        if valore is None:  # proposta: la PEC se il protocollo è per PEC, altrimenti la generale
-            pec = self.p.mezzo == Protocollo.Mezzo.PEC
-            scelta = next((s for s in servizi if s.pec), None) if pec else None
-            return servizi, scelta or next((s for s in servizi if s.generale), None)
+        if valore is None:
+            return servizi, spedizioni.servizio_proposto(self.p, servizi)
         return servizi, next((s for s in servizi if str(s.pk) == str(valore)), None)
 
     def _form(self, dati=None, valore=None):

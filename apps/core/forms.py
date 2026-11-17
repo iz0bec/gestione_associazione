@@ -107,8 +107,16 @@ class CasellaForm(StileMixin, forms.ModelForm):
         model = CasellaPosta
         fields = [
             "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "cartella_processata",
-            "giorni",
+            "giorni", "servizio_risposta",
         ]  # fmt: skip
+
+    def __init__(self, *args, **kwargs):
+        from .models import ServizioInvio
+
+        super().__init__(*args, **kwargs)
+        campo = self.fields["servizio_risposta"]
+        campo.queryset = ServizioInvio.objects.filter(attivo=True).order_by("tipo", "nome")
+        campo.empty_label = "— quello con lo stesso indirizzo —"
 
     def clean(self):
         dati = super().clean()
@@ -129,6 +137,8 @@ class CasellaForm(StileMixin, forms.ModelForm):
     def save(self, commit=True):
         if self.cleaned_data.get("nuova_password"):
             self.instance.imposta_password(self.cleaned_data["nuova_password"])
+        if self.instance.servizio_risposta is None:
+            self.instance.servizio_risposta = self.instance.servizio_stesso_indirizzo()
         return super().save(commit)
 
 

@@ -51,6 +51,31 @@ _PESO = {
 }  # fmt: skip
 
 
+def servizio_proposto(protocollo, servizi):
+    """Servizio proposto in «Spedisci da», fra quelli attivi:
+
+    1. per la risposta a un messaggio scaricato, il «Rispondi con» della casella di arrivo;
+    2. con mezzo PEC, il primo servizio PEC;
+    3. il server generale (None: quello del .env).
+    """
+    from .models import MessaggioRicevuto
+
+    if protocollo.risposta_a_id:
+        arrivo = (
+            MessaggioRicevuto.objects.filter(protocollo_id=protocollo.risposta_a_id)
+            .select_related("casella__servizio_risposta")
+            .first()
+        )
+        risposta = arrivo.casella.servizio_per_risposte() if arrivo else None
+        if risposta is not None and risposta in servizi:
+            return risposta
+    if protocollo.mezzo == Protocollo.Mezzo.PEC:
+        pec = next((s for s in servizi if s.pec), None)
+        if pec is not None:
+            return pec
+    return next((s for s in servizi if s.generale), None)
+
+
 def puo_spedire(protocollo):
     return protocollo.direzione == Protocollo.Direzione.USCITA and not protocollo.annullato
 

@@ -307,3 +307,6 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 - **Aggiornamento (1.0.23)**: anche la configurazione delle caselle IMAP passa in *Sistema → Servizi di
   posta* (permesso `core.gestisci_servizi_posta`); il protocollo decide solo quali usare (`attiva`,
   «usata dal protocollo», permesso `protocollo.change_casellaposta`). Una casella nuova nasce spenta.
+- **Aggiornamento (1.0.24)**: ogni casella ha *Rispondi con* (`servizio_risposta`, compilato per indirizzo e
+  tipo); `spedizioni.servizio_proposto` propone per una risposta il servizio della casella di arrivo, poi la
+  PEC per il mezzo PEC, poi il server generale. La scelta resta all'utente.
