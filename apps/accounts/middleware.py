@@ -21,7 +21,16 @@ from . import servizi
 PAGINE_PASSWORD = ("/account/password/change/", "/account/password/set/")
 
 # Percorsi sempre consentiti (account, risorse statiche, pagine tecniche)
-CONSENTITI = ("/account/", "/salute/", "/aspetto.css", "/logo.png", "/ripristino/")
+# (il contatore della chat è richiesto da ogni pagina ogni 30 secondi: rediretto, ricaricherebbe la
+# pagina del cambio password mentre si scrive)
+CONSENTITI = (
+    "/account/",
+    "/salute/",
+    "/aspetto.css",
+    "/logo.png",
+    "/ripristino/",
+    "/chat/non-letti/",
+)
 
 
 class ObblighiAccessoMiddleware:

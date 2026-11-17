@@ -1,0 +1,27 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Chat interna: messaggi di una conversazione e, in coda, l'elemento che ogni 5 secondi chiede quelli nuovi
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% for m in elenco %}
+{% if m.sistema %}
+<div class="text-center small text-secondary my-2" id="m{{ m.pk }}">{{ m.testo }} · {{ m.inviato_il|date:"d/m H:i" }}</div>
+{% else %}
+<div class="d-flex mb-2 {% if m.autore_id == user.pk %}justify-content-end{% endif %}" id="m{{ m.pk }}">
+  <div class="chat-fumetto {% if m.autore_id == user.pk %}chat-mio{% else %}chat-altrui{% endif %}">
+    {% if m.autore_id != user.pk and conversazione.gruppo %}<div class="small fw-bold">{{ m.autore.get_full_name|default:m.autore.username|default:"utente eliminato" }}</div>{% endif %}
+    {% if m.ritirato_il %}<div class="fst-italic text-secondary">Messaggio ritirato</div>
+    {% else %}<div class="chat-testo">{{ m.testo|urlize|linebreaksbr }}</div>{% endif %}
+    <div class="small text-secondary text-end d-flex align-items-center justify-content-end gap-1">
+      {{ m.inviato_il|date:"d/m H:i" }}
+      {% if m.autore_id == user.pk and not m.ritirato_il %}
+      <form method="post" action="{% url 'chat:ritira' m.pk %}" class="d-inline" data-conferma="Ritirare il messaggio? Il testo sparisce per tutti.">{% csrf_token %}
+        <button type="submit" class="btn btn-link btn-sm p-0 text-secondary" title="Ritira il messaggio" aria-label="Ritira il messaggio"><i class="ti ti-trash"></i></button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+{% if coda %}<div id="chat-coda" hx-get="{% url 'chat:messaggi' conversazione.pk %}?dopo={{ ultimo }}" hx-trigger="every 5s, chat-nuovi from:body" hx-swap="outerHTML" hx-sync="this:drop"></div>{% endif %}

@@ -174,7 +174,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   contengono il database e l'elenco dei file, non i file stessi (prima ogni backup li copiava tutti,
   ad Avigliano circa 190 MB a backup). Lo scaricamento produce comunque un backup completo.
 - ✅ **Utenti connessi** (1.0.29): chi sta usando il gestionale in questo momento (per l'amministratore).
-- **Chat interna** fra gli utenti del gestionale.
+- ✅ **Chat interna** (1.0.35) fra gli utenti del gestionale (non i soci): conversazioni a due e di
+  gruppo, aggiornamento automatico, non letti nella barra, riservate ai partecipanti.
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).
 - API REST con token con scadenza e permessi limitati (per integrazioni esterne).
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.

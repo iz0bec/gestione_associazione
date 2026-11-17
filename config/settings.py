@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "apps.calendario",
     "apps.eventi",
     "apps.area",
+    "apps.chat",
     "apps.migrazione",
 ]
 

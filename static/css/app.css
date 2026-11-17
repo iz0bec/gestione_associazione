@@ -130,3 +130,10 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
 
 /* Modulo delle etichette adesive dentro un menu a tendina */
 .modulo-etichette { min-width: 18rem; }
+
+/* Chat interna: area dei messaggi scorrevole e fumetti */
+.chat-messaggi { height: 60vh; min-height: 18rem; overflow-y: auto; }
+.chat-fumetto { max-width: 80%; padding: .5rem .75rem; border-radius: .75rem; }
+.chat-mio { background: var(--tblr-primary-lt); border-bottom-right-radius: .2rem; }
+.chat-altrui { background: var(--tblr-bg-surface-secondary); border-bottom-left-radius: .2rem; }
+.chat-testo { white-space: normal; overflow-wrap: anywhere; }

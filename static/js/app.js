@@ -301,6 +301,54 @@
     var pulsante = ev.target.closest("[data-cf-calcola]");
     if (pulsante) calcolaCf(pulsante.closest("[data-cf-assistito]"));
   });
+  // Chat interna: l'area dei messaggi resta in fondo (se ci si era), Invio spedisce,
+  // Maiusc+Invio va a capo, il modulo si svuota dopo l'invio e mostra gli errori
+  function chatInFondo(area, forza) {
+    if (forza || area.scrollHeight - area.scrollTop - area.clientHeight < 120) {
+      area.scrollTop = area.scrollHeight;
+    }
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-chat-messaggi]").forEach(function (a) { chatInFondo(a, true); });
+  });
+  document.addEventListener("htmx:beforeSwap", function (ev) {
+    var area = ev.detail.target && ev.detail.target.closest && ev.detail.target.closest("[data-chat-messaggi]");
+    if (area && area.dataset.inFondo !== "1") {
+      area.dataset.inFondo = area.scrollHeight - area.scrollTop - area.clientHeight < 120 ? "1" : "";
+    }
+  });
+  document.addEventListener("htmx:afterSettle", function (ev) {
+    var area = document.querySelector("[data-chat-messaggi]");
+    if (!area || !ev.detail.elt) return;
+    if (area.dataset.inFondo === "1") chatInFondo(area, true);
+    area.dataset.inFondo = "";
+    if (area.querySelector("[id^='m']")) {
+      var vuota = area.querySelector("[data-chat-vuota]");
+      if (vuota) vuota.remove();
+    }
+  });
+  document.addEventListener("keydown", function (ev) {
+    var campo = ev.target.closest && ev.target.closest("[data-chat-testo]");
+    if (!campo || ev.key !== "Enter" || ev.shiftKey || ev.isComposing) return;
+    ev.preventDefault();
+    if (campo.value.trim()) campo.form.requestSubmit();
+  });
+  document.addEventListener("htmx:afterRequest", function (ev) {
+    var modulo = ev.detail.elt && ev.detail.elt.closest && ev.detail.elt.closest("[data-chat-modulo]");
+    if (!modulo) return;
+    var errore = modulo.querySelector("[data-chat-errore]");
+    if (ev.detail.successful) {
+      modulo.reset();
+      if (errore) errore.textContent = "";
+      var area = document.querySelector("[data-chat-messaggi]");
+      if (area) area.dataset.inFondo = "1";
+      modulo.querySelector("[data-chat-testo]").focus();
+    } else if (errore) {
+      errore.textContent = ev.detail.xhr && ev.detail.xhr.status === 422
+        ? ev.detail.xhr.responseText : "Messaggio non inviato: riprova.";
+    }
+  });
+
   document.addEventListener("DOMContentLoaded", function () { inizializza(document); });
   document.addEventListener("htmx:load", function (ev) { inizializza(ev.target); });
 })();

@@ -1,4 +1,4 @@
-{% comment %}Barra superiore: ricerca rapida, versione e crediti, aiuto, tema, menu utente.{% endcomment %}
+{% comment %}Barra superiore: ricerca rapida, versione e crediti, chat, aiuto, tema, menu utente.{% endcomment %}
 <header class="navbar navbar-expand-md d-print-none">
   <div class="container-xl">
     <button type="button" class="nav-link px-2 me-2 d-none d-lg-flex" data-cambia-menu title="Nascondi o mostra il menu laterale" aria-label="Nascondi o mostra il menu laterale">
@@ -14,6 +14,9 @@
       <a class="nav-link px-2 d-none d-md-flex" href="{% url 'core:informazioni' %}" title="{{ APP_NOME }} {{ APP_VERSIONE }} di {{ APP_AUTORE }}: informazioni, crediti e licenze">
         <span class="badge bg-secondary-lt versione-app">v{{ APP_VERSIONE }}</span>
       </a>
+      {% if perms.chat.usa_chat %}<a class="nav-link px-2" href="{% url 'chat:elenco' %}" title="Chat interna" aria-label="Chat interna">
+        <i class="ti ti-messages"></i><span hx-get="{% url 'chat:contatore' %}" hx-trigger="load, every 30s" hx-swap="innerHTML"></span>
+      </a>{% endif %}
       <a class="nav-link px-2" href="{{ AIUTO_URL }}" title="Aiuto su questa pagina" aria-label="Aiuto su questa pagina">
         <i class="ti ti-help-circle"></i>
       </a>

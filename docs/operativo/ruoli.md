@@ -153,6 +153,12 @@ in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 | Amministratore di sistema, Presidente, Segretario, Tesoriere | sì | sì |
 | Addetto protocollo, Consigliere, Revisore | sì | - |
 
+### Chat interna
+
+La **Chat** è aperta a tutti gli utenti con almeno un ruolo (non ai soci dell'area personale). Ognuno
+legge solo le conversazioni a cui partecipa: **nemmeno l'amministratore di sistema** vede quelle degli
+altri.
+
 ## Funzioni che coinvolgono più moduli
 
 Un'operazione che scrive in un altro modulo richiede anche il permesso di quel modulo:

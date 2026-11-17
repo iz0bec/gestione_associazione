@@ -22,6 +22,11 @@
           <a class="nav-link" href="{% url 'eventi:elenco' %}"><span class="nav-link-icon"><i class="ti ti-confetti"></i></span><span class="nav-link-title">Eventi</span></a>
         </li>
         {% endif %}
+        {% if perms.chat.usa_chat %}
+        <li class="nav-item{% if nome == 'chat' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'chat:elenco' %}"><span class="nav-link-icon"><i class="ti ti-messages"></i></span><span class="nav-link-title">Chat</span></a>
+        </li>
+        {% endif %}
         {% if perms.anagrafica.view_soggetto %}
         <li class="nav-item{% if nome == 'anagrafica' %} active{% endif %}">
           <a class="nav-link" href="{% url 'anagrafica:elenco' %}"><span class="nav-link-icon"><i class="ti ti-address-book"></i></span><span class="nav-link-title">Anagrafica</span></a>

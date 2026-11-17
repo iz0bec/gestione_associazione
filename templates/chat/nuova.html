@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Chat interna: nuova conversazione a due o di gruppo
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Nuova conversazione{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'chat:elenco' %}">Chat</a></div>{% endblock %}
+{% block titolo_pagina %}Nuova conversazione{% endblock %}
+{% block contenuto %}
+<form method="post" class="card">{% csrf_token %}
+  <div class="card-body">
+    {{ form }}
+  </div>
+  <div class="card-footer text-end">
+    <a class="btn" href="{% url 'chat:elenco' %}">Annulla</a>
+    <button class="btn btn-primary" type="submit"><i class="ti ti-message-plus me-1"></i>Inizia</button>
+  </div>
+</form>
+{% endblock %}

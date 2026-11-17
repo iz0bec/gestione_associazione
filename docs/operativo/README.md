@@ -28,5 +28,7 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 13. [Utenti e ruoli](utenti.md) - account, password temporanee, secondo fattore obbligatorio per ruolo
 14. [Calendario](calendario.md) - prossimi impegni e calendario sul telefono e sul computer (iCal)
 15. [Firme e timbri](firme-e-timbri.md) - come acquisire firma e timbro, caricarli e usarli nelle stampe; firma e timbro generici
+16. [Eventi e cerimonie](eventi.md) - eventi con posti e accompagnatori, adesioni dalla segreteria e dal modulo pubblico, foglio presenze
+17. [Chat interna](chat.md) - messaggi fra gli utenti del gestionale, a due o in gruppo
 
 Sono pronti tutti i moduli previsti per la 0.0.1.

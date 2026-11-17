@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Chat interna** (menu *Chat* e icona nella barra in alto) fra gli utenti del gestionale, non i soci:
+  conversazioni a due e di gruppo, messaggi che arrivano senza ricaricare la pagina, numero dei non
+  letti nella barra, chi è connesso, aggiunta di persone e uscita dai gruppi, ritiro dei propri
+  messaggi. Le conversazioni le leggono solo i partecipanti, nemmeno l'amministratore; il registro
+  attività non contiene mai il testo dei messaggi.
+
 ## [1.0.34] - 2026-11-18
 
 Traduzione dei messaggi della password e manuale dei backup aggiornato.

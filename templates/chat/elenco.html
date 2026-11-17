@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Chat interna: le conversazioni dell'utente e le persone con cui iniziarne una
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Chat{% endblock %}
+{% block titolo_pagina %}Chat interna{% endblock %}
+{% block azioni %}<a class="btn btn-primary" href="{% url 'chat:nuova' %}"><i class="ti ti-plus me-1"></i>Nuova conversazione</a>{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Le tue conversazioni</h3></div>
+      <div class="list-group list-group-flush">
+      {% for c in conversazioni %}
+        <a class="list-group-item list-group-item-action d-flex align-items-center gap-3" href="{{ c.get_absolute_url }}">
+          <span class="avatar avatar-sm"><i class="ti ti-{% if c.gruppo %}users-group{% else %}user{% endif %}"></i></span>
+          <div class="flex-fill text-truncate">
+            <div class="{% if c.non_letti %}fw-bold{% else %}fw-medium{% endif %} text-truncate">{{ c.nome }}</div>
+            <div class="small text-secondary">{% if c.gruppo %}{{ c.presenti|length }} partecipanti · {% endif %}{% if c.ultimo_messaggio_il %}ultimo messaggio {{ c.ultimo_messaggio_il|date:"d/m/Y H:i" }}{% else %}nessun messaggio{% endif %}</div>
+          </div>
+          {% if c.non_letti %}<span class="badge bg-red text-red-fg" title="Messaggi non letti">{{ c.non_letti }}</span>{% endif %}
+        </a>
+      {% empty %}
+        <div class="list-group-item text-secondary">Nessuna conversazione. Scegli una persona qui a fianco o crea un gruppo.</div>
+      {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Scrivi a…</h3></div>
+      <div class="list-group list-group-flush">
+      {% for p in persone %}
+        <a class="list-group-item list-group-item-action d-flex align-items-center gap-2" href="{% url 'chat:con' p.pk %}">
+          <span class="badge {% if p.connesso %}bg-green{% else %}bg-secondary-lt{% endif %} p-1" title="{% if p.connesso %}Connesso ora{% else %}Non connesso{% endif %}"></span>
+          <span class="text-truncate">{{ p.get_full_name|default:p.username }}</span>
+          {% if p.connesso %}<span class="small text-secondary ms-auto">connesso</span>{% endif %}
+        </a>
+      {% empty %}
+        <div class="list-group-item text-secondary">Nessun altro utente può usare la chat.</div>
+      {% endfor %}
+      </div>
+    </div>
+    <p class="small text-secondary mt-2 mb-0"><i class="ti ti-lock me-1"></i>Le conversazioni le leggono solo i partecipanti, nemmeno l'amministratore di sistema.</p>
+  </div>
+</div>
+{% endblock %}

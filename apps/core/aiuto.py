@@ -46,6 +46,7 @@ PAGINE_PER_SEZIONE = {
     "documenti": "documenti",
     "calendario": "calendario",
     "eventi": "eventi",
+    "chat": "chat",
     "utenti": "utenti",
     "core:servizi_posta": "sistema#servizi-di-posta",
     "core:servizio_nuovo": "sistema#servizi-di-invio-smtp",

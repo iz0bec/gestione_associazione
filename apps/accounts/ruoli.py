@@ -333,9 +333,10 @@ RUOLI = {
     ],
 }
 
-# il manuale di gestione adottato è consultabile da tutti gli utenti
+# il manuale di gestione adottato è consultabile da tutti gli utenti, la chat interna è per tutti
 for _permessi in RUOLI.values():
     _permessi.append("protocollo.view_manualegestione")
+    _permessi.append("chat.usa_chat")
 
 
 def configura_ruoli(verbose=False):

@@ -85,6 +85,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
 - Area personale dei soci (`apps/area`): accesso con collegamento monouso via email (`servizi.chiedi_accesso`,
   inviato direttamente come il recupero password: il link non deve finire nel registro degli invii),
   sessione propria (`area_soggetto`), mai utenti Django; viste pubbliche elencate in `test_coerenza_permessi`.
+- Chat interna (`apps/chat`): solo utenti del gestionale con `chat.usa_chat` (a tutti i ruoli in `ruoli.py`);
+  operazioni solo da `chat.servizi`; le viste caricano la conversazione con `servizi.conversazioni_di(user)`
+  (404 a chi non partecipa, anche al superutente); mai il testo dei messaggi nel registro attività.
 - Email: solo tramite `apps.comunicazioni.servizi.crea_invio` (bozza → `conferma` → coda `elabora_coda`);
   testi utente con segnaposto `{{ chiave }}` (`servizi.componi`, chiavi in `SEGNAPOSTO`), mai con il motore
   dei template. Finalità ≠ istituzionale ⇒ serve l'ultimo consenso prestato.
