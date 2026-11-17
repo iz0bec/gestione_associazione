@@ -299,9 +299,13 @@ def test_migrazione_dal_file_env(settings):
 def test_caselle_configurate_in_sistema_e_abilitate_dal_protocollo(client_ruolo, settings):
     from apps.protocollo.models import CasellaPosta
 
-    settings.CHIAVE_CIFRATURA = nuova_chiave()
+    settings.CHIAVE_CIFRATURA = ""
     admin = client_ruolo("Amministratore di sistema")
-    assert "Nuova casella" in admin.get("/sistema/posta/").content.decode()
+    pagina = admin.get("/sistema/posta/").content.decode()
+    assert "Manca la chiave di cifratura" in pagina and "Nuova casella" in pagina  # disattivato
+    settings.CHIAVE_CIFRATURA = nuova_chiave()
+    pagina = admin.get("/sistema/posta/").content.decode()
+    assert "Manca la chiave" not in pagina and "/sistema/posta/caselle/nuova/" in pagina
     r = admin.post("/sistema/posta/caselle/nuova/", {
         "nome": "PEC federazione", "pec": "on", "server": "imaps.pec.example.it", "porta": 993,
         "ssl": "on", "utente": "fed@pec.example.it", "cartella": "INBOX",

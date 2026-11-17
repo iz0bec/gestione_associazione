@@ -5,6 +5,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- *Sistema → Servizi di posta*: senza la chiave di cifratura il pulsante «Nuova casella» non spariva più senza spiegazione; ora resta visibile (disattivato) con un avviso che dice come configurare `CHIAVE_CIFRATURA`.
+
 ## [1.0.23] - 2026-11-17
 
 Tutta la configurazione della posta in Sistema → Servizi di posta.

@@ -7,6 +7,7 @@
 {% block titolo %}Servizi di posta{% endblock %}
 {% block titolo_pagina %}Servizi di posta{% endblock %}
 {% block contenuto %}
+{% if not cifratura %}<div class="alert alert-warning"><i class="ti ti-key me-1"></i><strong>Manca la chiave di cifratura</strong> (<code>CHIAVE_CIFRATURA</code> nel file <code>.env</code>): senza non si possono salvare caselle né servizi di invio, perché le password si conservano cifrate. Generarla con <code>manage.py genera_chiave_cifratura</code>, aggiungerla al <code>.env</code> e riavviare (manuale di sistema, <em>Configurazione</em>).</div>{% endif %}
 <div class="row g-3">
   <div class="col-lg-6">
     <form method="post" class="card" novalidate>{% csrf_token %}
@@ -24,7 +25,7 @@
         <h3 class="card-title"><i class="ti ti-inbox me-1"></i>Caselle di posta (IMAP)</h3>
         <div class="card-actions d-flex align-items-center gap-2">
           <span class="badge {% if object.ricezione_posta %}bg-green-lt{% else %}bg-red-lt{% endif %}">lettura {% if object.ricezione_posta %}attiva{% else %}disattivata{% endif %}</span>
-          {% if cifratura %}<a class="btn btn-sm btn-primary" href="{% url 'core:casella_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova casella</a>{% endif %}
+          {% if cifratura %}<a class="btn btn-sm btn-primary" href="{% url 'core:casella_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova casella</a>{% else %}<span class="btn btn-sm btn-primary disabled" aria-disabled="true" title="Serve la chiave CHIAVE_CIFRATURA"><i class="ti ti-plus me-1"></i>Nuova casella</span>{% endif %}
         </div>
       </div>
       {% if caselle %}
@@ -44,7 +45,7 @@
       {% else %}
       <div class="card-body small text-secondary">Nessuna casella di posta configurata.</div>
       {% endif %}
-      <div class="card-footer small text-secondary">{% if not cifratura %}<span class="text-orange">Per salvare le password serve la chiave <code>CHIAVE_CIFRATURA</code> (manuale di sistema).</span> {% endif %}Quali caselle legge il protocollo si sceglie in <a href="{% url 'protocollo:caselle' %}">Protocollo → Caselle</a>.</div>
+      <div class="card-footer small text-secondary">Quali caselle legge il protocollo si sceglie in <a href="{% url 'protocollo:caselle' %}">Protocollo → Caselle</a>.</div>
     </div>
   </div>
   <div class="col-12">
