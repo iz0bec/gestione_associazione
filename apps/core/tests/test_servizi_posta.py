@@ -87,7 +87,7 @@ def test_pagina_solo_amministratore(client_ruolo):
     r = c.post("/sistema/posta/", {"ricezione_posta": "on"})  # invio spento
     org = Organizzazione.corrente()
     assert r.status_code == 302 and not org.invio_email and org.ricezione_posta
-    assert "Invio delle email disattivato" in c.get("/comunicazioni/").content.decode()
+    assert "Invio dei messaggi disattivato" in c.get("/comunicazioni/").content.decode()
 
 
 class _ImapFinto:

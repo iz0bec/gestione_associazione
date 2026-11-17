@@ -183,10 +183,11 @@ class Organizzazione(models.Model):
     )
     # interruttori dei servizi di posta (Sistema -> Servizi di posta)
     invio_email = models.BooleanField(
-        "invio delle email",
+        "invio dei messaggi",
         default=True,
-        help_text="Spento: nessuna email parte (comunicazioni, auguri, promemoria, recupero "
-        "password); i messaggi già confermati restano in coda.",
+        help_text="Spento: non parte nulla, né email e PEC né Telegram, SMS e WhatsApp "
+        "(comunicazioni, protocolli, auguri, promemoria, recupero password); i messaggi già "
+        "confermati restano in coda.",
     )
     ricezione_posta = models.BooleanField(
         "lettura delle caselle di posta (IMAP)",

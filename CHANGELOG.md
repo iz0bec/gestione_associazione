@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato
+- L'interruttore *Invio delle email* si chiama **Invio dei messaggi** e gli avvisi dicono che, spento,
+  ferma anche Telegram, SMS e WhatsApp (era già così, ma non era scritto: un messaggio Telegram restava
+  in coda senza un motivo evidente).
+
 ## [1.0.27] - 2026-11-17
 
 Comunicazioni via PEC, su Telegram, per SMS e su WhatsApp Business.

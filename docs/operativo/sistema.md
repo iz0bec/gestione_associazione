@@ -75,7 +75,7 @@ configura la posta: le **caselle** da leggere (email e PEC in arrivo) e i **serv
 spedire. Il protocollo sceglie soltanto quali caselle usare (*Protocollo → Caselle*). Due interruttori
 generali:
 
-- **Invio delle email**: spento, **nessuna email parte**. Le comunicazioni si possono ancora scrivere
+- **Invio dei messaggi**: spento, **non parte nulla**: né email e PEC né Telegram, SMS e WhatsApp. Le comunicazioni si possono ancora scrivere
   e confermare: restano *in coda* e partono quando l'invio viene riattivato. Gli **auguri** e i
   **promemoria di rinnovo** automatici non vengono nemmeno preparati, così alla riattivazione non
   partono messaggi ormai fuori tempo; anche le email dell'accesso (recupero della password) non
