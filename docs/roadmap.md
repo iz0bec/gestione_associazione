@@ -60,6 +60,7 @@
 | **1.0.25** ✅ | etichette adesive in PDF, pulizia selettiva della posta scartata (cartella SCARTATA e cestino sul server), blocco delle email ordinarie verso le PEC | GitHub, GitLab |
 | **1.0.26** ✅ | spostamenti sul server anche per gli scartati rimasti nella posta in arrivo | GitHub, GitLab |
 | **1.0.27** ✅ | comunicazioni via PEC (con ricevute), su Telegram, per SMS e su WhatsApp Business; comunicazioni anche senza email | GitHub, GitLab |
+| **1.0.28** ✅ | avvisi della posta da protocollare su Telegram, SMS o WhatsApp scelti da ciascun utente; interruttore «Invio dei messaggi» | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

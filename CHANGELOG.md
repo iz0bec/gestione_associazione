@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.28] - 2026-11-17
+
+Avvisi della posta da protocollare su Telegram, SMS o WhatsApp.
+
 ### Aggiunto
 - **Avvisi della posta da protocollare** su Telegram, SMS o WhatsApp, scelti da ciascun utente che
   gestisce la posta (*Posta da protocollare → Avvisi* o menu dell'utente): un riepilogo per ogni
