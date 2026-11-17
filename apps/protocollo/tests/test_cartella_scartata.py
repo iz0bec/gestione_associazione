@@ -232,3 +232,16 @@ def test_spunta_anche_dalla_casella(casella, imap, client_ruolo):
                     "messaggi": [_messaggio(1).pk], "stato": "scartato"}, follow=True)  # fmt: skip
     assert "nel cestino al prossimo scaricamento" in r.content.decode()
     assert _messaggio(1).spostare_in == "cestino"
+
+
+def test_scartato_rimasto_nella_posta_in_arrivo(casella, imap, segretario):
+    """Messaggi scaricati prima di PROCESSATA (o fuori dai giorni) sono ancora in INBOX."""
+    posta.scarica_casella(casella)
+    imap.cartelle["INBOX"][b"9"] = imap.cartelle["INBOX.PROCESSATA"].pop(b"1")  # come una volta
+    servizi.scarta_messaggio(_messaggio(1), segretario, "x")
+    servizi.scarta_messaggio(_messaggio(2), segretario, "x")
+    assert posta.applica_spostamenti(imap, casella) == 2  # senza riscaricare: è fuori dai giorni
+    assert imap.oggetti("INBOX.SCARTATA") == ["Offerta 1", "Offerta 2"]
+    assert imap.oggetti("INBOX") == []
+    m = _messaggio(1)
+    assert (m.cartella_server, m.spostare_in, m.errore_server) == ("scartata", "", "")

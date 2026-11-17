@@ -300,23 +300,32 @@ def applica_spostamenti(conn, casella):
                 destinazione = _dove(casella, verso)
                 if not destinazione:
                     raise ErroreCasella("cartella di destinazione non indicata nella casella")
-            if conn.select(_quota(origine))[0] != "OK":
-                raise ErroreCasella(f"cartella «{origine}» non trovata")
-            trovati = []
-            for m in messaggi:
-                uids = _cerca_per_message_id(conn, m.message_id)
-                if uids:
-                    trovati.append((m, uids[-1]))
-                else:
-                    m.spostare_in, m.errore_server = "", f"non trovato in «{origine}»"
-                    m.save(update_fields=["spostare_in", "errore_server"])
-            if trovati:
-                _sposta(conn, [u for _, u in trovati], destinazione)
-            for m, _ in trovati:
-                m.cartella_server = "" if verso == "processata" else verso
-                m.spostare_in = m.errore_server = ""
-                m.save(update_fields=["cartella_server", "spostare_in", "errore_server"])
-                spostati += 1
+            # dove dovrebbe essere, poi nella cartella letta: i messaggi scaricati prima della
+            # cartella PROCESSATA (o fuori dalla finestra dei giorni) sono ancora lì
+            arrivo = destinazione if verso == "cestino" else nome_sul_server(conn, destinazione)
+            cartelle = [origine]
+            if casella.cartella not in (origine, arrivo):
+                cartelle.append(casella.cartella)
+            restanti = list(messaggi)
+            for cartella in cartelle:
+                if not restanti or conn.select(_quota(cartella))[0] != "OK":
+                    continue
+                trovati, mancanti = [], []
+                for m in restanti:
+                    uids = _cerca_per_message_id(conn, m.message_id)
+                    (trovati if uids else mancanti).append((m, uids[-1] if uids else None))
+                if trovati:
+                    _sposta(conn, [u for _, u in trovati], destinazione)
+                for m, _ in trovati:
+                    m.cartella_server = "" if verso == "processata" else verso
+                    m.spostare_in = m.errore_server = ""
+                    m.save(update_fields=["cartella_server", "spostare_in", "errore_server"])
+                    spostati += 1
+                restanti = [m for m, _ in mancanti]
+            for m in restanti:  # cancellato a mano o mai arrivato: non si riprova
+                m.spostare_in = ""
+                m.errore_server = f"non trovato in «{'» né in «'.join(cartelle)}»"[:300]
+                m.save(update_fields=["spostare_in", "errore_server"])
         except (ErroreCasella, imaplib.IMAP4.error, OSError) as e:
             log.warning("Casella %s: spostamento verso %s non riuscito: %s", casella, verso, e)
             for m in messaggi:  # si riprova al prossimo scaricamento

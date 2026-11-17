@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.26] - 2026-11-17
+
+Spostamenti sul server anche per i messaggi rimasti nella posta in arrivo.
+
+### Corretto
+- Gli scartati scaricati prima della cartella `PROCESSATA` (1.0.19), o più vecchi dei giorni da
+  scaricare, sono ancora nella posta in arrivo: la 1.0.25 li cercava solo in `PROCESSATA` e li segnava
+  «non trovato». Ora si cercano anche nella cartella letta; quelli segnati vengono rimessi in coda e
+  spostati al prossimo scaricamento. Un nuovo spostamento cancella l'errore del tentativo precedente.
+
 ## [1.0.25] - 2026-11-17
 
 Etichette adesive, pulizia della posta scartata, niente email ordinarie verso le PEC per errore.

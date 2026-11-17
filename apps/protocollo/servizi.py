@@ -432,7 +432,7 @@ def scarta_messaggio(messaggio, utente, motivo):
     messaggio.gestito_da = utente
     messaggio.gestito_il = timezone.now()
     if messaggio.casella.cartella_scartata.strip():  # sul server, al prossimo scaricamento
-        messaggio.spostare_in = "scartata"
+        messaggio.spostare_in, messaggio.errore_server = "scartata", ""
     messaggio.save()
     registra(Azione.ARCHIVIAZIONE, messaggio, utente=utente, motivo=motivo)
     return messaggio
@@ -451,6 +451,7 @@ def ripristina_messaggio(messaggio, utente):
     messaggio.gestito_il = None
     # torna nella cartella dei messaggi scaricati (o non si sposta più, se era ancora lì)
     messaggio.spostare_in = "processata" if messaggio.cartella_server == "scartata" else ""
+    messaggio.errore_server = ""
     messaggio.save()
     registra(Azione.MODIFICA, messaggio, utente=utente, ripristinato=True, motivo_scarto=motivo)
     return messaggio
@@ -508,7 +509,7 @@ def ripulisci_messaggio(messaggio, utente, dal_server=False):
     messaggio.file_eml = ""
     messaggio.ripulito_il = timezone.now()
     if dal_server and not messaggio.casella.pec:
-        messaggio.spostare_in = "cestino"
+        messaggio.spostare_in, messaggio.errore_server = "cestino", ""
     messaggio.save()
     for nome in file:  # dopo il salvataggio: se il database fallisce, i file restano
         transaction.on_commit(lambda nome=nome: default_storage.delete(nome))
