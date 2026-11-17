@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.32] - 2026-11-17
+
+Eventi e cerimonie con adesioni.
+
 ### Aggiunto
 - **Eventi e cerimonie** (nuovo modulo, menu *Eventi*): data, luogo, programma, posti, accompagnatori,
   chiusura delle adesioni; **adesioni** dalla segreteria (collegate all'anagrafica quando la persona è
