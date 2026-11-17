@@ -36,6 +36,16 @@ def _con_secondo_fattore(queryset):
     return queryset.annotate(ha_mfa=Exists(fattori), mfa_obbligo=Exists(obblighi))
 
 
+def _limite_connessi():
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from .models import MINUTI_CONNESSO
+
+    return timezone.now() - timedelta(minutes=MINUTI_CONNESSO)
+
+
 class UtentiView(PermessoMixin, ListView):
     permission_required = "accounts.view_utente"
     template_name = "accounts/utenti.html"
@@ -62,6 +72,8 @@ class UtentiView(PermessoMixin, ListView):
             qs = qs.filter(is_active=True)
         elif self.stato == "disattivati":
             qs = qs.filter(is_active=False)
+        elif self.stato == "connessi":
+            qs = qs.filter(ultima_attivita__gte=_limite_connessi()).order_by("-ultima_attivita")
         return qs
 
     def get_template_names(self):
@@ -76,6 +88,9 @@ class UtentiView(PermessoMixin, ListView):
             ruolo=self.ruolo,
             stato=self.stato,
             ruoli=Group.objects.order_by("name"),
+            connessi=Utente.objects.filter(ultima_attivita__gte=_limite_connessi()).order_by(
+                "-ultima_attivita"
+            ),
         )
         return ctx
 

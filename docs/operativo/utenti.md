@@ -24,6 +24,14 @@ accesso. Il cartellino **password temporanea** indica chi non ha ancora scelto l
 **richiesto, da configurare** indica chi ha un ruolo con il secondo fattore obbligatorio ma non lo
 ha ancora attivato.
 
+### Utenti connessi
+
+In cima all'elenco, **Connessi ora** mostra chi ha usato il programma negli ultimi 5 minuti (clic sul
+nome per la scheda); il filtro *Connessi ora* restringe l'elenco a loro. Nella colonna dell'ultimo
+accesso compare *connesso ora* oppure l'ora dell'ultima attività. Chi esce con **Esci** non risulta più
+connesso; chi chiude solo il browser scompare dopo 5 minuti. L'attività si annota al massimo una volta
+al minuto per utente.
+
 ## Nuovo utente
 
 **Nuovo utente**: nome utente, nome, cognome, email (unica, serve anche per accedere), telefono,

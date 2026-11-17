@@ -4,7 +4,7 @@
 # * Email:       info@iz0bec.info
 # * Descrizione: Obblighi di accesso: cambio della password temporanea e secondo fattore
 # *              richiesto dal ruolo. Fino a quando non sono soddisfatti l'utente può usare
-# *              solo le pagine del proprio account.
+# *              solo le pagine del proprio account. Ultima attività (utenti connessi).
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -70,3 +70,30 @@ class ObblighiAccessoMiddleware:
             )
             return reverse("mfa_index")
         return None
+
+
+class AttivitaMiddleware:
+    """Annota l'ultima attività dell'utente (al massimo una scrittura al minuto)."""
+
+    INTERVALLO = 60  # secondi
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        risposta = self.get_response(request)
+        utente = getattr(request, "user", None)
+        if (
+            utente is not None
+            and utente.is_authenticated
+            and not request.path.startswith((settings.STATIC_URL or "/static/", "/salute/"))
+        ):
+            from django.utils import timezone
+
+            from .models import Utente
+
+            adesso = timezone.now()
+            ultima = utente.ultima_attivita
+            if ultima is None or (adesso - ultima).total_seconds() >= self.INTERVALLO:
+                Utente.objects.filter(pk=utente.pk).update(ultima_attivita=adesso)
+        return risposta

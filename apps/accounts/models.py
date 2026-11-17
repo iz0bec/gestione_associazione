@@ -10,6 +10,8 @@
 from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
 
+MINUTI_CONNESSO = 5  # attività più recente di così = «connesso ora»
+
 
 class Utente(AbstractUser):
     """Account di accesso. I ruoli sono gruppi Django (vedi ruoli.py)."""
@@ -35,6 +37,9 @@ class Utente(AbstractUser):
         "deve cambiare la password",
         default=False,
         help_text="Al prossimo accesso l'utente deve scegliere una nuova password.",
+    )
+    ultima_attivita = models.DateTimeField(
+        "ultima attività", null=True, blank=True, editable=False, db_index=True
     )
     avvisi_posta = models.CharField(
         "avvisi della posta da protocollare",
@@ -66,6 +71,16 @@ class Utente(AbstractUser):
     @property
     def ruoli(self):
         return [g.name for g in self.groups.all()]
+
+    @property
+    def connesso(self):
+        """Ha usato il programma negli ultimi minuti (e non è uscito)."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        limite = timezone.now() - timedelta(minutes=MINUTI_CONNESSO)
+        return self.ultima_attivita is not None and self.ultima_attivita >= limite
 
 
 class PoliticaRuolo(models.Model):

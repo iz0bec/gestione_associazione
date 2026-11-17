@@ -30,6 +30,14 @@ def _password_scelta(sender, request=None, user=None, **kwargs):
         user.save(update_fields=["deve_cambiare_password"])
 
 
+def _uscito(sender, request, user, **kwargs):
+    """All'uscita l'utente non risulta più connesso."""
+    from django.contrib.auth import get_user_model
+
+    if user is not None and user.pk:
+        get_user_model().objects.filter(pk=user.pk).update(ultima_attivita=None)
+
+
 class AccountsConfig(AppConfig):
     name = "apps.accounts"
     verbose_name = "Utenti e accessi"
@@ -41,3 +49,6 @@ class AccountsConfig(AppConfig):
 
         for segnale in (signals.password_changed, signals.password_set, signals.password_reset):
             segnale.connect(_password_scelta, dispatch_uid=f"password_scelta_{id(segnale)}")
+        from django.contrib.auth.signals import user_logged_out
+
+        user_logged_out.connect(_uscito, dispatch_uid="utente_uscito")

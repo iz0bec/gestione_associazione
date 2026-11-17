@@ -8,6 +8,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ### Aggiunto
 - **Scadenza dei mandati**: durata del mandato e preavviso per organo; la scadenza di ogni carica in
   corso compare nell'organo, nel cruscotto (*Mandati in scadenza*) e nel calendario (anche iCal).
+- **Utenti connessi** in *Sistema → Utenti*: chi ha usato il programma negli ultimi 5 minuti, filtro
+  *Connessi ora* e ultima attività di ciascuno (l'uscita con *Esci* lo toglie subito).
 
 ## [1.0.28] - 2026-11-17
 
