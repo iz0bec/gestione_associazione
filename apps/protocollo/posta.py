@@ -76,8 +76,12 @@ def _testo(msg):
 
 
 def _originale_pec(msg):
-    """Nelle PEC il messaggio originale è nell'allegato postacert.eml."""
-    for parte in msg.iter_attachments():
+    """Nelle PEC il messaggio originale è nell'allegato postacert.eml.
+
+    La busta di trasporto è firmata (multipart/signed → multipart/mixed → postacert.eml): si
+    cerca a ogni livello, non solo tra gli allegati diretti.
+    """
+    for parte in msg.walk():
         if (parte.get_filename() or "").lower() == "postacert.eml":
             if parte.get_content_type() == "message/rfc822":
                 return parte.get_content()
@@ -85,6 +89,14 @@ def _originale_pec(msg):
             if dati:
                 return email.message_from_bytes(dati, policy=policy.default)
     return None
+
+
+def _mittente_busta_pec(msg, nome, indirizzo):
+    """Dalla busta «Per conto di: x@y» <posta-certificata@...> ricava x@y (o il Reply-To)."""
+    _, risposta = parseaddr(str(msg.get("Reply-To", "")))
+    trovato = re.search(r"per conto di:\s*(\S+@\S+)", nome, re.IGNORECASE)
+    vero = trovato.group(1).strip("<>\"'") if trovato else risposta
+    return ("", vero) if "@" in vero else (nome, indirizzo)
 
 
 def _allegati(msg, cartella):
@@ -116,6 +128,9 @@ def salva_messaggio(casella, grezzo: bytes):
     if casella.pec and (originale := _originale_pec(msg)) is not None:
         contenuto = originale
     nome_mitt, email_mitt = parseaddr(str(contenuto.get("From", "")))
+    if contenuto is msg and casella.pec and msg.get("X-Trasporto"):
+        # busta PEC senza originale leggibile: il mittente vero non è posta-certificata@...
+        nome_mitt, email_mitt = _mittente_busta_pec(msg, nome_mitt, email_mitt)
     try:
         data = parsedate_to_datetime(str(contenuto.get("Date") or msg.get("Date")))
         if timezone.is_naive(data):

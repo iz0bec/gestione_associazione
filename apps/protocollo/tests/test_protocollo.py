@@ -22,7 +22,7 @@ from apps.anagrafica.models import Soggetto
 from apps.core.cifratura import nuova_chiave
 from apps.core.models import EventoAudit
 from apps.protocollo import posta, servizi
-from apps.protocollo.forms import CampoSegnatura, CasellaForm
+from apps.protocollo.forms import CampoSegnatura, CasellaForm, leggi_corrispondenti_liberi
 from apps.protocollo.models import (
     CasellaPosta,
     MessaggioRicevuto,
@@ -237,6 +237,50 @@ class TestPosta:
         m = posta.salva_messaggio(_casella(pec=True), busta.as_bytes())
         assert m.mittente_email == "protocollo@pec.comune.example.it" and m.oggetto == "Nota"
         assert [a["nome"] for a in m.allegati] == ["domanda.pdf"]
+
+    def test_pec_firmata_come_aruba(self):
+        """Busta reale: multipart/signed → multipart/mixed → postacert.eml (inline)."""
+        from email.mime.multipart import MIMEMultipart
+
+        originale = _email(mittente="ancr-fed-pzmt@pec.example.it", oggetto="test")
+        misto = EmailMessage()
+        misto.set_content("Messaggio di posta certificata")
+        misto.add_attachment(originale)
+        misto.get_payload()[-1].replace_header("Content-Disposition", "inline")
+        misto.get_payload()[-1].set_param("filename", "postacert.eml", header="Content-Disposition")
+        firmato = MIMEMultipart("signed", protocol="application/pkcs7-signature")
+        firmato["From"] = (
+            '"Per conto di: ancr-fed-pzmt@pec.example.it" <posta-certificata@pec.aruba.it>'
+        )
+        firmato["Reply-To"] = "ancr-fed-pzmt@pec.example.it"
+        firmato["X-Trasporto"] = "posta-certificata"
+        firmato["Subject"] = "POSTA CERTIFICATA: test"
+        firmato["Message-ID"] = "<firmato@pec.example>"
+        firmato.attach(misto)
+        m = posta.salva_messaggio(_casella(pec=True), firmato.as_bytes())
+        assert m.mittente_email == "ancr-fed-pzmt@pec.example.it" and m.oggetto == "test"
+        assert "posta-certificata" not in m.mittente
+
+    def test_busta_pec_senza_originale(self):
+        busta = EmailMessage()
+        busta["From"] = '"Per conto di: sede@pec.example.it" <posta-certificata@pec.aruba.it>'
+        busta["X-Trasporto"] = "posta-certificata"
+        busta["Message-ID"] = "<solo-busta@pec.example>"
+        busta.set_content("Messaggio di posta certificata")
+        m = posta.salva_messaggio(_casella(pec=True), busta.as_bytes())
+        assert m.mittente == m.mittente_email == "sede@pec.example.it"
+
+    def test_risposta_a_un_messaggio(self, client_ruolo, utente):
+        p = _registra(utente)
+        p.corrispondenti.update(  # come lo registrava la 1.0.20 da una busta PEC
+            indirizzo="sede@pec.example.it",
+            descrizione="Per conto di: sede@pec.example.it <sede@pec.example.it>",
+        )
+        r = client_ruolo("Segretario").get(reverse("protocollo:nuovo") + f"?risposta={p.pk}")
+        riga = r.context["form"].initial["destinatari_altri"]
+        assert riga == '"Per conto di: sede@pec.example.it" <sede@pec.example.it>'
+        letti = leggi_corrispondenti_liberi(riga, "destinatario")
+        assert letti[0]["indirizzo"] == "sede@pec.example.it"
 
     def test_protocollazione(self, utente, comune):
         casella = _casella()

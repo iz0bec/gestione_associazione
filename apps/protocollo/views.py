@@ -168,9 +168,7 @@ class NuovoView(PermessoMixin, FormView):
                     classificazione=p.classificazione,
                     destinatari=[c.soggetto for c in p.mittenti if c.soggetto],
                     destinatari_altri="\n".join(
-                        f"{c.descrizione} <{c.indirizzo}>" if "@" in c.indirizzo else c.descrizione
-                        for c in p.mittenti
-                        if not c.soggetto
+                        _riga_corrispondente(c) for c in p.mittenti if not c.soggetto
                     ),
                 )
         if soggetto := self.request.GET.get("soggetto"):
@@ -415,6 +413,23 @@ class SpedisciView(PermessoMixin, _ProtocolloVisibileMixin, TemplateView):
             massimo_mb=settings.PROTOCOLLO_SPEDIZIONE_MAX_MB,
         )
         return ctx
+
+
+def _riga_corrispondente(c):
+    """Riga «Nome <indirizzo>» rileggibile da leggi_corrispondenti_liberi.
+
+    La descrizione dei messaggi protocollati contiene già «<indirizzo>»: non va ripetuto, e un
+    nome con «:» o «@» va tra virgolette, altrimenti l'indirizzo non si rilegge più.
+    """
+    if "@" not in c.indirizzo:
+        return c.descrizione
+    nome = c.descrizione.strip()
+    if nome.endswith(f"<{c.indirizzo}>"):
+        nome = nome[: -len(c.indirizzo) - 2].strip()
+    nome = nome.strip('"').replace('"', "'")
+    if not nome or nome == c.indirizzo:
+        return c.indirizzo
+    return f'"{nome}" <{c.indirizzo}>'
 
 
 def _esito_spedizione(request, sped):
