@@ -168,9 +168,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   (giornalieri, settimanali, mensili), con tetto di spazio, controllo del disco e backup esclusi
   dalla rotazione.
 - ✅ Liste di destinatari in Excel: esportazione per la modifica fuori linea e reimportazione con anteprima.
-- ✅ **Backup incrementali dei documenti** (1.0.30): i file del protocollo non cambiano mai (il nome è
-  l'impronta), quindi si salvano una volta sola e i backup vi fanno riferimento; oggi ogni backup
-  li contiene tutti (ad Avigliano circa 190 MB a backup).
+- ✅ **Backup incrementali dei documenti** (1.0.30): ogni documento (allegati del protocollo, foto,
+  firme) si salva una volta sola in un archivio comune, indicizzato per impronta; i backup successivi
+  contengono il database e l'elenco dei file, non i file stessi (prima ogni backup li copiava tutti,
+  ad Avigliano circa 190 MB a backup). Lo scaricamento produce comunque un backup completo.
 - ✅ **Utenti connessi** (1.0.29): chi sta usando il gestionale in questo momento (per l'amministratore).
 - **Chat interna** fra gli utenti del gestionale.
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).

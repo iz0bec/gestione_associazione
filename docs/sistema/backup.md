@@ -11,17 +11,21 @@
 
 # Backup e ripristino
 
-L'applicazione fa da sé backup **completi**: un unico file `.tar` con il database (`pg_dump`), i
-file caricati (`MEDIA_ROOT`) e un manifesto (data, versione, migrazioni, numero di soci e
-protocolli, impronte SHA-256). Il file `.env` va custodito **a parte**: contiene i segreti
-(`SECRET_KEY`, `CHIAVE_CIFRATURA`, password del database) e non è nel backup.
+L'applicazione fa da sé i backup. Ognuno è un file `.tar` con il database (`pg_dump`), l'elenco dei
+file caricati (`MEDIA_ROOT`) con le impronte SHA-256 e un manifesto (data, versione, migrazioni,
+numero di soci e protocolli). I file caricati non sono copiati in ogni backup: stanno **una volta
+sola** nell'archivio comune della cartella dei backup (vedi *Backup incrementali*). Un backup è
+quindi completo **insieme all'archivio**; quello scaricato dall'interfaccia contiene già tutto.
+Il file `.env` va custodito **a parte**: contiene i segreti (`SECRET_KEY`, `CHIAVE_CIFRATURA`,
+`CHIAVE_BACKUP`, password del database) e non è nel backup.
 
 ## Dall'interfaccia
 
 **Sistema → Backup** (amministratore di sistema):
 
 - **Crea backup ora**;
-- **scarica** un backup, per conservarlo fuori dal server;
+- **scarica** un backup, per conservarlo fuori dal server: il file scaricato è sempre completo,
+  con dentro anche i documenti dell'archivio;
 - **carica** un backup creato altrove, ad esempio per trasferire i dati su un nuovo server.
   Viene verificato prima di essere aggiunto all'elenco;
 - **ripristina**: chiede di scrivere `RIPRISTINA` e la propria password. Poi:
@@ -69,17 +73,18 @@ Il pianificatore crea ogni notte un backup **automatico**, poi applica la conser
 
 ## Conservazione a rotazione
 
-Ogni backup è completo (database e **tutti** i file caricati), quindi senza regole la cartella
-cresce senza fine. Dopo ogni backup (notturno, manuale o da terminale) si eliminano quelli che non
-servono più:
+Senza regole la cartella dei backup crescerebbe senza fine. Dopo ogni backup (notturno, manuale o
+da terminale) si eliminano quelli che non servono più, poi si tolgono dall'archivio i documenti
+che nessun backup rimasto usa:
 
 - **automatici**: l'ultimo di ciascuno degli ultimi `BACKUP_GIORNALIERI` giorni, `BACKUP_SETTIMANALI`
   settimane e `BACKUP_MENSILI` mesi. Con i valori predefiniti si tengono al massimo 7 + 4 + 12 file
   (di fatto qualcuno meno, perché lo stesso file può valere per il giorno, la settimana e il mese);
 - **altri** (manuali, caricati, «prima del ripristino», «prima dell'aggiornamento», «prima
   dell'inizializzazione»): gli ultimi `BACKUP_ALTRI`;
-- **tetto di spazio**: con `BACKUP_SPAZIO_MASSIMO`, se i backup tenuti lo superano si eliminano i più
-  vecchi, prima gli automatici poi gli altri;
+- **tetto di spazio**: con `BACKUP_SPAZIO_MASSIMO`, se i file di backup tenuti lo superano si
+  eliminano i più vecchi, prima gli automatici poi gli altri. Il tetto conta i file di backup, non
+  l'archivio dei documenti, che la pagina mostra a parte;
 - **mai eliminati da soli**: l'ultimo backup automatico e l'ultimo degli altri, i backup
   **esclusi dalla rotazione** e i file illeggibili (vanno controllati a mano). Durante un ripristino
   la pulizia non tocca nulla.
@@ -114,9 +119,14 @@ di dati. Lo spazio che occupa conta comunque nel tetto `BACKUP_SPAZIO_MASSIMO`. 
 
 ### Perché il file è `.tar` e non `.tar.gz`
 
-Le due parti del backup sono già compresse: il database con il formato *custom* di `pg_dump` e i
-file in `file.tar.gz`. Comprimere ancora il contenitore costerebbe tempo senza ridurre lo spazio;
-gran parte dei file caricati (PDF, foto) è del resto già compressa.
+Il database è già compresso (formato *custom* di `pg_dump`) e gran parte dei documenti (PDF, foto)
+lo è per natura; con la cifratura, poi, i dati non si comprimono più. Comprimere il contenitore
+costerebbe tempo senza ridurre lo spazio.
+
+Dentro il `.tar` ci sono `manifest.json`, `database.dump` (`database.dump.cif` se cifrato),
+`file.json` (l'elenco dei file con le impronte) e, solo nei backup scaricati, la cartella
+`oggetti/` con i documenti. I backup fino alla 1.0.29 avevano invece i file in `file.tar.gz`: si
+ripristinano ancora.
 
 ## Da terminale
 
@@ -135,13 +145,17 @@ PostgreSQL (o più recente). Lo script di installazione li installa.
 
 ## Raccomandazioni
 
-- Copiare i backup **fuori dal server** (altro disco, NAS, cloud cifrato), ad esempio con un
-  `rsync` notturno della cartella `BACKUP_ROOT`.
-- Cifrare i backup che lasciano il server (contengono dati personali), ad esempio con
-  `gpg --symmetric`.
-- Conservare insieme ai backup una copia del file `.env`, o almeno di `CHIAVE_CIFRATURA`: senza
-  quella chiave le password delle caselle di posta salvate non sono leggibili.
-- Provare il ripristino su un'installazione di prova almeno due volte l'anno.
+- Copiare i backup **fuori dal server** (altro disco, NAS, cloud), ad esempio con un `rsync`
+  notturno della cartella `BACKUP_ROOT` **compresa la sottocartella `oggetti/`**: senza
+  l'archivio i backup non contengono i documenti. In alternativa si conserva il backup scaricato,
+  che è completo.
+- Impostare `CHIAVE_BACKUP`: i backup contengono dati personali e così lasciano il server già
+  cifrati, senza bisogno di altri programmi.
+- Conservare **fuori dal server**, in un posto diverso dai backup, una copia di `CHIAVE_BACKUP`
+  (senza, i backup cifrati non si ripristinano) e di `CHIAVE_CIFRATURA` (senza, le password delle
+  caselle di posta salvate non sono leggibili).
+- La prova di ripristino settimanale controlla impronte e database; almeno due volte l'anno conviene
+  comunque ripristinare davvero un backup su un'installazione di prova.
 
 ## Inizializzazione (azzerare tutto)
 

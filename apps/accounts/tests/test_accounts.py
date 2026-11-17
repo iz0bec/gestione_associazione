@@ -76,3 +76,14 @@ class TestAccesso:
 
         with pytest.raises(ValidationError):
             validate_password("Corta-1")
+
+
+def test_messaggi_della_password_in_italiano():
+    """Django 6.1 ha cambiato il testo della lunghezza minima: la traduzione è in locale/."""
+    from django.contrib.auth.password_validation import validate_password
+    from django.core.exceptions import ValidationError
+    from django.utils import translation
+
+    with translation.override("it"), pytest.raises(ValidationError) as e:
+        validate_password("corta")
+    assert e.value.messages == ["Questa password è troppo corta: deve contenere almeno 12 caratteri."]

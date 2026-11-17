@@ -60,8 +60,12 @@ Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante
 
 ## Backup
 
-**Sistema → Backup** (amministratore di sistema): backup completi di dati e file, creati ogni notte
-e su richiesta, da scaricare e conservare fuori dal server; ripristino con conferma. I vecchi backup
+**Sistema → Backup** (amministratore di sistema): backup di dati e file, creati ogni notte e su
+richiesta; ripristino con conferma. I documenti si salvano **una volta sola** e ogni backup li richiama,
+così un backup nuovo occupa poco; quello **scaricato** è sempre completo, da conservare fuori dal server.
+Con la chiave dei backup (`CHIAVE_BACKUP`) i backup sono **cifrati**: se manca, la pagina lo segnala
+e mostra i comandi per crearla. Il pulsante con la provetta (**prova di ripristino**) controlla che un backup sia ripristinabile (lo fa
+da sé anche una volta alla settimana). I vecchi backup
 si eliminano da soli a rotazione (ultimi giorni, settimane e mesi): accanto a ognuno si legge perché è
 conservato. Con la **puntina** un backup si esclude dalla rotazione (es. quello di fine anno) e resta
 finché non lo si rimette in rotazione. Vedi il [manuale di sistema](../sistema/backup.md).

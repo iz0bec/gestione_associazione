@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- Il messaggio «password troppo corta» compariva in inglese nel cambio della password e nella
+  creazione degli utenti: Django 6.1 ne ha cambiato il testo senza aggiornare la traduzione italiana.
+
+### Documentazione
+- Manuale di sistema dei backup aggiornato al formato della 1.0.30: documenti salvati una volta sola
+  nell'archivio comune (da copiare insieme ai backup), contenuto del `.tar`, cifratura con
+  `CHIAVE_BACKUP` al posto di `gpg`, tetto di spazio, prova di ripristino. Corretti anche il riepilogo
+  nel manuale operativo e la roadmap.
+
 ## [1.0.33] - 2026-11-17
 
 Area personale dei soci.

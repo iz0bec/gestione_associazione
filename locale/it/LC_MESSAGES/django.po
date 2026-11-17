@@ -10,6 +10,13 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "- Select an option -"
 msgstr "— scegliere —"
+
+# Django 6.1 ha cambiato il testo (da %(min_length)d a %d): la traduzione di Django non lo copre più
+msgid "This password is too short. It must contain at least %d character."
+msgid_plural "This password is too short. It must contain at least %d characters."
+msgstr[0] "Questa password è troppo corta: deve contenere almeno %d carattere."
+msgstr[1] "Questa password è troppo corta: deve contenere almeno %d caratteri."
