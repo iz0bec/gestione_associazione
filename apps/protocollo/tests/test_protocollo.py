@@ -367,6 +367,9 @@ class ImapConCartelle:
         self.sottoscritte.append(cartella.strip('"'))
         return "OK", [b""]
 
+    def list(self):
+        return "OK", [f'(\\HasNoChildren) "." "{c}"'.encode() for c in self.cartelle]
+
     def _uids(self, insieme):
         return [u.encode() for u in insieme.split(",")]
 

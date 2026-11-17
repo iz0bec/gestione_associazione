@@ -108,6 +108,9 @@ class _ImapFinto:
     def capability(self):
         return "OK", [b"IMAP4rev1 MOVE"]
 
+    def list(self):
+        return "OK", [b'(\\HasNoChildren \\Trash) "." "INBOX.Trash"']
+
     def logout(self):
         self.uscito = True
 

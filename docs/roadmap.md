@@ -57,7 +57,7 @@
 | **1.0.22** ✅ | servizi di invio (SMTP, email e PEC) in Sistema → Servizi di posta; caselle solo per la lettura | GitHub, GitLab |
 | **1.0.23** ✅ | caselle configurate in Sistema → Servizi di posta; il protocollo sceglie solo quali usare | GitHub, GitLab |
 | **1.0.24** ✅ | «Rispondi con» per casella, risposte dal servizio della casella di arrivo, interruttore dei servizi, comandi per la chiave di cifratura | GitHub, GitLab |
-| **1.0.25** ✅ | etichette adesive in PDF, pulizia selettiva della posta scartata, blocco delle email ordinarie verso le PEC | GitHub, GitLab |
+| **1.0.25** ✅ | etichette adesive in PDF, pulizia selettiva della posta scartata (cartella SCARTATA e cestino sul server), blocco delle email ordinarie verso le PEC | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

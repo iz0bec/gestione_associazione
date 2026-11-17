@@ -179,12 +179,26 @@ contrario. I messaggi già gestiti nel frattempo da un altro utente sono saltati
 messaggio di esito; ogni scarto e ripristino è annotato nel registro attività. La protocollazione
 resta una per messaggio, perché ognuno ha il proprio oggetto e la propria classificazione.
 
+**Sulla casella (server IMAP).** Il programma non cancella mai la posta dal server, ma la tiene in
+ordine: i messaggi scaricati vanno in `PROCESSATA`; quelli **scartati** vanno nella cartella `SCARTATA`
+(`INBOX.SCARTATA` su Aruba, creata se manca) e tornano in `PROCESSATA` se vengono riportati tra quelli
+da esaminare. Gli spostamenti avvengono al **giro di scaricamento successivo** (ogni 15 minuti o con
+*Scarica ora*), quindi solo con la lettura della posta attiva; la scheda del messaggio dice dove si
+trova e se uno spostamento è in attesa o non è riuscito (es. messaggio cancellato a mano dalla
+webmail). La cartella si cambia nella scheda della casella (*Sistema → Servizi di posta*); vuota, gli
+scartati restano in `PROCESSATA`. Così, dalla webmail, `SCARTATA` si può svuotare senza timore.
+
 **Pulizia della posta scartata.** I messaggi scartati restano nel programma, con testo, allegati e
 file originale, finché qualcuno non li elimina. Nell'elenco *Scartati* si filtra per **motivo** e per
 **data dello scarto** (*scartati prima del*), poi:
 
 - **Elimina definitivamente** elimina i messaggi spuntati;
 - **Elimina tutti i N filtrati** elimina tutti quelli che rispondono ai filtri, anche nelle altre pagine.
+
+Spuntando **anche dalla casella (cestino, non le PEC)**, il messaggio viene spostato anche nel
+**cestino** della casella email, da cui si recupera finché il cestino non viene svuotato. Le **PEC**
+non vanno mai nel cestino: una PEC ricevuta può servire come prova di ricezione e resta nella cartella
+`SCARTATA`.
 
 Viene eliminato il **contenuto** (testo, allegati, file `.eml`); resta solo una riga invisibile con
 mittente, oggetto e motivo, che serve a non riscaricare lo stesso messaggio e documenta la pulizia

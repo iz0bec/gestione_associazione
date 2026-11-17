@@ -45,7 +45,7 @@
             <form method="post" action="{% url 'core:verifica_casella' c.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nulla viene scaricato"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
             <a class="btn btn-sm" href="{% url 'core:casella_modifica' c.pk %}">Modifica</a>
           </div>
-          <div class="text-secondary">{{ c.utente }} · {{ c.server }}:{{ c.porta }} · {{ c.cartella }}{% if c.cartella_processata %} → {{ c.cartella_processata }}{% endif %} · ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
+          <div class="text-secondary">{{ c.utente }} · {{ c.server }}:{{ c.porta }} · {{ c.cartella }}{% if c.cartella_processata %} → {{ c.cartella_processata }}{% endif %}{% if c.cartella_scartata %} · scartati → {{ c.cartella_scartata }}{% endif %} · ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
           <div>{% with r=c.servizio_per_risposte %}{% if r %}<span class="text-secondary"><i class="ti ti-arrow-back-up me-1"></i>risponde con: {{ r.nome }} ({{ r.indirizzo }})</span>{% else %}<span class="text-orange"><i class="ti ti-alert-triangle me-1"></i>nessun servizio per rispondere: le risposte partirebbero dal server generale (Modifica → Rispondi con)</span>{% endif %}{% endwith %}</div>
         </div>
         {% endfor %}

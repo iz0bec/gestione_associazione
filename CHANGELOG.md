@@ -13,7 +13,15 @@ Etichette adesive, pulizia della posta scartata, niente email ordinarie verso le
 - **Pulizia della posta scartata**: nell'elenco *Scartati* filtri per motivo e data dello scarto,
   **Elimina definitivamente** sui messaggi spuntati o su tutti quelli filtrati. Si elimina il contenuto
   (testo, allegati, file `.eml`); resta una riga minima per non riscaricarli, e il registro attività
-  documenta cosa è stato eliminato. Nuovo permesso, a segretario e amministratore di sistema.
+  documenta cosa è stato eliminato. Nuovo permesso, a segretario e amministratore di sistema. Con la
+  spunta **anche dalla casella** il messaggio va anche nel **cestino** della casella email (riconosciuto
+  dal server o per nome: Trash, Cestino...); le PEC mai, restano come prova di ricezione.
+- **Cartella `SCARTATA` sul server**: i messaggi scartati si spostano dalla cartella `PROCESSATA` a
+  `SCARTATA` (`INBOX.SCARTATA` su Aruba, creata se manca) e tornano indietro se ripristinati; gli
+  scartati già presenti si spostano al primo scaricamento dopo l'aggiornamento. Gli spostamenti
+  avvengono con lo scaricamento (ogni 15 minuti o *Scarica ora*), ritrovando i messaggi per Message-ID;
+  la scheda del messaggio dice dove si trova e gli eventuali errori. La verifica della casella indica
+  anche la cartella degli scartati e il cestino trovato.
 - **Etichette adesive in PDF** per la spedizione postale: dai destinatari su carta di un protocollo
   (menu *Buste ed etichette*), dai destinatari senza email di una comunicazione e da una **lista di
   distribuzione**. Fogli A4 di formato comune (70 × 37, 70 × 36, 63,5 × 38,1, 99,1 × 38,1 mm), con la

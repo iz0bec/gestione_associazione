@@ -689,8 +689,13 @@ class AzionePostaView(PermessoMixin, View):
                 fatti, saltati = servizi.ripristina_messaggi(scelti, request.user)
                 testo = f"{fatti} messaggi riportati tra quelli da esaminare."
             elif azione == "ripulisci":
-                fatti, saltati = servizi.ripulisci_messaggi(scelti, request.user)
+                dal_server = request.POST.get("dal_server") == "on"
+                fatti, saltati = servizi.ripulisci_messaggi(scelti, request.user, dal_server)
                 testo = f"{fatti} messaggi scartati eliminati definitivamente."
+                if dal_server:
+                    pec = scelti.filter(casella__pec=True, ripulito_il__isnull=False).count()
+                    testo += (" Sulla casella vanno nel cestino al prossimo scaricamento"
+                              + (f" (non le {pec} PEC, che restano)." if pec else "."))  # fmt: skip
             else:
                 return indietro
         except OperazioneNonValida as e:

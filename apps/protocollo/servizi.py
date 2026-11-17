@@ -431,6 +431,8 @@ def scarta_messaggio(messaggio, utente, motivo):
     messaggio.motivo_scarto = motivo[:255]
     messaggio.gestito_da = utente
     messaggio.gestito_il = timezone.now()
+    if messaggio.casella.cartella_scartata.strip():  # sul server, al prossimo scaricamento
+        messaggio.spostare_in = "scartata"
     messaggio.save()
     registra(Azione.ARCHIVIAZIONE, messaggio, utente=utente, motivo=motivo)
     return messaggio
@@ -447,6 +449,8 @@ def ripristina_messaggio(messaggio, utente):
     messaggio.motivo_scarto = ""
     messaggio.gestito_da = None
     messaggio.gestito_il = None
+    # torna nella cartella dei messaggi scaricati (o non si sposta più, se era ancora lì)
+    messaggio.spostare_in = "processata" if messaggio.cartella_server == "scartata" else ""
     messaggio.save()
     registra(Azione.MODIFICA, messaggio, utente=utente, ripristinato=True, motivo_scarto=motivo)
     return messaggio
@@ -477,11 +481,13 @@ def ripristina_messaggi(messaggi, utente):
 
 
 @transaction.atomic
-def ripulisci_messaggio(messaggio, utente):
+def ripulisci_messaggio(messaggio, utente, dal_server=False):
     """Elimina definitivamente il contenuto di un messaggio scartato (file .eml, allegati, testo).
 
     Resta una riga minima (casella, Message-ID, mittente, oggetto, motivo), così il messaggio non
     viene riscaricato e il registro attività dice cosa è stato eliminato. Non si annulla.
+    `dal_server`: sposta anche il messaggio nel cestino della casella (mai per le PEC, che
+    possono servire come prova di ricezione); avviene al prossimo scaricamento.
     """
     from django.core.files.storage import default_storage
 
@@ -501,16 +507,18 @@ def ripulisci_messaggio(messaggio, utente):
     messaggio.allegati = []
     messaggio.file_eml = ""
     messaggio.ripulito_il = timezone.now()
+    if dal_server and not messaggio.casella.pec:
+        messaggio.spostare_in = "cestino"
     messaggio.save()
     for nome in file:  # dopo il salvataggio: se il database fallisce, i file restano
         transaction.on_commit(lambda nome=nome: default_storage.delete(nome))
     return messaggio
 
 
-def ripulisci_messaggi(messaggi, utente):
+def ripulisci_messaggi(messaggi, utente, dal_server=False):
     if utente is not None and not utente.has_perm("protocollo.ripulisci_posta"):
         raise OperazioneNonValida("Non hai il permesso di eliminare la posta scartata.")
-    return _in_blocco(ripulisci_messaggio, messaggi, utente)
+    return _in_blocco(ripulisci_messaggio, messaggi, utente, dal_server)
 
 
 # --- esportazione --------------------------------------------------------------------------

@@ -107,7 +107,7 @@ class CasellaForm(StileMixin, forms.ModelForm):
         model = CasellaPosta
         fields = [
             "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "cartella_processata",
-            "giorni", "servizio_risposta",
+            "cartella_scartata", "giorni", "servizio_risposta",
         ]  # fmt: skip
 
     def __init__(self, *args, **kwargs):
@@ -123,6 +123,12 @@ class CasellaForm(StileMixin, forms.ModelForm):
         processata = (dati.get("cartella_processata") or "").strip()
         if processata and processata.lower() == (dati.get("cartella") or "").strip().lower():
             self.add_error("cartella_processata", "Deve essere diversa dalla cartella da leggere.")
+        scartata = (dati.get("cartella_scartata") or "").strip().lower()
+        altre = {(dati.get("cartella") or "").strip().lower(), processata.lower()}
+        if scartata and scartata in altre:
+            self.add_error(
+                "cartella_scartata", "Deve essere diversa da quella da leggere e dei scaricati."
+            )
         from .cifratura import cifratura_disponibile
 
         if not cifratura_disponibile():

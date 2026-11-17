@@ -310,3 +310,8 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 - **Aggiornamento (1.0.24)**: ogni casella ha *Rispondi con* (`servizio_risposta`, compilato per indirizzo e
   tipo); `spedizioni.servizio_proposto` propone per una risposta il servizio della casella di arrivo, poi la
   PEC per il mezzo PEC, poi il server generale. La scelta resta all'utente.
+- **Aggiornamento (1.0.25)**: gli scartati vanno nella cartella `cartella_scartata` (`SCARTATA`) e, se
+  ripuliti con «anche dalla casella», nel cestino (attributo `\Trash` di LIST o nomi comuni; mai creato,
+  mai per le PEC). Ancora nessuna cancellazione sul server. Gli spostamenti si accodano sul messaggio
+  (`spostare_in`) e li esegue `posta.applica_spostamenti` dentro `scarica_casella`, cercando per Message-ID:
+  niente IMAP durante le richieste web, ripetizione automatica in caso di errore.

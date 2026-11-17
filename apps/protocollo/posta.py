@@ -244,6 +244,87 @@ def _sposta(conn, uids, cartella):
             raise ErroreCasella(f"Spostamento nella cartella «{cartella}» non riuscito: {dati}")
 
 
+# cestini più comuni se il server non indica \Trash (RFC 6154) nell'elenco delle cartelle
+CESTINI = ("Trash", "Cestino", "Deleted Messages", "Deleted Items", "Posta eliminata")
+_RIGA_LIST = re.compile(rb'^\((?P<attributi>[^)]*)\) (?:"[^"]*"|NIL) (?P<nome>.+)$')
+
+
+def cestino_del_server(conn):
+    """Nome del cestino della casella, o None: mai creato, per non inventarne uno."""
+    with contextlib.suppress(imaplib.IMAP4.error):
+        stato, righe = conn.list()
+        if stato == "OK":
+            for riga in righe or []:
+                trovato = _RIGA_LIST.match(riga) if isinstance(riga, bytes) else None
+                if trovato and b"\\trash" in trovato["attributi"].lower():
+                    return trovato["nome"].decode(errors="replace").strip().strip('"')
+    for nome in CESTINI:
+        completo = nome_sul_server(conn, nome)
+        if conn.status(_quota(completo), "(MESSAGES)")[0] == "OK":
+            return completo
+    return None
+
+
+def _dove(casella, posizione):
+    """Cartella del server per una posizione logica del messaggio."""
+    if posizione == "scartata":
+        return casella.cartella_scartata.strip()
+    return casella.cartella_processata.strip() or casella.cartella  # "" o "processata"
+
+
+def _cerca_per_message_id(conn, message_id):
+    if message_id.startswith("senza-id-"):  # Message-ID assente: non si ritrova
+        return []
+    stato, dati = conn.uid("SEARCH", None, "HEADER", "Message-ID", _quota(message_id))
+    return dati[0].split() if stato == "OK" and dati and dati[0] else []
+
+
+def applica_spostamenti(conn, casella):
+    """Sposta sul server i messaggi scartati, ripristinati o ripuliti nel frattempo (cercati per
+    Message-ID nella cartella in cui si trovano). Gli errori restano sul messaggio."""
+    attesa = list(
+        MessaggioRicevuto.objects.filter(casella=casella).exclude(spostare_in="").order_by("pk")
+    )
+    gruppi = {}
+    for m in attesa:
+        gruppi.setdefault((m.cartella_server, m.spostare_in), []).append(m)
+    spostati = 0
+    for (da, verso), messaggi in gruppi.items():
+        try:
+            origine = nome_sul_server(conn, _dove(casella, da))
+            if verso == "cestino":
+                destinazione = cestino_del_server(conn)
+                if destinazione is None:
+                    raise ErroreCasella("cestino della casella non trovato")
+            else:
+                destinazione = _dove(casella, verso)
+                if not destinazione:
+                    raise ErroreCasella("cartella di destinazione non indicata nella casella")
+            if conn.select(_quota(origine))[0] != "OK":
+                raise ErroreCasella(f"cartella «{origine}» non trovata")
+            trovati = []
+            for m in messaggi:
+                uids = _cerca_per_message_id(conn, m.message_id)
+                if uids:
+                    trovati.append((m, uids[-1]))
+                else:
+                    m.spostare_in, m.errore_server = "", f"non trovato in «{origine}»"
+                    m.save(update_fields=["spostare_in", "errore_server"])
+            if trovati:
+                _sposta(conn, [u for _, u in trovati], destinazione)
+            for m, _ in trovati:
+                m.cartella_server = "" if verso == "processata" else verso
+                m.spostare_in = m.errore_server = ""
+                m.save(update_fields=["cartella_server", "spostare_in", "errore_server"])
+                spostati += 1
+        except (ErroreCasella, imaplib.IMAP4.error, OSError) as e:
+            log.warning("Casella %s: spostamento verso %s non riuscito: %s", casella, verso, e)
+            for m in messaggi:  # si riprova al prossimo scaricamento
+                m.errore_server = f"spostamento non riuscito: {e}"[:300]
+                m.save(update_fields=["errore_server"])
+    return spostati
+
+
 def scarica_casella(casella):
     """Scarica i messaggi degli ultimi `casella.giorni` giorni non ancora presenti e sposta
     quelli conservati (nuovi o già scaricati) nella cartella dei messaggi scaricati."""
@@ -281,6 +362,7 @@ def scarica_casella(casella):
             # anche dopo un errore: si spostano quelli già conservati nel programma
             if archivio and conservati:
                 _sposta(conn, conservati, archivio)
+        applica_spostamenti(conn, casella)  # scartati, ripristinati, ripuliti nel frattempo
     finally:
         with contextlib.suppress(OSError, imaplib.IMAP4.error):
             conn.logout()
@@ -310,6 +392,10 @@ def verifica_casella(casella):
             archivio = nome_sul_server(conn, archivio)
             esiste = conn.status(_quota(archivio), "(MESSAGES)")[0] == "OK"
             capacita = _capacita(conn)
+        scartata = casella.cartella_scartata.strip()
+        if scartata:
+            scartata = nome_sul_server(conn, scartata)
+        cestino = None if casella.pec else cestino_del_server(conn)
     finally:
         with contextlib.suppress(OSError, imaplib.IMAP4.error):
             conn.logout()
@@ -325,6 +411,12 @@ def verifica_casella(casella):
         )
         if "MOVE" not in capacita and "UIDPLUS" not in capacita:
             parti.append("ATTENZIONE: il server non permette di spostarli (mancano MOVE e UIDPLUS)")
+    if scartata:
+        parti.append(f"gli scartati vanno nella cartella «{scartata}»")
+    if not casella.pec and cestino:
+        parti.append(f"cestino della casella: «{cestino}»")
+    elif not casella.pec:
+        parti.append("cestino non trovato (i messaggi ripuliti restano sul server)")
     return "; ".join(parti) + "."
 
 

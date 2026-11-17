@@ -45,6 +45,7 @@
       <button class="btn btn-sm" type="submit" name="azione" value="ripristina"><i class="ti ti-arrow-back-up me-1"></i>Riporta tra quelli da esaminare</button>
       {% if perms.protocollo.ripulisci_posta %}
       <input type="hidden" name="motivo" value="{{ filtro_motivo }}"><input type="hidden" name="prima_del" value="{{ filtro_prima_del }}">
+      <label class="form-check mb-0 small" title="Al prossimo scaricamento il messaggio va anche nel cestino della casella email. Le PEC restano sempre nella casella (cartella SCARTATA)."><input class="form-check-input" type="checkbox" name="dal_server"><span class="form-check-label">anche dalla casella (cestino, non le PEC)</span></label>
       <button class="btn btn-sm btn-outline-danger" type="submit" name="azione" value="ripulisci" data-conferma="Eliminare definitivamente il contenuto dei messaggi selezionati (testo, allegati, file originale)? L'operazione non si annulla."><i class="ti ti-trash me-1"></i>Elimina definitivamente</button>
       <button class="btn btn-sm btn-danger ms-auto" type="submit" name="azione" value="ripulisci_filtrati" data-conferma="Eliminare definitivamente tutti i {{ filtrati }} messaggi scartati{% if filtro_motivo or filtro_prima_del %} che rispondono ai filtri{% endif %}? L'operazione non si annulla."><i class="ti ti-trash me-1"></i>Elimina tutti i {{ filtrati }}{% if filtro_motivo or filtro_prima_del %} filtrati{% endif %}</button>
       {% endif %}

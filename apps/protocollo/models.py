@@ -260,6 +260,20 @@ class CasellaPosta(models.Model):
         help_text="Dopo lo scaricamento i messaggi vengono spostati in questa cartella del server "
         "(creata se manca). Vuota: restano dove sono.",
     )
+    cartella_scartata = models.CharField(
+        "cartella dei messaggi scartati",
+        max_length=100,
+        default="SCARTATA",
+        blank=True,
+        validators=[
+            RegexValidator(
+                r"^[A-Za-z0-9][A-Za-z0-9 _.\-]*$",
+                "Solo lettere senza accenti, cifre, spazi, punti, trattini e trattini bassi.",
+            )
+        ],
+        help_text="I messaggi scartati nel programma vengono spostati in questa cartella del "
+        "server (creata se manca), al giro di scaricamento successivo. Vuota: restano dove sono.",
+    )
     giorni = models.PositiveIntegerField(
         "giorni da scaricare",
         default=30,
@@ -370,6 +384,17 @@ class MessaggioRicevuto(models.Model):
         editable=False,
         help_text="Scartato e ripulito: testo, allegati e file originale eliminati.",
     )
+    # posizione sulla casella IMAP: "" = dove l'ha lasciato lo scaricamento (PROCESSATA)
+    cartella_server = models.CharField(max_length=10, blank=True, editable=False)
+    spostare_in = models.CharField(
+        max_length=10,
+        blank=True,
+        editable=False,
+        db_index=True,
+        help_text="Spostamento sul server in attesa del prossimo scaricamento "
+        "(processata, scartata, cestino).",
+    )
+    errore_server = models.CharField(max_length=300, blank=True, editable=False)
 
     objects = MessaggioQuerySet.as_manager()
 
