@@ -73,6 +73,12 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
 
         ctx["impegni"] = calendario.prossimi(self.request.user, giorni=14)[:8]
         ctx["scadenze"] = calendario.scadenze_aperte(self.request.user)
+        if self.request.user.has_perm("anagrafica.change_soggetto"):
+            from apps.area.models import RichiestaArea
+
+            ctx["richieste_area"] = RichiestaArea.objects.filter(
+                gestita_il__isnull=True
+            ).select_related("soggetto")[:10]
         if self.request.user.has_perm("organi.view_carica"):
             from apps.organi.servizi import mandati_in_scadenza
 

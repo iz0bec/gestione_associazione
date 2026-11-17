@@ -156,22 +156,22 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   operazione, **richiesta firmata** sulla domanda (anche per quelle a mano o online) che passa al socio
   all'accoglimento con il riferimento al protocollo. *Da fare*: risposta di conferma di ricezione al
   mittente (modello di Comunicazioni). ✅ Fatta: conferma di ricezione con il numero di protocollo.
-- Eventi e cerimonie con adesioni.
-- Scadenza dei mandati delle cariche (lo storico c'è già, punto 3 della fase 1): durata per organo,
+- ✅ Eventi e cerimonie con adesioni (1.0.32): segreteria, modulo pubblico, area del socio.
+- ✅ Scadenza dei mandati delle cariche (1.0.29): durata per organo,
   avvisi prima della scadenza nel cruscotto e nello scadenzario.
-- Area personale del socio: dati e quote (la tessera digitale con QR è già fatta, voce sotto).
+- ✅ Area personale del socio (1.0.33): accesso con collegamento via email, dati, tessere, quote e ricevute, eventi, richieste di correzione.
 - ✅ Tessera digitale (formato carta) con QR di verifica, inviata per email; verifica pubblica.
 - ✅ Promemoria automatici di rinnovo ai soci non in regola.
 - ✅ GDPR: esportazione dei dati di una persona, anonimizzazione, termini di conservazione.
-- Backup automatici cifrati con verifica del ripristino. ✅ Fatta la conservazione a rotazione
+- ✅ Backup automatici cifrati con verifica del ripristino (1.0.30). ✅ Fatta la conservazione a rotazione
   (giornalieri, settimanali, mensili), con tetto di spazio, controllo del disco e backup esclusi
   dalla rotazione.
 - ✅ Liste di destinatari in Excel: esportazione per la modifica fuori linea e reimportazione con anteprima.
-- **Backup incrementali dei documenti**: i file del protocollo non cambiano mai (il nome è
+- ✅ **Backup incrementali dei documenti** (1.0.30): i file del protocollo non cambiano mai (il nome è
   l'impronta), quindi si salvano una volta sola e i backup vi fanno riferimento; oggi ogni backup
   li contiene tutti (ad Avigliano circa 190 MB a backup).
-- **Utenti connessi**: chi sta usando il gestionale in questo momento (per l'amministratore).
+- ✅ **Utenti connessi** (1.0.29): chi sta usando il gestionale in questo momento (per l'amministratore).
 - **Chat interna** fra gli utenti del gestionale.
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).
 - API REST con token con scadenza e permessi limitati (per integrazioni esterne).
-- Pagamenti delle quote tracciati (contanti, bonifico, POS) con ricevuta numerata.
+- ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.

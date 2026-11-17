@@ -93,6 +93,15 @@
       </div>
     </div>
     {% endif %}
+    {% if richieste_area %}
+    <div class="card mb-3 border-warning">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-message-question me-2"></i>Richieste dall'area soci</h2></div>
+      <div class="list-group list-group-flush">{% for r in richieste_area %}<div class="list-group-item small">
+        <div class="text-secondary">{{ r.creata_il|date:"d/m/Y H:i" }}</div><div>{{ r.testo|linebreaksbr }}</div>
+        {% if perms.anagrafica.change_soggetto %}<form method="post" action="{% url 'area:gestita' r.pk %}" class="mt-1">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-check me-1"></i>Gestita</button></form>{% endif %}
+      </div>{% endfor %}</div>
+    </div>
+    {% endif %}
     {% if telegram_attivo and soggetto.attivo and not soggetto.deceduto or soggetto.telegram_chat_id %}
     <div class="card mb-3">
       <div class="card-body d-flex align-items-center gap-2">

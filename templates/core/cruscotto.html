@@ -80,6 +80,14 @@
     </div>
   </div>
   {% endif %}
+  {% if richieste_area %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-message-question me-2"></i>Richieste dall'area soci</h2></div>
+      <div class="list-group list-group-flush">{% for r in richieste_area %}<a class="list-group-item list-group-item-action d-flex" href="{{ r.soggetto.get_absolute_url }}"><span class="text-secondary me-3 text-nowrap">{{ r.creata_il|date:"d/m" }}</span><span class="fw-medium me-2">{{ r.soggetto }}</span><span class="flex-fill text-truncate text-secondary">{{ r.testo }}</span></a>{% endfor %}</div>
+    </div>
+  </div>
+  {% endif %}
   {% if mandati %}
   <div class="col-12">
     <div class="card">

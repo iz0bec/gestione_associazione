@@ -23,6 +23,9 @@ PUBBLICHE = {
     "iscrizione", "iscrizione_inviata", "feed_pubblico", "documenti_pubblici", "documento_pubblico",
     "presentazione", "verifica_tessera", "verifica_tessera_codice", "evento_pubblico",
     "evento_pubblico_inviato",
+    # area personale dei soci: protetta dalla sessione del socio, non dagli utenti (nomi completi)
+    "area:area", "area:accesso", "area:inviato", "area:entra", "area:ricevuta", "area:aderisci",
+    "area:rinuncia", "area:richiesta", "area:telegram", "area:esci",
 }  # fmt: skip
 
 # chi ha il primo permesso deve avere anche il secondo (la funzione lo usa)
@@ -57,7 +60,7 @@ def test_ogni_pagina_e_protetta():
     scoperte = []
     for nome, callback in _nostre():
         classe = getattr(callback, "view_class", None)
-        if nome.split(":")[-1] in PUBBLICHE:
+        if nome in PUBBLICHE or nome.split(":")[-1] in PUBBLICHE:
             continue
         if classe is None or not issubclass(classe, AccessMixin):
             scoperte.append(nome)

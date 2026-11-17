@@ -1,0 +1,58 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Area personale del socio: dati, tessere e quote, consensi, eventi, richieste
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Area personale{% endblock %}
+{% block contenuto %}
+{% for m in messages %}<div class="alert alert-{% if m.level_tag == 'error' %}danger{% else %}{{ m.level_tag }}{% endif %}">{{ m }}</div>{% endfor %}
+<div class="d-flex align-items-center mb-3">
+  <h1 class="h2 flex-fill mb-0">Ciao {{ soggetto.nome|default:soggetto.nome_completo }}</h1>
+  <form method="post" action="{% url 'area:esci' %}">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-logout me-1"></i>Esci</button></form>
+</div>
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title">I tuoi dati</h2></div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Nome</dt><dd class="col-sm-8">{{ soggetto.nome_completo }}</dd>
+      {% if socio %}<dt class="col-sm-4">Socio</dt><dd class="col-sm-8">n. {{ socio.numero }} · {{ socio.tipologia }} · {{ socio.get_stato_display|lower }}{% if socio.sezione %} · sezione di {{ socio.sezione.nome }}{% endif %}</dd>{% endif %}
+      {% if soggetto.data_nascita %}<dt class="col-sm-4">Nascita</dt><dd class="col-sm-8">{{ soggetto.data_nascita|date:"d/m/Y" }}{% if soggetto.luogo_nascita %} a {{ soggetto.luogo_nascita }}{% endif %}</dd>{% endif %}
+      {% if soggetto.codice_fiscale %}<dt class="col-sm-4">Codice fiscale</dt><dd class="col-sm-8">{{ soggetto.codice_fiscale }}</dd>{% endif %}
+      <dt class="col-sm-4">Indirizzo</dt><dd class="col-sm-8">{{ soggetto.indirizzo|default:"—" }}{% if soggetto.comune %}, {{ soggetto.cap }} {{ soggetto.comune }}{% if soggetto.provincia %} ({{ soggetto.provincia }}){% endif %}{% endif %}</dd>
+      <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ soggetto.email|default:"—" }}</dd>
+      <dt class="col-sm-4">Telefono</dt><dd class="col-sm-8">{{ soggetto.cellulare|default:soggetto.telefono|default:"—" }}</dd>
+    </dl>
+  </div>
+  <form method="post" action="{% url 'area:richiesta' %}" class="card-footer">{% csrf_token %}
+    <label class="form-label small" for="testo">Qualcosa non è giusto? Scrivi alla segreteria che cosa va corretto:</label>
+    <div class="d-flex gap-2"><textarea class="form-control form-control-sm" id="testo" name="testo" rows="2" maxlength="2000" required></textarea><button class="btn btn-sm" type="submit">Invia</button></div>
+    {% for r in richieste %}<div class="small text-secondary mt-1">{{ r.creata_il|date:"d/m/Y" }}: {{ r.testo|truncatechars:80 }} · {% if r.gestita_il %}gestita{% else %}in attesa{% endif %}</div>{% endfor %}
+  </form>
+</div>
+{% if socio %}
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title">Tessere e quote</h2></div>
+  <div class="list-group list-group-flush">
+    {% for t in tessere %}<div class="list-group-item d-flex align-items-center gap-2">
+      <div class="flex-fill"><strong>{{ t.anno }}</strong> · tessera {{ t.codice }} · {{ t.importo }} €<div class="small text-secondary">{% if t.pagata %}pagata il {{ t.pagata_il|date:"d/m/Y" }}{% if t.metodo_pagamento %} ({{ t.get_metodo_pagamento_display|lower }}){% endif %}{% else %}<span class="text-orange">quota da pagare</span>{% endif %}</div></div>
+      {% if t.pagata and t.ricevuta_numero %}<a class="btn btn-sm" href="{% url 'area:ricevuta' t.pk %}" target="_blank" rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta {{ t.codice_ricevuta }}</a>{% endif %}
+    </div>{% empty %}<div class="list-group-item text-secondary">Nessuna tessera registrata.</div>{% endfor %}
+  </div>
+</div>
+{% endif %}
+<div class="card mb-3">
+  <div class="card-header"><h2 class="card-title">Eventi</h2></div>
+  <div class="list-group list-group-flush">
+    {% for e, mia in eventi %}<div class="list-group-item d-flex align-items-center gap-2">
+      <div class="flex-fill"><strong>{{ e }}</strong><div class="small text-secondary">{{ e.inizio|date:"l d/m/Y H:i" }}{% if e.luogo %} · {{ e.luogo }}{% endif %}{% if e.quota %} · {{ e.quota }}{% endif %}</div></div>
+      {% if mia %}<span class="badge bg-green-lt">hai aderito{% if mia.accompagnatori %} (+{{ mia.accompagnatori }}){% endif %}</span><form method="post" action="{% url 'area:rinuncia' e.pk %}" data-conferma="Annullare la tua adesione?">{% csrf_token %}<button class="btn btn-sm" type="submit">Rinuncia</button></form>
+      {% else %}<form method="post" action="{% url 'area:aderisci' e.pk %}" class="d-flex gap-1 align-items-center">{% csrf_token %}{% if e.accompagnatori %}<label class="small text-secondary" for="acc-{{ e.pk }}">accompagnatori</label><input class="form-control form-control-sm w-auto" id="acc-{{ e.pk }}" type="number" name="accompagnatori" min="0" max="{{ e.accompagnatori }}" value="0">{% endif %}<button class="btn btn-sm btn-primary" type="submit">Aderisco</button></form>{% endif %}
+    </div>{% empty %}<div class="list-group-item text-secondary">Nessun evento con adesioni aperte.</div>{% endfor %}
+  </div>
+</div>
+{% if consensi %}<div class="card mb-3"><div class="card-header"><h2 class="card-title">Consensi privacy</h2></div><div class="list-group list-group-flush">
+  {% for c in consensi %}<div class="list-group-item d-flex"><span class="flex-fill">{{ c.get_finalita_display }}</span><span class="badge {% if c.prestato %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.prestato %}prestato{% else %}negato{% endif %} il {{ c.data|date:"d/m/Y" }}</span></div>{% endfor %}
+</div><div class="card-footer small text-secondary">Per cambiarli scrivi alla segreteria con il riquadro dei dati.</div></div>{% endif %}
+{% if telegram %}<div class="card"><div class="card-body d-flex align-items-center gap-2"><i class="ti ti-brand-telegram text-azure fs-2"></i><div class="flex-fill">{% if soggetto.telegram_chat_id %}Ricevi le comunicazioni anche su Telegram.{% else %}Vuoi ricevere le comunicazioni anche su Telegram?{% endif %}</div>{% if not soggetto.telegram_chat_id %}<a class="btn btn-sm" href="{% url 'area:telegram' %}">Collega</a>{% endif %}</div></div>{% endif %}
+{% endblock %}

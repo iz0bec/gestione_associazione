@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Area personale dei soci** (`/area/`, da attivare nei dati dell'organizzazione): accesso senza
+  password con un collegamento via email valido 30 minuti e usabile una volta; dati, tessere e quote
+  con le ricevute, consensi, eventi con adesione e rinuncia, collegamento a Telegram, richieste di
+  correzione dei dati che la segreteria vede nel cruscotto e nella scheda.
+
 ## [1.0.32] - 2026-11-17
 
 Eventi e cerimonie con adesioni.

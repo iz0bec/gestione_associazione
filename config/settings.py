@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.documenti",
     "apps.calendario",
     "apps.eventi",
+    "apps.area",
     "apps.migrazione",
 ]
 

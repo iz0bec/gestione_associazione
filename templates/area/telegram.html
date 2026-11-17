@@ -1,0 +1,16 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Collegamento di Telegram dall'area personale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Telegram{% endblock %}
+{% block contenuto %}
+<div class="card"><div class="card-body text-center">
+  <h1 class="h2">Ricevi le comunicazioni su Telegram</h1>
+  <p class="text-secondary">Apri questo collegamento sul telefono, oppure inquadra il codice, e premi <strong>Avvia</strong>. Con <code>/stop</code> smetti quando vuoi.</p>
+  <div class="mb-3">{{ qr }}</div>
+  <input class="form-control font-monospace" type="text" readonly data-copia value="{{ link }}" aria-label="Collegamento per Telegram">
+  <a class="btn btn-link mt-3" href="{% url 'area:area' %}">Torna all'area personale</a>
+</div></div>
+{% endblock %}

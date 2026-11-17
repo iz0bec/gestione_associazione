@@ -157,6 +157,12 @@ class Organizzazione(models.Model):
         default=False,
         help_text="Pubblica il modulo di domanda di iscrizione all'indirizzo /iscrizione/.",
     )
+    area_soci = models.BooleanField(
+        "area personale dei soci",
+        default=False,
+        help_text="I soci entrano all'indirizzo /area/ con un collegamento inviato alla propria "
+        "email e vedono dati, tessere, quote, ricevute ed eventi.",
+    )
     # pagina pubblica di presentazione (indirizzo principale per chi non ha fatto l'accesso)
     pagina_pubblica = models.BooleanField(
         "pagina pubblica di presentazione",

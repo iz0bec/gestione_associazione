@@ -11,6 +11,7 @@
 <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
   <a class="btn btn-primary btn-lg" href="{% url 'account_login' %}"><i class="ti ti-login me-1"></i>Accedi</a>
   {% if organizzazione.iscrizioni_online %}<a class="btn btn-lg" href="{% url 'iscrizione' %}"><i class="ti ti-user-plus me-1"></i>Chiedi l'iscrizione</a>{% endif %}
+  {% if organizzazione.area_soci %}<a class="btn btn-lg" href="{% url 'area:accesso' %}"><i class="ti ti-id me-1"></i>Area soci</a>{% endif %}
 </div>
 {% if organizzazione.presentazione %}
 <div class="card mb-3">

@@ -1,0 +1,20 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Accesso all'area personale: richiesta del collegamento via email
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Area soci{% endblock %}
+{% block contenuto %}
+{% for m in messages %}<div class="alert alert-{% if m.level_tag == 'error' %}danger{% else %}{{ m.level_tag }}{% endif %}">{{ m }}</div>{% endfor %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-header"><h1 class="card-title h2">Area personale dei soci</h1></div>
+  <div class="card-body">
+    <p class="text-secondary">Scrivi l'email che hai comunicato all'associazione: riceverai un collegamento per entrare, valido 30 minuti. Nell'area trovi i tuoi dati, le tessere, le quote con le ricevute e gli eventi a cui aderire.</p>
+    {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+    {{ form.email.as_field_group }}{{ form.token }}
+    <div class="nascosto" aria-hidden="true">{{ form.sito }}</div>
+  </div>
+  <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-mail me-1"></i>Mandami il collegamento</button></div>
+</form>
+{% endblock %}

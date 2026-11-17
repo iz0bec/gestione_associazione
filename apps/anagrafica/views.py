@@ -67,6 +67,7 @@ class DettaglioView(PermessoMixin, DetailView):
         from apps.core.models import ServizioMessaggi
 
         ctx["whatsapp_attivo"] = ServizioMessaggi.attivo_per("whatsapp") is not None
+        ctx["richieste_area"] = self.object.richieste_area.filter(gestita_il__isnull=True)
         from apps.organi.models import cariche_di
 
         ctx["cariche"] = cariche_di(self.object) if self.object.is_persona else []

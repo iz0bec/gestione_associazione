@@ -276,6 +276,25 @@ scheda con **Apri**.
 Il modulo firmato si vede solo con l'accesso al libro soci (e, in una federazione, solo per le
 proprie sezioni). Ogni consultazione è registrata.
 
+## Area personale dei soci
+
+Con **Area personale dei soci** attiva (*Organizzazione → dati*, accanto alle domande online) i soci
+entrano all'indirizzo **/area/** (collegamento anche nella pagina pubblica) **senza password**:
+scrivono la propria email e ricevono un **collegamento valido 30 minuti e usabile una sola volta**.
+La pagina risponde sempre allo stesso modo, così non rivela chi è socio; il collegamento parte solo
+se l'email è di un socio non cessato (una sola scheda) e con l'invio dei messaggi attivo.
+
+Nell'area il socio vede:
+
+- i propri **dati** (anagrafica, numero di socio, tipologia, sezione) e può **chiedere una correzione**
+  scrivendo alla segreteria: la richiesta compare nel **cruscotto** e nella **scheda anagrafica**
+  (riquadro *Richieste dall'area soci*, pulsante **Gestita**);
+- **tessere e quote** di ogni anno, con la **ricevuta** in PDF (solo le proprie);
+- gli **eventi** con le adesioni aperte: **Aderisco** (con gli accompagnatori ammessi) e **Rinuncia**;
+- i **consensi** registrati e, se il bot è attivo, il collegamento a **Telegram**.
+
+La sessione dura due ore (pulsante **Esci**). Ogni accesso è annotato nel registro attività.
+
 ## Stampe ed esportazioni
 
 | Stampa | Dove | Chi |
