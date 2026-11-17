@@ -55,6 +55,7 @@
 | **1.0.20** ✅ | cartella PROCESSATA nel namespace del server (INBOX.PROCESSATA su Aruba) | GitHub, GitLab |
 | **1.0.21** ✅ | mittente vero delle PEC firmate (Aruba) e risposta con l'indirizzo del destinatario | GitHub, GitLab |
 | **1.0.22** ✅ | servizi di invio (SMTP, email e PEC) in Sistema → Servizi di posta; caselle solo per la lettura | GitHub, GitLab |
+| **1.0.23** ✅ | caselle configurate in Sistema → Servizi di posta; il protocollo sceglie solo quali usare | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

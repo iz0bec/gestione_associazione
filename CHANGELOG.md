@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.23] - 2026-11-17
+
+Tutta la configurazione della posta in Sistema → Servizi di posta.
+
 ### Modificato
 - **Configurazione della posta tutta in *Sistema → Servizi di posta***: oltre ai servizi di invio, anche
   le **caselle** email e PEC (server, credenziali, cartelle) si creano e si modificano lì, con la
