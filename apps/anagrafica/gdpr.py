@@ -286,6 +286,8 @@ def anonimizza(soggetto, utente, *, motivo, conferma):
         setattr(soggetto, campo, "")
     soggetto.cognome = ANONIMO
     soggetto.codice_fiscale = None
+    soggetto.telegram_chat_id = soggetto.telegram_collegato_il = None
+    soggetto.telegram_codice = ""
     soggetto.data_nascita = soggetto.data_decesso = None
     soggetto.attivo = False
     soggetto.anonimizzato_il = timezone.now()

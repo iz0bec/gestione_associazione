@@ -116,6 +116,16 @@ SSL, nome utente (vuoto: l'indirizzo) e password, conservata **cifrata** e mai m
   password sono quelli della casella.
 - Un servizio che ha già spedito non si elimina (le spedizioni restano nella storia): si disattiva.
 
+### Telegram
+
+Il riquadro **Telegram** collega il **bot** dell'associazione, da cui partono le comunicazioni scelte
+«anche su Telegram». Per crearlo: in Telegram scrivere a **@BotFather**, comando `/newbot`, scegliere
+nome e username del bot e incollare nel riquadro il **token** che restituisce (è conservato cifrato e non
+si mostra più). Il programma lo verifica con Telegram e mostra il nome del bot; poi si **attiva**
+l'interruttore. Il riquadro indica quante persone sono collegate e l'ultimo controllo. Il bot legge i
+collegamenti (`/start`) e le disiscrizioni (`/stop`) ogni minuto; i messaggi partono solo con l'invio
+attivo. Il server deve poter raggiungere `api.telegram.org` (HTTPS in uscita); non serve aprire porte.
+
 La pagina mostra anche i **messaggi in coda** e, per ogni casella, se è usata dal protocollo,
 l'ultimo controllo ed eventuali errori. Ogni modifica è annotata nel registro attività (mai la password).
 

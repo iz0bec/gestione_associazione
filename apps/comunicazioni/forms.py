@@ -71,6 +71,39 @@ class InvioForm(StileMixin, forms.Form):
     programmato_il = forms.DateTimeField(
         label="Invia non prima di", required=False, widget=CampoDataOra, help_text="Vuoto = subito."
     )
+    da = forms.ChoiceField(
+        label="Spedisci da",
+        required=False,
+        help_text="Con un servizio PEC chi ha la PEC in anagrafica la riceve per PEC (con le "
+        "ricevute di consegna), gli altri per email dal server generale.",
+    )
+    telegram = forms.BooleanField(
+        label="Anche su Telegram",
+        required=False,
+        help_text="A chi ha collegato Telegram; chi non ha l'email la riceve solo lì.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        from apps.core import invio
+        from apps.core.models import CanaleTelegram
+
+        super().__init__(*args, **kwargs)
+        self.servizi = list(invio.servizi_attivi())
+        scelte = [(str(s.pk), f"{s.nome} - {s.indirizzo}{' (PEC)' if s.pec else ''}")
+                  for s in self.servizi]  # fmt: skip
+        if not any(s.generale for s in self.servizi):
+            scelte.insert(0, ("", "Server di invio generale (email)"))
+        self.fields["da"].choices = scelte
+        generale = next((s for s in self.servizi if s.generale), None)
+        self.fields["da"].initial = str(generale.pk) if generale else ""
+        self.telegram_pronto = CanaleTelegram.corrente().pronto
+        if not self.telegram_pronto:
+            del self.fields["telegram"]
+
+    def servizio(self):
+        valore = self.cleaned_data.get("da") or ""
+        servizio = next((s for s in self.servizi if str(s.pk) == valore), None)
+        return None if servizio is not None and servizio.generale else servizio
 
     def clean(self):
         dati = super().clean()

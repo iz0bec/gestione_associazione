@@ -126,6 +126,10 @@ class Soggetto(ModelloBase):
     pec = models.EmailField("PEC", blank=True)
     telefono = models.CharField(max_length=30, blank=True)
     cellulare = models.CharField(max_length=30, blank=True)
+    # Telegram: collegato dalla persona stessa (/start con il codice dell'invito); /stop scollega
+    telegram_chat_id = models.BigIntegerField(null=True, blank=True, editable=False)
+    telegram_collegato_il = models.DateTimeField(null=True, blank=True, editable=False)
+    telegram_codice = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
     indirizzo = models.CharField(max_length=255, blank=True)
     cap = models.CharField("CAP", max_length=5, blank=True, validators=[validatore_cap])
     comune = models.CharField(max_length=100, blank=True)

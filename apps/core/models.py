@@ -442,3 +442,42 @@ class ServizioInvio(models.Model):
         from .cifratura import decifra
 
         return decifra(self.password_cifrata)
+
+
+class CanaleTelegram(models.Model):
+    """Bot Telegram dell'organizzazione (uno solo): le persone si collegano con /start e il codice
+    del proprio invito, e ricevono lì le comunicazioni scelte «anche su Telegram»."""
+
+    token_cifrato = models.TextField(editable=False, blank=True)
+    nome_bot = models.CharField(
+        "nome del bot", max_length=64, blank=True, editable=False, help_text="Letto da Telegram."
+    )
+    attivo = models.BooleanField(default=False)
+    ultimo_update = models.BigIntegerField(default=0, editable=False)
+    ultimo_controllo = models.DateTimeField(null=True, blank=True, editable=False)
+    ultimo_errore = models.CharField(max_length=300, blank=True, editable=False)
+
+    class Meta:
+        verbose_name = "canale Telegram"
+        verbose_name_plural = "canale Telegram"
+
+    def __str__(self):
+        return f"@{self.nome_bot}" if self.nome_bot else "Telegram"
+
+    @classmethod
+    def corrente(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+    def imposta_token(self, token):
+        from .cifratura import cifra
+
+        self.token_cifrato = cifra(token)
+
+    def token(self):
+        from .cifratura import decifra
+
+        return decifra(self.token_cifrato) if self.token_cifrato else ""
+
+    @property
+    def pronto(self):
+        return self.attivo and bool(self.token_cifrato and self.nome_bot)

@@ -41,6 +41,7 @@ urlpatterns = [
         name="verifica_casella",
     ),
     path("sistema/posta/verifica-invio/", views.VerificaSmtpView.as_view(), name="verifica_smtp"),
+    path("sistema/posta/telegram/", views.TelegramView.as_view(), name="telegram"),
     path("sistema/posta/caselle/nuova/", views.CasellaNuovaView.as_view(), name="casella_nuova"),
     path(
         "sistema/posta/caselle/<int:pk>/",

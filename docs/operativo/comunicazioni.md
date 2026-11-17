@@ -44,13 +44,42 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 3. **Documenti** da allegare (es. un programma in PDF).
 4. **Destinatari**: una o più **liste**, persone ed enti cercati in anagrafica, altri indirizzi scritti a
    mano (uno per riga: `Mario Rossi <mario@example.org>`).
-5. **Finalità**, eventuale data di **invio programmato**, **protocolla in uscita** al termine.
-6. **Prepara e controlla**: nulla parte ancora. La pagina mostra l'**anteprima** del messaggio come lo
+5. **Spedisci da**: il server generale (predefinito) o un altro servizio di invio configurato in
+   *Sistema → Servizi di posta* (vedi sotto per la **PEC**); **Anche su Telegram**, se il bot è attivo.
+6. **Finalità**, eventuale data di **invio programmato**, **protocolla in uscita** al termine.
+7. **Prepara e controlla**: nulla parte ancora. La pagina mostra l'**anteprima** del messaggio come lo
    riceverà il primo destinatario e l'elenco dei destinatari con gli **esclusi** e il motivo.
-7. **Conferma e invia**. I primi messaggi partono subito, gli altri a gruppi nei minuti successivi.
+8. **Conferma e invia**. I primi messaggi partono subito, gli altri a gruppi nei minuti successivi.
 
 Lo stato di ogni destinatario (in attesa, inviato, errore, escluso) resta nel registro. Se il server di
 posta non risponde, il programma ritenta tre volte; poi si può usare **Ritenta gli errori**.
+
+### Comunicazioni via PEC
+
+Scegliendo in *Spedisci da* un servizio **PEC**:
+
+- chi ha la **PEC** in anagrafica la riceve **per PEC**, dalla casella PEC dell'associazione (badge *PEC*
+  accanto al destinatario);
+- chi non ha la PEC la riceve per **email** dal server generale;
+- chi non ha né PEC né email resta **su carta**, come sempre.
+
+Le **ricevute** di accettazione e consegna arrivano nella casella PEC e, se la casella è usata dal
+protocollo, si agganciano da sole al destinatario («PEC consegnata», «non consegnata»...): non
+compaiono fra la posta da protocollare (sono archiviate fra gli scartati, con il motivo). Una
+comunicazione via PEC protocollata ha mezzo *PEC*.
+
+### Anche su Telegram
+
+Se l'associazione ha attivato il **bot Telegram** (*Sistema → Servizi di posta*), nel modulo compare
+**Anche su Telegram**: chi ha collegato Telegram riceve il messaggio anche lì (testo e documenti
+allegati); chi non ha l'email ma ha Telegram lo riceve **solo** su Telegram. Valgono le stesse regole di
+privacy (finalità e consenso) dell'email.
+
+Per **collegare** una persona: nella sua **scheda anagrafica**, riquadro *Telegram* → **Invito**. Si
+ottiene un **link personale** (con QR da inquadrare) da mandarle: aprendolo con Telegram e premendo
+*Avvia*, il collegamento è fatto e il bot la saluta. La persona può smettere in qualsiasi momento
+scrivendo `/stop` al bot; dalla scheda si può **Scollegare**. Il bot non riceve risposte: a chi scrive
+indica l'email dell'associazione.
 
 ### Chi non ha l'email: lettere e buste
 

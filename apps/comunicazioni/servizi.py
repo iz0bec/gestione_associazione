@@ -22,6 +22,7 @@ from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -132,12 +133,12 @@ def consensi_prestati(soggetti, finalita):
     return {pk for pk, prestato in ultimo.items() if prestato}
 
 
-def motivo_esclusione(soggetto, finalita, con_consenso):
+def motivo_esclusione(soggetto, finalita, con_consenso, indirizzo=None):
     if not soggetto.attivo:
         return "scheda archiviata"
     if soggetto.deceduto:
         return "deceduto"
-    if not soggetto.email:
+    if not (soggetto.email if indirizzo is None else indirizzo):
         return "senza email"
     if finalita != Finalita.ISTITUZIONALE and soggetto.pk not in con_consenso:
         return "consenso non prestato"
@@ -214,10 +215,14 @@ def crea_invio(
     origine_id=None,
     contesto=None,
     contesti_soggetto=None,
+    servizio=None,
+    telegram=False,
 ):
     """Prepara un invio in bozza con i destinatari (i non raggiungibili esclusi, con il motivo).
 
     `allegati`: lista di (nome, bytes); `contesti_soggetto`: {soggetto_id: {segnaposto: valore}}.
+    `servizio`: ServizioInvio (None: server generale); se è una PEC, chi ha la PEC la riceve per
+    PEC e gli altri per email dal server generale. `telegram`: anche a chi ha collegato Telegram.
     """
     if not oggetto.strip() or not corpo.strip():
         raise OperazioneNonValida("Oggetto e testo sono obbligatori.")
@@ -229,10 +234,17 @@ def crea_invio(
     soggetti = list({s.pk: s for s in soggetti}.values())
     if not soggetti and not indirizzi:
         raise OperazioneNonValida("Indicare almeno un destinatario.")
+    if servizio is not None and not servizio.attivo:
+        raise OperazioneNonValida(f"Il servizio di invio «{servizio}» è disattivato.")
+    from apps.core.models import CanaleTelegram
+
+    telegram = telegram and CanaleTelegram.corrente().pronto
+    pec = servizio is not None and servizio.pec
     invio = Invio.objects.create(
         oggetto=oggetto.strip(), corpo=corpo, finalita=finalita, modello=modello,
         protocolla=protocolla, programmato_il=programmato_il, origine=origine,
         origine_id=origine_id, contesto=contesto or {}, creato_da=utente, modificato_da=utente,
+        servizio=servizio, telegram=telegram,
     )  # fmt: skip
     con_consenso = (
         consensi_prestati(soggetti, finalita) if finalita != Finalita.ISTITUZIONALE else set()
@@ -240,22 +252,30 @@ def crea_invio(
     contesti_soggetto = contesti_soggetto or {}
     righe = []
     for s in sorted(soggetti, key=lambda x: x.nome_completo):
-        motivo = motivo_esclusione(s, finalita, con_consenso)
+        canale = Destinatario.Canale.PEC if pec and s.pec else Destinatario.Canale.EMAIL
+        indirizzo = s.pec if canale == Destinatario.Canale.PEC else s.email
+        motivo = motivo_esclusione(s, finalita, con_consenso, indirizzo)
+        su_telegram = telegram and s.telegram_chat_id and motivo in ("", "senza email")
         righe.append(
             Destinatario(
                 invio=invio,
                 soggetto=s,
                 nome=s.nome_completo[:200],
-                email=s.email,
+                email=indirizzo,
+                canale=canale,
                 stato=Destinatario.Stato.ESCLUSO if motivo else Destinatario.Stato.IN_ATTESA,
                 motivo=motivo,
+                telegram_stato="in_attesa" if su_telegram else "",
                 contesto=dict(contesti_soggetto.get(s.pk, {})),
             )  # fmt: skip
         )
-    gia = {s.email.lower() for s in soggetti if s.email}
+    gia = {r.email.lower() for r in righe if r.email}
     for nome, email in indirizzi:
         if email not in gia:
-            righe.append(Destinatario(invio=invio, nome=nome[:200], email=email))
+            from apps.protocollo.spedizioni import sembra_pec
+
+            canale = Destinatario.Canale.PEC if pec and sembra_pec(email) else "email"
+            righe.append(Destinatario(invio=invio, nome=nome[:200], email=email, canale=canale))
             gia.add(email)
     Destinatario.objects.bulk_create(righe)
     for nome, dati in allegati:
@@ -289,7 +309,9 @@ def conferma(invio, utente):
     invio = Invio.objects.select_for_update().get(pk=invio.pk)
     if invio.stato != Invio.Stato.BOZZA:
         raise OperazioneNonValida("L'invio è già stato confermato.")
-    if not invio.destinatari.filter(stato=Destinatario.Stato.IN_ATTESA).exists():
+    if not invio.destinatari.filter(
+        Q(stato=Destinatario.Stato.IN_ATTESA) | Q(telegram_stato="in_attesa")
+    ).exists():
         raise OperazioneNonValida("Nessun destinatario raggiungibile.")
     if sconosciuti := segnaposto_sconosciuti(invio.oggetto + invio.corpo):
         raise OperazioneNonValida(f"Segnaposto sconosciuti: {', '.join(sconosciuti)}.")
@@ -312,6 +334,7 @@ def annulla(invio, utente):
     invio.destinatari.filter(stato=Destinatario.Stato.IN_ATTESA).update(
         stato=Destinatario.Stato.ESCLUSO, motivo="invio annullato"
     )
+    invio.destinatari.filter(telegram_stato="in_attesa").update(telegram_stato="")
     registra(Azione.ANNULLAMENTO, invio, utente=utente)
     return invio
 
@@ -332,6 +355,17 @@ def contesto_destinatario(invio, destinatario):
     return contesto
 
 
+def servizio_per(invio, destinatario):
+    """Servizio da cui parte il messaggio (None: server generale): la PEC scelta per chi ha la
+    PEC; per l'email il servizio scelto se è un'email, altrimenti il generale."""
+    servizio = invio.servizio
+    if servizio is None:
+        return None
+    if servizio.pec:
+        return servizio if destinatario.canale == Destinatario.Canale.PEC else None
+    return servizio
+
+
 def messaggio(invio, destinatario, org=None):
     org = org or Organizzazione.corrente()
     contesto = contesto_destinatario(invio, destinatario)
@@ -344,16 +378,28 @@ def messaggio(invio, destinatario, org=None):
         "comunicazioni/email/messaggio.html",
         {"testo": testo, "organizzazione": org, "piede": piede},
     )
+    servizio = servizio_per(invio, destinatario)
+    pec = servizio is not None and servizio.pec
+    intestazioni = {"X-Gestione-Invio": str(invio.pk)}
+    mittente = None  # quello del server generale
+    if servizio is not None:
+        from email.utils import make_msgid
+
+        from apps.core import invio as servizi_invio
+
+        mittente = servizi_invio.mittente(servizio, org)
+        intestazioni["Message-ID"] = make_msgid(domain=servizio.indirizzo.rsplit("@")[-1])
     email = EmailMultiAlternatives(
         subject=oggetto,
         body=f"{testo}\n\n-- \n{piede}",
+        from_email=mittente,
         to=[
             f"{destinatario.nome} <{destinatario.email}>"
             if destinatario.nome
             else destinatario.email
         ],
-        reply_to=[org.email] if org.email else None,
-        headers={"X-Gestione-Invio": str(invio.pk)},
+        reply_to=[org.email] if org.email and not pec else None,
+        headers=intestazioni,
     )
     email.attach_alternative(html, "text/html")
     for a in invio.allegati.all():
@@ -379,13 +425,22 @@ def elabora_coda(limite=None, invio=None):
     inviati = errori = 0
     org = Organizzazione.corrente()
     for inv in invii.order_by("confermato_il"):
+        connessioni = {}
         for d in inv.destinatari.filter(stato=Destinatario.Stato.IN_ATTESA).select_related(
             "soggetto__socio"
         ):
             if inviati + errori >= limite:
                 return inviati, errori
             try:
-                messaggio(inv, d, org).send()
+                email = messaggio(inv, d, org)
+                servizio = servizio_per(inv, d)
+                if servizio not in connessioni:
+                    from apps.core import invio as servizi_invio
+
+                    connessioni[servizio] = servizi_invio.connessione(servizio)
+                if connessioni[servizio].send_messages([email]) != 1:
+                    raise OperazioneNonValida("Il server non ha accettato il messaggio.")
+                d.message_id = email.extra_headers.get("Message-ID", "")[:255]
             except Exception as e:  # noqa: BLE001 - l'errore resta sul destinatario
                 d.tentativi += 1
                 d.motivo = str(e)[:255]
@@ -398,16 +453,51 @@ def elabora_coda(limite=None, invio=None):
             d.stato = Destinatario.Stato.INVIATO
             d.inviato_il = timezone.now()
             d.motivo = ""
-            d.save(update_fields=["stato", "inviato_il", "motivo"])
+            d.save(update_fields=["stato", "inviato_il", "motivo", "message_id"])
             inviati += 1
+        if inv.telegram:
+            from . import telegram
+
+            fatti, falliti = telegram.invia_coda(inv, limite - inviati - errori)
+            inviati, errori = inviati + fatti, errori + falliti
+            if inviati + errori >= limite:
+                return inviati, errori
         _concludi_se_finito(inv)
     return inviati, errori
 
 
+# ricevute PEC: un esito non torna indietro (la consegna vale sempre)
+_PESO_RICEVUTE = {
+    "accettazione": 1, "presa-in-carico": 1, "non-accettazione": 2, "preavviso-errore-consegna": 2,
+    "errore-consegna": 2, "rilevazione-virus": 2, "avvenuta-consegna": 3,
+}  # fmt: skip
+
+
+def applica_ricevuta_pec(riferimento, tipo):
+    """Aggancia una ricevuta PEC (X-Riferimento-Message-ID) a una comunicazione: il destinatario,
+    oppure None se non è di una comunicazione."""
+    d = (
+        Destinatario.objects.select_related("invio")
+        .filter(canale=Destinatario.Canale.PEC, message_id=riferimento)
+        .exclude(message_id="")
+        .first()
+    )
+    if d is None:
+        return None
+    if _PESO_RICEVUTE.get(tipo, 0) >= _PESO_RICEVUTE.get(d.esito_pec, 0):
+        d.esito_pec = tipo
+        d.save(update_fields=["esito_pec"])
+    return d
+
+
 def _concludi_se_finito(invio):
-    if invio.destinatari.filter(stato=Destinatario.Stato.IN_ATTESA).exists():
+    if invio.destinatari.filter(
+        Q(stato=Destinatario.Stato.IN_ATTESA) | Q(telegram_stato="in_attesa")
+    ).exists():
         return
-    errori = invio.destinatari.filter(stato=Destinatario.Stato.ERRORE).exists()
+    errori = invio.destinatari.filter(
+        Q(stato=Destinatario.Stato.ERRORE) | Q(telegram_stato="errore")
+    ).exists()
     invio.stato = Invio.Stato.CON_ERRORI if errori else Invio.Stato.INVIATO
     invio.completato_il = timezone.now()
     invio.save(update_fields=["stato", "completato_il"])
@@ -441,7 +531,9 @@ def _protocolla(invio):
     p = protocollo.registra_protocollo(
         {
             "direzione": Protocollo.Direzione.USCITA,
-            "mezzo": Protocollo.Mezzo.EMAIL,
+            "mezzo": Protocollo.Mezzo.PEC
+            if invio.servizio_id and invio.servizio.pec
+            else Protocollo.Mezzo.EMAIL,
             "oggetto": invio.oggetto[:500],
         },
         destinatari,

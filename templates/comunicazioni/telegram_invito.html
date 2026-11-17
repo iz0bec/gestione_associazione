@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Invito personale a collegarsi al bot Telegram (link e QR)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Invito Telegram · {{ soggetto }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ soggetto.get_absolute_url }}">{{ soggetto }}</a></div>{% endblock %}
+{% block titolo_pagina %}Invito a Telegram{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <p>Mandare a <strong>{{ soggetto }}</strong> questo link (per email, messaggio o di persona): aprendolo con Telegram e premendo <strong>Avvia</strong>, riceverà sul bot <strong>@{{ bot }}</strong> le comunicazioni dell'associazione scelte «anche su Telegram».</p>
+        <label class="form-label" for="link-telegram">Link personale (clic per copiarlo)</label>
+        <input class="form-control font-monospace mb-3" id="link-telegram" type="text" readonly data-copia value="{{ link }}">
+        <p class="small text-secondary mb-0">Il link vale una sola volta e solo per questa persona: dopo il collegamento non serve più. Con <code>/stop</code> sul bot la persona smette di ricevere i messaggi; dalla scheda si può scollegare in qualsiasi momento.</p>
+      </div>
+      <div class="card-footer"><a class="btn btn-link" href="{{ soggetto.get_absolute_url }}">Torna alla scheda</a></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body text-center">
+      <div class="mb-2">{{ qr }}</div>
+      <div class="small text-secondary">Inquadrare con la fotocamera del telefono</div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

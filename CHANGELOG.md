@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Comunicazioni via PEC**: in *Spedisci da* si sceglie un servizio di invio (anche PEC). Con la PEC, chi
+  ha la PEC in anagrafica la riceve per PEC, gli altri per email dal server generale, chi non ha nessuno
+  dei due resta su carta. Le ricevute di accettazione e consegna si agganciano al destinatario («PEC
+  consegnata»...) e non finiscono fra la posta da protocollare. Anche un servizio email diverso dal
+  generale (es. quello del presidente) si può scegliere come mittente.
+- **Telegram**: bot dell'associazione configurato in *Sistema → Servizi di posta* (token da @BotFather,
+  cifrato, con verifica). Dalla scheda anagrafica si genera l'**invito** personale (link e QR): la persona
+  si collega con *Avvia* e smette con `/stop`. Le comunicazioni con **Anche su Telegram** arrivano lì
+  (testo e allegati), anche a chi non ha l'email. Nessun webhook: i comandi si leggono ogni minuto.
+
 ## [1.0.26] - 2026-11-17
 
 Spostamenti sul server anche per i messaggi rimasti nella posta in arrivo.

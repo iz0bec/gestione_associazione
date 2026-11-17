@@ -138,6 +138,8 @@ class InvioNuovoView(PermessoMixin, FormView):
                 allegati=[(f.name, f.read()) for f in d["allegati"]],
                 protocolla=d["protocolla"],
                 programmato_il=d["programmato_il"],
+                servizio=form.servizio(),
+                telegram=d.get("telegram", False),
             )
         except OperazioneNonValida as e:
             form.add_error(None, e)
@@ -490,6 +492,41 @@ class ListaEtichetteView(PermessoMixin, View):
         risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
         risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
         return risposta
+
+
+class TelegramInvitoView(PermessoMixin, TemplateView):
+    """Link personale (e QR) per collegarsi al bot: da mandare o stampare per la persona."""
+
+    permission_required = "anagrafica.change_soggetto"
+    template_name = "comunicazioni/telegram_invito.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.core.models import CanaleTelegram
+        from apps.patrimonio.servizi import qr_svg
+
+        from . import telegram
+
+        ctx = super().get_context_data(**kwargs)
+        soggetto = get_object_or_404(Soggetto, pk=self.kwargs["pk"])
+        if not CanaleTelegram.corrente().pronto:
+            raise Http404("Telegram non è attivo.")
+        link = telegram.link_invito(soggetto)
+        ctx.update(soggetto=soggetto, link=link, qr=qr_svg(link),
+                   bot=CanaleTelegram.corrente().nome_bot)  # fmt: skip
+        return ctx
+
+
+class TelegramScollegaView(PermessoMixin, View):
+    permission_required = "anagrafica.change_soggetto"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        from . import telegram
+
+        soggetto = get_object_or_404(Soggetto, pk=pk)
+        telegram.scollega(soggetto, request.user)
+        messages.success(request, f"Telegram scollegato per {soggetto}.")
+        return redirect(soggetto)
 
 
 class ListaImportaView(PermessoMixin, FormView):

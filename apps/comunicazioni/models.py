@@ -128,6 +128,19 @@ class Invio(ModelloBase):
     protocollo = models.ForeignKey(
         "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
+    servizio = models.ForeignKey(
+        "core.ServizioInvio",
+        verbose_name="spedisci da",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="invii",
+        help_text="Vuoto: il server generale. Con un servizio PEC chi ha la PEC la riceve per PEC, "
+        "gli altri per email dal server generale.",
+    )
+    telegram = models.BooleanField(
+        "anche su Telegram", default=False, help_text="A chi ha collegato Telegram."
+    )
     origine = models.CharField(max_length=30, blank=True, editable=False)
     origine_id = models.PositiveBigIntegerField(null=True, blank=True, editable=False)
     contesto = models.JSONField(default=dict, blank=True, editable=False)
@@ -182,11 +195,25 @@ class Destinatario(models.Model):
     soggetto = models.ForeignKey(
         Soggetto, null=True, blank=True, on_delete=models.SET_NULL, related_name="comunicazioni"
     )
+
+    class Canale(models.TextChoices):
+        EMAIL = "email", "Email"
+        PEC = "pec", "PEC"
+
     nome = models.CharField(max_length=200)
-    email = models.EmailField(blank=True)
+    email = models.EmailField(blank=True, help_text="Indirizzo email o PEC, secondo il canale.")
+    canale = models.CharField(max_length=5, choices=Canale.choices, default=Canale.EMAIL)
     stato = models.CharField(
         max_length=10, choices=Stato.choices, default=Stato.IN_ATTESA, db_index=True
     )
+    message_id = models.CharField(max_length=255, blank=True, db_index=True)
+    esito_pec = models.CharField(
+        max_length=30, blank=True, help_text="Ultima ricevuta PEC (accettazione, consegna...)."
+    )
+    telegram_stato = models.CharField(
+        max_length=10, blank=True, help_text="Vuoto: non su Telegram; in_attesa, inviato, errore."
+    )
+    telegram_errore = models.CharField(max_length=255, blank=True)
     motivo = models.CharField(max_length=255, blank=True)
     tentativi = models.PositiveSmallIntegerField(default=0)
     inviato_il = models.DateTimeField(null=True, blank=True)
@@ -206,6 +233,17 @@ class Destinatario(models.Model):
 
     def __str__(self):
         return f"{self.nome} <{self.email}>"
+
+    ESITI_PEC = {
+        "accettazione": "accettata", "presa-in-carico": "presa in carico",
+        "non-accettazione": "non accettata", "avvenuta-consegna": "consegnata",
+        "errore-consegna": "non consegnata", "preavviso-errore-consegna": "non consegnata",
+        "rilevazione-virus": "rifiutata (virus)",
+    }  # fmt: skip
+
+    @property
+    def esito_pec_testo(self):
+        return self.ESITI_PEC.get(self.esito_pec, self.esito_pec)
 
 
 def percorso_allegato_invio(istanza, nome):

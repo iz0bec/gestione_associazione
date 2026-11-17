@@ -10,6 +10,7 @@
 
 from django.core.management.base import BaseCommand
 
+from apps.comunicazioni import telegram
 from apps.comunicazioni.servizi import auguri_del_giorno, elabora_coda, promemoria_rinnovo
 from apps.protocollo.spedizioni import spedisci
 
@@ -17,10 +18,12 @@ from apps.protocollo.spedizioni import spedisci
 class Command(BaseCommand):
     help = (
         "Prepara auguri e promemoria di rinnovo del giorno e spedisce i messaggi in coda, "
-        "compresi i protocolli da spedire per email o PEC."
+        "compresi i protocolli da spedire per email o PEC; legge i collegamenti al bot Telegram."
     )
 
     def handle(self, *args, **options):
+        if comandi := telegram.leggi_comandi():
+            self.stdout.write(f"Telegram: {comandi} messaggi al bot")
         auguri = auguri_del_giorno()
         rinnovo = promemoria_rinnovo()
         if rinnovo:

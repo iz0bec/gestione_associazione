@@ -71,6 +71,9 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   (`protocollo.CasellaPosta`, solo lettura) e server SMTP (`core.ServizioInvio`, `apps/core/invio.py`: il
   «server generale» è il backend Django predefinito `invio.Backend`, il `.env` è solo la riserva).
   *Protocollo → Caselle* sceglie solo quali caselle usare (`attiva`).
+- Comunicazioni: `Invio.servizio` (PEC → canale per destinatario, ricevute in `applica_ricevuta_pec`);
+  Telegram solo da `apps/comunicazioni/telegram.py` (`_chiama` con urllib, comandi via `getUpdates` in
+  `invia_coda`, collegamento con `link_invito`/`/start`).
 - Download di file: `FileResponse` come allegato con `Content-Security-Policy: default-src 'none'; sandbox`.
 - Segreti nel DB: `apps.core.cifratura.cifra/decifra` (chiave `CHIAVE_CIFRATURA`, mai nel DB).
 - Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.

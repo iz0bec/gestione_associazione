@@ -61,6 +61,9 @@ class DettaglioView(PermessoMixin, DetailView):
         ctx["consensi"] = self.object.consensi.all()
         ctx["form_consenso"] = ConsensoForm()
         ctx["socio"] = getattr(self.object, "socio", None)
+        from apps.core.models import CanaleTelegram
+
+        ctx["telegram_attivo"] = CanaleTelegram.corrente().pronto
         from apps.organi.models import cariche_di
 
         ctx["cariche"] = cariche_di(self.object) if self.object.is_persona else []

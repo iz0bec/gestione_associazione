@@ -97,7 +97,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    con auguri automatici (rispettando consensi e decessi), invio di convocazioni, ricevute ed esiti.
    ✅ *Fatti in seguito*: lettere e buste DL per chi non ha l'email, indirizzi postali nelle liste in
    Excel; etichette adesive in PDF (protocollo, comunicazioni, liste). *Da fare*: invio delle
-   comunicazioni tramite PEC, SMS/messaggistica.
+   comunicazioni tramite SMS (rimandato). ✅ Comunicazioni via PEC e su Telegram (1.0.27).
 5. ✅ **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. ✅ **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,

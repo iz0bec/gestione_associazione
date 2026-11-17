@@ -162,6 +162,14 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
         return redirect(self.success_url)
 
 
+def _stato_telegram():
+    from apps.comunicazioni.telegram import collegati
+
+    from .models import CanaleTelegram
+
+    return {"telegram": CanaleTelegram.corrente(), "telegram_collegati": collegati()}
+
+
 def _comandi_chiave():
     """Comandi da copiare per creare CHIAVE_CIFRATURA in questa installazione."""
     import shlex
@@ -214,6 +222,7 @@ class ServiziPostaView(PermessoMixin, UpdateView):
             generale=invio.servizio_generale(),
             cifratura=cifratura_disponibile(),
             **_comandi_chiave(),
+            **_stato_telegram(),
             in_coda=Destinatario.objects.filter(
                 invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
             ).count(),
@@ -434,6 +443,48 @@ class VerificaServizioView(PermessoMixin, View):
             dettaglio = f"{type(e).__name__}: {str(e)[:150]}"
             messages.error(request, f"{servizio}: accesso a {servizio.server}:{servizio.porta} "
                                     f"non riuscito ({dettaglio}).")  # fmt: skip
+        return redirect("core:servizi_posta")
+
+
+class TelegramView(PermessoMixin, View):
+    """Bot Telegram: token (verificato con getMe, conservato cifrato), attivazione."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        from apps.comunicazioni import telegram
+
+        from .models import CanaleTelegram
+
+        canale = CanaleTelegram.corrente()
+        azione = request.POST.get("azione")
+        if azione == "token":
+            token = request.POST.get("token", "").strip()
+            if not cifratura_disponibile():
+                messages.error(request, "Manca la chiave di cifratura (CHIAVE_CIFRATURA).")
+                return redirect("core:servizi_posta")
+            try:
+                nome = telegram.verifica(token)
+            except telegram.ErroreTelegram as e:
+                messages.error(request, f"Token non accettato da Telegram: {e}.")
+                return redirect("core:servizi_posta")
+            canale.imposta_token(token)
+            canale.nome_bot, canale.ultimo_errore = nome, ""
+            canale.save()
+            registra(Azione.MODIFICA, canale, descrizione="Bot Telegram", bot=nome)
+            messages.success(request, f"Bot @{nome} collegato. Attivarlo per usarlo.")
+        elif azione == "verifica" and canale.token_cifrato:
+            try:
+                nome = telegram.verifica(canale.token())
+                messages.success(request, f"Telegram: accesso al bot @{nome} riuscito.")
+            except telegram.ErroreTelegram as e:
+                messages.error(request, f"Telegram: verifica non riuscita ({e}).")
+        elif azione in ("attiva", "disattiva") and canale.token_cifrato:
+            canale.attivo = azione == "attiva"
+            canale.save(update_fields=["attivo"])
+            registra(Azione.MODIFICA, canale, descrizione="Bot Telegram", attivo=canale.attivo)
+            messages.success(request, f"Telegram {'attivato' if canale.attivo else 'disattivato'}.")
         return redirect("core:servizi_posta")
 
 

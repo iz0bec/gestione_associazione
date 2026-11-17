@@ -39,6 +39,12 @@ urlpatterns = [
     path("liste/importa/", views.ListaImportaView.as_view(), name="lista_importa"),
     path("liste/<int:pk>/esporta/", views.ListaEsportaView.as_view(), name="lista_esporta"),
     path("liste/<int:pk>/etichette/", views.ListaEtichetteView.as_view(), name="lista_etichette"),
+    path("telegram/<int:pk>/", views.TelegramInvitoView.as_view(), name="telegram_invito"),
+    path(
+        "telegram/<int:pk>/scollega/",
+        views.TelegramScollegaView.as_view(),
+        name="telegram_scollega",
+    ),
     path("liste/<int:pk>/", views.ListaView.as_view(), name="lista"),
     path("liste/<int:pk>/modifica/", views.ListaModificaView.as_view(), name="lista_modifica"),
     path("anniversari/", views.AnniversariView.as_view(), name="anniversari"),

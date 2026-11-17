@@ -160,16 +160,38 @@ def salva_messaggio(casella, grezzo: bytes):
     destinatario = ricevuta = None
     if casella.pec and (ricevuta := spedizioni.ricevuta_pec(msg)):
         destinatario = spedizioni.destinatario_della_ricevuta(ricevuta[1])
+    comunicazione = None
     if destinatario is not None:
         messaggio.stato = MessaggioRicevuto.Stato.PROTOCOLLATO
         messaggio.protocollo = destinatario.spedizione.protocollo
         messaggio.gestito_il = timezone.now()
+    elif ricevuta:
+        from apps.comunicazioni.models import Destinatario as DestinatarioComunicazione
+
+        comunicazione = (
+            DestinatarioComunicazione.objects.select_related("invio")
+            .filter(canale="pec", message_id=ricevuta[1])
+            .exclude(message_id="")
+            .first()
+        )
+    if comunicazione is not None:  # ricevuta di una comunicazione: non si protocolla
+        messaggio.stato = MessaggioRicevuto.Stato.SCARTATO
+        messaggio.motivo_scarto = (
+            f"Ricevuta PEC ({ricevuta[0]}) della comunicazione «{comunicazione.invio}»"[:255]
+        )
+        messaggio.gestito_il = timezone.now()
+        if casella.cartella_scartata.strip():
+            messaggio.spostare_in = "scartata"
     messaggio.file_eml.save(f"{impronta[:20]}.eml", ContentFile(grezzo), save=False)
     try:
         with transaction.atomic():
             messaggio.save()
             if destinatario is not None:
                 spedizioni.applica_ricevuta(destinatario, ricevuta[0], grezzo, data)
+            elif comunicazione is not None:
+                from apps.comunicazioni.servizi import applica_ricevuta_pec
+
+                applica_ricevuta_pec(ricevuta[1], ricevuta[0])
     except IntegrityError:
         return None  # scaricato in parallelo da un altro processo
     return messaggio

@@ -315,3 +315,17 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   mai per le PEC). Ancora nessuna cancellazione sul server. Gli spostamenti si accodano sul messaggio
   (`spostare_in`) e li esegue `posta.applica_spostamenti` dentro `scarica_casella`, cercando per Message-ID:
   niente IMAP durante le richieste web, ripetizione automatica in caso di errore.
+
+## ADR-029 - Comunicazioni via PEC e su Telegram
+
+- **PEC**: l'invio sceglie un servizio (`Invio.servizio`); con un servizio PEC il canale si decide per
+  destinatario (`Destinatario.canale`): PEC a chi ce l'ha, email dal server generale agli altri, carta a chi
+  non ha nessuno dei due. Le ricevute si agganciano per `X-Riferimento-Message-ID` (`esito_pec`, la consegna
+  non torna indietro) e il messaggio della ricevuta si archivia fra gli scartati, senza protocollarlo.
+- **Telegram** invece di WhatsApp: gratuito, nessuna approvazione di modelli né account aziendale. Un bot
+  per organizzazione (`core.CanaleTelegram`, token cifrato); la persona si collega da sola con un link
+  personale monouso (`/start <codice>`), `/stop` scollega. Comandi letti con `getUpdates` dal giro di
+  `invia_coda`: niente webhook, quindi nessun indirizzo pubblico né porta da esporre. «Anche su Telegram»
+  si aggiunge all'email (stesse regole di finalità e consenso); chi non ha l'email lo riceve solo lì.
+- **SMS** rimandati: richiedono un fornitore a pagamento (scelta dell'associazione).
+

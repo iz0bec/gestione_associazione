@@ -99,6 +99,25 @@
     </div>
   </div>
 </div>
+<div class="row g-3 mt-0">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-brand-telegram me-1"></i>Telegram</h3>
+        <div class="card-actions">{% if telegram.token_cifrato %}<form method="post" action="{% url 'core:telegram' %}">{% csrf_token %}<input type="hidden" name="azione" value="{% if telegram.attivo %}disattiva{% else %}attiva{% endif %}"><label class="form-check form-switch mb-0" title="Attivo"><input class="form-check-input" type="checkbox" data-invio-automatico{% if telegram.attivo %} checked{% endif %} aria-label="Telegram attivo"><noscript><button class="btn btn-sm" type="submit">Cambia</button></noscript></label></form>{% else %}<span class="badge bg-secondary-lt">non configurato</span>{% endif %}</div>
+      </div>
+      <div class="card-body small">
+        {% if telegram.nome_bot %}<p>Bot <strong>@{{ telegram.nome_bot }}</strong> · {{ telegram_collegati }} person{{ telegram_collegati|pluralize:"a,e" }} collegat{{ telegram_collegati|pluralize:"a,e" }}{% if telegram.ultimo_controllo %} · ultimo controllo {{ telegram.ultimo_controllo|date:"d/m H:i" }}{% endif %}{% if telegram.ultimo_errore %} · <span class="text-danger">{{ telegram.ultimo_errore }}</span>{% endif %}</p>{% endif %}
+        <p class="text-secondary">Le comunicazioni scelte «anche su Telegram» arrivano a chi si è collegato al bot con il proprio link (scheda anagrafica → Telegram). Per creare il bot: in Telegram scrivere a <strong>@BotFather</strong>, comando <code>/newbot</code>, e incollare qui il token che restituisce. Vale l'interruttore dell'invio.</p>
+        <form method="post" action="{% url 'core:telegram' %}" class="d-flex gap-2">{% csrf_token %}<input type="hidden" name="azione" value="token">
+          <input class="form-control form-control-sm" type="password" name="token" autocomplete="off" placeholder="{% if telegram.token_cifrato %}nuovo token (quello salvato non si mostra){% else %}token del bot, es. 123456:ABC-DEF...{% endif %}" aria-label="Token del bot" required>
+          <button class="btn btn-sm btn-primary" type="submit">Salva</button>
+        </form>
+      </div>
+      {% if telegram.token_cifrato %}<div class="card-footer"><form method="post" action="{% url 'core:telegram' %}" data-modale-invio="#modale-verifica">{% csrf_token %}<input type="hidden" name="azione" value="verifica"><button class="btn btn-sm" type="submit"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form></div>{% endif %}
+    </div>
+  </div>
+</div>
 <div class="modal" id="modale-verifica" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-body text-center py-4">
     <div class="spinner-border text-primary mb-3" role="status"></div>

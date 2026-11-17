@@ -165,8 +165,9 @@ class TestCoda:
 
     def test_errori_e_tentativi(self, utente):
         invio = servizi.conferma(self._invio(utente), utente)
-        with mock.patch.object(
-            servizi.EmailMultiAlternatives, "send", side_effect=OSError("smtp giù")
+        with mock.patch(
+            "django.core.mail.backends.locmem.EmailBackend.send_messages",
+            side_effect=OSError("smtp giù"),
         ):
             for _ in range(servizi.MAX_TENTATIVI):
                 assert servizi.elabora_coda() == (0, 2)
