@@ -45,6 +45,11 @@ class OrganoForm(StileMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["sezione"].empty_label = "— dell'associazione (federazione) —"
+        self.fields["preavviso_mandato"].required = False
+
+    def clean_preavviso_mandato(self):
+        valore = self.cleaned_data.get("preavviso_mandato")
+        return 90 if valore is None else valore
 
     def validate_unique(self):
         super().validate_unique()
