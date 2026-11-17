@@ -21,7 +21,7 @@
         {% for c in in_carica %}
         <div class="list-group-item d-flex align-items-center">
           <span class="avatar avatar-sm me-3">{{ c.soggetto.iniziali }}</span>
-          <div class="flex-fill"><a href="{{ c.soggetto.get_absolute_url }}" class="fw-medium text-reset">{{ c.soggetto.nome_completo }}</a><div class="small text-secondary">{{ c.get_ruolo_display }} dal {{ c.dal|date:"d/m/Y" }}{% if c.al %} al {{ c.al|date:"d/m/Y" }}{% endif %}{% if c.nomina %} · {{ c.nomina }}{% endif %}</div></div>
+          <div class="flex-fill"><a href="{{ c.soggetto.get_absolute_url }}" class="fw-medium text-reset">{{ c.soggetto.nome_completo }}</a><div class="small text-secondary">{{ c.get_ruolo_display }} dal {{ c.dal|date:"d/m/Y" }}{% if c.al %} al {{ c.al|date:"d/m/Y" }}{% elif c.scadenza_mandato %} · mandato fino al {{ c.scadenza_mandato|date:"d/m/Y" }}{% endif %}{% if c.nomina %} · {{ c.nomina }}{% endif %}</div></div>
           {% if perms.organi.gestisci_cariche %}<div class="btn-list flex-nowrap"><button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modifica-carica-{{ c.pk }}" title="Modifica date, atto di nomina e note"><i class="ti ti-pencil"></i><span class="d-none d-md-inline ms-1">Modifica</span></button><button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#fine-{{ c.pk }}">Fine carica</button></div>{% endif %}
         </div>
         {% empty %}<div class="list-group-item text-secondary">Nessun componente registrato.</div>{% endfor %}

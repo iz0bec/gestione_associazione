@@ -39,7 +39,7 @@ class OrganoForm(StileMixin, forms.ModelForm):
         model = Organo
         fields = [
             "nome", "sezione", "sigla", "tipo", "quorum_prima", "quorum_seconda", "max_deleghe",
-            "solo_soci_in_regola", "ordine", "attivo",
+            "solo_soci_in_regola", "durata_mandato", "preavviso_mandato", "ordine", "attivo",
         ]  # fmt: skip
 
     def __init__(self, *args, **kwargs):

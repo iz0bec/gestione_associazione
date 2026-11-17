@@ -73,6 +73,10 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
 
         ctx["impegni"] = calendario.prossimi(self.request.user, giorni=14)[:8]
         ctx["scadenze"] = calendario.scadenze_aperte(self.request.user)
+        if self.request.user.has_perm("organi.view_carica"):
+            from apps.organi.servizi import mandati_in_scadenza
+
+            ctx["mandati"] = mandati_in_scadenza()
         if self.request.user.has_perm("protocollo.view_protocollo"):
             ctx["protocollo"] = _riepilogo_protocollo(self.request.user)
         ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(

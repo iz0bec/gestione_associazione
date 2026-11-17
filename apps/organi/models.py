@@ -63,6 +63,17 @@ class Organo(models.Model):
         default=True,
         help_text="Per l'assemblea dei soci.",
     )
+    durata_mandato = models.PositiveSmallIntegerField(
+        "durata del mandato (anni)",
+        null=True,
+        blank=True,
+        help_text="Secondo lo statuto (es. 4). Vuoto: nessuna scadenza calcolata.",
+    )
+    preavviso_mandato = models.PositiveSmallIntegerField(
+        "preavviso (giorni)",
+        default=90,
+        help_text="Da quanti giorni prima la scadenza compare nel cruscotto.",
+    )
     ordine = models.PositiveSmallIntegerField(default=0)
     attivo = models.BooleanField(default=True)
 
@@ -147,6 +158,17 @@ class Carica(ModelloBase):
         return self.al is None or self.al > date.today()
 
     @property
+    def scadenza_mandato(self):
+        """Fine naturale del mandato (inizio + durata dell'organo), se la carica è in corso."""
+        anni = self.organo.durata_mandato
+        if not anni or not self.in_carica:
+            return None
+        try:
+            return self.dal.replace(year=self.dal.year + anni)
+        except ValueError:  # 29 febbraio
+            return self.dal.replace(year=self.dal.year + anni, day=28)
+
+    @property
     def vota(self):
         return self.ruolo != self.Ruolo.SUPPLENTE
 
@@ -229,6 +251,17 @@ class RappresentanteLegale(ModelloBase):
     @property
     def in_carica(self):
         return self.al is None or self.al > date.today()
+
+    @property
+    def scadenza_mandato(self):
+        """Fine naturale del mandato (inizio + durata dell'organo), se la carica è in corso."""
+        anni = self.organo.durata_mandato
+        if not anni or not self.in_carica:
+            return None
+        try:
+            return self.dal.replace(year=self.dal.year + anni)
+        except ValueError:  # 29 febbraio
+            return self.dal.replace(year=self.dal.year + anni, day=28)
 
 
 class Riunione(ModelloBase):

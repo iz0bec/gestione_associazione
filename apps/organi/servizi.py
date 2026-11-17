@@ -11,10 +11,12 @@
 
 import hashlib
 from dataclasses import dataclass
+from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.audit import Azione, campi_modificati, registra
@@ -905,3 +907,23 @@ def puo_gestire_contrassegno(utente, contrassegno):
 def gestisce_tutto(utente):
     """Associazione e interruttori generali: solo chi non è limitato a una sezione."""
     return _sezioni(utente) is None
+
+
+# --- scadenza dei mandati ----------------------------------------------------------------------
+
+
+def mandati_in_scadenza(oggi=None):
+    """Cariche in corso il cui mandato scade entro il preavviso dell'organo (anche già scaduto,
+    finché non si registra la fine): [(carica, scadenza, giorni mancanti)] in ordine di scadenza."""
+    oggi = oggi or date.today()
+    elenco = []
+    cariche = (
+        Carica.objects.filter(organo__attivo=True, organo__durata_mandato__isnull=False)
+        .filter(Q(al__isnull=True) | Q(al__gt=oggi))
+        .select_related("organo", "soggetto")
+    )
+    for c in cariche:
+        scadenza = c.scadenza_mandato
+        if scadenza and (scadenza - oggi).days <= c.organo.preavviso_mandato:
+            elenco.append((c, scadenza, (scadenza - oggi).days))
+    return sorted(elenco, key=lambda x: (x[1], x[0].organo.ordine, x[0].ruolo))

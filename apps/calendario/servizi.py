@@ -146,6 +146,25 @@ def _prestiti(dal, al):
         )  # fmt: skip
 
 
+def _mandati(dal, al):
+    from apps.organi.models import Carica
+
+    cariche = Carica.objects.filter(
+        organo__attivo=True, organo__durata_mandato__isnull=False, al__isnull=True
+    ).select_related("organo", "soggetto")
+    for c in cariche:
+        scadenza = c.scadenza_mandato
+        if scadenza and dal <= scadenza <= al:
+            yield Evento(
+                uid=f"mandato-{c.pk}",
+                titolo=f"Scade il mandato: {c.get_ruolo_display()} {c.soggetto.nome_completo} "
+                f"({c.organo.nome})",
+                inizio=scadenza, descrizione=f"In carica dal {c.dal:%d/%m/%Y}.",
+                percorso=reverse("organi:organo", args=[c.organo_id]), categoria="Mandati",
+                icona="hourglass",
+            )  # fmt: skip
+
+
 def _momento(giorno, ora):
     return timezone.make_aware(datetime.combine(giorno, ora))
 
@@ -186,6 +205,8 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _compleanni(utente)
     if utente.has_perm("patrimonio.view_bene"):
         elenco += _prestiti(dal, al)
+    if utente.has_perm("organi.view_carica"):
+        elenco += _mandati(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):
         elenco += _appuntamenti(dal, al)
     return elenco

@@ -74,6 +74,15 @@ e il timbro si caricano in *Firme e timbri* (vedi [Firme e timbri](firme-e-timbr
 Contano le cariche degli organi dell'associazione (per le convocazioni di un organo di sezione,
 quelle della sezione) e, fra più organi, prima l'organo di amministrazione.
 
+### Scadenza dei mandati
+
+Nella scheda dell'organo (*Modifica*) si indicano la **durata del mandato** in anni, secondo lo statuto,
+e il **preavviso** in giorni (predefinito 90). Per ogni carica in corso il programma calcola la fine
+naturale del mandato (data di inizio + durata) e la mostra nell'organo («mandato fino al …»). Dal
+preavviso in poi la scadenza compare nel **cruscotto**, riquadro *Mandati in scadenza* (in rosso se già
+passata e la carica non è stata chiusa), e nel **calendario**, categoria *Mandati*, anche
+nell'esportazione iCal. Senza durata non si calcola nulla.
+
 ## Rappresentante legale
 
 Di solito il rappresentante legale è il presidente, e allora non serve fare nulla. Può però essere
