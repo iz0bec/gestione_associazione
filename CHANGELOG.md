@@ -5,6 +5,19 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.21] - 2026-11-17
+
+Mittente delle PEC ricevute e risposte via PEC.
+
+### Corretto
+- **Mittente delle PEC** ricevute: con le buste firmate di Aruba (`multipart/signed`) il messaggio
+  originale `postacert.eml` non veniva trovato e il mittente risultava
+  «Per conto di: … <posta-certificata@pec.aruba.it>». Ora l'originale si cerca a ogni livello della
+  busta; se manca, il mittente si ricava da «Per conto di:» o dal `Reply-To`.
+- **Risposta a un protocollo**: il destinatario proposto non ripete più l'indirizzo già presente nel
+  nome e mette il nome tra virgolette, così l'indirizzo email/PEC viene riconosciuto (prima restava
+  vuoto e compariva l'avviso «Indirizzo postale mancante» per le buste).
+
 ## [1.0.20] - 2026-11-16
 
 Cartella PROCESSATA nel namespace del server (Aruba).
