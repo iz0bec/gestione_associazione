@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Avvisi della posta da protocollare** su Telegram, SMS o WhatsApp, scelti da ciascun utente che
+  gestisce la posta (*Posta da protocollare → Avvisi* o menu dell'utente): un riepilogo per ogni
+  scaricamento con messaggi nuovi (quanti, mittente e oggetto dei primi cinque, collegamento alla
+  posta), con *Collega il mio Telegram* e *Manda un avviso di prova*.
+
 ### Modificato
 - L'interruttore *Invio delle email* si chiama **Invio dei messaggi** e gli avvisi dicono che, spento,
   ferma anche Telegram, SMS e WhatsApp (era già così, ma non era scritto: un messaggio Telegram restava

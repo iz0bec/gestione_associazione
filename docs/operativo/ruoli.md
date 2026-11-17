@@ -80,7 +80,8 @@ L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (s
 Chi modifica titolario e modelli sceglie anche quali **caselle** usa il protocollo; la configurazione delle
 caselle e dei servizi di invio (server, password) spetta solo all'Amministratore di sistema
 (*Sistema → Servizi di posta*). L'eliminazione definitiva della posta scartata spetta a segretario e
-amministratore di sistema, non all'addetto.
+amministratore di sistema, non all'addetto. Chi gestisce la posta (addetto, segretario, amministratore)
+può scegliere per sé gli **avvisi** dei messaggi nuovi su Telegram, SMS o WhatsApp.
 
 ### Organi sociali
 

@@ -48,6 +48,7 @@ PAGINE_PER_SEZIONE = {
     "utenti": "utenti",
     "core:servizi_posta": "sistema#servizi-di-posta",
     "core:servizio_nuovo": "sistema#servizi-di-invio-smtp",
+    "protocollo:avvisi": "protocollo#posta-da-protocollare",
     "core:casella_nuova": "sistema#caselle-di-posta-imap",
     "core:casella_modifica": "sistema#caselle-di-posta-imap",
     "core:servizio_modifica": "sistema#servizi-di-invio-smtp",

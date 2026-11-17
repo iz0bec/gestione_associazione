@@ -36,6 +36,18 @@ class Utente(AbstractUser):
         default=False,
         help_text="Al prossimo accesso l'utente deve scegliere una nuova password.",
     )
+    avvisi_posta = models.CharField(
+        "avvisi della posta da protocollare",
+        max_length=10,
+        blank=True,
+        choices=[
+            ("", "Nessuno"),
+            ("telegram", "Telegram"),
+            ("sms", "SMS"),
+            ("whatsapp", "WhatsApp"),
+        ],  # fmt: skip
+        help_text="Scelto dall'utente: un avviso quando arrivano messaggi nuovi da protocollare.",
+    )
     puo_cambiare_password = models.BooleanField(
         "può cambiare la propria password",
         default=True,

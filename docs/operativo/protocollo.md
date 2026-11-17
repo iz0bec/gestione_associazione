@@ -179,6 +179,16 @@ contrario. I messaggi già gestiti nel frattempo da un altro utente sono saltati
 messaggio di esito; ogni scarto e ripristino è annotato nel registro attività. La protocollazione
 resta una per messaggio, perché ognuno ha il proprio oggetto e la propria classificazione.
 
+**Avvisi sul telefono.** Chi gestisce la posta può scegliere di ricevere un **avviso** quando arrivano
+messaggi nuovi da protocollare: *Posta da protocollare → Avvisi* (oppure dal menu dell'utente, *Avvisi
+della posta*). Si sceglie il canale fra quelli attivi nell'organizzazione (**Telegram**, **SMS**,
+**WhatsApp**) o *No*. Arriva un solo avviso per ogni scaricamento, con il numero dei messaggi, mittente e
+oggetto dei primi cinque e il collegamento alla posta; le ricevute PEC agganciate da sole non contano.
+Per Telegram serve che l'utente sia collegato alla propria scheda anagrafica: *Collega il mio Telegram*
+dà il link personale da aprire sul telefono. Per SMS e WhatsApp si usa il cellulare della scheda (o il
+telefono del profilo); scegliere WhatsApp vale come consenso a riceverlo. *Manda un avviso di prova*
+controlla che tutto funzioni. Gli avvisi partono solo con l'invio dei messaggi attivo.
+
 **Sulla casella (server IMAP).** Il programma non cancella mai la posta dal server, ma la tiene in
 ordine: i messaggi scaricati vanno in `PROCESSATA`; quelli **scartati** vanno nella cartella `SCARTATA`
 (`INBOX.SCARTATA` su Aruba, creata se manca) e tornano in `PROCESSATA` se vengono riportati tra quelli

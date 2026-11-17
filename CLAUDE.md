@@ -75,7 +75,8 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   Telegram solo da `apps/comunicazioni/telegram.py` (`_chiama` con urllib, comandi via `getUpdates` in
   `invia_coda`, collegamento con `link_invito`/`/start`). SMS e WhatsApp solo da
   `apps/comunicazioni/messaggi.py` (fornitori in `FORNITORI`, `ServizioMessaggi.attivo_per`, consegne in
-  `ConsegnaMessaggio`; WhatsApp solo con `whatsapp_consenso_il`).
+  `ConsegnaMessaggio`; WhatsApp solo con `whatsapp_consenso_il`). Avvisi della posta agli utenti:
+  `apps/protocollo/avvisi.py` (`Utente.avvisi_posta`, chiamato alla fine di `posta.scarica_tutte`).
 - Download di file: `FileResponse` come allegato con `Content-Security-Policy: default-src 'none'; sandbox`.
 - Segreti nel DB: `apps.core.cifratura.cifra/decifra` (chiave `CHIAVE_CIFRATURA`, mai nel DB).
 - Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.

@@ -611,6 +611,64 @@ def scartati_filtrati(dati):
     return qs
 
 
+class AvvisiPostaView(PermessoMixin, TemplateView):
+    """Scelta personale: avvisi della posta da protocollare su Telegram, SMS o WhatsApp."""
+
+    permission_required = "protocollo.gestisci_posta"
+    template_name = "protocollo/avvisi.html"
+
+    def get_context_data(self, **kwargs):
+        from . import avvisi
+
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        ctx.update(
+            canali=avvisi.canali_disponibili(),
+            scelto=u.avvisi_posta,
+            problema=avvisi.problema(u),
+            numero=avvisi.numero_di(u),
+            soggetto=u.soggetto,
+            link_telegram=self.request.session.pop("link_telegram", ""),
+        )
+        return ctx
+
+    def post(self, request):
+        from apps.comunicazioni import telegram
+
+        from . import avvisi
+
+        u = request.user
+        azione = request.POST.get("azione")
+        if azione == "salva":
+            canale = request.POST.get("canale", "")
+            if canale and canale not in dict(avvisi.canali_disponibili()):
+                messages.error(request, "Canale non disponibile.")
+                return redirect("protocollo:avvisi")
+            u.avvisi_posta = canale
+            u.save(update_fields=["avvisi_posta"])
+            if canale == "whatsapp" and u.soggetto and not u.soggetto.whatsapp_consenso_il:
+                from django.utils import timezone
+
+                u.soggetto.whatsapp_consenso_il = timezone.now()  # scelto dalla persona stessa
+                u.soggetto.save(update_fields=["whatsapp_consenso_il"])
+            registra(Azione.MODIFICA, u, descrizione=f"Avvisi della posta di {u}",
+                     avvisi_posta=canale or "nessuno")  # fmt: skip
+            motivo = avvisi.problema(u)
+            if canale and motivo:
+                messages.warning(request, f"Scelta salvata, ma gli avvisi non partono: {motivo}.")
+            else:
+                messages.success(request, "Scelta salvata.")
+        elif azione == "telegram" and u.soggetto is not None:
+            request.session["link_telegram"] = telegram.link_invito(u.soggetto)
+        elif azione == "prova":
+            try:
+                avvisi.invia(u, f"Prova degli avvisi della posta da protocollare ({u}).")
+                messages.success(request, "Avviso di prova inviato.")
+            except avvisi.AvvisoNonInviato as e:
+                messages.error(request, f"Avviso di prova non inviato: {e}.")
+        return redirect("protocollo:avvisi")
+
+
 class MessaggioView(PermessoMixin, DetailView):
     permission_required = "protocollo.view_messaggioricevuto"
     queryset = MessaggioRicevuto.objects.visibili()

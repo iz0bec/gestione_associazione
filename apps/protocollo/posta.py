@@ -458,6 +458,7 @@ def scarica_tutte():
     risultati = {}
     if not Organizzazione.corrente().ricezione_posta:
         return risultati  # lettura della posta disattivata (Sistema -> Servizi di posta)
+    inizio = timezone.now()
     for casella in CasellaPosta.objects.filter(attiva=True):
         try:
             risultati[casella.nome] = scarica_casella(casella)
@@ -468,4 +469,10 @@ def scarica_tutte():
             casella.ultimo_errore = str(e)[:500]
         casella.ultimo_controllo = timezone.now()
         casella.save(update_fields=["ultimo_controllo", "ultimo_errore"])
+    try:  # avvisi a chi li ha scelti: un errore non ferma lo scaricamento
+        from .avvisi import avvisa_nuova_posta
+
+        avvisa_nuova_posta(inizio)
+    except Exception:  # noqa: BLE001
+        log.exception("Avvisi della posta non inviati")
     return risultati
