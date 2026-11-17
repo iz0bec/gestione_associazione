@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Eventi e cerimonie** (nuovo modulo, menu *Eventi*): data, luogo, programma, posti, accompagnatori,
+  chiusura delle adesioni; **adesioni** dalla segreteria (collegate all'anagrafica quando la persona è
+  riconoscibile) e da un **modulo pubblico** con collegamento segreto e protezioni anti-spam; foglio
+  presenze in PDF ed elenco in Excel; eventi nel calendario e nell'iCal.
+
 ## [1.0.31] - 2026-11-17
 
 Incassi, note di storno e registro incassi.

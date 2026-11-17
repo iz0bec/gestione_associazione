@@ -180,11 +180,13 @@ DOCUMENTI_GESTIONE = [
     "documenti.change_modellostampa",
 ]
 
-CALENDARIO_LETTURA = ["calendario.view_appuntamento"]
+CALENDARIO_LETTURA = ["calendario.view_appuntamento", "eventi.view_evento"]
 CALENDARIO_GESTIONE = [
     *CALENDARIO_LETTURA,
     "calendario.add_appuntamento",
     "calendario.change_appuntamento",
+    "eventi.add_evento",
+    "eventi.change_evento",
 ]
 
 RUOLI = {

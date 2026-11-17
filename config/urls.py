@@ -20,6 +20,7 @@ from apps.core.views import (
     salute,
 )
 from apps.core.viste_backup import StatoRipristinoView
+from apps.eventi.views import EventoPubblicoInviatoView, EventoPubblicoView
 from apps.patrimonio.views import BenePubblicoView, FotoPubblicaView
 from apps.soci.pubblico import (
     DomandaInviataView,
@@ -49,6 +50,7 @@ urlpatterns = [
     path("patrimonio/", include("apps.patrimonio.urls")),
     path("documenti/", include("apps.documenti.urls")),
     path("calendario/", include("apps.calendario.urls")),
+    path("eventi/", include("apps.eventi.urls")),
     path("beni/<str:token>/", BenePubblicoView.as_view(), name="bene_pubblico"),
     path("beni/<str:token>/foto/", FotoPubblicaView.as_view(), name="bene_pubblico_foto"),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),
@@ -60,6 +62,12 @@ urlpatterns = [
         name="documento_pubblico",
     ),
     path("iscrizione/inviata/", DomandaInviataView.as_view(), name="iscrizione_inviata"),
+    path("adesione/<str:token>/", EventoPubblicoView.as_view(), name="evento_pubblico"),
+    path(
+        "adesione/<str:token>/inviata/",
+        EventoPubblicoInviatoView.as_view(),
+        name="evento_pubblico_inviato",
+    ),
     path("verifica-tessera/", VerificaTesseraView.as_view(), name="verifica_tessera"),
     path(
         "verifica-tessera/<str:codice>/",

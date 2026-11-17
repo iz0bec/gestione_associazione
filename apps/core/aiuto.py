@@ -45,6 +45,7 @@ PAGINE_PER_SEZIONE = {
     "patrimonio": "patrimonio",
     "documenti": "documenti",
     "calendario": "calendario",
+    "eventi": "eventi",
     "utenti": "utenti",
     "core:servizi_posta": "sistema#servizi-di-posta",
     "core:servizio_nuovo": "sistema#servizi-di-invio-smtp",

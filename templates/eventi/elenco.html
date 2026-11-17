@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Elenco degli eventi e delle cerimonie
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Eventi{% endblock %}
+{% block titolo_pagina %}Eventi e cerimonie{% endblock %}
+{% block azioni %}<div class="btn-list">
+  <a class="btn" href="?{% if not passati %}passati=1{% endif %}">{% if passati %}Prossimi{% else %}Passati{% endif %}</a>
+  {% if perms.eventi.add_evento %}<a class="btn btn-primary" href="{% url 'eventi:nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo evento</a>{% endif %}
+</div>{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="list-group list-group-flush">
+  {% for e in eventi %}
+    <a class="list-group-item list-group-item-action d-flex align-items-center gap-3" href="{{ e.get_absolute_url }}">
+      <div class="text-center"><div class="fw-bold">{{ e.inizio|date:"d" }}</div><div class="small text-secondary text-uppercase">{{ e.inizio|date:"M Y" }}</div></div>
+      <div class="flex-fill"><div class="fw-medium">{{ e.titolo }}{% if e.annullato %} <span class="badge bg-red-lt">annullato</span>{% endif %}{% if e.pubblico %} <span class="badge bg-azure-lt">adesioni online</span>{% endif %}</div>
+        <div class="small text-secondary">{{ e.get_tipo_display }} · {{ e.inizio|date:"D d/m/Y H:i" }}{% if e.luogo %} · {{ e.luogo }}{% endif %}</div></div>
+      <div class="text-end small"><strong>{{ e.partecipanti }}</strong>{% if e.posti %} / {{ e.posti }}{% endif %}<div class="text-secondary">partecipanti</div></div>
+    </a>
+  {% empty %}<div class="list-group-item text-secondary">Nessun evento {% if passati %}passato{% else %}in programma{% endif %}.</div>{% endfor %}
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

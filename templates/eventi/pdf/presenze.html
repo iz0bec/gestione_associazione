@@ -1,0 +1,20 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Foglio presenze di un evento con gli aderenti
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Presenze - {{ evento }}{% endblock %}
+{% block stile %}
+  td.firma { width: 55mm; }
+  td, th { padding: 5pt 4pt; }
+{% endblock %}
+{% block contenuto %}
+<h1>{{ evento }}</h1>
+<p>{{ evento.inizio|date:"l d/m/Y H:i" }}{% if evento.luogo %} · {{ evento.luogo }}{% endif %} · {{ evento.partecipanti }} partecipanti</p>
+<table>
+  <thead><tr><th>#</th><th>Cognome e nome</th><th>Acc.</th><th>Note</th><th>Firma</th></tr></thead>
+  <tbody>{% for a in adesioni %}<tr><td>{{ forloop.counter }}</td><td>{{ a }}</td><td>{{ a.accompagnatori|default:"" }}</td><td>{{ a.note }}</td><td class="firma"></td></tr>{% endfor %}
+  {% for _ in "12345" %}<tr><td></td><td></td><td></td><td></td><td class="firma"></td></tr>{% endfor %}</tbody>
+</table>
+{% endblock %}

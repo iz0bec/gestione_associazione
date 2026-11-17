@@ -118,6 +118,13 @@ poter scrivere comunicazioni.
 | Segretario, Consigliere | sì | - | - |
 | Addetto protocollo | - | - | - |
 
+### Eventi
+
+| Ruolo | Consulta eventi e adesioni | Crea eventi, gestisce le adesioni |
+|---|---|---|
+| Amministratore di sistema, Presidente, Segretario, Tesoriere | sì | sì |
+| Presidente di sezione, Addetto protocollo, Consigliere, Revisore | sì | - |
+
 ### Patrimonio
 
 | Ruolo | Consulta inventario e passaggi | Inserisce, modifica, valuta, presta e registra uscite | Passaggio di consegne |

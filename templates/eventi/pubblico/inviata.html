@@ -1,0 +1,14 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Conferma dell'adesione pubblica a un evento
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Adesione registrata{% endblock %}
+{% block contenuto %}
+<div class="card"><div class="card-body text-center py-5">
+  <i class="ti ti-circle-check text-green display-6" aria-hidden="true"></i>
+  <h1 class="h2 mt-3">Adesione registrata</h1>
+  <p class="text-secondary mb-0">Grazie: la tua adesione a «{{ evento }}» del {{ evento.inizio|date:"d/m/Y" }} è stata registrata.</p>
+</div></div>
+{% endblock %}

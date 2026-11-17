@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda dell'evento con le adesioni
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ evento }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'eventi:elenco' %}">Eventi</a></div>{% endblock %}
+{% block titolo_pagina %}{{ evento }}{% endblock %}
+{% block azioni %}<div class="btn-list">
+  <a class="btn" href="{% url 'eventi:aderenti' evento.pk 'pdf' %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Foglio presenze</a>
+  <a class="btn" href="{% url 'eventi:aderenti' evento.pk 'xlsx' %}"><i class="ti ti-file-spreadsheet me-1"></i>Aderenti (Excel)</a>
+  {% if perms.eventi.change_evento %}<a class="btn" href="{% url 'eventi:modifica' evento.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+</div>{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">Adesioni: {{ evento.partecipanti }} partecipant{{ evento.partecipanti|pluralize:"e,i" }}{% if evento.posti %} su {{ evento.posti }} posti{% endif %}</h2></div>
+      <div class="list-group list-group-flush">
+        {% for a in adesioni %}
+        <div class="list-group-item d-flex align-items-center gap-2{% if a.annullata %} text-secondary{% endif %}">
+          <div class="flex-fill">{% if a.soggetto %}<a href="{{ a.soggetto.get_absolute_url }}"{% if a.annullata %} class="text-secondary text-decoration-line-through"{% endif %}>{{ a }}</a>{% else %}<span{% if a.annullata %} class="text-decoration-line-through"{% endif %}>{{ a }}</span>{% endif %}{% if a.accompagnatori %} <span class="badge bg-secondary-lt">+{{ a.accompagnatori }}</span>{% endif %}
+            <div class="small text-secondary">{{ a.email }}{% if a.telefono %} · {{ a.telefono }}{% endif %} · {{ a.get_origine_display|lower }} · {{ a.creata_il|date:"d/m H:i" }}{% if a.note %} · {{ a.note }}{% endif %}{% if a.annullata %} · annullata{% endif %}</div></div>
+          {% if perms.eventi.change_evento and not a.annullata %}<form method="post" action="{% url 'eventi:adesione_annulla' a.pk %}" data-conferma="Annullare l'adesione di {{ a }}?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Annulla l'adesione"><i class="ti ti-x"></i></button></form>{% endif %}
+        </div>
+        {% empty %}<div class="list-group-item text-secondary">Nessuna adesione.</div>{% endfor %}
+      </div>
+    </div>
+    {% if perms.eventi.change_evento and not evento.annullato %}
+    <form method="post" action="{% url 'eventi:adesione_nuova' evento.pk %}" class="card mt-3" novalidate>{% csrf_token %}
+      <div class="card-header"><h3 class="card-title">Aggiungi un'adesione</h3></div>
+      <div class="card-body"><div class="row g-2">
+        {% for campo in form %}<div class="col-md-6">{{ campo.as_field_group }}</div>{% endfor %}
+      </div><p class="small text-secondary mb-0">Se email o nome e cognome corrispondono a una sola persona dell'anagrafica, l'adesione viene collegata alla sua scheda.</p></div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-user-plus me-1"></i>Aggiungi</button></div>
+    </form>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-body">
+      {% if evento.annullato %}<div class="alert alert-danger">Evento annullato.</div>{% endif %}
+      <dl class="mb-0">
+        <dt>Quando</dt><dd>{{ evento.inizio|date:"l d/m/Y H:i" }}{% if evento.fine %} – {{ evento.fine|date:"d/m/Y H:i" }}{% endif %}</dd>
+        {% if evento.luogo %}<dt>Dove</dt><dd>{{ evento.luogo }}</dd>{% endif %}
+        <dt>Tipo</dt><dd>{{ evento.get_tipo_display }}</dd>
+        {% if evento.quota %}<dt>Quota</dt><dd>{{ evento.quota }}</dd>{% endif %}
+        <dt>Adesioni</dt><dd>{% if evento.si_puo_aderire %}aperte fino al {{ evento.scadenza_adesioni|date:"d/m/Y H:i" }}{% else %}chiuse{% endif %}{% if evento.posti %} · posti liberi {{ evento.posti_liberi }}{% endif %}</dd>
+      </dl>
+      {% if evento.descrizione %}<hr><div class="small">{{ evento.descrizione|linebreaksbr }}</div>{% endif %}
+    </div></div>
+    {% if evento.pubblico %}<div class="card"><div class="card-body">
+      <div class="fw-medium mb-1"><i class="ti ti-world me-1"></i>Modulo pubblico di adesione</div>
+      <p class="small text-secondary">Da diffondere (sito, social, email): chiunque abbia il collegamento può aderire.</p>
+      <input class="form-control form-control-sm font-monospace" type="text" readonly data-copia value="{{ link_pubblico }}" aria-label="Collegamento al modulo pubblico">
+    </div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

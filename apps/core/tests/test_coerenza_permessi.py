@@ -21,7 +21,8 @@ from apps.accounts.ruoli import RUOLI
 PUBBLICHE = {
     "salute", "aspetto_css", "logo", "stato_ripristino", "bene_pubblico", "bene_pubblico_foto",
     "iscrizione", "iscrizione_inviata", "feed_pubblico", "documenti_pubblici", "documento_pubblico",
-    "presentazione", "verifica_tessera", "verifica_tessera_codice",
+    "presentazione", "verifica_tessera", "verifica_tessera_codice", "evento_pubblico",
+    "evento_pubblico_inviato",
 }  # fmt: skip
 
 # chi ha il primo permesso deve avere anche il secondo (la funzione lo usa)

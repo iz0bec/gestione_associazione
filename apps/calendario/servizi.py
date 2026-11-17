@@ -165,6 +165,20 @@ def _mandati(dal, al):
             )  # fmt: skip
 
 
+def _eventi_associazione(dal, al):
+    from apps.eventi.models import Evento as EventoAssociazione
+
+    inizio = _momento(dal, time.min)
+    fine = _momento(al, time.max)
+    for e in EventoAssociazione.objects.filter(annullato=False, inizio__range=(inizio, fine)):
+        yield Evento(
+            uid=f"evento-{e.pk}", titolo=e.titolo, inizio=e.inizio,
+            fine=e.fine or e.inizio + DURATA_RIUNIONE, luogo=e.luogo,
+            descrizione=e.descrizione, percorso=e.get_absolute_url(), categoria="Eventi",
+            icona="confetti",
+        )  # fmt: skip
+
+
 def _momento(giorno, ora):
     return timezone.make_aware(datetime.combine(giorno, ora))
 
@@ -207,6 +221,8 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _prestiti(dal, al)
     if utente.has_perm("organi.view_carica"):
         elenco += _mandati(dal, al)
+    if utente.has_perm("eventi.view_evento"):
+        elenco += _eventi_associazione(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):
         elenco += _appuntamenti(dal, al)
     return elenco

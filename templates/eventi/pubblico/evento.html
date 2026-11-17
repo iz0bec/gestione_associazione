@@ -1,0 +1,29 @@
+{% extends "layouts/pubblico.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modulo pubblico di adesione a un evento
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ evento }}{% endblock %}
+{% block contenuto %}
+<div class="card mb-3"><div class="card-body">
+  <h1 class="h2">{{ evento }}</h1>
+  <div class="text-secondary mb-2">{{ evento.inizio|date:"l d F Y, H:i" }}{% if evento.luogo %} · {{ evento.luogo }}{% endif %}{% if evento.quota %} · {{ evento.quota }}{% endif %}</div>
+  {% if evento.descrizione %}<div>{{ evento.descrizione|linebreaksbr }}</div>{% endif %}
+</div></div>
+{% if evento.si_puo_aderire %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-header"><h2 class="card-title">Adesione</h2></div>
+  <div class="card-body">
+    {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+    {{ form.token }}
+    {% for campo in form %}{% if campo.name != "token" and campo.name != "sito" %}{{ campo.as_field_group }}{% endif %}{% endfor %}
+    <div class="nascosto" aria-hidden="true">{{ form.sito }}</div>
+    <p class="small text-secondary mb-0">I dati servono solo per organizzare l'evento.{% if evento.posti %} Posti ancora disponibili: {{ evento.posti_liberi }}.{% endif %}</p>
+  </div>
+  <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-check me-1"></i>Aderisco</button></div>
+</form>
+{% else %}
+<div class="alert alert-info">Le adesioni a questo evento sono chiuse{% if evento.posti and not evento.posti_liberi %}: posti esauriti{% endif %}.</div>
+{% endif %}
+{% endblock %}
