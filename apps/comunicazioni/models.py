@@ -141,6 +141,14 @@ class Invio(ModelloBase):
     telegram = models.BooleanField(
         "anche su Telegram", default=False, help_text="A chi ha collegato Telegram."
     )
+    sms = models.BooleanField("anche per SMS", default=False)
+    whatsapp = models.BooleanField("anche su WhatsApp", default=False)
+    testo_breve = models.CharField(
+        "testo breve (SMS e WhatsApp)",
+        max_length=320,
+        blank=True,
+        help_text="Con i segnaposto. Vuoto: l'oggetto della comunicazione.",
+    )
     origine = models.CharField(max_length=30, blank=True, editable=False)
     origine_id = models.PositiveBigIntegerField(null=True, blank=True, editable=False)
     contesto = models.JSONField(default=dict, blank=True, editable=False)
@@ -244,6 +252,44 @@ class Destinatario(models.Model):
     @property
     def esito_pec_testo(self):
         return self.ESITI_PEC.get(self.esito_pec, self.esito_pec)
+
+
+class ConsegnaMessaggio(models.Model):
+    """SMS o messaggio WhatsApp di una comunicazione a un destinatario."""
+
+    class Canale(models.TextChoices):
+        SMS = "sms", "SMS"
+        WHATSAPP = "whatsapp", "WhatsApp"
+
+    class Stato(models.TextChoices):
+        IN_ATTESA = "in_attesa", "In attesa"
+        INVIATO = "inviato", "Inviato"
+        ERRORE = "errore", "Errore"
+
+    destinatario = models.ForeignKey(
+        Destinatario, on_delete=models.CASCADE, related_name="consegne"
+    )
+    canale = models.CharField(max_length=10, choices=Canale.choices)
+    numero = models.CharField(max_length=20)
+    stato = models.CharField(
+        max_length=10, choices=Stato.choices, default=Stato.IN_ATTESA, db_index=True
+    )
+    errore = models.CharField(max_length=255, blank=True)
+    tentativi = models.PositiveSmallIntegerField(default=0)
+    riferimento = models.CharField(max_length=100, blank=True, help_text="Id del fornitore.")
+    inviato_il = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "consegna di messaggio"
+        verbose_name_plural = "consegne di messaggi"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["destinatario", "canale"], name="una_consegna_per_canale"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_canale_display()} a {self.numero}"
 
 
 def percorso_allegato_invio(istanza, nome):

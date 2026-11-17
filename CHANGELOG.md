@@ -15,6 +15,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   cifrato, con verifica). Dalla scheda anagrafica si genera l'**invito** personale (link e QR): la persona
   si collega con *Avvia* e smette con `/stop`. Le comunicazioni con **Anche su Telegram** arrivano lì
   (testo e allegati), anche a chi non ha l'email. Nessun webhook: i comandi si leggono ogni minuto.
+- **SMS e WhatsApp Business** (preparati, da provare con un account reale): fornitori in *Sistema →
+  Servizi di posta* (Skebby, Aruba SMS, Twilio; API Cloud di Meta con modello approvato), credenziali
+  cifrate e **Verifica**. Le comunicazioni con **Anche per SMS** / **Anche su WhatsApp** mandano un
+  **testo breve** (con segnaposto) al cellulare dell'anagrafica; WhatsApp solo a chi ha registrato il
+  consenso nella scheda. Esito per destinatario e canale, tre tentativi.
 
 ## [1.0.26] - 2026-11-17
 

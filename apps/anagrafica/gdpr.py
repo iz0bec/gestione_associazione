@@ -287,6 +287,7 @@ def anonimizza(soggetto, utente, *, motivo, conferma):
     soggetto.cognome = ANONIMO
     soggetto.codice_fiscale = None
     soggetto.telegram_chat_id = soggetto.telegram_collegato_il = None
+    soggetto.whatsapp_consenso_il = None
     soggetto.telegram_codice = ""
     soggetto.data_nascita = soggetto.data_decesso = None
     soggetto.attivo = False

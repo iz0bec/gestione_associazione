@@ -40,6 +40,7 @@ urlpatterns = [
     path("liste/<int:pk>/esporta/", views.ListaEsportaView.as_view(), name="lista_esporta"),
     path("liste/<int:pk>/etichette/", views.ListaEtichetteView.as_view(), name="lista_etichette"),
     path("telegram/<int:pk>/", views.TelegramInvitoView.as_view(), name="telegram_invito"),
+    path("whatsapp/<int:pk>/", views.WhatsAppConsensoView.as_view(), name="whatsapp_consenso"),
     path(
         "telegram/<int:pk>/scollega/",
         views.TelegramScollegaView.as_view(),

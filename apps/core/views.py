@@ -165,9 +165,10 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
 def _stato_telegram():
     from apps.comunicazioni.telegram import collegati
 
-    from .models import CanaleTelegram
+    from .models import CanaleTelegram, ServizioMessaggi
 
-    return {"telegram": CanaleTelegram.corrente(), "telegram_collegati": collegati()}
+    return {"telegram": CanaleTelegram.corrente(), "telegram_collegati": collegati(),
+            "servizi_messaggi": ServizioMessaggi.objects.all()}  # fmt: skip
 
 
 def _comandi_chiave():
@@ -443,6 +444,83 @@ class VerificaServizioView(PermessoMixin, View):
             dettaglio = f"{type(e).__name__}: {str(e)[:150]}"
             messages.error(request, f"{servizio}: accesso a {servizio.server}:{servizio.porta} "
                                     f"non riuscito ({dettaglio}).")  # fmt: skip
+        return redirect("core:servizi_posta")
+
+
+class _ServizioMessaggiMixin:
+    permission_required = "core.gestisci_servizi_posta"
+    template_name = "core/servizio_messaggi.html"
+    success_url = reverse_lazy("core:servizi_posta")
+
+    def get_form_class(self):
+        from .forms import ServizioMessaggiForm
+
+        return ServizioMessaggiForm
+
+    def get_queryset(self):
+        from .models import ServizioMessaggi
+
+        return ServizioMessaggi.objects.all()
+
+    def form_valid(self, form):
+        nuovo = form.instance.pk is None
+        dettagli = {} if nuovo else campi_modificati(form)
+        dettagli.get("campi", {}).pop("nuovo_segreto", None)
+        risposta = super().form_valid(form)
+        registra(Azione.CREAZIONE if nuovo else Azione.MODIFICA, self.object,
+                 descrizione=f"Servizio di messaggistica {self.object}",
+                 segreto_cambiato=bool(form.cleaned_data.get("nuovo_segreto")) or None,
+                 **dettagli)  # fmt: skip
+        messages.success(self.request, f"Servizio «{self.object}» salvato.")
+        return risposta
+
+
+class ServizioMessaggiNuovoView(_ServizioMessaggiMixin, PermessoMixin, CreateView):
+    pass
+
+
+class ServizioMessaggiModificaView(_ServizioMessaggiMixin, PermessoMixin, UpdateView):
+    pass
+
+
+class ServizioMessaggiAzioneView(PermessoMixin, View):
+    """Attiva/disattiva, verifica (nessun messaggio inviato) o elimina un servizio."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    http_method_names = ["post"]
+
+    def post(self, request, pk, azione):
+        from django.shortcuts import get_object_or_404
+
+        from apps.comunicazioni import messaggi
+
+        from .models import ServizioMessaggi
+
+        s = get_object_or_404(ServizioMessaggi, pk=pk)
+        if azione == "attivo":
+            s.attivo = request.POST.get("attivo") == "on"
+            s.save(update_fields=["attivo"])
+            registra(Azione.MODIFICA, s, descrizione=f"Servizio di messaggistica {s}",
+                     attivo=s.attivo)  # fmt: skip
+            altri = ServizioMessaggi.objects.filter(attivo=True).exclude(pk=s.pk)
+            if s.attivo and any(a.canale == s.canale for a in altri):
+                messages.warning(request, "C'è già un altro servizio attivo per lo stesso canale: "
+                                          "si usa il primo in elenco.")  # fmt: skip
+            else:
+                messages.success(request, f"«{s}» {'attivato' if s.attivo else 'disattivato'}.")
+        elif azione == "verifica":
+            try:
+                esito = messaggi.verifica(s)
+                messages.success(request, f"{s}: {esito} (nessun messaggio inviato).")
+                s.ultimo_errore = ""
+            except messaggi.ErroreMessaggi as e:
+                messages.error(request, f"{s}: verifica non riuscita ({e}).")
+                s.ultimo_errore = str(e)[:300]
+            s.save(update_fields=["ultimo_errore"])
+        elif azione == "elimina":
+            s.delete()
+            registra(Azione.ELIMINAZIONE, None, descrizione=f"Servizio di messaggistica {s}")
+            messages.success(request, f"«{s}» eliminato.")
         return redirect("core:servizi_posta")
 
 

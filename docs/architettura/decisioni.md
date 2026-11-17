@@ -327,5 +327,9 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   personale monouso (`/start <codice>`), `/stop` scollega. Comandi letti con `getUpdates` dal giro di
   `invia_coda`: niente webhook, quindi nessun indirizzo pubblico né porta da esporre. «Anche su Telegram»
   si aggiunge all'email (stesse regole di finalità e consenso); chi non ha l'email lo riceve solo lì.
-- **SMS** rimandati: richiedono un fornitore a pagamento (scelta dell'associazione).
+- **SMS e WhatsApp Business** preparati senza un account di prova: `core.ServizioMessaggi` (Skebby e Aruba,
+  stessa API REST v1.0; Twilio; API Cloud di Meta) e `comunicazioni.ConsegnaMessaggio` (una per destinatario e
+  canale). Testo breve dedicato (l'email è troppo lunga); numeri portati a E.164; WhatsApp solo con modelli
+  approvati (unico parametro `{{1}}`) e con il consenso registrato della persona (`whatsapp_consenso_il`),
+  come richiede Meta. Indirizzo dell'API modificabile, perché le integrazioni sono provate solo con server finti.
 

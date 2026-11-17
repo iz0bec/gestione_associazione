@@ -42,6 +42,21 @@ urlpatterns = [
     ),
     path("sistema/posta/verifica-invio/", views.VerificaSmtpView.as_view(), name="verifica_smtp"),
     path("sistema/posta/telegram/", views.TelegramView.as_view(), name="telegram"),
+    path(
+        "sistema/posta/messaggi/nuovo/",
+        views.ServizioMessaggiNuovoView.as_view(),
+        name="messaggi_nuovo",
+    ),
+    path(
+        "sistema/posta/messaggi/<int:pk>/",
+        views.ServizioMessaggiModificaView.as_view(),
+        name="messaggi_modifica",
+    ),
+    path(
+        "sistema/posta/messaggi/<int:pk>/<str:azione>/",
+        views.ServizioMessaggiAzioneView.as_view(),
+        name="messaggi_azione",
+    ),
     path("sistema/posta/caselle/nuova/", views.CasellaNuovaView.as_view(), name="casella_nuova"),
     path(
         "sistema/posta/caselle/<int:pk>/",

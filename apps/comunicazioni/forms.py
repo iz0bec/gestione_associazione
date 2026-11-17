@@ -82,6 +82,22 @@ class InvioForm(StileMixin, forms.Form):
         required=False,
         help_text="A chi ha collegato Telegram; chi non ha l'email la riceve solo lì.",
     )
+    sms = forms.BooleanField(
+        label="Anche per SMS", required=False, help_text="Al cellulare dell'anagrafica."
+    )
+    whatsapp = forms.BooleanField(
+        label="Anche su WhatsApp",
+        required=False,
+        help_text="Al cellulare di chi ha dato il consenso a ricevere messaggi su WhatsApp.",
+    )
+    testo_breve = forms.CharField(
+        label="Testo breve (SMS e WhatsApp)",
+        required=False,
+        max_length=300,
+        widget=forms.Textarea(attrs={"rows": 2, "maxlength": 300}),
+        help_text="Con i segnaposto, es. «{{ saluto }} {{ nome }}, assemblea il 12/12 ore 18: "
+        "dettagli per email». Vuoto: l'oggetto. Si aggiunge il nome dell'associazione.",
+    )
 
     def __init__(self, *args, **kwargs):
         from apps.core import invio
@@ -99,6 +115,13 @@ class InvioForm(StileMixin, forms.Form):
         self.telegram_pronto = CanaleTelegram.corrente().pronto
         if not self.telegram_pronto:
             del self.fields["telegram"]
+        from apps.core.models import ServizioMessaggi
+
+        for canale in ("sms", "whatsapp"):
+            if ServizioMessaggi.attivo_per(canale) is None:
+                del self.fields[canale]
+        if "sms" not in self.fields and "whatsapp" not in self.fields:
+            del self.fields["testo_breve"]
 
     def servizio(self):
         valore = self.cleaned_data.get("da") or ""
@@ -108,6 +131,8 @@ class InvioForm(StileMixin, forms.Form):
     def clean(self):
         dati = super().clean()
         _controlla_segnaposto(self, "oggetto", "corpo")
+        if "testo_breve" in self.fields:
+            _controlla_segnaposto(self, "testo_breve")
         self.indirizzi_validi, errati = leggi_indirizzi(dati.get("indirizzi"))
         if errati:
             self.add_error("indirizzi", "Indirizzi non validi: " + "; ".join(errati))

@@ -45,7 +45,8 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 4. **Destinatari**: una o più **liste**, persone ed enti cercati in anagrafica, altri indirizzi scritti a
    mano (uno per riga: `Mario Rossi <mario@example.org>`).
 5. **Spedisci da**: il server generale (predefinito) o un altro servizio di invio configurato in
-   *Sistema → Servizi di posta* (vedi sotto per la **PEC**); **Anche su Telegram**, se il bot è attivo.
+   *Sistema → Servizi di posta* (vedi sotto per la **PEC**); **Anche su Telegram**, **Anche per SMS**,
+   **Anche su WhatsApp**, se i rispettivi servizi sono attivi, con il **testo breve** per SMS e WhatsApp.
 6. **Finalità**, eventuale data di **invio programmato**, **protocolla in uscita** al termine.
 7. **Prepara e controlla**: nulla parte ancora. La pagina mostra l'**anteprima** del messaggio come lo
    riceverà il primo destinatario e l'elenco dei destinatari con gli **esclusi** e il motivo.
@@ -74,6 +75,24 @@ Se l'associazione ha attivato il **bot Telegram** (*Sistema → Servizi di posta
 **Anche su Telegram**: chi ha collegato Telegram riceve il messaggio anche lì (testo e documenti
 allegati); chi non ha l'email ma ha Telegram lo riceve **solo** su Telegram. Valgono le stesse regole di
 privacy (finalità e consenso) dell'email.
+
+### Anche per SMS e su WhatsApp
+
+Se in *Sistema → Servizi di posta* è attivo un fornitore di **SMS** (Skebby, Aruba SMS, Twilio) o di
+**WhatsApp Business**, nel modulo compaiono **Anche per SMS** e **Anche su WhatsApp** con il **Testo
+breve**: un messaggio di poche righe, con i segnaposto (es. `{{ saluto }} {{ nome }}, assemblea il
+12/12 alle 18: i dettagli per email`), a cui si aggiunge il nome dell'associazione; vuoto, si usa
+l'oggetto. Va al **cellulare** dell'anagrafica (in qualsiasi formato: il programma lo porta a +39...).
+
+- **SMS**: a chi ha il cellulare (anche a chi non ha l'email), con le stesse regole di finalità e
+  consenso. Al massimo tre SMS concatenati (459 caratteri).
+- **WhatsApp**: solo a chi ha dato il **consenso a ricevere messaggi su WhatsApp**, registrato nella
+  scheda anagrafica (riquadro *WhatsApp* → **Registra consenso**, oppure **Ritira**): è una regola di
+  WhatsApp. Il messaggio usa il **modello approvato da Meta** configurato nel servizio, con il testo
+  breve al posto del parametro.
+
+Nella pagina dell'invio ogni destinatario mostra l'esito di SMS e WhatsApp (in attesa, inviato,
+errore con il motivo); il programma ritenta tre volte.
 
 Per **collegare** una persona: nella sua **scheda anagrafica**, riquadro *Telegram* → **Invito**. Si
 ottiene un **link personale** (con QR da inquadrare) da mandarle: aprendolo con Telegram e premendo

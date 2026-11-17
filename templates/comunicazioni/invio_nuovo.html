@@ -35,6 +35,9 @@
       <div class="card-body">
         {{ form.da.as_field_group }}
         {% if form.telegram %}{{ form.telegram.as_field_group }}{% endif %}
+        {% if form.sms %}{{ form.sms.as_field_group }}{% endif %}
+        {% if form.whatsapp %}{{ form.whatsapp.as_field_group }}{% endif %}
+        {% if form.testo_breve %}{{ form.testo_breve.as_field_group }}{% endif %}
         {{ form.finalita.as_field_group }}
         {{ form.programmato_il.as_field_group }}
         {% if perms.protocollo.add_protocollo %}{{ form.protocolla.as_field_group }}{% endif %}

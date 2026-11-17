@@ -198,6 +198,52 @@ class ServizioInvioForm(StileMixin, forms.ModelForm):
         return super().save(commit)
 
 
+class ServizioMessaggiForm(StileMixin, forms.ModelForm):
+    """Fornitore di SMS o WhatsApp Business (password o token cifrati, mai mostrati)."""
+
+    nuovo_segreto = forms.CharField(
+        label="Password o token",
+        required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
+        help_text="Skebby e Aruba: password; Twilio: Auth Token; WhatsApp: token di accesso "
+        "permanente (utente di sistema). Vuoto per mantenere quello salvato. È conservato cifrato.",
+    )
+
+    class Meta:
+        from .models import ServizioMessaggi
+
+        model = ServizioMessaggi
+        fields = [
+            "nome", "tipo", "account", "mittente", "tipo_messaggio", "modello", "lingua",
+            "url_base", "attivo",
+        ]  # fmt: skip
+
+    def clean(self):
+        import re
+
+        from .cifratura import cifratura_disponibile
+
+        dati = super().clean()
+        if not cifratura_disponibile():
+            raise forms.ValidationError("Manca la chiave di cifratura (CHIAVE_CIFRATURA).")
+        if not self.instance.segreto_cifrato and not dati.get("nuovo_segreto"):
+            self.add_error("nuovo_segreto", "Indicare la password o il token.")
+        tipo, mittente = dati.get("tipo"), (dati.get("mittente") or "").strip()
+        if tipo == "whatsapp" and not (dati.get("modello") or "").strip():
+            self.add_error("modello", "Per WhatsApp serve il nome del modello approvato da Meta.")
+        if tipo == "twilio" and not mittente:
+            self.add_error("mittente", "Per Twilio serve il numero o il Messaging Service.")
+        alfanumerico = tipo in ("skebby", "aruba") and mittente and not mittente.startswith("+")
+        if alfanumerico and not re.fullmatch(r"[A-Za-z0-9 ]{1,11}", mittente):
+            self.add_error("mittente", "Mittente alfanumerico: al massimo 11 lettere o cifre.")
+        return dati
+
+    def save(self, commit=True):
+        if self.cleaned_data.get("nuovo_segreto"):
+            self.instance.imposta_segreto(self.cleaned_data["nuovo_segreto"])
+        return super().save(commit)
+
+
 class DocumentoPubblicoForm(StileMixin, forms.ModelForm):
     nuovo_file = forms.FileField(
         label="File PDF",

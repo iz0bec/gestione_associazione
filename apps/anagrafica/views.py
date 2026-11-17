@@ -64,6 +64,9 @@ class DettaglioView(PermessoMixin, DetailView):
         from apps.core.models import CanaleTelegram
 
         ctx["telegram_attivo"] = CanaleTelegram.corrente().pronto
+        from apps.core.models import ServizioMessaggi
+
+        ctx["whatsapp_attivo"] = ServizioMessaggi.attivo_per("whatsapp") is not None
         from apps.organi.models import cariche_di
 
         ctx["cariche"] = cariche_di(self.object) if self.object.is_persona else []

@@ -140,6 +140,9 @@ class InvioNuovoView(PermessoMixin, FormView):
                 programmato_il=d["programmato_il"],
                 servizio=form.servizio(),
                 telegram=d.get("telegram", False),
+                sms=d.get("sms", False),
+                whatsapp=d.get("whatsapp", False),
+                testo_breve=d.get("testo_breve", ""),
             )
         except OperazioneNonValida as e:
             form.add_error(None, e)
@@ -177,7 +180,7 @@ class InvioView(PermessoMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         inv = self.object
-        destinatari = inv.destinatari.select_related("soggetto__socio")
+        destinatari = inv.destinatari.select_related("soggetto__socio").prefetch_related("consegne")
         filtro = self.request.GET.get("stato")
         ctx["destinatari"] = destinatari.filter(stato=filtro) if filtro else destinatari
         ctx["conteggi"] = {
@@ -514,6 +517,25 @@ class TelegramInvitoView(PermessoMixin, TemplateView):
         ctx.update(soggetto=soggetto, link=link, qr=qr_svg(link),
                    bot=CanaleTelegram.corrente().nome_bot)  # fmt: skip
         return ctx
+
+
+class WhatsAppConsensoView(PermessoMixin, View):
+    """Registra o ritira il consenso della persona a ricevere messaggi su WhatsApp."""
+
+    permission_required = "anagrafica.change_soggetto"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        from django.utils import timezone
+
+        soggetto = get_object_or_404(Soggetto, pk=pk)
+        consenso = request.POST.get("consenso") == "on"
+        soggetto.whatsapp_consenso_il = timezone.now() if consenso else None
+        soggetto.save(update_fields=["whatsapp_consenso_il"])
+        registra(Azione.MODIFICA, soggetto, whatsapp_consenso=consenso)
+        stato = "registrato" if consenso else "ritirato"
+        messages.success(request, f"Consenso WhatsApp {stato} per {soggetto}.")
+        return redirect(soggetto)
 
 
 class TelegramScollegaView(PermessoMixin, View):

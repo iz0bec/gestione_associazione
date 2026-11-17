@@ -34,6 +34,7 @@ from . import anniversari
 from .models import (
     AllegatoInvio,
     Automazione,
+    ConsegnaMessaggio,
     Destinatario,
     DestinatarioRegistrato,
     Finalita,
@@ -217,12 +218,17 @@ def crea_invio(
     contesti_soggetto=None,
     servizio=None,
     telegram=False,
+    sms=False,
+    whatsapp=False,
+    testo_breve="",
 ):
     """Prepara un invio in bozza con i destinatari (i non raggiungibili esclusi, con il motivo).
 
     `allegati`: lista di (nome, bytes); `contesti_soggetto`: {soggetto_id: {segnaposto: valore}}.
     `servizio`: ServizioInvio (None: server generale); se è una PEC, chi ha la PEC la riceve per
-    PEC e gli altri per email dal server generale. `telegram`: anche a chi ha collegato Telegram.
+    PEC e gli altri per email dal server generale. `telegram`: anche a chi ha collegato Telegram;
+    `sms`, `whatsapp`: anche per SMS (a chi ha il cellulare) e WhatsApp (a chi ha dato il consenso),
+    con `testo_breve` (vuoto: l'oggetto).
     """
     if not oggetto.strip() or not corpo.strip():
         raise OperazioneNonValida("Oggetto e testo sono obbligatori.")
@@ -236,15 +242,20 @@ def crea_invio(
         raise OperazioneNonValida("Indicare almeno un destinatario.")
     if servizio is not None and not servizio.attivo:
         raise OperazioneNonValida(f"Il servizio di invio «{servizio}» è disattivato.")
-    from apps.core.models import CanaleTelegram
+    from apps.core.models import CanaleTelegram, ServizioMessaggi
 
     telegram = telegram and CanaleTelegram.corrente().pronto
+    sms = sms and ServizioMessaggi.attivo_per("sms") is not None
+    whatsapp = whatsapp and ServizioMessaggi.attivo_per("whatsapp") is not None
+    if testo_breve and (sconosciuti := segnaposto_sconosciuti(testo_breve)):
+        raise OperazioneNonValida(f"Segnaposto sconosciuti: {', '.join(sconosciuti)}.")
     pec = servizio is not None and servizio.pec
     invio = Invio.objects.create(
         oggetto=oggetto.strip(), corpo=corpo, finalita=finalita, modello=modello,
         protocolla=protocolla, programmato_il=programmato_il, origine=origine,
         origine_id=origine_id, contesto=contesto or {}, creato_da=utente, modificato_da=utente,
-        servizio=servizio, telegram=telegram,
+        servizio=servizio, telegram=telegram, sms=sms, whatsapp=whatsapp,
+        testo_breve=(testo_breve or "").strip()[:320],
     )  # fmt: skip
     con_consenso = (
         consensi_prestati(soggetti, finalita) if finalita != Finalita.ISTITUZIONALE else set()
@@ -278,6 +289,8 @@ def crea_invio(
             righe.append(Destinatario(invio=invio, nome=nome[:200], email=email, canale=canale))
             gia.add(email)
     Destinatario.objects.bulk_create(righe)
+    if sms or whatsapp:
+        _consegne_messaggi(invio, sms, whatsapp)
     for nome, dati in allegati:
         _allega(invio, nome, dati)
     registra(
@@ -288,6 +301,25 @@ def crea_invio(
         esclusi=sum(1 for r in righe if r.stato == Destinatario.Stato.ESCLUSO),
     )
     return invio
+
+
+def _consegne_messaggi(invio, sms, whatsapp):
+    """SMS a chi ha il cellulare, WhatsApp a chi ha anche dato il consenso: per i destinatari non
+    esclusi (o esclusi solo perché senza email), con le stesse regole di finalità e consenso."""
+    from .messaggi import numero_e164
+
+    consegne = []
+    for d in invio.destinatari.filter(soggetto__isnull=False).select_related("soggetto"):
+        if d.stato == Destinatario.Stato.ESCLUSO and d.motivo != "senza email":
+            continue
+        numero = numero_e164(d.soggetto.cellulare)
+        if not numero:
+            continue
+        if sms:
+            consegne.append(ConsegnaMessaggio(destinatario=d, canale="sms", numero=numero))
+        if whatsapp and d.soggetto.whatsapp_consenso_il:
+            consegne.append(ConsegnaMessaggio(destinatario=d, canale="whatsapp", numero=numero))
+    ConsegnaMessaggio.objects.bulk_create(consegne)
 
 
 def _allega(invio, nome, dati):
@@ -310,7 +342,9 @@ def conferma(invio, utente):
     if invio.stato != Invio.Stato.BOZZA:
         raise OperazioneNonValida("L'invio è già stato confermato.")
     if not invio.destinatari.filter(
-        Q(stato=Destinatario.Stato.IN_ATTESA) | Q(telegram_stato="in_attesa")
+        Q(stato=Destinatario.Stato.IN_ATTESA)
+        | Q(telegram_stato="in_attesa")
+        | Q(consegne__stato=ConsegnaMessaggio.Stato.IN_ATTESA)
     ).exists():
         raise OperazioneNonValida("Nessun destinatario raggiungibile.")
     if sconosciuti := segnaposto_sconosciuti(invio.oggetto + invio.corpo):
@@ -335,6 +369,9 @@ def annulla(invio, utente):
         stato=Destinatario.Stato.ESCLUSO, motivo="invio annullato"
     )
     invio.destinatari.filter(telegram_stato="in_attesa").update(telegram_stato="")
+    ConsegnaMessaggio.objects.filter(
+        destinatario__invio=invio, stato=ConsegnaMessaggio.Stato.IN_ATTESA
+    ).delete()
     registra(Azione.ANNULLAMENTO, invio, utente=utente)
     return invio
 
@@ -462,6 +499,13 @@ def elabora_coda(limite=None, invio=None):
             inviati, errori = inviati + fatti, errori + falliti
             if inviati + errori >= limite:
                 return inviati, errori
+        if inv.sms or inv.whatsapp:
+            from . import messaggi
+
+            fatti, falliti = messaggi.invia_coda(inv, limite - inviati - errori)
+            inviati, errori = inviati + fatti, errori + falliti
+            if inviati + errori >= limite:
+                return inviati, errori
         _concludi_se_finito(inv)
     return inviati, errori
 
@@ -492,11 +536,15 @@ def applica_ricevuta_pec(riferimento, tipo):
 
 def _concludi_se_finito(invio):
     if invio.destinatari.filter(
-        Q(stato=Destinatario.Stato.IN_ATTESA) | Q(telegram_stato="in_attesa")
+        Q(stato=Destinatario.Stato.IN_ATTESA)
+        | Q(telegram_stato="in_attesa")
+        | Q(consegne__stato=ConsegnaMessaggio.Stato.IN_ATTESA)
     ).exists():
         return
     errori = invio.destinatari.filter(
-        Q(stato=Destinatario.Stato.ERRORE) | Q(telegram_stato="errore")
+        Q(stato=Destinatario.Stato.ERRORE)
+        | Q(telegram_stato="errore")
+        | Q(consegne__stato=ConsegnaMessaggio.Stato.ERRORE)
     ).exists()
     invio.stato = Invio.Stato.CON_ERRORI if errori else Invio.Stato.INVIATO
     invio.completato_il = timezone.now()

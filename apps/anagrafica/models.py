@@ -130,6 +130,10 @@ class Soggetto(ModelloBase):
     telegram_chat_id = models.BigIntegerField(null=True, blank=True, editable=False)
     telegram_collegato_il = models.DateTimeField(null=True, blank=True, editable=False)
     telegram_codice = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
+    # WhatsApp: serve il consenso esplicito a ricevere messaggi su WhatsApp (regole di Meta)
+    whatsapp_consenso_il = models.DateTimeField(
+        "consenso WhatsApp", null=True, blank=True, editable=False
+    )
     indirizzo = models.CharField(max_length=255, blank=True)
     cap = models.CharField("CAP", max_length=5, blank=True, validators=[validatore_cap])
     comune = models.CharField(max_length=100, blank=True)

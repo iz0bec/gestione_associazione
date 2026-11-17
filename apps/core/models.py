@@ -481,3 +481,90 @@ class CanaleTelegram(models.Model):
     @property
     def pronto(self):
         return self.attivo and bool(self.token_cifrato and self.nome_bot)
+
+
+class ServizioMessaggi(models.Model):
+    """Fornitore di SMS o WhatsApp Business (Sistema → Servizi di posta). Si usa il primo attivo
+    per ciascun canale; le credenziali sono cifrate come le password delle caselle."""
+
+    class Tipo(models.TextChoices):
+        SKEBBY = "skebby", "SMS - Skebby"
+        ARUBA = "aruba", "SMS - Aruba"
+        TWILIO = "twilio", "SMS - Twilio"
+        WHATSAPP = "whatsapp", "WhatsApp Business (API Cloud di Meta)"
+
+    URL_PREDEFINITI = {
+        "skebby": "https://api.skebby.it/API/v1.0/REST",
+        "aruba": "https://smspanel.aruba.it/API/v1.0/REST",
+        "twilio": "https://api.twilio.com/2010-04-01",
+        "whatsapp": "https://graph.facebook.com/v21.0",
+    }
+
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=10, choices=Tipo.choices)
+    account = models.CharField(
+        max_length=200,
+        help_text="Skebby e Aruba: nome utente; Twilio: Account SID; WhatsApp: ID del numero di "
+        "telefono (Phone number ID).",
+    )
+    segreto_cifrato = models.TextField(editable=False, blank=True)
+    mittente = models.CharField(
+        max_length=40,
+        blank=True,
+        help_text="SMS: mittente alfanumerico (max 11 caratteri, es. ANCR) o numero; Twilio: "
+        "numero (+39...) o Messaging Service SID (MG...). Non serve per WhatsApp.",
+    )
+    modello = models.CharField(
+        "modello WhatsApp",
+        max_length=100,
+        blank=True,
+        help_text="Nome del modello di messaggio approvato da Meta, con un solo parametro {{1}} "
+        "nel corpo: lì va il testo breve della comunicazione.",
+    )
+    lingua = models.CharField("lingua del modello", max_length=10, default="it", blank=True)
+    tipo_messaggio = models.CharField(
+        "qualità SMS",
+        max_length=10,
+        blank=True,
+        help_text="Skebby e Aruba: tipo di messaggio del listino (es. GP alta qualità, "
+        "N notifica). Vuoto: GP.",
+    )
+    url_base = models.URLField(
+        "indirizzo dell'API",
+        blank=True,
+        help_text="Vuoto: quello predefinito del fornitore. Da cambiare solo se lo indica il "
+        "fornitore.",
+    )
+    attivo = models.BooleanField(default=False)
+    ultimo_errore = models.CharField(max_length=300, blank=True, editable=False)
+
+    class Meta:
+        verbose_name = "servizio di messaggistica"
+        verbose_name_plural = "servizi di messaggistica"
+        ordering = ["tipo", "nome"]
+
+    def __str__(self):
+        return self.nome
+
+    @property
+    def canale(self):
+        return "whatsapp" if self.tipo == self.Tipo.WHATSAPP else "sms"
+
+    @property
+    def url(self):
+        return (self.url_base or self.URL_PREDEFINITI[self.tipo]).rstrip("/")
+
+    def imposta_segreto(self, segreto):
+        from .cifratura import cifra
+
+        self.segreto_cifrato = cifra(segreto)
+
+    def segreto(self):
+        from .cifratura import decifra
+
+        return decifra(self.segreto_cifrato) if self.segreto_cifrato else ""
+
+    @classmethod
+    def attivo_per(cls, canale):
+        tipi = ["whatsapp"] if canale == "whatsapp" else ["skebby", "aruba", "twilio"]
+        return cls.objects.filter(attivo=True, tipo__in=tipi).exclude(segreto_cifrato="").first()

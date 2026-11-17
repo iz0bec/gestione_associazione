@@ -105,6 +105,15 @@
       </div>
     </div>
     {% endif %}
+    {% if soggetto.is_persona and whatsapp_attivo or soggetto.whatsapp_consenso_il %}
+    <div class="card mb-3">
+      <div class="card-body d-flex align-items-center gap-2">
+        <span class="avatar bg-green-lt me-1"><i class="ti ti-brand-whatsapp"></i></span>
+        <div class="flex-fill">{% if soggetto.whatsapp_consenso_il %}<div class="fw-medium">Riceve messaggi WhatsApp</div><div class="small text-secondary">consenso dal {{ soggetto.whatsapp_consenso_il|date:"d/m/Y" }}{% if not soggetto.cellulare %} · <span class="text-orange">manca il cellulare</span>{% endif %}</div>{% else %}<div class="text-secondary">Nessun consenso per WhatsApp</div>{% endif %}</div>
+        {% if perms.anagrafica.change_soggetto %}<form method="post" action="{% url 'comunicazioni:whatsapp_consenso' soggetto.pk %}"{% if not soggetto.whatsapp_consenso_il %} data-conferma="La persona ha acconsentito a ricevere messaggi su WhatsApp al numero {{ soggetto.cellulare|default:'(manca il cellulare)' }}?"{% endif %}>{% csrf_token %}{% if not soggetto.whatsapp_consenso_il %}<input type="hidden" name="consenso" value="on">{% endif %}<button class="btn btn-sm" type="submit">{% if soggetto.whatsapp_consenso_il %}Ritira{% else %}Registra consenso{% endif %}</button></form>{% endif %}
+      </div>
+    </div>
+    {% endif %}
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-shield-check me-2"></i>Consensi privacy</h2></div>
       <div class="list-group list-group-flush">

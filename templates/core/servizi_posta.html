@@ -117,6 +117,29 @@
       {% if telegram.token_cifrato %}<div class="card-footer"><form method="post" action="{% url 'core:telegram' %}" data-modale-invio="#modale-verifica">{% csrf_token %}<input type="hidden" name="azione" value="verifica"><button class="btn btn-sm" type="submit"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form></div>{% endif %}
     </div>
   </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-message-2 me-1"></i>SMS e WhatsApp</h3>
+        <div class="card-actions"><a class="btn btn-sm btn-primary" href="{% url 'core:messaggi_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo</a></div>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for m in servizi_messaggi %}
+        <div class="list-group-item small">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <form method="post" action="{% url 'core:messaggi_azione' m.pk 'attivo' %}">{% csrf_token %}<label class="form-check form-switch mb-0" title="Attivo"><input class="form-check-input" type="checkbox" name="attivo" data-invio-automatico{% if m.attivo %} checked{% endif %} aria-label="Servizio attivo"><noscript><button class="btn btn-sm" type="submit">Salva</button></noscript></label></form>
+            <strong class="flex-fill">{{ m.nome }} <span class="badge {% if m.canale == 'whatsapp' %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{{ m.get_tipo_display }}</span></strong>
+            <form method="post" action="{% url 'core:messaggi_azione' m.pk 'verifica' %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nessun messaggio inviato"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
+            <a class="btn btn-sm" href="{% url 'core:messaggi_modifica' m.pk %}">Modifica</a>
+            <form method="post" action="{% url 'core:messaggi_azione' m.pk 'elimina' %}" data-conferma="Eliminare «{{ m.nome }}»?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Elimina"><i class="ti ti-trash"></i></button></form>
+          </div>
+          <div class="text-secondary">{{ m.account }}{% if m.mittente %} · mittente {{ m.mittente }}{% endif %}{% if m.modello %} · modello «{{ m.modello }}»{% endif %}{% if m.ultimo_errore %} · <span class="text-danger">{{ m.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
+        </div>
+        {% empty %}<div class="list-group-item small text-secondary">Nessun fornitore configurato. SMS: Skebby, Aruba SMS o Twilio; WhatsApp: API Cloud di Meta (WhatsApp Business).</div>{% endfor %}
+      </div>
+      <div class="card-footer small text-secondary">Le comunicazioni scelte «anche per SMS» o «anche su WhatsApp» mandano il <strong>testo breve</strong> al cellulare dell'anagrafica; WhatsApp solo a chi ha dato il consenso (scheda anagrafica). Si usa il primo servizio attivo per canale; vale l'interruttore dell'invio.</div>
+    </div>
+  </div>
 </div>
 <div class="modal" id="modale-verifica" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-body text-center py-4">

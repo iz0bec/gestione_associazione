@@ -126,6 +126,22 @@ l'interruttore. Il riquadro indica quante persone sono collegate e l'ultimo cont
 collegamenti (`/start`) e le disiscrizioni (`/stop`) ogni minuto; i messaggi partono solo con l'invio
 attivo. Il server deve poter raggiungere `api.telegram.org` (HTTPS in uscita); non serve aprire porte.
 
+### SMS e WhatsApp
+
+Il riquadro **SMS e WhatsApp** elenca i **fornitori** (interruttore, **Verifica**, Modifica, Elimina);
+**Nuovo** ne aggiunge uno. Si usa il primo attivo per ciascun canale. Password e token sono cifrati.
+
+| Fornitore | Account | Password o token | Mittente e altro |
+|---|---|---|---|
+| Skebby, Aruba SMS | nome utente | password | mittente alfanumerico (max 11, registrato presso il fornitore); qualità (es. `GP`) |
+| Twilio | Account SID | Auth Token | numero `+...` o Messaging Service `MG...` |
+| WhatsApp Business (API Cloud di Meta) | ID del numero di telefono | token permanente di un utente di sistema | nome e lingua del **modello approvato** con un parametro `{{1}}` |
+
+**Verifica** prova l'accesso senza mandare messaggi (per gli SMS mostra anche il credito). L'indirizzo
+dell'API ha un valore predefinito per ogni fornitore e si cambia solo se il fornitore lo indica. Le
+integrazioni seguono la documentazione dei fornitori ma non sono ancora state provate con un account
+reale: alla prima configurazione usare *Verifica* e una comunicazione di prova a sé stessi.
+
 La pagina mostra anche i **messaggi in coda** e, per ogni casella, se è usata dal protocollo,
 l'ultimo controllo ed eventuali errori. Ogni modifica è annotata nel registro attività (mai la password).
 
