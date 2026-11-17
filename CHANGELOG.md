@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.33] - 2026-11-17
+
+Area personale dei soci.
+
 ### Aggiunto
 - **Area personale dei soci** (`/area/`, da attivare nei dati dell'organizzazione): accesso senza
   password con un collegamento via email valido 30 minuti e usabile una volta; dati, tessere e quote

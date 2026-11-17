@@ -65,6 +65,7 @@
 | **1.0.30** ✅ | backup incrementali, cifrati con CHIAVE_BACKUP, prova di ripristino settimanale | GitHub, GitLab |
 | **1.0.31** ✅ | incassi diversi dalle quote con ricevuta, note di storno e rimborsi, registro incassi con quadratura | GitHub, GitLab |
 | **1.0.32** ✅ | eventi e cerimonie con adesioni dalla segreteria e dal modulo pubblico | GitHub, GitLab |
+| **1.0.33** ✅ | area personale dei soci con accesso tramite collegamento via email | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
