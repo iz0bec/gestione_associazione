@@ -48,6 +48,21 @@ Ogni operazione resta nel registro attività.
 
 Il confronto si fa sulle migrazioni elencate nel manifesto, non sul numero di versione.
 
+## Backup incrementali, cifratura e prova di ripristino (dalla 1.0.30)
+
+- **Incrementali**: i file caricati si salvano una volta sola nell'archivio `BACKUP_ROOT/oggetti/`
+  (per impronta SHA-256); ogni backup contiene database ed elenco dei file. I file che nessun backup usa
+  più si tolgono con la rotazione. Il backup **scaricato** dall'interfaccia è sempre completo (con i
+  file dentro, cartella `oggetti/` del `.tar`). I backup fino alla 1.0.29 restano ripristinabili.
+- **Cifratura**: con `CHIAVE_BACKUP` nel `.env` (`manage.py genera_chiave_backup`) database e file sono
+  cifrati con AES-256-GCM. **Conservare la chiave fuori dal server**: senza non si ripristina nulla.
+  La pagina *Sistema → Backup* mostra il comando pronto da copiare e l'impronta della chiave in uso.
+- **Prova di ripristino**: pulsante nella pagina o `manage.py backup --prova [NOME]`; controlla le
+  impronte (decifrando) e il dump e, se l'utente PostgreSQL ha il permesso `CREATEDB`, ripristina in un
+  database temporaneo confrontando i conteggi. Il pianificatore ne fa una alla settimana sull'ultimo.
+- **Ripristino a mano**: `manage.py backup --estrai NOME CARTELLA` scrive `database.dump` (per
+  `pg_restore`) e la cartella `media` decifrati.
+
 ## Backup automatici
 
 Il pianificatore crea ogni notte un backup **automatico**, poi applica la conservazione.

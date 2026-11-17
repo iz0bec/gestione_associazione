@@ -173,6 +173,9 @@ MEDIA_URL = "/non-servito/"
 
 # Backup completi (database + file): cartella, backup automatico notturno e quanti conservarne
 BACKUP_ROOT = env.path("BACKUP_ROOT", default=BASE_DIR / "var" / "backup")
+# chiave dei backup cifrati (AES-256-GCM), distinta da CHIAVE_CIFRATURA: va custodita fuori dal
+# server, senza non si ripristina. Vuota: backup in chiaro. manage.py genera_chiave_backup
+CHIAVE_BACKUP = env("CHIAVE_BACKUP", default="")
 BACKUP_AUTOMATICO = env.bool("BACKUP_AUTOMATICO", default=True)
 BACKUP_ORA = env.int("BACKUP_ORA", default=2)
 # conservazione a rotazione (BACKUP_CONSERVA è il vecchio nome dei giornalieri)

@@ -54,7 +54,7 @@ class TestFile:
         p = backup.crea(motivo="manuale")
         assert backup.NOME_VALIDO.match(p.name) and oct(p.stat().st_mode)[-3:] == "600"
         with tarfile.open(p) as tar:
-            assert set(tar.getnames()) == {"manifest.json", "database.dump", "file.tar.gz"}
+            assert set(tar.getnames()) == {"manifest.json", "database.dump", "file.json"}
         m = backup.verifica(p)
         assert m["conteggi"]["soggetti"] == 1 and "soci" in m["migrazioni"]
         assert [b.nome for b in backup.elenco()] == [p.name]
@@ -299,3 +299,183 @@ def test_un_backup_automatico_al_giorno():
     assert backup_di_oggi(oggi)
     call_command("backup", motivo="prima dell'aggiornamento", stdout=io.StringIO())
     assert {b.motivo for b in backup.elenco()} == {"automatico", "prima dell'aggiornamento"}
+
+
+# --- incrementali, cifratura, formato precedente, prova di ripristino (1.0.30) ---------------
+
+
+def _oggetti():
+    return sorted(f.name for f in backup.archivio().glob("*/*"))
+
+
+@richiede_pg
+@pytest.mark.django_db
+class TestIncrementali:
+    def test_file_una_volta_sola(self, cartelle):
+        primo = backup.crea()
+        assert len(_oggetti()) == 1 and backup.leggi_manifesto(primo)["file"]["numero"] == 1
+        (cartelle / "media" / "copia.jpg").write_bytes(b"foto originale")  # stesso contenuto
+        (cartelle / "media" / "nuovo.pdf").write_bytes(b"%PDF nuovo")
+        secondo = backup.crea()
+        assert len(_oggetti()) == 2 and backup.leggi_manifesto(secondo)["file"]["numero"] == 3
+        assert primo.stat().st_size < 1024 * 1024  # niente documenti dentro il .tar
+        backup.elimina(secondo.name)
+        assert len(_oggetti()) == 1  # il pdf non serve più a nessun backup
+
+    def test_scaricato_completo_e_autosufficiente(self, cartelle):
+        p = backup.crea()
+        completo = backup.esporta_completo(p)
+        with tarfile.open(completo) as tar:
+            assert any(n.startswith("oggetti/") for n in tar.getnames())
+        shutil.rmtree(backup.archivio())  # altrove l'archivio non c'è
+        with completo.open("rb") as f:
+            caricato = backup.salva_caricato(SimpleUploadedFile("b.tar", f.read()))
+        destinazione = cartelle / "estratto"
+        backup.estrai(caricato, destinazione)
+        assert (
+            destinazione / "media" / "anagrafica" / "foto.jpg"
+        ).read_bytes() == b"foto originale"
+        assert (destinazione / "database.dump").read_bytes().startswith(b"PGDMP")
+
+    def test_file_mancante_nell_archivio(self):
+        p = backup.crea()
+        for f in backup.archivio().glob("*/*"):
+            f.unlink()
+        with pytest.raises(backup.BackupNonValido, match="Manca un file"):
+            backup.verifica(p)
+
+
+@richiede_pg
+@pytest.mark.django_db
+class TestCifratura:
+    def test_cifrato_e_chiave_sbagliata(self, settings, cartelle):
+        from apps.core import cifratura_backup as cb
+
+        settings.CHIAVE_BACKUP = cb.nuova_chiave()
+        p = backup.crea()
+        m = backup.leggi_manifesto(p)
+        assert m["cifrato"] and m["impronta_chiave"] == cb.impronta(settings.CHIAVE_BACKUP)
+        with tarfile.open(p) as tar:
+            assert "database.dump.cif" in tar.getnames()
+            assert not tar.extractfile("database.dump.cif").read().startswith(b"PGDMP")
+        (oggetto,) = backup.archivio().glob("*/*")
+        assert oggetto.name.endswith(".cif") and b"foto originale" not in oggetto.read_bytes()
+        backup.verifica(p)
+        giusta = settings.CHIAVE_BACKUP
+        settings.CHIAVE_BACKUP = cb.nuova_chiave()
+        with pytest.raises(backup.BackupNonValido, match="altra chiave"):
+            backup.verifica(p)
+        settings.CHIAVE_BACKUP = ""
+        with pytest.raises(backup.BackupNonValido, match="serve la chiave"):
+            backup.verifica(p)
+        settings.CHIAVE_BACKUP = giusta
+        destinazione = cartelle / "estratto"
+        backup.estrai(p, destinazione)
+        assert (
+            destinazione / "media" / "anagrafica" / "foto.jpg"
+        ).read_bytes() == b"foto originale"
+
+    def test_flusso_troncato_o_manomesso(self, tmp_path):
+        from apps.core import cifratura_backup as cb
+
+        chiave = cb.nuova_chiave()
+        chiaro = tmp_path / "chiaro"
+        chiaro.write_bytes(b"x" * (cb.BLOCCO * 2 + 10))
+        cif = tmp_path / "cif"
+        sha = cb.cifra(chiaro, cif, chiave)
+        assert cb.decifra(cif, tmp_path / "di_nuovo", chiave) == sha
+        dati = cif.read_bytes()
+        (tmp_path / "corto").write_bytes(dati[: len(dati) - 40])
+        with pytest.raises(cb.ErroreCifratura):
+            cb.decifra(tmp_path / "corto", tmp_path / "x", chiave)
+        rovinato = bytearray(dati)
+        rovinato[100] ^= 1
+        (tmp_path / "rovinato").write_bytes(bytes(rovinato))
+        with pytest.raises(cb.ErroreCifratura):
+            cb.decifra(tmp_path / "rovinato", tmp_path / "x", chiave)
+
+
+@richiede_pg
+@pytest.mark.django_db(transaction=True, serialized_rollback=True)
+def test_ripristino_cifrato_reale(settings, cartelle):
+    from apps.core import cifratura_backup as cb
+
+    settings.CHIAVE_BACKUP = cb.nuova_chiave()
+    Soggetto.objects.create(cognome="Prima")
+    p = backup.crea()
+    Soggetto.objects.create(cognome="Dopo")
+    (cartelle / "media" / "anagrafica" / "foto.jpg").write_bytes(b"foto modificata")
+    backup.ripristina(p)
+    assert list(Soggetto.objects.values_list("cognome", flat=True)) == ["Prima"]
+    assert (cartelle / "media" / "anagrafica" / "foto.jpg").read_bytes() == b"foto originale"
+
+
+@richiede_pg
+@pytest.mark.django_db(transaction=True, serialized_rollback=True)
+def test_formato_precedente_ancora_ripristinabile(cartelle):
+    """Backup della 1.0.29 o prima: file in un unico file.tar.gz."""
+    import hashlib
+    import tempfile
+
+    from django.conf import settings
+
+    Soggetto.objects.create(cognome="Vecchio")
+    with tempfile.TemporaryDirectory() as lavoro:
+        lavoro = Path(lavoro)
+        argomenti, ambiente = backup._connessione()
+        backup._esegui([shutil.which("pg_dump"), "--format=custom", "--no-owner",
+                        "--no-privileges", f"--file={lavoro / 'database.dump'}", *argomenti],
+                       ambiente, "pg_dump")  # fmt: skip
+        with tarfile.open(lavoro / "file.tar.gz", "w:gz") as tar:
+            tar.add(cartelle / "media" / "anagrafica", arcname="anagrafica")
+        impronte = {n: hashlib.sha256((lavoro / n).read_bytes()).hexdigest()
+                    for n in ("database.dump", "file.tar.gz")}  # fmt: skip
+        manifesto = {"formato": 1, "applicazione": settings.APP_NOME, "versione": "1.0.29",
+                     "creato_il": "2026-11-01T02:00:00+01:00", "motivo": "automatico",
+                     "migrazioni": backup._migrazioni_applicate(), "conteggi": {},
+                     "impronte": impronte}  # fmt: skip
+        (lavoro / "manifest.json").write_text(json.dumps(manifesto))
+        vecchio = backup.cartella() / "backup_20261101_020000_automatico.tar"
+        with tarfile.open(vecchio, "w") as tar:
+            for n in ("manifest.json", "database.dump", "file.tar.gz"):
+                tar.add(lavoro / n, arcname=n)
+    Soggetto.objects.create(cognome="Nuovo")
+    (cartelle / "media" / "anagrafica" / "foto.jpg").write_bytes(b"cambiata")
+    backup.ripristina(vecchio)
+    assert list(Soggetto.objects.values_list("cognome", flat=True)) == ["Vecchio"]
+    assert (cartelle / "media" / "anagrafica" / "foto.jpg").read_bytes() == b"foto originale"
+    assert backup.esporta_completo(vecchio).exists()  # anche scaricabile
+
+
+@richiede_pg
+@pytest.mark.django_db(transaction=True, serialized_rollback=True)
+def test_prova_di_ripristino_completa(cartelle, client_ruolo):
+    Soggetto.objects.create(cognome="Prova")
+    p = backup.crea()
+    esito, dettaglio = backup.prova_ripristino(p)
+    assert esito == "ok", dettaglio
+    assert "database temporaneo riuscito" in dettaglio or "non eseguito" in dettaglio
+    assert backup.verifiche()[p.name]["esito"] == "ok"
+    for f in backup.archivio().glob("*/*"):
+        f.write_bytes(b"rovinato")
+    esito, dettaglio = backup.prova_ripristino(p)
+    assert esito == "errore" and "danneggiato" in dettaglio
+    admin = client_ruolo("Amministratore di sistema")
+    pagina = admin.get(reverse("core:backup")).content.decode()
+    assert "prova di ripristino non riuscita" in pagina and "non sono cifrati" in pagina
+
+
+@pytest.mark.django_db
+def test_prova_settimanale(cartelle):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.core.management.commands.pianificatore import prova_dovuta
+
+    adesso = timezone.localtime()
+    assert not prova_dovuta(adesso)  # nessun backup
+    (backup.cartella() / "backup_20260101_020000_automatico.tar").write_bytes(b"x")
+    assert prova_dovuta(adesso)
+    backup._salva_verifica("backup_20260101_020000_automatico.tar", "ok", "")
+    assert not prova_dovuta(adesso) and prova_dovuta(adesso + timedelta(days=8))

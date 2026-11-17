@@ -13,6 +13,14 @@
 </form>
 {% endblock %}
 {% block contenuto %}
+{% if not chiave_impronta %}<div class="alert alert-warning">
+  <div class="mb-2"><i class="ti ti-lock-open me-1"></i><strong>I backup non sono cifrati.</strong> Chi ne ottiene una copia legge tutti i dati. Con la chiave dedicata <code>CHIAVE_BACKUP</code> database e documenti vengono cifrati (AES-256): <strong>conservare la chiave fuori dal server</strong> (password manager, cassaforte), perché senza non si ripristina nulla.</div>
+  <div class="small mb-1">1. Sul server, crea la chiave e la aggiunge al <code>.env</code> (clic per copiare):</div>
+  <input class="form-control form-control-sm font-monospace mb-2" type="text" readonly data-copia value="{{ comando_chiave }}" aria-label="Comando per creare la chiave dei backup">
+  <div class="small mb-1">2. Riavvia il programma:</div>
+  {% if comando_riavvio %}<input class="form-control form-control-sm font-monospace mb-2" type="text" readonly data-copia value="{{ comando_riavvio }}" aria-label="Comando per riavviare">{% else %}<div class="small mb-2">ferma e riavvia <code>runserver</code> (sviluppo).</div>{% endif %}
+  <div class="small">3. Copia la chiave (riga <code>CHIAVE_BACKUP=</code> del <code>.env</code>) in un luogo sicuro fuori dal server. I backup già fatti restano in chiaro.</div>
+</div>{% else %}<div class="alert alert-success py-2"><i class="ti ti-lock me-1"></i>Backup <strong>cifrati</strong> con la chiave dedicata (impronta <code>{{ chiave_impronta }}</code>). Senza quella chiave non si ripristinano: conservarne una copia fuori dal server.</div>{% endif %}
 <div class="row row-cards">
   <div class="col-lg-8">
     <div class="card">
@@ -26,11 +34,13 @@
                 {% if b.manifesto.conteggi %}<div class="small text-secondary">{{ b.manifesto.conteggi.soci }} soci · {{ b.manifesto.conteggi.protocolli }} protocolli · {{ b.manifesto.conteggi.movimenti }} movimenti</div>{% endif %}</td>
               <td><span class="badge {% if b.automatico %}bg-secondary-lt{% elif b.motivo == 'illeggibile' %}bg-red-lt{% else %}bg-blue-lt{% endif %}">{{ b.motivo }}</span>{% if b.manifesto.creato_da %}<div class="small text-secondary">{{ b.manifesto.creato_da }}</div>{% endif %}
                 <div class="small {% if b.fissato %}text-green{% elif b.conservazione %}text-secondary{% else %}text-orange{% endif %}">{% if b.fissato %}<i class="ti ti-pinned me-1"></i>escluso dalla rotazione{% if b.fissato.da %} da {{ b.fissato.da }}{% endif %}{% elif b.conservazione %}conservato: {{ b.conservazione }}{% else %}sarà eliminato al prossimo backup{% endif %}</div>
-                {% if b.fissato.nota %}<div class="small text-secondary">{{ b.fissato.nota }}</div>{% endif %}</td>
+                {% if b.fissato.nota %}<div class="small text-secondary">{{ b.fissato.nota }}</div>{% endif %}
+                <div class="small">{% if b.manifesto.cifrato %}<i class="ti ti-lock text-green" title="Cifrato (chiave {{ b.manifesto.impronta_chiave }})"></i> cifrato{% elif b.manifesto.formato %}<i class="ti ti-lock-open text-secondary"></i> in chiaro{% endif %}{% if b.prova %} · <span class="{% if b.prova.esito == 'ok' %}text-green{% else %}text-danger{% endif %}" title="{{ b.prova.dettaglio }}"><i class="ti ti-{% if b.prova.esito == 'ok' %}circle-check{% else %}alert-triangle{% endif %}"></i> prova di ripristino {% if b.prova.esito == 'ok' %}riuscita{% else %}non riuscita{% endif %} il {{ b.prova.il|slice:":10" }}</span>{% endif %}</div></td>
               <td class="d-none d-md-table-cell">{{ b.manifesto.versione|default:"—" }}</td>
               <td class="text-end text-nowrap">{{ b.dimensione|filesizeformat }}</td>
               <td class="text-end text-nowrap">
-                <a class="btn btn-sm" href="{% url 'core:scarica_backup' b.nome %}" title="Scarica" aria-label="Scarica {{ b.nome }}"><i class="ti ti-download"></i></a>
+                <a class="btn btn-sm" href="{% url 'core:scarica_backup' b.nome %}" title="Scarica (completo, con tutti i documenti)" aria-label="Scarica {{ b.nome }}"><i class="ti ti-download"></i></a>
+                {% if b.motivo != 'illeggibile' %}<form class="d-inline" method="post" action="{% url 'core:prova_backup' b.nome %}" data-modale-invio="#modale-prova">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di ripristino: verifica tutto senza toccare i dati" aria-label="Prova il ripristino di {{ b.nome }}"><i class="ti ti-test-pipe"></i></button></form>{% endif %}
                 {% if b.motivo != 'illeggibile' %}<form class="d-inline" method="post" action="{% url 'core:conserva_backup' b.nome %}">{% csrf_token %}<input type="hidden" name="conserva" value="{% if b.fissato %}0{% else %}1{% endif %}">{% if b.fissato %}<button class="btn btn-sm btn-outline-green" type="submit" title="Rimetti in rotazione" aria-label="Rimetti in rotazione {{ b.nome }}"><i class="ti ti-pinned-off"></i></button>{% else %}<button class="btn btn-sm" type="submit" title="Escludi dalla rotazione (conserva)" aria-label="Escludi dalla rotazione {{ b.nome }}"><i class="ti ti-pin"></i></button>{% endif %}</form>{% endif %}
                 {% if perms.core.ripristina_backup and b.motivo != 'illeggibile' %}<a class="btn btn-sm btn-outline-warning" href="{% url 'core:ripristino' b.nome %}">Ripristina</a>{% endif %}
                 <form class="d-inline" method="post" action="{% url 'core:elimina_backup' b.nome %}" data-conferma="Eliminare definitivamente questo backup?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Elimina" aria-label="Elimina {{ b.nome }}"><i class="ti ti-trash"></i></button></form>
@@ -48,7 +58,8 @@
     <div class="card mb-3"><div class="card-body">
       <h3 class="card-title">Come funziona</h3>
       <ul class="small mb-0">
-        <li>Un backup contiene <strong>tutto</strong>: il database e i file caricati (documenti protocollati, foto, loghi, moduli firmati).</li>
+        <li>Un backup contiene <strong>tutto</strong>: il database e i file caricati (documenti protocollati, foto, loghi, moduli firmati). I documenti si salvano <strong>una volta sola</strong> nell'archivio della cartella dei backup e ogni backup li richiama ({{ occupazione.archivio|filesizeformat }} in tutto): un backup nuovo occupa solo il database e le novità. Lo <strong>scaricato</strong> è sempre completo, con tutti i documenti.</li>
+        <li>La <i class="ti ti-test-pipe"></i> <strong>prova di ripristino</strong> controlla tutto senza toccare i dati: impronte di database e documenti e, se il server lo permette, un ripristino completo in un database temporaneo. Si fa da sola ogni settimana sull'ultimo backup automatico.</li>
         <li>{% if automatico %}Ogni notte, dalle {{ ora }}:00, viene creato un backup automatico.{% else %}Il backup automatico notturno è disattivato.{% endif %} Degli automatici si conserva l'ultimo di ciascuno degli ultimi <strong>{{ politica.giornalieri }} giorni</strong>, <strong>{{ politica.settimanali }} settimane</strong> e <strong>{{ politica.mensili }} mesi</strong>.</li>
         <li>Degli altri backup (manuali, caricati, prima di un ripristino o di un aggiornamento) {% if politica.altri %}si conservano gli ultimi <strong>{{ politica.altri }}</strong>{% else %}non se ne elimina nessuno{% endif %}. L'ultimo di ciascun gruppo non viene mai eliminato da solo.</li>
         <li>Con <i class="ti ti-pin"></i> si <strong>esclude un backup dalla rotazione</strong> (es. quello di fine anno o prima di una migrazione): resta finché non lo si rimette in rotazione o lo si elimina, ma il suo spazio conta nel totale.</li>
@@ -71,5 +82,11 @@
       <div class="card-footer text-end"><button class="btn" type="submit"><i class="ti ti-upload me-1"></i>Carica</button></div>
     </form>
   </div>
+</div>
+<div class="modal" id="modale-prova" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered"><div class="modal-content"><div class="modal-body text-center py-4">
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <div>Prova di ripristino in corso…</div><div class="small text-secondary">può richiedere qualche minuto</div>
+  </div></div></div>
 </div>
 {% endblock %}

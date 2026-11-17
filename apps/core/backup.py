@@ -2,8 +2,10 @@
 # * Progetto:    Gestione Associazione
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
-# * Descrizione: Backup e ripristino completi: un file .tar con il database (pg_dump), i file
-# *              caricati e un manifesto con versione, migrazioni e impronte SHA-256.
+# * Descrizione: Backup e ripristino completi: un file .tar con il database (pg_dump), l'elenco
+# *              dei file caricati e un manifesto con versione, migrazioni e impronte SHA-256.
+# *              I file stanno una volta sola nell'archivio per contenuto (backup incrementali);
+# *              con CHIAVE_BACKUP database e file sono cifrati (AES-256-GCM).
 # *              Il ripristino verifica il file, salva prima lo stato attuale, poi sostituisce
 # *              database e file e applica le migrazioni mancanti. Conservazione a rotazione
 # *              (giornalieri, settimanali, mensili), tetto di spazio e controllo del disco.
@@ -29,10 +31,13 @@ from django.db import connection
 from django.utils import timezone
 
 log = logging.getLogger(__name__)
-FORMATO = 1
+FORMATO = 2  # 1: file in un unico file.tar.gz (backup fino alla 1.0.29), ancora ripristinabili
 MANIFESTO = "manifest.json"
 DATABASE = "database.dump"
-FILE = "file.tar.gz"
+DATABASE_CIFRATO = "database.dump.cif"
+FILE = "file.tar.gz"  # solo formato 1
+ELENCO_FILE = "file.json"  # formato 2: [{"percorso", "sha256", "dimensione"}]
+OGGETTI = "oggetti"  # archivio dei file per contenuto (e cartella nel .tar completo)
 NOME_VALIDO = re.compile(r"^backup_[A-Za-z0-9_-]{1,80}\.tar$")
 
 
@@ -151,6 +156,186 @@ def _impronta(p):
     return h.hexdigest()
 
 
+# --- archivio dei file per contenuto -----------------------------------------------------
+#
+# Ogni file caricato si salva una volta sola in BACKUP_ROOT/oggetti/<aa>/<sha256>, cifrato se
+# c'è CHIAVE_BACKUP (<sha256>.<impronta della chiave>.cif): i backup contengono solo l'elenco.
+# I file del protocollo non cambiano mai, quindi ogni backup aggiunge solo le novità.
+
+INDICE = ".indice_file.json"  # cache {percorso: [dimensione, mtime_ns, sha256]}
+
+
+def archivio():
+    c = cartella() / OGGETTI
+    c.mkdir(parents=True, exist_ok=True)
+    c.chmod(0o700)
+    return c
+
+
+def nome_oggetto(sha, impronta_chiave=""):
+    return f"{sha}.{impronta_chiave}.cif" if impronta_chiave else sha
+
+
+def percorso_oggetto(sha, impronta_chiave=""):
+    return archivio() / sha[:2] / nome_oggetto(sha, impronta_chiave)
+
+
+def _censisci_media():
+    """Elenco dei file caricati con impronta (ricalcolata solo se dimensione o data cambiano)."""
+    media = Path(settings.MEDIA_ROOT)
+    p_indice = cartella() / INDICE
+    try:
+        indice = json.loads(p_indice.read_text())
+    except (OSError, json.JSONDecodeError):
+        indice = {}
+    nuovo, voci = {}, []
+    if media.is_dir():
+        for f in sorted(media.rglob("*")):
+            relativo = f.relative_to(media).as_posix()
+            if not f.is_file() or f.is_symlink() or relativo.startswith("."):
+                continue
+            stato = f.stat()
+            vecchio = indice.get(relativo)
+            if vecchio and vecchio[:2] == [stato.st_size, stato.st_mtime_ns]:
+                sha = vecchio[2]
+            else:
+                sha = _impronta(f)
+            nuovo[relativo] = [stato.st_size, stato.st_mtime_ns, sha]
+            voci.append({"percorso": relativo, "sha256": sha, "dimensione": stato.st_size})
+    parziale = p_indice.with_name(INDICE + ".parziale")
+    parziale.write_text(json.dumps(nuovo))
+    parziale.chmod(0o600)
+    parziale.replace(p_indice)
+    return voci
+
+
+def _archivia(sorgente, sha, chiave):
+    from . import cifratura_backup as cb
+
+    impronta_chiave = cb.impronta(chiave) if chiave else ""
+    dest = percorso_oggetto(sha, impronta_chiave)
+    if dest.exists():
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    parziale = dest.with_name(dest.name + ".parziale")
+    if chiave:
+        cb.cifra(sorgente, parziale, chiave)
+    else:
+        shutil.copyfile(sorgente, parziale)
+    parziale.chmod(0o600)
+    parziale.replace(dest)
+
+
+def _blocchi(f, cifrato):
+    """Contenuto in chiaro di un file aperto (decifrato se serve), a blocchi."""
+    from . import cifratura_backup as cb
+
+    if cifrato:
+        yield from cb.decifra_flusso(f, cb.chiave_corrente())
+    else:
+        yield from iter(lambda: f.read(1024 * 1024), b"")
+
+
+def _sha_blocchi(blocchi):
+    h = hashlib.sha256()
+    for b in blocchi:
+        h.update(b)
+    return h.hexdigest()
+
+
+class _Contenuto:
+    """Accesso al contenuto di un backup di formato 2: membri del .tar e archivio dei file."""
+
+    def __init__(self, tar, manifesto):
+        self.tar = tar
+        self.manifesto = manifesto
+        self.impronta_chiave = manifesto.get("impronta_chiave", "")
+        self.membri = {m.name: m for m in tar.getmembers()}
+
+    def database(self):
+        cifrato = DATABASE_CIFRATO in self.membri
+        return self.tar.extractfile(self.membri[DATABASE_CIFRATO if cifrato else DATABASE]), cifrato
+
+    def elenco_file(self):
+        voci = json.loads(self.tar.extractfile(self.membri[ELENCO_FILE]).read())
+        for v in voci:
+            percorso = Path(v.get("percorso", ""))
+            if percorso.is_absolute() or ".." in percorso.parts or not v.get("sha256"):
+                raise BackupNonValido("Elenco dei file del backup non valido.")
+        return voci
+
+    def apri(self, sha):
+        """(file aperto, cifrato) del contenuto: dentro il .tar o nell'archivio."""
+        nome = nome_oggetto(sha, self.impronta_chiave)
+        interno = f"{OGGETTI}/{nome}"
+        if interno in self.membri:
+            return self.tar.extractfile(self.membri[interno]), bool(self.impronta_chiave)
+        p = percorso_oggetto(sha, self.impronta_chiave)
+        if not p.is_file():
+            raise BackupNonValido(f"Manca un file del backup nell'archivio ({sha[:12]}…).")
+        return open(p, "rb"), bool(self.impronta_chiave)  # noqa: SIM115 - chiuso dal chiamante
+
+
+def oggetti_usati():
+    """Nomi dei file dell'archivio usati da almeno un backup; None se un backup è illeggibile
+    (allora non si elimina nulla)."""
+    usati = set()
+    for b in elenco():
+        if b.manifesto.get("motivo") == "illeggibile":
+            return None
+        if b.manifesto.get("formato") != 2:
+            continue
+        try:
+            with tarfile.open(b.percorso, "r:") as tar:
+                c = _Contenuto(tar, b.manifesto)
+                if any(n.startswith(f"{OGGETTI}/") for n in c.membri):
+                    continue  # completo: i file sono dentro
+                usati |= {nome_oggetto(v["sha256"], c.impronta_chiave) for v in c.elenco_file()}
+        except (tarfile.TarError, KeyError, json.JSONDecodeError, OSError, BackupNonValido):
+            return None
+    return usati
+
+
+def pulisci_archivio():
+    """Toglie dall'archivio i file che nessun backup usa più. Restituisce quanti."""
+    if (cartella() / ".ripristino.lock").exists():
+        return 0
+    usati = oggetti_usati()
+    if usati is None:
+        return 0
+    tolti = 0
+    for f in archivio().glob("*/*"):
+        if f.is_file() and not f.name.endswith(".parziale") and f.name not in usati:
+            f.unlink()
+            tolti += 1
+    return tolti
+
+
+def dimensione_archivio():
+    return sum(f.stat().st_size for f in archivio().glob("*/*") if f.is_file())
+
+
+def esporta_completo(p):
+    """Copia del backup con dentro anche i file (per portarlo altrove): percorso temporaneo."""
+    manifesto = leggi_manifesto(p)
+    destinazione = cartella() / f".esporta_{p.name}"
+    with tarfile.open(p, "r:") as src, tarfile.open(destinazione, "w") as dst:
+        for m in src.getmembers():
+            dst.addfile(m, src.extractfile(m))
+        if manifesto.get("formato") == 2:
+            c = _Contenuto(src, manifesto)
+            gia = set()
+            for v in c.elenco_file():
+                nome = nome_oggetto(v["sha256"], c.impronta_chiave)
+                if nome in gia or f"{OGGETTI}/{nome}" in c.membri:
+                    continue
+                gia.add(nome)
+                dst.add(percorso_oggetto(v["sha256"], c.impronta_chiave),
+                        arcname=f"{OGGETTI}/{nome}")  # fmt: skip
+    destinazione.chmod(0o600)
+    return destinazione
+
+
 # --- creazione ---------------------------------------------------------------------------
 
 
@@ -158,25 +343,36 @@ def crea(motivo="manuale", utente=None):
     """Crea il backup completo e restituisce il percorso del file."""
     from apps.core.models import Organizzazione
 
+    from . import cifratura_backup as cb
+
     pg_dump = _programma("pg_dump")
     controlla_spazio()
     destinazione = cartella()
+    chiave = cb.chiave_corrente()
+    chiave_impronta = cb.impronta(chiave) if chiave else ""
     marca = timezone.localtime().strftime("%Y%m%d_%H%M%S")
     tipo = re.sub(r"[^a-z0-9]+", "-", motivo.lower()).strip("-")[:30] or "manuale"
     nome = f"backup_{marca}_{tipo}.tar"
+    n = 2
+    while (destinazione / nome).exists():  # due backup nello stesso secondo
+        nome = f"backup_{marca}_{tipo}-{n}.tar"
+        n += 1
     with tempfile.TemporaryDirectory(dir=destinazione) as lavoro:
         lavoro = Path(lavoro)
         argomenti, ambiente = _connessione()
         _esegui([pg_dump, "--format=custom", "--no-owner", "--no-privileges",
                  f"--file={lavoro / DATABASE}", *argomenti], ambiente,
                 "Backup del database non riuscito")  # fmt: skip
-        media = Path(settings.MEDIA_ROOT)
-        with tarfile.open(lavoro / FILE, "w:gz") as tar:
-            if media.is_dir():
-                for voce in sorted(media.iterdir()):
-                    if voce.name.startswith("."):
-                        continue
-                    tar.add(voce, arcname=voce.name)
+        impronta_db = _impronta(lavoro / DATABASE)
+        membro_db = DATABASE
+        if chiave:
+            cb.cifra(lavoro / DATABASE, lavoro / DATABASE_CIFRATO, chiave)
+            (lavoro / DATABASE).unlink()
+            membro_db = DATABASE_CIFRATO
+        voci = _censisci_media()
+        for v in voci:
+            _archivia(Path(settings.MEDIA_ROOT) / v["percorso"], v["sha256"], chiave)
+        (lavoro / ELENCO_FILE).write_text(json.dumps(voci, ensure_ascii=False))
         try:
             ente = Organizzazione.corrente().denominazione
         except Exception:  # noqa: BLE001
@@ -192,12 +388,15 @@ def crea(motivo="manuale", utente=None):
             "database": settings.DATABASES["default"]["NAME"],
             "migrazioni": _migrazioni_applicate(),
             "conteggi": _conteggi(),
-            "impronte": {n: _impronta(lavoro / n) for n in (DATABASE, FILE)},
+            "cifrato": bool(chiave),
+            "impronta_chiave": chiave_impronta,
+            "file": {"numero": len(voci), "dimensione": sum(v["dimensione"] for v in voci)},
+            "impronte": {DATABASE: impronta_db, ELENCO_FILE: _impronta(lavoro / ELENCO_FILE)},
         }
         (lavoro / MANIFESTO).write_text(json.dumps(manifesto, indent=2, ensure_ascii=False))
         parziale = destinazione / f".{nome}.parziale"
         with tarfile.open(parziale, "w") as tar:
-            for n in (MANIFESTO, DATABASE, FILE):
+            for n in (MANIFESTO, membro_db, ELENCO_FILE):
                 tar.add(lavoro / n, arcname=n)
         parziale.chmod(0o600)
         parziale.replace(destinazione / nome)
@@ -239,25 +438,56 @@ def elenco():
     return backup
 
 
-def verifica(p):
-    """Controlla struttura, impronte e compatibilità con questa versione. Restituisce il
-    manifesto, oppure solleva BackupNonValido senza aver modificato nulla."""
+def verifica(p, *, file=True):
+    """Controlla struttura, impronte (decifrando, se cifrato) e compatibilità con questa versione.
+    Restituisce il manifesto, oppure solleva BackupNonValido senza aver modificato nulla.
+    `file=False`: non rilegge i file caricati (solo database ed elenco)."""
     from django.db.migrations.loader import MigrationLoader
 
+    from .cifratura_backup import ErroreCifratura
+
     manifesto = leggi_manifesto(p)
-    if manifesto.get("formato") != FORMATO or manifesto.get("applicazione") != settings.APP_NOME:
+    formato = manifesto.get("formato")
+    if formato not in (1, FORMATO) or manifesto.get("applicazione") != settings.APP_NOME:
         raise BackupNonValido("Il file non è un backup di questa applicazione.")
     with tarfile.open(p, "r:") as tar:
         nomi = {m.name: m for m in tar.getmembers()}
-        if set(nomi) != {MANIFESTO, DATABASE, FILE} or not all(m.isfile() for m in nomi.values()):
+        if not all(m.isfile() for m in nomi.values()):
             raise BackupNonValido("Contenuto del backup inatteso.")
-        for n in (DATABASE, FILE):
-            h = hashlib.sha256()
-            f = tar.extractfile(nomi[n])
-            for blocco in iter(lambda f=f: f.read(1024 * 1024), b""):
-                h.update(blocco)
-            if h.hexdigest() != manifesto.get("impronte", {}).get(n):
-                raise BackupNonValido(f"Backup danneggiato: impronta di {n} non corrispondente.")
+        if formato == 1:
+            if set(nomi) != {MANIFESTO, DATABASE, FILE}:
+                raise BackupNonValido("Contenuto del backup inatteso.")
+            for n in (DATABASE, FILE):
+                h = hashlib.sha256()
+                f = tar.extractfile(nomi[n])
+                for blocco in iter(lambda f=f: f.read(1024 * 1024), b""):
+                    h.update(blocco)
+                if h.hexdigest() != manifesto.get("impronte", {}).get(n):
+                    raise BackupNonValido(f"Backup danneggiato: impronta di {n} diversa.")
+        else:
+            database = {DATABASE_CIFRATO} if manifesto.get("cifrato") else {DATABASE}
+            base = {MANIFESTO, ELENCO_FILE} | database
+            extra = set(nomi) - base
+            if not base <= set(nomi) or any(not n.startswith(f"{OGGETTI}/") for n in extra):
+                raise BackupNonValido("Contenuto del backup inatteso.")
+            c = _Contenuto(tar, manifesto)
+            impronte = manifesto.get("impronte", {})
+            try:
+                f, cifrato = c.database()
+                if _sha_blocchi(_blocchi(f, cifrato)) != impronte.get(DATABASE):
+                    raise BackupNonValido("Backup danneggiato: impronta del database diversa.")
+                grezzo = tar.extractfile(nomi[ELENCO_FILE]).read()
+                if hashlib.sha256(grezzo).hexdigest() != impronte.get(ELENCO_FILE):
+                    raise BackupNonValido("Backup danneggiato: elenco dei file non corrispondente.")
+                for v in c.elenco_file() if file else ():
+                    f, cifrato = c.apri(v["sha256"])
+                    with f:
+                        if _sha_blocchi(_blocchi(f, cifrato)) != v["sha256"]:
+                            raise BackupNonValido(
+                                f"Backup danneggiato: file {v['percorso']} non corrispondente."
+                            )
+            except ErroreCifratura as e:
+                raise BackupNonValido(str(e)) from e
     # un backup di una versione più recente non si ripristina su codice più vecchio
     note = MigrationLoader(None, ignore_no_migrations=True).disk_migrations
     sconosciute = [
@@ -298,6 +528,7 @@ def elimina(nome, utente=None):
     if nome in (dati := conservati()):
         del dati[nome]
         _scrivi_conservati(dati)
+    pulisci_archivio()
     _registra("Backup eliminato", utente, file=nome)
 
 
@@ -445,6 +676,7 @@ def pulisci(utente=None, politica=None):
             tolti.append(b.nome)
     if tolti:
         _registra("Backup eliminati dalla conservazione", utente, file=tolti)
+    pulisci_archivio()
     return tolti
 
 
@@ -452,8 +684,9 @@ def occupazione():
     """Spazio dei backup e del disco che li ospita."""
     backup = elenco()
     disco = shutil.disk_usage(cartella())
-    return {"backup": sum(b.dimensione for b in backup), "numero": len(backup),
-            "libero": disco.free, "totale": disco.total}  # fmt: skip
+    archiviati = dimensione_archivio()
+    return {"backup": sum(b.dimensione for b in backup) + archiviati, "numero": len(backup),
+            "archivio": archiviati, "libero": disco.free, "totale": disco.total}  # fmt: skip
 
 
 def controlla_spazio(politica=None):
@@ -535,34 +768,183 @@ def ripristina(p, *, utente_descrizione="", backup_sicurezza=True, avanzamento=N
     return manifesto, sicurezza
 
 
+def _estrai_database(p, destinazione):
+    """Scrive in `destinazione` il dump del database del backup (decifrato se serve)."""
+    from .cifratura_backup import ErroreCifratura
+
+    manifesto = leggi_manifesto(p)
+    with tarfile.open(p, "r:") as tar:
+        if manifesto.get("formato") == 1:
+            f = tar.extractfile(DATABASE)
+            cifrato = False
+        else:
+            f, cifrato = _Contenuto(tar, manifesto).database()
+        try:
+            with open(destinazione, "wb") as dst:
+                for blocco in _blocchi(f, cifrato):
+                    dst.write(blocco)
+        except ErroreCifratura as e:
+            raise BackupNonValido(str(e)) from e
+
+
+def _svuota_media():
+    media = Path(settings.MEDIA_ROOT)
+    media.mkdir(parents=True, exist_ok=True)
+    for voce in media.iterdir():
+        if voce.is_dir() and not voce.is_symlink():
+            shutil.rmtree(voce)
+        else:
+            voce.unlink()
+    return media
+
+
+def _scrivi_file(p, media):
+    """File caricati dal backup p nella cartella media (svuotata)."""
+    from .cifratura_backup import ErroreCifratura
+
+    manifesto = leggi_manifesto(p)
+    with tarfile.open(p, "r:") as tar:
+        if manifesto.get("formato") == 1:
+            with tarfile.open(fileobj=tar.extractfile(FILE), mode="r:gz") as interno:
+                interno.extractall(media, filter="data")
+            return
+        c = _Contenuto(tar, manifesto)
+        for v in c.elenco_file():
+            dest = media / v["percorso"]
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            f, cifrato = c.apri(v["sha256"])
+            try:
+                with f, open(dest, "wb") as uscita:
+                    for blocco in _blocchi(f, cifrato):
+                        uscita.write(blocco)
+            except ErroreCifratura as e:
+                raise BackupNonValido(str(e)) from e
+
+
 def _sostituisci(p, pg_restore, passo):
     """Database e file dal backup p, poi le migrazioni mancanti (backup di versioni precedenti)."""
     from django.core.management import call_command
 
     with tempfile.TemporaryDirectory(dir=cartella()) as lavoro:
-        lavoro = Path(lavoro)
-        with tarfile.open(p, "r:") as tar:
-            for n in (DATABASE, FILE):
-                tar.extract(n, lavoro, filter="data")
+        dump = Path(lavoro) / DATABASE
+        _estrai_database(p, dump)
         passo("Ripristino del database")
         svuota_database()
         argomenti, ambiente = _connessione()
         _esegui([pg_restore, "--no-owner", "--no-privileges", "--exit-on-error",
-                 "--single-transaction", *argomenti, str(lavoro / DATABASE)], ambiente,
+                 "--single-transaction", *argomenti, str(dump)], ambiente,
                 "Ripristino del database non riuscito")  # fmt: skip
         connection.close()
         passo("Aggiornamento dello schema")
         call_command("migrate", interactive=False, verbosity=0)
         passo("Ripristino dei file")
-        media = Path(settings.MEDIA_ROOT)
-        media.mkdir(parents=True, exist_ok=True)
-        for voce in media.iterdir():
-            if voce.is_dir() and not voce.is_symlink():
-                shutil.rmtree(voce)
-            else:
-                voce.unlink()
-        with tarfile.open(lavoro / FILE, "r:gz") as tar:
-            tar.extractall(media, filter="data")
+        _scrivi_file(p, _svuota_media())
+
+
+def estrai(p, destinazione):
+    """Per un ripristino a mano: database.dump e media/ decifrati nella cartella indicata."""
+    verifica(p)
+    dest = Path(destinazione)
+    (dest / "media").mkdir(parents=True, exist_ok=False)
+    _estrai_database(p, dest / DATABASE)
+    _scrivi_file(p, dest / "media")
+    return dest
+
+
+# --- prova di ripristino -------------------------------------------------------------------
+
+VERIFICHE = ".verifiche.json"
+TABELLE_CONTEGGI = {
+    "soggetti": "anagrafica_soggetto", "soci": "soci_socio",
+    "protocolli": "protocollo_protocollo", "movimenti": "tesoreria_movimento",
+}  # fmt: skip
+
+
+def verifiche():
+    """Esito dell'ultima prova di ripristino di ciascun backup."""
+    try:
+        dati = json.loads((cartella() / VERIFICHE).read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return dati if isinstance(dati, dict) else {}
+
+
+def _salva_verifica(nome, esito, dettaglio):
+    dati = {n: v for n, v in verifiche().items() if (cartella() / n).exists()}
+    dati[nome] = {"il": timezone.localtime().isoformat(timespec="seconds"), "esito": esito,
+                  "dettaglio": dettaglio[:500]}  # fmt: skip
+    q = cartella() / VERIFICHE
+    parziale = q.with_name(VERIFICHE + ".parziale")
+    parziale.write_text(json.dumps(dati, indent=2, ensure_ascii=False))
+    parziale.chmod(0o600)
+    parziale.replace(q)
+
+
+def prova_ripristino(p, utente=None):
+    """Prova il backup senza toccare i dati: impronte di database e file (decifrando), lettura
+    del dump con pg_restore e, se l'utente PostgreSQL può creare database, ripristino completo in
+    un database temporaneo con il confronto dei conteggi. Restituisce (esito, dettaglio)."""
+    import secrets
+
+    try:
+        manifesto = verifica(p)
+        pg_restore = _programma("pg_restore")
+        with tempfile.TemporaryDirectory(dir=cartella()) as lavoro:
+            dump = Path(lavoro) / DATABASE
+            _estrai_database(p, dump)
+            argomenti, ambiente = _connessione()
+            _esegui([pg_restore, "--list", str(dump)], ambiente, "Dump del database illeggibile")
+            n_file = manifesto.get("file", {}).get("numero", "tutti i")
+            dettaglio = f"impronte di database e {n_file} file corrette; dump leggibile"
+            prova = f"{settings.DATABASES['default']['NAME']}_prova_{secrets.token_hex(4)}"
+            try:
+                with connection.cursor() as c:
+                    c.execute(f"CREATE DATABASE {connection.ops.quote_name(prova)}")
+            except Exception as e:  # noqa: BLE001 - manca il permesso CREATEDB
+                dettaglio += (f"; ripristino di prova non eseguito (non si può creare un database "
+                              f"temporaneo: {str(e).splitlines()[0][:120]})")  # fmt: skip
+                _salva_verifica(p.name, "ok", dettaglio)
+                _registra("Prova di ripristino", utente, file=p.name, esito="ok")
+                return "ok", dettaglio
+            try:
+                prova_arg = [a for a in argomenti if not a.startswith("--dbname=")]
+                _esegui([pg_restore, "--no-owner", "--no-privileges", "--exit-on-error",
+                         *prova_arg, f"--dbname={prova}", str(dump)], ambiente,
+                        "Ripristino di prova del database non riuscito")  # fmt: skip
+                diversi = _confronta_conteggi(prova, manifesto.get("conteggi", {}))
+            finally:
+                with connection.cursor() as c:
+                    c.execute(f"DROP DATABASE IF EXISTS {connection.ops.quote_name(prova)}")
+            if diversi:
+                raise BackupNonValido("conteggi diversi dopo il ripristino: " + ", ".join(diversi))
+            dettaglio += "; ripristino completo in un database temporaneo riuscito, conteggi uguali"
+    except BackupNonValido as e:
+        dettaglio = " ".join(e.messages)
+        _salva_verifica(p.name, "errore", dettaglio)
+        _registra("Prova di ripristino non riuscita", utente, file=p.name, errore=dettaglio)
+        return "errore", dettaglio
+    _salva_verifica(p.name, "ok", dettaglio)
+    _registra("Prova di ripristino", utente, file=p.name, esito="ok")
+    return "ok", dettaglio
+
+
+def _confronta_conteggi(nome_db, attesi):
+    import psycopg
+
+    db = settings.DATABASES["default"]
+    diversi = []
+    with psycopg.connect(
+        host=db.get("HOST") or "localhost", port=db.get("PORT") or 5432, user=db.get("USER"),
+        password=db.get("PASSWORD") or None, dbname=nome_db,
+    ) as conn, conn.cursor() as c:  # fmt: skip
+        for chiave, tabella in TABELLE_CONTEGGI.items():
+            if chiave not in attesi:
+                continue
+            c.execute(f'SELECT count(*) FROM "{tabella}"')  # noqa: S608 - nomi fissi
+            trovati = c.fetchone()[0]
+            if trovati != attesi[chiave]:
+                diversi.append(f"{chiave} {trovati} invece di {attesi[chiave]}")
+    return diversi
 
 
 def stato_ripristino():

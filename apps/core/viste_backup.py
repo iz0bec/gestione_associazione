@@ -35,12 +35,24 @@ class BackupView(PermessoMixin, View):
     permission_required = "core.gestisci_backup"
 
     def get(self, request):
+        from . import cifratura_backup as cb
+        from .views import _comandi_chiave
+
         elenco = backup.elenco()
         tenuti = backup.classifica(elenco)
         fissati = backup.conservati()
+        prove = backup.verifiche()
         for b in elenco:
             b.conservazione = tenuti.get(b.nome, "")
             b.fissato = fissati.get(b.nome)
+            b.prova = prove.get(b.nome)
+        chiave = cb.chiave_corrente()
+        comandi = _comandi_chiave()
+        comando_chiave = (
+            comandi["comando_chiave"]
+            .replace("CHIAVE_CIFRATURA", "CHIAVE_BACKUP")
+            .replace("genera_chiave_cifratura", "genera_chiave_backup")
+        )
         return render(request, "core/backup.html", {
             "backup": elenco,
             "cartella": backup.cartella(),
@@ -48,6 +60,9 @@ class BackupView(PermessoMixin, View):
             "ora": settings.BACKUP_ORA,
             "politica": backup.Politica.corrente(),
             "occupazione": backup.occupazione(),
+            "chiave_impronta": cb.impronta(chiave) if chiave else "",
+            "comando_chiave": comando_chiave,
+            "comando_riavvio": comandi["comando_riavvio"],
         })  # fmt: skip
 
     def post(self, request):
@@ -80,8 +95,30 @@ class ScaricaBackupView(PermessoMixin, View):
         except backup.BackupNonValido:
             raise Http404 from None
         registra(Azione.ESPORTAZIONE, descrizione="Backup scaricato", file=nome)
-        return FileResponse(p.open("rb"), as_attachment=True, filename=nome,
+        completo = backup.esporta_completo(p)  # con dentro anche i file: si porta altrove
+        f = completo.open("rb")
+        completo.unlink()  # resta leggibile finché è aperto, poi sparisce
+        return FileResponse(f, as_attachment=True, filename=nome,
                             content_type="application/x-tar")  # fmt: skip
+
+
+class ProvaBackupView(PermessoMixin, View):
+    """Prova di ripristino senza toccare i dati."""
+
+    permission_required = "core.gestisci_backup"
+    http_method_names = ["post"]
+
+    def post(self, request, nome):
+        try:
+            esito, dettaglio = backup.prova_ripristino(backup.percorso(nome), request.user)
+        except backup.BackupNonValido as e:
+            messages.error(request, " ".join(e.messages))
+            return redirect("core:backup")
+        if esito == "ok":
+            messages.success(request, f"Prova di ripristino di {nome} riuscita: {dettaglio}.")
+        else:
+            messages.error(request, f"Prova di ripristino di {nome} non riuscita: {dettaglio}.")
+        return redirect("core:backup")
 
 
 class EliminaBackupView(PermessoMixin, View):

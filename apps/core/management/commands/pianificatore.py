@@ -22,6 +22,21 @@ from django.utils import timezone
 log = logging.getLogger("pianificatore")
 
 
+def prova_dovuta(adesso, giorni=7):
+    """Nessuna prova di ripristino negli ultimi `giorni`: se ne fa una sull'ultimo backup."""
+    from datetime import datetime, timedelta
+
+    from apps.core import backup
+
+    ultime = []
+    for v in backup.verifiche().values():
+        try:
+            ultime.append(datetime.fromisoformat(v.get("il", "")))
+        except ValueError:
+            continue
+    return bool(backup.elenco()) and (not ultime or adesso - max(ultime) >= timedelta(days=giorni))
+
+
 def backup_di_oggi(oggi):
     from apps.core import backup
 
@@ -74,6 +89,8 @@ class Command(BaseCommand):
                 # uno al giorno, anche se il pianificatore viene riavviato
                 if not backup_di_oggi(adesso.date()):
                     self._esegui("backup", automatico=True)
+                if prova_dovuta(adesso):
+                    self._esegui("backup", prova="ultimo")  # una alla settimana
                 ultimo_backup = adesso.date()
             if opzioni["una_volta"]:
                 return

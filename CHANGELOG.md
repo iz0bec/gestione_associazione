@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Backup incrementali**: i documenti si salvano una volta sola in un archivio per contenuto; ogni
+  backup aggiunge solo le novità. Lo scaricato resta completo.
+- **Backup cifrati** con la chiave dedicata `CHIAVE_BACKUP` (AES-256-GCM, comando
+  `genera_chiave_backup`, istruzioni da copiare nella pagina).
+- **Prova di ripristino** senza toccare i dati (pulsante, `backup --prova`, settimanale automatica) ed
+  estrazione decifrata per il ripristino a mano (`backup --estrai`).
+
+### Corretto
+- Due backup creati nello stesso secondo non si sovrascrivono più.
+
 ## [1.0.29] - 2026-11-17
 
 Scadenza dei mandati e utenti connessi.

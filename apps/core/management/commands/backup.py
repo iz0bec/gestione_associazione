@@ -29,8 +29,39 @@ class Command(BaseCommand):
         parser.add_argument("--conserva", metavar="NOME", help="Esclude un backup dalla rotazione")
         parser.add_argument("--rilascia", metavar="NOME", help="Rimette un backup in rotazione")
         parser.add_argument("--nota", default="", help="Con --conserva: perché si conserva")
+        parser.add_argument(
+            "--prova", metavar="NOME", nargs="?", const="ultimo",
+            help="Prova di ripristino (senza toccare i dati) del backup indicato o dell'ultimo",
+        )  # fmt: skip
+        parser.add_argument(
+            "--estrai", nargs=2, metavar=("NOME", "CARTELLA"),
+            help="Scrive nella cartella il dump del database e i file del backup, decifrati "
+            "(per un ripristino a mano)",
+        )  # fmt: skip
 
     def handle(self, *args, **opzioni):
+        if opzioni["prova"]:
+            elenco = backup.elenco()
+            nome = elenco[0].nome if opzioni["prova"] == "ultimo" and elenco else opzioni["prova"]
+            try:
+                esito, dettaglio = backup.prova_ripristino(backup.percorso(nome))
+            except backup.BackupNonValido as e:
+                raise CommandError(" ".join(e.messages)) from None
+            stile = self.style.SUCCESS if esito == "ok" else self.style.ERROR
+            self.stdout.write(stile(f"{nome}: {esito} - {dettaglio}"))
+            if esito != "ok":
+                raise CommandError("Prova di ripristino non riuscita.")
+            return
+        if opzioni["estrai"]:
+            nome, destinazione = opzioni["estrai"]
+            try:
+                backup.estrai(backup.percorso(nome), destinazione)
+            except backup.BackupNonValido as e:
+                raise CommandError(" ".join(e.messages)) from None
+            self.stdout.write(self.style.SUCCESS(
+                f"Estratti in {destinazione}: database.dump (per pg_restore) e la cartella media"
+            ))  # fmt: skip
+            return
         if opzioni["conserva"] or opzioni["rilascia"]:
             nome = opzioni["conserva"] or opzioni["rilascia"]
             try:
