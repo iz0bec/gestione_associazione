@@ -1,26 +1,35 @@
 {% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Caselle di posta usate dal protocollo (la configurazione è in Sistema → Servizi di posta)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
 {% block titolo %}Caselle di posta{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:posta' %}">Posta da protocollare</a></div>{% endblock %}
 {% block titolo_pagina %}Caselle di posta{% endblock %}
-{% block azioni %}{% if perms.protocollo.add_casellaposta and cifratura %}<a class="btn btn-primary" href="{% url 'protocollo:casella_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova casella</a>{% endif %}{% endblock %}
+{% block azioni %}{% if perms.core.gestisci_servizi_posta %}<a class="btn" href="{% url 'core:servizi_posta' %}"><i class="ti ti-settings me-1"></i>Configura le caselle</a>{% endif %}{% endblock %}
 {% block contenuto %}
-{% if not cifratura %}<div class="alert alert-warning">Per salvare le password delle caselle serve la chiave di cifratura <code>CHIAVE_CIFRATURA</code> nel file di configurazione: vedi il manuale di sistema, <em>Configurazione</em>.</div>{% endif %}
 <div class="card">
   <div class="table-responsive">
     <table class="table table-vcenter card-table">
-      <thead><tr><th>Casella</th><th>Server</th><th>Ultimo controllo</th><th></th></tr></thead>
+      <thead><tr><th>Usata dal protocollo</th><th>Casella</th><th>Ultimo controllo</th></tr></thead>
       <tbody>
       {% for c in caselle %}
         <tr>
-          <td><span class="fw-medium">{{ c.nome }}</span>{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}{% if not c.attiva %} <span class="badge bg-secondary-lt">disattivata</span>{% endif %}<div class="small text-secondary">{{ c.utente }}</div></td>
-          <td>{{ c.server }}:{{ c.porta }} <span class="small text-secondary">{{ c.cartella }}{% if c.cartella_processata %} → {{ c.cartella_processata }}{% endif %}</span></td>
+          <td class="w-1">
+            {% if perms.protocollo.change_casellaposta %}
+            <form method="post" action="{% url 'protocollo:casella_uso' c.pk %}">{% csrf_token %}
+              <label class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" name="attiva" data-invio-automatico{% if c.attiva %} checked{% endif %} aria-label="Usata dal protocollo"><noscript><button class="btn btn-sm ms-2" type="submit">Salva</button></noscript></label>
+            </form>
+            {% else %}<span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.attiva %}sì{% else %}no{% endif %}</span>{% endif %}
+          </td>
+          <td><span class="fw-medium">{{ c.nome }}</span>{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}<div class="small text-secondary">{{ c.utente }}</div></td>
           <td>{{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %}<div class="small text-red">{{ c.ultimo_errore|truncatechars:120 }}</div>{% endif %}</td>
-          <td class="text-end">{% if perms.protocollo.change_casellaposta %}<a class="btn btn-sm" href="{% url 'protocollo:casella_modifica' c.pk %}">Modifica</a>{% endif %}</td>
         </tr>
-      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna casella.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="3" class="text-secondary py-4 text-center">Nessuna casella configurata.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>
-  <div class="card-footer text-secondary small">Le caselle sono lette via IMAP: i messaggi non vengono cancellati né segnati come letti; quelli scaricati sono spostati nella cartella indicata (PROCESSATA, creata se manca). Lo scaricamento automatico va pianificato sul server (manuale di sistema). Le ricevute delle PEC spedite arrivano qui e si agganciano da sole al protocollo. I server per spedire (email e PEC) si configurano in <a href="{% url 'core:servizi_posta' %}">Sistema → Servizi di posta</a>.</div>
+  <div class="card-footer text-secondary small">Solo le caselle usate dal protocollo vengono lette: i loro messaggi compaiono fra la posta da protocollare e le ricevute delle PEC spedite si agganciano da sole ai protocolli. Server, credenziali, cartelle e verifica dell'accesso sono in <em>Sistema → Servizi di posta</em> (Amministratore di sistema).</div>
 </div>
 {% endblock %}

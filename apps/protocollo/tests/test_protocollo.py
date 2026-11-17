@@ -20,9 +20,10 @@ from django.utils import timezone
 
 from apps.anagrafica.models import Soggetto
 from apps.core.cifratura import nuova_chiave
+from apps.core.forms import CasellaForm
 from apps.core.models import EventoAudit
 from apps.protocollo import posta, servizi
-from apps.protocollo.forms import CampoSegnatura, CasellaForm, leggi_corrispondenti_liberi
+from apps.protocollo.forms import CampoSegnatura, leggi_corrispondenti_liberi
 from apps.protocollo.models import (
     CasellaPosta,
     MessaggioRicevuto,
@@ -565,7 +566,6 @@ class TestViste:
             reverse("protocollo:posta"),
             reverse("protocollo:messaggio", args=[m.pk]),
             reverse("protocollo:caselle"),
-            reverse("protocollo:casella_nuova"),
             reverse("protocollo:classificazioni"),
             reverse("anagrafica:dettaglio", args=[comune.pk]),
             reverse("core:cruscotto"),

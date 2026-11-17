@@ -70,9 +70,10 @@ finché non lo si rimette in rotazione. Vedi il [manuale di sistema](../sistema/
 
 ![Servizi di posta: interruttori, stato del server di invio e verifica delle caselle](immagini/servizi-posta.jpg)
 
-**Sistema → Servizi di posta**, solo per l'Amministratore di sistema. È il punto in cui si
-configura **come si spedisce**; le caselle da **leggere** (email e PEC in arrivo) si configurano
-invece in *Protocollo → Caselle*. Due interruttori generali:
+**Sistema → Servizi di posta**, solo per l'Amministratore di sistema. È l'unico punto in cui si
+configura la posta: le **caselle** da leggere (email e PEC in arrivo) e i **servizi di invio** per
+spedire. Il protocollo sceglie soltanto quali caselle usare (*Protocollo → Caselle*). Due interruttori
+generali:
 
 - **Invio delle email**: spento, **nessuna email parte**. Le comunicazioni si possono ancora scrivere
   e confermare: restano *in coda* e partono quando l'invio viene riattivato. Gli **auguri** e i
@@ -84,6 +85,14 @@ invece in *Protocollo → Caselle*. Due interruttori generali:
 
 Quando un servizio è spento, le pagine interessate (Comunicazioni, Promemoria di rinnovo, Posta da
 protocollare) lo segnalano con un avviso.
+
+### Caselle di posta (IMAP)
+
+Ogni **casella** è un indirizzo email o PEC da leggere: nome, *è una PEC*, server IMAP, porta, SSL,
+utente e password (conservata **cifrata**, serve la chiave `CHIAVE_CIFRATURA`), cartella da leggere,
+cartella in cui spostare i messaggi scaricati (`PROCESSATA`) e giorni da scaricare. Per **Aruba**:
+email `imaps.aruba.it`, PEC `imaps.pec.aruba.it`, porta 993 con SSL. Una casella nuova resta spenta
+finché non la si abilita in *Protocollo → Caselle* (interruttore **Usata dal protocollo**).
 
 ### Servizi di invio (SMTP)
 
@@ -99,8 +108,8 @@ SSL, nome utente (vuoto: l'indirizzo) e password, conservata **cifrata** e mai m
   password sono quelli della casella.
 - Un servizio che ha già spedito non si elimina (le spedizioni restano nella storia): si disattiva.
 
-La pagina mostra anche i **messaggi in coda** e le **caselle IMAP** con l'ultimo controllo ed
-eventuali errori. Ogni modifica è annotata nel registro attività (mai la password).
+La pagina mostra anche i **messaggi in coda** e, per ogni casella, se è usata dal protocollo,
+l'ultimo controllo ed eventuali errori. Ogni modifica è annotata nel registro attività (mai la password).
 
 **Verifica** (accanto a ogni casella e a ogni servizio di invio) fa una **prova di accesso**, anche con i
 servizi spenti: per una casella riporta quanti messaggi contiene, quanti rientrano nel periodo da

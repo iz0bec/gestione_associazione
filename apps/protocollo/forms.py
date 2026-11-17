@@ -16,11 +16,9 @@ from django import forms
 from apps.anagrafica.forms import CampoData
 from apps.anagrafica.models import Soggetto
 from apps.comunicazioni.models import Lista
-from apps.core.cifratura import cifratura_disponibile
 from apps.core.forms import StileMixin
 
 from .models import (
-    CasellaPosta,
     Classificazione,
     Corrispondente,
     ManualeGestione,
@@ -243,41 +241,6 @@ class ProtocollaMessaggioForm(StileMixin, forms.Form):
     )
     riservato = forms.BooleanField(required=False)
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
-
-
-class CasellaForm(StileMixin, forms.ModelForm):
-    nuova_password = forms.CharField(
-        label="Password",
-        required=False,
-        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
-        help_text="Lasciare vuoto per mantenere quella salvata. È conservata cifrata.",
-    )
-
-    class Meta:
-        model = CasellaPosta
-        fields = [
-            "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "cartella_processata",
-            "giorni", "attiva",
-        ]  # fmt: skip
-
-    def clean(self):
-        dati = super().clean()
-        processata = (dati.get("cartella_processata") or "").strip()
-        if processata and processata.lower() == (dati.get("cartella") or "").strip().lower():
-            self.add_error("cartella_processata", "Deve essere diversa dalla cartella da leggere.")
-        if not cifratura_disponibile():
-            raise forms.ValidationError(
-                "Manca la chiave di cifratura (CHIAVE_CIFRATURA): chiedere all'amministratore di "
-                "sistema di configurarla prima di salvare una casella."
-            )
-        if not self.instance.password_cifrata and not dati.get("nuova_password"):
-            self.add_error("nuova_password", "Indicare la password della casella.")
-        return dati
-
-    def save(self, commit=True):
-        if self.cleaned_data.get("nuova_password"):
-            self.instance.imposta_password(self.cleaned_data["nuova_password"])
-        return super().save(commit)
 
 
 class SpedizioneForm(StileMixin, forms.Form):

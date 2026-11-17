@@ -122,8 +122,8 @@ Nella scheda, il riquadro **Spedizioni** riporta per ogni destinatario l'esito:
 Le **ricevute PEC** arrivano nella casella PEC e, quando la casella viene letta, si **agganciano da
 sole** alla spedizione: aggiornano l'esito e diventano documenti del protocollo (`ricevuta
 avvenuta-consegna - indirizzo.eml`, con la firma del gestore). Non compaiono fra la posta da
-protocollare. Per questo la PEC che spedisce deve essere configurata anche come **casella da
-leggere** (*Protocollo → Caselle*), con la lettura attiva.
+protocollare. Per questo la PEC che spedisce deve essere configurata anche come **casella**
+(*Sistema → Servizi di posta*) e **usata dal protocollo** (*Protocollo → Caselle*).
 
 ## Cercare
 
@@ -140,8 +140,8 @@ Se sono configurate le caselle email o PEC, i messaggi arrivano in **Posta da pr
 segnato come letto nulla: i messaggi scaricati vengono **spostati nella cartella `PROCESSATA`** della
 casella (creata al primo scaricamento, visibile anche dalla webmail; con Aruba si chiama
 `INBOX.PROCESSATA`, cioè una sottocartella della posta in arrivo), così nella posta in arrivo restano
-solo quelli non ancora acquisiti. La cartella si cambia nella scheda della casella; lasciandola vuota i
-messaggi restano dove sono.
+solo quelli non ancora acquisiti. La cartella si cambia nella scheda della casella (*Sistema → Servizi
+di posta*); lasciandola vuota i messaggi restano dove sono.
 
 Per ogni messaggio:
 - si legge il testo (sempre in solo testo, per sicurezza; l'originale completo è scaricabile come `.eml`)
@@ -215,8 +215,9 @@ la toglie dalla pagina pubblica; le versioni restano agli atti.
 - **Titolario** (*Protocollo → Altro → Titolario*): voci di classificazione con codice. Ne è proposto uno di base
   (organizzazione, soci, organi sociali, contabilità, patrimonio, eventi, rapporti con enti...), da
   adattare. Le voci non più usate si disattivano.
-- **Caselle** (da *Posta da protocollare → Caselle*): server IMAP, porta (993), utente, password,
-  cartella da leggere e cartella dei messaggi scaricati (`PROCESSATA`). La password è salvata **cifrata**; serve che l'amministratore di sistema abbia configurato la
-  chiave di cifratura. Per la PEC segnare *è una PEC* (per Aruba `imaps.pec.aruba.it`, porta 993).
-  Le caselle servono **solo a leggere**: i server per **spedire** (email e PEC) si configurano in
-  *Sistema → Servizi di posta* (vedi la guida del [Sistema](sistema.md#servizi-di-posta)).
+- **Caselle** (da *Posta da protocollare → Caselle*): l'elenco delle caselle email e PEC con un
+  interruttore **Usata dal protocollo**: solo quelle usate vengono lette, i loro messaggi arrivano fra
+  la posta da protocollare e le ricevute delle PEC spedite si agganciano ai protocolli. Server,
+  credenziali, cartelle e **Verifica** dell'accesso si configurano in *Sistema → Servizi di posta*
+  (Amministratore di sistema; vedi la guida del [Sistema](sistema.md#servizi-di-posta)). Una casella
+  appena configurata resta spenta finché non la si abilita qui.

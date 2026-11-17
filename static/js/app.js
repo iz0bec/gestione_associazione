@@ -152,9 +152,9 @@
     }, true);
   });
 
-  // Select che inviano il modulo al cambio (es. scelta dell'anno)
+  // Select e interruttori che inviano il modulo al cambio (es. anno, uso di una casella)
   document.addEventListener("change", function (ev) {
-    if (ev.target.matches("select[data-invio-automatico]") && ev.target.form) {
+    if (ev.target.matches("select[data-invio-automatico], input[data-invio-automatico]") && ev.target.form) {
       ev.target.form.requestSubmit();
     }
   });

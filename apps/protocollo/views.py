@@ -33,7 +33,6 @@ from django_filters.views import FilterView
 from apps.anagrafica.models import Soggetto
 from apps.core import invio
 from apps.core.audit import Azione, campi_modificati, registra
-from apps.core.cifratura import cifratura_disponibile
 from apps.core.models import EventoAudit, Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
@@ -42,7 +41,6 @@ from . import buste, servizi, spedizioni
 from .filtri import ProtocolloFilter
 from .forms import (
     AllegatiForm,
-    CasellaForm,
     ClassificazioneForm,
     ManualeGestioneForm,
     ModelloProtocolloForm,
@@ -531,7 +529,7 @@ class PostaView(PermessoMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["stato"] = self.request.GET.get("stato", MessaggioRicevuto.Stato.NUOVO)
         ctx["stati"] = [*MessaggioRicevuto.Stato.choices, ("tutti", "Tutti")]
-        ctx["caselle"] = CasellaPosta.objects.all()
+        ctx["caselle"] = CasellaPosta.objects.filter(attiva=True)
         from apps.soci.estrazione import probabile_iscrizione
 
         ctx["iscrizioni"] = {
@@ -689,9 +687,6 @@ class CaselleView(PermessoMixin, ListView):
     template_name = "protocollo/caselle.html"
     context_object_name = "caselle"
 
-    def get_context_data(self, **kwargs):
-        return super().get_context_data(cifratura=cifratura_disponibile(), **kwargs)
-
 
 class _ConfigMixin:
     def form_valid(self, form):
@@ -707,24 +702,21 @@ class _ConfigMixin:
         return risposta
 
 
-class CasellaNuovaView(PermessoMixin, _ConfigMixin, CreateView):
-    permission_required = "protocollo.add_casellaposta"
-    form_class = CasellaForm
-    template_name = "protocollo/modulo_config.html"
-    success_url = reverse_lazy("protocollo:caselle")
-    extra_context = {
-        "titolo": "Nuova casella di posta",
-        "indietro": reverse_lazy("protocollo:caselle"),
-    }
+class CasellaUsoView(PermessoMixin, View):
+    """Abilita o no una casella al protocollo (configurata in Sistema → Servizi di posta)."""
 
-
-class CasellaModificaView(PermessoMixin, _ConfigMixin, UpdateView):
     permission_required = "protocollo.change_casellaposta"
-    model = CasellaPosta
-    form_class = CasellaForm
-    template_name = "protocollo/modulo_config.html"
-    success_url = reverse_lazy("protocollo:caselle")
-    extra_context = {"titolo": "Casella di posta", "indietro": reverse_lazy("protocollo:caselle")}
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        casella = get_object_or_404(CasellaPosta, pk=pk)
+        casella.attiva = request.POST.get("attiva") == "on"
+        casella.save(update_fields=["attiva"])
+        registra(Azione.MODIFICA, casella, descrizione=f"Casella di posta {casella}",
+                 usata_dal_protocollo=casella.attiva)  # fmt: skip
+        stato = "usata dal protocollo" if casella.attiva else "non più usata dal protocollo"
+        messages.success(request, f"Casella «{casella}» {stato}.")
+        return redirect("protocollo:caselle")
 
 
 class ClassificazioniView(PermessoMixin, ListView):

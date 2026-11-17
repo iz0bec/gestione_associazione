@@ -265,7 +265,11 @@ class CasellaPosta(models.Model):
         default=30,
         help_text="Al primo scaricamento e come finestra di controllo.",
     )
-    attiva = models.BooleanField(default=True)
+    attiva = models.BooleanField(
+        "usata dal protocollo",
+        default=True,
+        help_text="Si abilita in Protocollo → Caselle: solo le caselle usate vengono lette.",
+    )
     ultimo_controllo = models.DateTimeField(null=True, blank=True, editable=False)
     ultimo_errore = models.CharField(max_length=500, blank=True, editable=False)
 

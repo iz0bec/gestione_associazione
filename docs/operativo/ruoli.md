@@ -64,7 +64,7 @@ In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 
 ### Protocollo
 
-| Ruolo | Registro | Registra, aggiunge documenti, posta, spedisce per email/PEC | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle | Manuale di gestione |
+| Ruolo | Registro | Registra, aggiunge documenti, posta, spedisce per email/PEC | Annulla | Riservati | Esporta e registri | Titolario, modelli di registrazione e caselle usate | Manuale di gestione |
 |---|---|---|---|---|---|---|---|
 | Amministratore di sistema | consulta | sì | sì | sì | sì | modifica (anche i modelli) | prepara e adotta |
 | Presidente | consulta | - (vede la posta) | - | sì | sì | consulta titolario e modelli | consulta |
@@ -77,6 +77,9 @@ sezione e revisore; la bozza solo da chi accede al protocollo.
 | Revisore | consulta | - | - | - | sì | consulta il titolario |
 
 L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (segretario).
+Chi modifica titolario e modelli sceglie anche quali **caselle** usa il protocollo; la configurazione delle
+caselle e dei servizi di invio (server, password) spetta solo all'Amministratore di sistema
+(*Sistema → Servizi di posta*).
 
 ### Organi sociali
 

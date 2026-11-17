@@ -304,3 +304,6 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
 - **Migrazione**: il server del `.env` (se configurato davvero) diventa il servizio generale; le caselle
   «anche invio» della 1.0.18 diventano servizi con le stesse credenziali e le spedizioni passate vi restano
   collegate. Un servizio che ha spedito non si elimina (si disattiva).
+- **Aggiornamento (1.0.23)**: anche la configurazione delle caselle IMAP passa in *Sistema → Servizi di
+  posta* (permesso `core.gestisci_servizi_posta`); il protocollo decide solo quali usare (`attiva`,
+  «usata dal protocollo», permesso `protocollo.change_casellaposta`). Una casella nuova nasce spenta.

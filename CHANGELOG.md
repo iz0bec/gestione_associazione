@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato
+- **Configurazione della posta tutta in *Sistema → Servizi di posta***: oltre ai servizi di invio, anche
+  le **caselle** email e PEC (server, credenziali, cartelle) si creano e si modificano lì, con la
+  **Verifica** dell'accesso. *Protocollo → Caselle* mostra solo l'elenco con l'interruttore **Usata dal
+  protocollo**: solo le caselle usate vengono lette. Una casella nuova resta spenta finché il protocollo
+  non la abilita. I ruoli del protocollo non creano più caselle.
+
 ## [1.0.22] - 2026-11-17
 
 Servizi di invio separati dalle caselle di lettura.

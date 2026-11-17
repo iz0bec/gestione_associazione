@@ -21,8 +21,11 @@
   <div class="col-lg-6">
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title"><i class="ti ti-inbox me-1"></i>Lettura (IMAP)</h3>
-        <div class="card-actions"><span class="badge {% if object.ricezione_posta %}bg-green-lt{% else %}bg-red-lt{% endif %}">{% if object.ricezione_posta %}attiva{% else %}disattivata{% endif %}</span></div>
+        <h3 class="card-title"><i class="ti ti-inbox me-1"></i>Caselle di posta (IMAP)</h3>
+        <div class="card-actions d-flex align-items-center gap-2">
+          <span class="badge {% if object.ricezione_posta %}bg-green-lt{% else %}bg-red-lt{% endif %}">lettura {% if object.ricezione_posta %}attiva{% else %}disattivata{% endif %}</span>
+          {% if cifratura %}<a class="btn btn-sm btn-primary" href="{% url 'core:casella_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova casella</a>{% endif %}
+        </div>
       </div>
       {% if caselle %}
       <div class="list-group list-group-flush">
@@ -30,17 +33,18 @@
         <div class="list-group-item small">
           <div class="d-flex align-items-center gap-2">
             <strong class="flex-fill">{{ c.nome }}{% if c.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}</strong>
-            <span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}">{% if c.attiva %}attiva{% else %}spenta{% endif %}</span>
+            <span class="badge {% if c.attiva %}bg-green-lt{% else %}bg-secondary-lt{% endif %}" title="Si abilita in Protocollo → Caselle">{% if c.attiva %}usata dal protocollo{% else %}non usata{% endif %}</span>
             <form method="post" action="{% url 'core:verifica_casella' c.pk %}" data-modale-invio="#modale-verifica">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prova di accesso: nulla viene scaricato"><i class="ti ti-plug-connected me-1"></i>Verifica</button></form>
+            <a class="btn btn-sm" href="{% url 'core:casella_modifica' c.pk %}">Modifica</a>
           </div>
-          <div class="text-secondary">{{ c.utente }} · {{ c.server }}:{{ c.porta }} · ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
+          <div class="text-secondary">{{ c.utente }} · {{ c.server }}:{{ c.porta }} · {{ c.cartella }}{% if c.cartella_processata %} → {{ c.cartella_processata }}{% endif %} · ultimo controllo: {{ c.ultimo_controllo|date:"d/m/Y H:i"|default:"mai" }}{% if c.ultimo_errore %} · <span class="text-danger">{{ c.ultimo_errore|truncatechars:80 }}</span>{% endif %}</div>
         </div>
         {% endfor %}
       </div>
       {% else %}
       <div class="card-body small text-secondary">Nessuna casella di posta configurata.</div>
       {% endif %}
-      <div class="card-footer small text-secondary">Le caselle da leggere si configurano in <a href="{% url 'protocollo:caselle' %}">Protocollo → Caselle</a>.</div>
+      <div class="card-footer small text-secondary">{% if not cifratura %}<span class="text-orange">Per salvare le password serve la chiave <code>CHIAVE_CIFRATURA</code> (manuale di sistema).</span> {% endif %}Quali caselle legge il protocollo si sceglie in <a href="{% url 'protocollo:caselle' %}">Protocollo → Caselle</a>.</div>
     </div>
   </div>
   <div class="col-12">

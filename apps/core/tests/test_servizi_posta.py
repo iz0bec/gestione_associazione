@@ -294,3 +294,37 @@ def test_migrazione_dal_file_env(settings):
     assert (s.server, s.porta, s.ssl, s.indirizzo, s.nome_mittente, s.utente, s.generale) == (
         "smtps.aruba.it", 465, True, "sez@example.it", "ANCR Sezione", "", True)  # fmt: skip
     assert s.password() == "segreta" and invio.servizio_generale() == s
+
+
+def test_caselle_configurate_in_sistema_e_abilitate_dal_protocollo(client_ruolo, settings):
+    from apps.protocollo.models import CasellaPosta
+
+    settings.CHIAVE_CIFRATURA = nuova_chiave()
+    admin = client_ruolo("Amministratore di sistema")
+    assert "Nuova casella" in admin.get("/sistema/posta/").content.decode()
+    r = admin.post("/sistema/posta/caselle/nuova/", {
+        "nome": "PEC federazione", "pec": "on", "server": "imaps.pec.example.it", "porta": 993,
+        "ssl": "on", "utente": "fed@pec.example.it", "cartella": "INBOX",
+        "cartella_processata": "PROCESSATA", "giorni": 30, "nuova_password": "segreta",
+    })  # fmt: skip
+    assert r.status_code == 302
+    c = CasellaPosta.objects.get()
+    assert c.password() == "segreta" and not c.attiva  # la abilita il protocollo
+    r = admin.post(f"/sistema/posta/caselle/{c.pk}/", {
+        "nome": "PEC federazione", "pec": "on", "server": "imaps.pec.example.it", "porta": 995,
+        "ssl": "on", "utente": "fed@pec.example.it", "cartella": "INBOX", "giorni": 30,
+    })  # fmt: skip
+    c.refresh_from_db()
+    assert r.status_code == 302 and c.porta == 995 and c.password() == "segreta" and not c.attiva
+    # il responsabile del protocollo abilita la casella, ma non la configura
+    resp = client_ruolo("Segretario", username="resp")
+    pagina = resp.get("/protocollo/caselle/").content.decode()
+    assert "PEC federazione" in pagina and "imaps.pec.example.it" not in pagina
+    assert resp.post(f"/protocollo/caselle/{c.pk}/uso/", {"attiva": "on"}).status_code == 302
+    c.refresh_from_db()
+    assert c.attiva
+    resp.post(f"/protocollo/caselle/{c.pk}/uso/", {})
+    c.refresh_from_db()
+    assert not c.attiva
+    assert resp.get("/sistema/posta/caselle/nuova/").status_code == 403
+    assert resp.get(f"/sistema/posta/caselle/{c.pk}/").status_code == 403

@@ -91,6 +91,47 @@ class ServiziPostaForm(StileMixin, forms.ModelForm):
         fields = ["invio_email", "ricezione_posta"]
 
 
+class CasellaForm(StileMixin, forms.ModelForm):
+    """Casella IMAP (email o PEC) da leggere; l'uso si abilita in Protocollo → Caselle."""
+
+    nuova_password = forms.CharField(
+        label="Password",
+        required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
+        help_text="Lasciare vuoto per mantenere quella salvata. È conservata cifrata.",
+    )
+
+    class Meta:
+        from apps.protocollo.models import CasellaPosta
+
+        model = CasellaPosta
+        fields = [
+            "nome", "pec", "server", "porta", "ssl", "utente", "cartella", "cartella_processata",
+            "giorni",
+        ]  # fmt: skip
+
+    def clean(self):
+        dati = super().clean()
+        processata = (dati.get("cartella_processata") or "").strip()
+        if processata and processata.lower() == (dati.get("cartella") or "").strip().lower():
+            self.add_error("cartella_processata", "Deve essere diversa dalla cartella da leggere.")
+        from .cifratura import cifratura_disponibile
+
+        if not cifratura_disponibile():
+            raise forms.ValidationError(
+                "Manca la chiave di cifratura (CHIAVE_CIFRATURA): chiedere all'amministratore di "
+                "sistema di configurarla prima di salvare una casella."
+            )
+        if not self.instance.password_cifrata and not dati.get("nuova_password"):
+            self.add_error("nuova_password", "Indicare la password della casella.")
+        return dati
+
+    def save(self, commit=True):
+        if self.cleaned_data.get("nuova_password"):
+            self.instance.imposta_password(self.cleaned_data["nuova_password"])
+        return super().save(commit)
+
+
 class ServizioInvioForm(StileMixin, forms.ModelForm):
     """Server SMTP per email o PEC (la password resta cifrata e non si mostra mai)."""
 

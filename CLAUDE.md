@@ -67,9 +67,10 @@ DB di sviluppo: `compose.dev.yaml` (Docker, 127.0.0.1:55432) oppure cluster loca
   (nome su disco = impronta). Riservati: filtrare sempre con `Protocollo.objects.visibili_a(user)`.
   Spedizione per email/PEC solo con `protocollo.spedizioni` (`prepara_spedizione` → `spedisci`, coda in
   `invia_coda`): unica eccezione a `crea_invio`; ricevute PEC agganciate per `X-Riferimento-Message-ID`.
-- Posta: le caselle (`CasellaPosta`, *Protocollo → Caselle*) solo leggono; i server SMTP sono
-  `core.ServizioInvio` (*Sistema → Servizi di posta*, `apps/core/invio.py`): il «server generale» è il
-  backend Django predefinito (`invio.Backend`), il `.env` è solo la riserva.
+- Posta: tutta la configurazione in *Sistema → Servizi di posta* (`apps/core`): caselle IMAP
+  (`protocollo.CasellaPosta`, solo lettura) e server SMTP (`core.ServizioInvio`, `apps/core/invio.py`: il
+  «server generale» è il backend Django predefinito `invio.Backend`, il `.env` è solo la riserva).
+  *Protocollo → Caselle* sceglie solo quali caselle usare (`attiva`).
 - Download di file: `FileResponse` come allegato con `Content-Security-Policy: default-src 'none'; sandbox`.
 - Segreti nel DB: `apps.core.cifratura.cifra/decifra` (chiave `CHIAVE_CIFRATURA`, mai nel DB).
 - Lavori periodici: `manage.py pianificatore` (servizio) o i comandi singoli; devono essere rieseguibili.

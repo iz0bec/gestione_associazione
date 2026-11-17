@@ -22,6 +22,7 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from . import invio
 from .audit import Azione, campi_modificati, registra
+from .cifratura import cifratura_disponibile
 from .forms import AspettoForm, OrganizzazioneCompletaForm, ServizioInvioForm, ServiziPostaForm
 from .models import EventoAudit, Organizzazione
 
@@ -193,6 +194,7 @@ class ServiziPostaView(PermessoMixin, UpdateView):
             smtp=invio.stato_env(),
             servizi=ServizioInvio.objects.all(),
             generale=invio.servizio_generale(),
+            cifratura=cifratura_disponibile(),
             in_coda=Destinatario.objects.filter(
                 invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
             ).count(),
@@ -253,6 +255,52 @@ class VerificaSmtpView(PermessoMixin, View):
             messages.success(request, f"Server di invio {stato['host']}:{stato['porta']}: accesso "
                                       "riuscito (nessuna email spedita).")  # fmt: skip
         return redirect("core:servizi_posta")
+
+
+class _CasellaMixin:
+    """Configurazione delle caselle IMAP (email e PEC); l'uso si abilita in Protocollo → Caselle."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    template_name = "core/casella.html"
+    success_url = reverse_lazy("core:servizi_posta")
+
+    def get_form_class(self):
+        from .forms import CasellaForm
+
+        return CasellaForm
+
+    def get_queryset(self):
+        from apps.protocollo.models import CasellaPosta
+
+        return CasellaPosta.objects.all()
+
+    def form_valid(self, form):
+        nuovo = form.instance.pk is None
+        if nuovo:
+            form.instance.attiva = False  # la abilita il protocollo
+        dettagli = {} if nuovo else campi_modificati(form)
+        dettagli.get("campi", {}).pop("nuova_password", None)
+        risposta = super().form_valid(form)
+        if nuovo:
+            registra(Azione.CREAZIONE, self.object, descrizione=f"Casella di posta {self.object}")
+            messages.success(self.request, f"Casella «{self.object}» salvata: per leggerla va "
+                                           "abilitata in Protocollo → Caselle.")  # fmt: skip
+        else:
+            if dettagli.get("campi") or form.cleaned_data.get("nuova_password"):
+                registra(Azione.MODIFICA, self.object,
+                         descrizione=f"Casella di posta {self.object}",
+                         password_cambiata=bool(form.cleaned_data.get("nuova_password")) or None,
+                         **dettagli)  # fmt: skip
+            messages.success(self.request, f"Casella «{self.object}» salvata.")
+        return risposta
+
+
+class CasellaNuovaView(_CasellaMixin, PermessoMixin, CreateView):
+    pass
+
+
+class CasellaModificaView(_CasellaMixin, PermessoMixin, UpdateView):
+    pass
 
 
 class _ServizioInvioMixin:

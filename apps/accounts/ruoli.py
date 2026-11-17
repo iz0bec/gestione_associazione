@@ -79,8 +79,7 @@ PROTOCOLLO_RESPONSABILE = [
     "protocollo.change_modelloprotocollo",
     "protocollo.gestisci_manuale",
     "protocollo.view_casellaposta",
-    "protocollo.add_casellaposta",
-    "protocollo.change_casellaposta",
+    "protocollo.change_casellaposta",  # solo l'uso nel protocollo: si configura in Sistema
 ]
 
 ORGANI_LETTURA = [
