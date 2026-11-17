@@ -20,6 +20,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   cifrate e **Verifica**. Le comunicazioni con **Anche per SMS** / **Anche su WhatsApp** mandano un
   **testo breve** (con segnaposto) al cellulare dell'anagrafica; WhatsApp solo a chi ha registrato il
   consenso nella scheda. Esito per destinatario e canale, tre tentativi.
+- **Comunicazioni senza email**: togliendo **Per email** si spedisce solo per SMS, WhatsApp o
+  Telegram (il testo lungo serve solo per Telegram).
 
 ## [1.0.26] - 2026-11-17
 

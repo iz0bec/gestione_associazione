@@ -47,6 +47,7 @@ from .models import (
 log = logging.getLogger(__name__)
 
 MAX_TENTATIVI = 3
+SOLO_ALTRI_CANALI = "niente email: solo SMS, WhatsApp o Telegram"
 
 SEGNAPOSTO = {
     "nome": "nome della persona",
@@ -221,6 +222,7 @@ def crea_invio(
     sms=False,
     whatsapp=False,
     testo_breve="",
+    email=True,
 ):
     """Prepara un invio in bozza con i destinatari (i non raggiungibili esclusi, con il motivo).
 
@@ -228,7 +230,7 @@ def crea_invio(
     `servizio`: ServizioInvio (None: server generale); se è una PEC, chi ha la PEC la riceve per
     PEC e gli altri per email dal server generale. `telegram`: anche a chi ha collegato Telegram;
     `sms`, `whatsapp`: anche per SMS (a chi ha il cellulare) e WhatsApp (a chi ha dato il consenso),
-    con `testo_breve` (vuoto: l'oggetto).
+    con `testo_breve` (vuoto: l'oggetto). `email=False`: niente email, solo gli altri canali.
     """
     if not oggetto.strip() or not corpo.strip():
         raise OperazioneNonValida("Oggetto e testo sono obbligatori.")
@@ -249,12 +251,16 @@ def crea_invio(
     whatsapp = whatsapp and ServizioMessaggi.attivo_per("whatsapp") is not None
     if testo_breve and (sconosciuti := segnaposto_sconosciuti(testo_breve)):
         raise OperazioneNonValida(f"Segnaposto sconosciuti: {', '.join(sconosciuti)}.")
+    if not email and not (telegram or sms or whatsapp):
+        raise OperazioneNonValida(
+            "Senza email serve almeno un altro canale attivo (SMS, WhatsApp o Telegram)."
+        )
     pec = servizio is not None and servizio.pec
     invio = Invio.objects.create(
         oggetto=oggetto.strip(), corpo=corpo, finalita=finalita, modello=modello,
         protocolla=protocolla, programmato_il=programmato_il, origine=origine,
         origine_id=origine_id, contesto=contesto or {}, creato_da=utente, modificato_da=utente,
-        servizio=servizio, telegram=telegram, sms=sms, whatsapp=whatsapp,
+        servizio=servizio, telegram=telegram, sms=sms, whatsapp=whatsapp, email=email,
         testo_breve=(testo_breve or "").strip()[:320],
     )  # fmt: skip
     con_consenso = (
@@ -267,6 +273,8 @@ def crea_invio(
         indirizzo = s.pec if canale == Destinatario.Canale.PEC else s.email
         motivo = motivo_esclusione(s, finalita, con_consenso, indirizzo)
         su_telegram = telegram and s.telegram_chat_id and motivo in ("", "senza email")
+        if not email and not motivo:
+            motivo = SOLO_ALTRI_CANALI
         righe.append(
             Destinatario(
                 invio=invio,
@@ -281,13 +289,13 @@ def crea_invio(
             )  # fmt: skip
         )
     gia = {r.email.lower() for r in righe if r.email}
-    for nome, email in indirizzi:
-        if email not in gia:
+    for nome, indirizzo in indirizzi if email else ():  # indirizzi liberi: solo per email
+        if indirizzo not in gia:
             from apps.protocollo.spedizioni import sembra_pec
 
-            canale = Destinatario.Canale.PEC if pec and sembra_pec(email) else "email"
-            righe.append(Destinatario(invio=invio, nome=nome[:200], email=email, canale=canale))
-            gia.add(email)
+            canale = Destinatario.Canale.PEC if pec and sembra_pec(indirizzo) else "email"
+            righe.append(Destinatario(invio=invio, nome=nome[:200], email=indirizzo, canale=canale))
+            gia.add(indirizzo)
     Destinatario.objects.bulk_create(righe)
     if sms or whatsapp:
         _consegne_messaggi(invio, sms, whatsapp)
@@ -310,7 +318,10 @@ def _consegne_messaggi(invio, sms, whatsapp):
 
     consegne = []
     for d in invio.destinatari.filter(soggetto__isnull=False).select_related("soggetto"):
-        if d.stato == Destinatario.Stato.ESCLUSO and d.motivo != "senza email":
+        if d.stato == Destinatario.Stato.ESCLUSO and d.motivo not in (
+            "senza email",
+            SOLO_ALTRI_CANALI,
+        ):
             continue
         numero = numero_e164(d.soggetto.cellulare)
         if not numero:

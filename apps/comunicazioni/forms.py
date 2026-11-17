@@ -49,7 +49,10 @@ class InvioForm(StileMixin, forms.Form):
     )
     oggetto = forms.CharField(max_length=200)
     corpo = forms.CharField(
-        label="Testo", widget=forms.Textarea(attrs={"rows": 10}), help_text=AIUTO_SEGNAPOSTO
+        label="Testo",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 10}),
+        help_text=AIUTO_SEGNAPOSTO,
     )
     finalita = forms.ChoiceField(
         label="Finalità", choices=Finalita.choices, initial=Finalita.COMUNICAZIONI
@@ -81,6 +84,13 @@ class InvioForm(StileMixin, forms.Form):
         label="Anche su Telegram",
         required=False,
         help_text="A chi ha collegato Telegram; chi non ha l'email la riceve solo lì.",
+    )
+    email = forms.BooleanField(
+        label="Per email",
+        required=False,
+        initial=True,
+        help_text="Togliendo la spunta la comunicazione parte solo per SMS, WhatsApp o Telegram "
+        "(il testo lungo serve solo per Telegram).",
     )
     sms = forms.BooleanField(
         label="Anche per SMS", required=False, help_text="Al cellulare dell'anagrafica."
@@ -122,6 +132,11 @@ class InvioForm(StileMixin, forms.Form):
                 del self.fields[canale]
         if "sms" not in self.fields and "whatsapp" not in self.fields:
             del self.fields["testo_breve"]
+        if not ({"sms", "whatsapp", "telegram"} & set(self.fields)):
+            del self.fields["email"]  # nessun altro canale: sempre per email
+
+    def per_email(self):
+        return self.cleaned_data.get("email", True) if "email" in self.fields else True
 
     def servizio(self):
         valore = self.cleaned_data.get("da") or ""
@@ -133,6 +148,12 @@ class InvioForm(StileMixin, forms.Form):
         _controlla_segnaposto(self, "oggetto", "corpo")
         if "testo_breve" in self.fields:
             _controlla_segnaposto(self, "testo_breve")
+        email = dati.get("email", True) if "email" in self.fields else True
+        altri = [c for c in ("sms", "whatsapp", "telegram") if dati.get(c)]
+        if not email and not altri:
+            self.add_error("email", "Scegliere almeno un canale (email, SMS, WhatsApp o Telegram).")
+        if (email or dati.get("telegram")) and not (dati.get("corpo") or "").strip():
+            self.add_error("corpo", "Il testo è obbligatorio per l'email e per Telegram.")
         self.indirizzi_validi, errati = leggi_indirizzi(dati.get("indirizzi"))
         if errati:
             self.add_error("indirizzi", "Indirizzi non validi: " + "; ".join(errati))

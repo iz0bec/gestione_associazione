@@ -141,6 +141,9 @@ class Invio(ModelloBase):
     telegram = models.BooleanField(
         "anche su Telegram", default=False, help_text="A chi ha collegato Telegram."
     )
+    email = models.BooleanField(
+        "per email", default=True, help_text="Tolto: solo SMS, WhatsApp o Telegram."
+    )
     sms = models.BooleanField("anche per SMS", default=False)
     whatsapp = models.BooleanField("anche su WhatsApp", default=False)
     testo_breve = models.CharField(

@@ -91,6 +91,11 @@ l'oggetto. Va al **cellulare** dell'anagrafica (in qualsiasi formato: il program
   WhatsApp. Il messaggio usa il **modello approvato da Meta** configurato nel servizio, con il testo
   breve al posto del parametro.
 
+**Solo SMS, WhatsApp o Telegram**: togliendo la spunta **Per email** (compare quando c'è almeno un
+altro canale attivo) la comunicazione non parte per email; il testo lungo serve solo se si sceglie
+anche Telegram, altrimenti basta l'oggetto con il testo breve. Gli altri indirizzi scritti a mano
+(solo email) non si usano; nella pagina dell'invio chi ha l'email compare come «niente email».
+
 Nella pagina dell'invio ogni destinatario mostra l'esito di SMS e WhatsApp (in attesa, inviato,
 errore con il motivo); il programma ritenta tre volte.
 

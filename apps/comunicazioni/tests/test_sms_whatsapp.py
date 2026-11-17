@@ -239,3 +239,40 @@ class TestPagine:
         c.post(reverse("comunicazioni:whatsapp_consenso", args=[anna.pk]), {})
         anna.refresh_from_db()
         assert anna.whatsapp_consenso_il is None
+
+
+class TestSoloMessaggi:
+    def test_niente_email(self, utente, persone, fornitore):
+        _servizio("skebby")
+        invio = servizi.conferma(_crea(utente, [persone["mario"], persone["senza"]], sms=True,
+                                       email=False, testo_breve="Assemblea"), utente)  # fmt: skip
+        mario = invio.destinatari.get(soggetto=persone["mario"])
+        assert mario.stato == "escluso" and mario.motivo == servizi.SOLO_ALTRI_CANALI
+        assert mario.consegne.get().canale == "sms"
+        assert servizi.elabora_coda() == (1, 0)  # un SMS, nessuna email
+        from django.core import mail
+
+        assert mail.outbox == []
+        invio.refresh_from_db()
+        assert invio.stato == "inviato" and not invio.email
+
+    def test_serve_un_canale(self, utente, persone):
+        with pytest.raises(servizi.OperazioneNonValida, match="almeno un altro canale"):
+            _crea(utente, [persone["mario"]], email=False)
+
+    def test_modulo_solo_sms(self, client_ruolo, persone, fornitore):
+        _servizio("skebby")
+        c = client_ruolo("Segretario")
+        assert "Per email" in c.get(reverse("comunicazioni:nuovo")).content.decode()
+        base = {"oggetto": "Avviso", "finalita": "istituzionale",
+                "soggetti": [persone["anna"].pk, persone["mario"].pk]}  # fmt: skip
+        r = c.post(reverse("comunicazioni:nuovo"), base | {"email": "on"})  # serve il testo
+        assert "corpo" in r.context["form"].errors
+        r = c.post(reverse("comunicazioni:nuovo"), base)  # spunta tolta e nessun altro canale
+        assert "email" in r.context["form"].errors
+        r = c.post(reverse("comunicazioni:nuovo"), base | {"sms": "on", "testo_breve": "Ciao"})
+        assert r.status_code == 302
+        invio = persone["anna"].comunicazioni.get().invio
+        assert not invio.email and invio.sms and invio.corpo == "Ciao"
+        pagina = c.get(invio.get_absolute_url()).content.decode()
+        assert "niente email" in pagina

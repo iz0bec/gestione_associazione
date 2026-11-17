@@ -34,6 +34,7 @@
     <div class="card">
       <div class="card-body">
         {{ form.da.as_field_group }}
+        {% if form.email %}{{ form.email.as_field_group }}{% endif %}
         {% if form.telegram %}{{ form.telegram.as_field_group }}{% endif %}
         {% if form.sms %}{{ form.sms.as_field_group }}{% endif %}
         {% if form.whatsapp %}{{ form.whatsapp.as_field_group }}{% endif %}

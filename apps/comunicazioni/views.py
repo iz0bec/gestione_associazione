@@ -130,7 +130,8 @@ class InvioNuovoView(PermessoMixin, FormView):
             invio = servizi.crea_invio(
                 self.request.user,
                 oggetto=d["oggetto"],
-                corpo=d["corpo"],
+                corpo=d["corpo"] or d.get("testo_breve") or d["oggetto"],
+                email=form.per_email(),
                 finalita=d["finalita"],
                 soggetti=soggetti,
                 indirizzi=form.indirizzi_validi,
