@@ -303,6 +303,7 @@ def test_caselle_configurate_in_sistema_e_abilitate_dal_protocollo(client_ruolo,
     admin = client_ruolo("Amministratore di sistema")
     pagina = admin.get("/sistema/posta/").content.decode()
     assert "Manca la chiave di cifratura" in pagina and "Nuova casella" in pagina  # disattivato
+    assert "manage.py genera_chiave_cifratura)&quot; &gt;&gt; .env" in pagina  # da copiare
     settings.CHIAVE_CIFRATURA = nuova_chiave()
     pagina = admin.get("/sistema/posta/").content.decode()
     assert "Manca la chiave" not in pagina and "/sistema/posta/caselle/nuova/" in pagina

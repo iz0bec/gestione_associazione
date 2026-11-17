@@ -162,6 +162,24 @@ class OrganizzazioneView(PermessoMixin, UpdateView):
         return redirect(self.success_url)
 
 
+def _comandi_chiave():
+    """Comandi da copiare per creare CHIAVE_CIFRATURA in questa installazione."""
+    import shlex
+    import sys
+
+    from django.conf import settings
+
+    cartella = shlex.quote(str(settings.BASE_DIR))
+    python = shlex.quote(sys.executable)
+    return {
+        "comando_chiave": f'cd {cartella} && echo "CHIAVE_CIFRATURA=$({python} manage.py '
+        f'genera_chiave_cifratura)" >> .env',
+        "comando_riavvio": ""
+        if settings.DEBUG
+        else "systemctl restart gestione-associazione gestione-associazione-pianificatore",
+    }
+
+
 class ServiziPostaView(PermessoMixin, UpdateView):
     """Interruttori dell'invio e della lettura, servizi di invio (SMTP) e stato delle caselle."""
 
@@ -195,6 +213,7 @@ class ServiziPostaView(PermessoMixin, UpdateView):
             servizi=ServizioInvio.objects.all(),
             generale=invio.servizio_generale(),
             cifratura=cifratura_disponibile(),
+            **_comandi_chiave(),
             in_coda=Destinatario.objects.filter(
                 invio__stato=Invio.Stato.IN_CODA, stato=Destinatario.Stato.IN_ATTESA
             ).count(),

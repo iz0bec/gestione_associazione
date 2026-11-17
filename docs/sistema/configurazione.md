@@ -41,7 +41,7 @@ permessi `600`, mai nel repository.
 | `DB_CONN_MAX_AGE` | | `60` | riuso delle connessioni al database (secondi) |
 | `URL_PUBBLICO` | | - | indirizzo pubblico dell'app, usato nei QR stampati delle schede dei beni (altrimenti quello della richiesta) |
 | `COMUNICAZIONI_LOTTO` | | `30` | email spedite a ogni giro della coda (ogni minuto): adattarlo ai limiti del proprio server SMTP |
-| `CHIAVE_CIFRATURA` | per le caselle di posta | - | chiave Fernet per le password salvate nel database; generarla con `manage.py genera_chiave_cifratura`. Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
+| `CHIAVE_CIFRATURA` | per le caselle di posta | - | chiave Fernet per le password salvate nel database; generarla e aggiungerla al `.env` con `cd /opt/gestione-associazione && echo "CHIAVE_CIFRATURA=$(.venv/bin/python manage.py genera_chiave_cifratura)" >> .env`, poi riavviare i servizi (*Sistema → Servizi di posta* mostra il comando esatto dell'installazione se la chiave manca). Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
 | `PROTOCOLLO_ALLEGATO_MAX_MB` | | `25` | dimensione massima di un documento protocollato |
 | `PROTOCOLLO_SPEDIZIONE_MAX_MB` | | `20` | totale dei documenti allegati a una spedizione per email o PEC di un protocollo (nel messaggio crescono di circa un terzo) |
 | `PROTOCOLLO_ESTENSIONI` | | pdf, p7m, xml, eml, office, immagini, zip | estensioni ammesse per i documenti (separate da virgola) |
