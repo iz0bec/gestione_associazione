@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.30] - 2026-11-17
+
+Backup incrementali, cifrati e con prova di ripristino.
+
 ### Aggiunto
 - **Backup incrementali**: i documenti si salvano una volta sola in un archivio per contenuto; ogni
   backup aggiunge solo le novità. Lo scaricato resta completo.
