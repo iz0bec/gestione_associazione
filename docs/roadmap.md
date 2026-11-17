@@ -98,9 +98,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    invio, registro invii, anniversari (compleanni, onomastici, ricorrenze, anzianità da socio, scomparse)
    con auguri automatici (rispettando consensi e decessi), invio di convocazioni, ricevute ed esiti.
    ✅ *Fatti in seguito*: lettere e buste DL per chi non ha l'email, indirizzi postali nelle liste in
-   Excel; etichette adesive in PDF (protocollo, comunicazioni, liste). *Da fare*: invio delle
-   ✅ Comunicazioni via PEC, su Telegram, per SMS e su WhatsApp Business (1.0.27; SMS e WhatsApp da
-   provare con un account reale).
+   Excel; etichette adesive in PDF (protocollo, comunicazioni, liste); comunicazioni via PEC, su
+   Telegram, per SMS e su WhatsApp Business (1.0.27); avvisi della posta da protocollare agli utenti
+   (1.0.28). *Da fare*: provare SMS e WhatsApp con un account reale.
 5. ✅ **Tesoreria** - esercizi, conti cassa/banca, prima nota, previsionale, rendiconto (Modello D),
    chiusura e riapertura con riporto saldi, collegamento con le quote.
 6. ✅ **Patrimonio** - inventario numerato, valutazioni, prestiti/cessioni/donazioni e restituzioni,
