@@ -253,6 +253,12 @@ class SpedizioneForm(StileMixin, forms.Form):
         widget=forms.Textarea(attrs={"rows": 8}),
         help_text="L'oggetto del messaggio è quello del protocollo, con numero e data.",
     )
+    email_ordinaria = forms.BooleanField(
+        label="Spedisci comunque come email ordinaria",
+        required=False,
+        help_text="Solo se si vuole davvero spedire un'email ordinaria a indirizzi PEC o per un "
+        "protocollo registrato con mezzo PEC: arriva come «anomalia», senza valore legale.",
+    )
     documenti = forms.ModelMultipleChoiceField(
         label="Documenti allegati",
         queryset=None,

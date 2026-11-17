@@ -5,6 +5,27 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.25] - 2026-11-17
+
+Etichette adesive, pulizia della posta scartata, niente email ordinarie verso le PEC per errore.
+
+### Aggiunto
+- **Pulizia della posta scartata**: nell'elenco *Scartati* filtri per motivo e data dello scarto,
+  **Elimina definitivamente** sui messaggi spuntati o su tutti quelli filtrati. Si elimina il contenuto
+  (testo, allegati, file `.eml`); resta una riga minima per non riscaricarli, e il registro attività
+  documenta cosa è stato eliminato. Nuovo permesso, a segretario e amministratore di sistema.
+- **Etichette adesive in PDF** per la spedizione postale: dai destinatari su carta di un protocollo
+  (menu *Buste ed etichette*), dai destinatari senza email di una comunicazione e da una **lista di
+  distribuzione**. Fogli A4 di formato comune (70 × 37, 70 × 36, 63,5 × 38,1, 99,1 × 38,1 mm), con la
+  possibilità di partire da un'etichetta qualsiasi per riusare un foglio già iniziato; solo chi ha
+  l'indirizzo postale completo. Ogni scaricamento è annotato nel registro attività.
+
+### Corretto
+- **Email ordinaria verso una PEC**: un protocollo registrato con mezzo PEC, o con destinatari che hanno
+  un indirizzo PEC, non si spedisce più da un servizio email ordinario senza accorgersene (la casella PEC
+  lo riceveva come «anomalia», senza valore legale). *Spedisci* lo segnala e chiede di scegliere il
+  servizio PEC o di confermare *Spedisci comunque come email ordinaria*.
+
 ## [1.0.24] - 2026-11-17
 
 Risposte dal servizio giusto e interruttore dei servizi di invio.

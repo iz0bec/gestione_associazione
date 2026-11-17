@@ -1,0 +1,28 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Etichette adesive per la spedizione postale su fogli A4 (posizioni in mm, nessuna
+               intestazione né piè di pagina: il foglio è tutto etichette).
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Etichette</title>
+<style>
+  @page { size: A4; margin: 0; }
+  body { margin: 0; font-family: "DejaVu Sans", "Helvetica", sans-serif; color: #000; }
+  .foglio { position: relative; width: 210mm; height: 297mm; page-break-after: always; overflow: hidden; }
+  .foglio:last-child { page-break-after: auto; }
+  .etichetta { position: absolute; width: {{ formato.larghezza|stringformat:"s" }}mm; height: {{ formato.altezza|stringformat:"s" }}mm;
+    box-sizing: border-box; padding: 4mm 5mm; display: flex; flex-direction: column; justify-content: center;
+    font-size: {% if formato.larghezza > 90 %}10.5pt{% else %}9pt{% endif %}; line-height: 1.2; overflow: hidden; }
+  .etichetta div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .etichetta .nome { font-weight: bold; }
+</style>
+</head>
+<body>
+{% for foglio in fogli %}<div class="foglio">
+  {% for e in foglio %}<div class="etichetta" style="left: {{ e.x|stringformat:'s' }}mm; top: {{ e.y|stringformat:'s' }}mm;">{% for r in e.righe %}<div{% if forloop.first %} class="nome"{% endif %}>{{ r }}</div>{% endfor %}</div>{% endfor %}
+</div>{% endfor %}
+</body>
+</html>

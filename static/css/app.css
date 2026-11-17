@@ -127,3 +127,6 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
 .firma-generica-anteprima { font-family: "Firma GA", cursive; font-size: 1.7rem; color: #1b2a5e; white-space: nowrap; overflow: hidden; }
 .carica-contrassegno summary { list-style: none; }
 .carica-contrassegno summary::-webkit-details-marker { display: none; }
+
+/* Modulo delle etichette adesive dentro un menu a tendina */
+.modulo-etichette { min-width: 18rem; }

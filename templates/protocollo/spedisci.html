@@ -21,6 +21,8 @@
       <div class="form-control-plaintext">Prot. n. {{ protocollo.segnatura }} del {{ protocollo.registrato_il|date:"d/m/Y" }} - {{ protocollo.oggetto }}</div>
     </div>
     {{ form.da.as_field_group }}
+    {% if avviso_canale %}<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i><strong>Attenzione:</strong> {{ avviso_canale }} Per la PEC scegliere il servizio PEC in «Spedisci da».
+      <div class="mt-2">{{ form.email_ordinaria.as_field_group }}</div></div>{% endif %}
 
     <div class="mb-3">
       <div class="form-label required">Destinatari</div>

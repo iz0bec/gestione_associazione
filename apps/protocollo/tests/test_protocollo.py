@@ -642,3 +642,83 @@ class TestAzioniPostaInBlocco:
         assert r.status_code == 403
         pagina = client_ruolo("Presidente", username="p").get("/protocollo/posta/").content
         assert b'name="messaggi"' not in pagina  # consulta ma non gestisce la posta
+
+
+class TestPuliziaPostaScartata:
+    def _scartati(self, utente, n=3, motivo="Pubblicità", prefisso="Offerta"):
+        c = _casella()
+        messaggi = [posta.salva_messaggio(c, _email(oggetto=f"{prefisso}-{i}").as_bytes())
+                    for i in range(n)]  # fmt: skip
+        for m in messaggi:
+            servizi.scarta_messaggio(m, utente, motivo)
+        return [type(m).objects.get(pk=m.pk) for m in messaggi]
+
+    def test_contenuto_eliminato_e_riga_conservata(
+        self, crea_utente, django_capture_on_commit_callbacks
+    ):
+        from django.core.files.storage import default_storage
+
+        resp = crea_utente("segr", ruoli=["Segretario"])
+        (m, *_altri) = self._scartati(resp)
+        file = [m.file_eml.name, *(a["percorso"] for a in m.allegati)]
+        assert all(default_storage.exists(f) for f in file) and m.allegati
+        with django_capture_on_commit_callbacks(execute=True):
+            servizi.ripulisci_messaggio(m, resp)
+        m.refresh_from_db()
+        assert m.ripulito_il and not m.testo and m.allegati == [] and not m.file_eml
+        assert not any(default_storage.exists(f) for f in file)
+        evento = EventoAudit.objects.filter(azione="eliminazione").latest("pk")
+        assert evento.dettagli["motivo_scarto"] == "Pubblicità"
+        assert evento.dettagli["allegati"] == ["domanda.pdf"]
+        # la riga resta: lo stesso messaggio non viene riscaricato
+        assert posta.salva_messaggio(m.casella, _email(oggetto="Offerta-0").as_bytes()) is None
+        with pytest.raises(OperazioneNonValida):
+            servizi.ripristina_messaggio(m, resp)
+        with pytest.raises(OperazioneNonValida):
+            servizi.ripulisci_messaggio(m, resp)
+
+    def test_solo_scartati_e_solo_con_permesso(self, utente, crea_utente):
+        c = _casella()
+        nuovo = posta.salva_messaggio(c, _email(oggetto="Nuovo").as_bytes())
+        with pytest.raises(OperazioneNonValida, match="permesso"):
+            servizi.ripulisci_messaggio(nuovo, utente)  # addetto: non può
+        with pytest.raises(OperazioneNonValida, match="scartati"):
+            servizi.ripulisci_messaggio(nuovo, crea_utente("segr", ruoli=["Segretario"]))
+
+    def test_pulizia_selettiva_dall_elenco(self, client_ruolo, crea_utente):
+        from datetime import timedelta as td
+
+        from apps.protocollo.models import MessaggioRicevuto
+
+        client = client_ruolo("Segretario")
+        a, b, c = self._scartati(client.utente)
+        (d,) = self._scartati(client.utente, n=1, motivo="Duplicato", prefisso="Copia")
+        MessaggioRicevuto.objects.filter(pk=a.pk).update(
+            gestito_il=timezone.now() - td(days=90))  # fmt: skip
+        pagina = client.get("/protocollo/posta/?stato=scartato").content.decode()
+        assert "Elimina definitivamente" in pagina and "Elimina tutti i 4" in pagina
+        pagina = client.get("/protocollo/posta/?stato=scartato&motivo=Duplicato").content.decode()
+        assert "Elimina tutti i 1 filtrati" in pagina
+        # selezionati
+        r = client.post("/protocollo/posta/azione/", {"azione": "ripulisci", "messaggi": [b.pk],
+                        "stato": "scartato"}, follow=True)  # fmt: skip
+        assert "1 messaggi scartati eliminati definitivamente." in r.content.decode()
+        # tutti quelli filtrati: scartati prima di 30 giorni fa con motivo «Pubblicità»
+        prima = (timezone.localdate() - td(days=30)).isoformat()
+        client.post("/protocollo/posta/azione/", {"azione": "ripulisci_filtrati",
+                    "motivo": "Pubblicità", "prima_del": prima, "stato": "scartato"})  # fmt: skip
+        ripuliti = set(
+            MessaggioRicevuto.objects.filter(ripulito_il__isnull=False).values_list("pk", flat=True)
+        )
+        assert ripuliti == {a.pk, b.pk}
+        pagina = client.get("/protocollo/posta/?stato=scartato").content.decode()
+        assert "Offerta-2" in pagina and "Offerta-0" not in pagina and "Offerta-1" not in pagina
+        assert client.get(f"/protocollo/posta/{a.pk}/").status_code == 404
+        # l'addetto non vede i pulsanti e non può eliminare
+        addetto = client_ruolo("Addetto protocollo", username="addetto2")
+        assert "Elimina definitivamente" not in addetto.get(
+            "/protocollo/posta/?stato=scartato").content.decode()  # fmt: skip
+        addetto.post("/protocollo/posta/azione/", {"azione": "ripulisci", "messaggi": [c.pk],
+                     "stato": "scartato"})  # fmt: skip
+        c.refresh_from_db()
+        assert c.ripulito_il is None

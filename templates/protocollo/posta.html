@@ -18,6 +18,20 @@
       {% for valore, etichetta in stati %}<li class="nav-item"><a class="nav-link{% if stato == valore %} active{% endif %}" href="?stato={{ valore }}">{{ etichetta }}</a></li>{% endfor %}
     </ul>
   </div>
+  {% if stato == "scartato" %}
+  <form method="get" class="card-body border-bottom py-2 d-flex flex-wrap align-items-end gap-2">
+    <input type="hidden" name="stato" value="scartato">
+    <div><label class="form-label small mb-1" for="filtro-motivo">Motivo</label>
+      <select class="form-select form-select-sm" name="motivo" id="filtro-motivo">
+        <option value="">tutti</option>
+        {% for m in motivi %}<option value="{{ m }}"{% if m == filtro_motivo %} selected{% endif %}>{{ m|truncatechars:60 }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label small mb-1" for="filtro-prima">Scartati prima del</label>
+      <input class="form-control form-control-sm" type="date" name="prima_del" id="filtro-prima" value="{{ filtro_prima_del }}"></div>
+    <button class="btn btn-sm" type="submit"><i class="ti ti-filter me-1"></i>Filtra</button>
+    {% if filtro_motivo or filtro_prima_del %}<a class="btn btn-sm btn-link" href="?stato=scartato">Togli i filtri</a>{% endif %}
+  </form>
+  {% endif %}
   {% with selezione=perms.protocollo.gestisci_posta %}{% if selezione and messaggi and stato == "nuovo" or selezione and messaggi and stato == "scartato" %}
   <form method="post" action="{% url 'protocollo:azione_posta' %}" id="azioni-posta"{% if stato == "nuovo" %} data-conferma="Scartare i messaggi selezionati con il motivo indicato?"{% endif %}>{% csrf_token %}
     <input type="hidden" name="stato" value="{{ stato }}">
@@ -29,6 +43,11 @@
       <button class="btn btn-sm btn-outline-secondary" type="submit" name="azione" value="scarta"><i class="ti ti-trash-x me-1"></i>Scarta</button>
       {% else %}
       <button class="btn btn-sm" type="submit" name="azione" value="ripristina"><i class="ti ti-arrow-back-up me-1"></i>Riporta tra quelli da esaminare</button>
+      {% if perms.protocollo.ripulisci_posta %}
+      <input type="hidden" name="motivo" value="{{ filtro_motivo }}"><input type="hidden" name="prima_del" value="{{ filtro_prima_del }}">
+      <button class="btn btn-sm btn-outline-danger" type="submit" name="azione" value="ripulisci" data-conferma="Eliminare definitivamente il contenuto dei messaggi selezionati (testo, allegati, file originale)? L'operazione non si annulla."><i class="ti ti-trash me-1"></i>Elimina definitivamente</button>
+      <button class="btn btn-sm btn-danger ms-auto" type="submit" name="azione" value="ripulisci_filtrati" data-conferma="Eliminare definitivamente tutti i {{ filtrati }} messaggi scartati{% if filtro_motivo or filtro_prima_del %} che rispondono ai filtri{% endif %}? L'operazione non si annulla."><i class="ti ti-trash me-1"></i>Elimina tutti i {{ filtrati }}{% if filtro_motivo or filtro_prima_del %} filtrati{% endif %}</button>
+      {% endif %}
       {% endif %}
     </div>
   {% endif %}

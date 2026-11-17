@@ -79,7 +79,8 @@ sezione e revisore; la bozza solo da chi accede al protocollo.
 L'addetto protocolla ma non annulla: l'annullamento lo decide un responsabile (segretario).
 Chi modifica titolario e modelli sceglie anche quali **caselle** usa il protocollo; la configurazione delle
 caselle e dei servizi di invio (server, password) spetta solo all'Amministratore di sistema
-(*Sistema → Servizi di posta*).
+(*Sistema → Servizi di posta*). L'eliminazione definitiva della posta scartata spetta a segretario e
+amministratore di sistema, non all'addetto.
 
 ### Organi sociali
 

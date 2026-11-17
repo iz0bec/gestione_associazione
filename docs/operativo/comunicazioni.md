@@ -61,7 +61,12 @@ e offre:
   posizione della finestra della busta, la data, l'oggetto e il testo con gli stessi segnaposto
   dell'email (es. *Gentile Mario*);
 - **Buste DL (Word)** già compilate, oppure il documento per la **stampa unione** con l'**elenco
-  (CSV)**: sono le stesse buste del protocollo in uscita.
+  (CSV)**: sono le stesse buste del protocollo in uscita;
+- **Etichette** adesive in PDF, su fogli A4 di formato comune, partendo anche da un foglio già usato
+  (vedi la guida del [Protocollo](protocollo.md)).
+
+Anche dalla scheda di una **lista di distribuzione** si scaricano le **Etichette** di tutti i membri con un
+indirizzo postale completo.
 
 L'indirizzo è quello **attuale** dell'anagrafica; se manca o è incompleto la pagina lo segnala. Se
 l'invio è protocollato, lettere e buste riportano il numero di protocollo. Vale la stessa regola

@@ -45,3 +45,16 @@ def con_stile(campo):
         attrs["aria-describedby"] = f"{campo.auto_id}_helptext"
     attrs["class"] = " ".join(classi)
     return campo.as_widget(attrs=attrs)
+
+
+@register.inclusion_tag("_modulo_etichette.html")
+def modulo_etichette(url, nel_menu=False):
+    """Modulo «Etichette adesive»: formato del foglio A4 e prima etichetta libera (GET → PDF)."""
+    from apps.protocollo.buste import FORMATI_ETICHETTE, FORMATO_ETICHETTE
+
+    return {
+        "url": url,
+        "nel_menu": nel_menu,
+        "formati": [(k, f["nome"]) for k, f in FORMATI_ETICHETTE.items()],
+        "predefinito": FORMATO_ETICHETTE,
+    }

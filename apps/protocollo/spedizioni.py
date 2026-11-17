@@ -88,6 +88,38 @@ def _email_valida(indirizzo):
     return True
 
 
+# parti del dominio tipiche dei gestori PEC (pec.aruba.it, legalmail.it, cert.legalmail.it...)
+_DOMINI_PEC = {"legalmail", "postacert", "cert", "arubapec", "sicurezzapostale", "gigapec"}
+
+
+def sembra_pec(indirizzo, corrispondente=None):
+    """L'indirizzo è (probabilmente) una PEC: lo dice l'anagrafica o il dominio."""
+    indirizzo = (indirizzo or "").strip().lower()
+    soggetto = getattr(corrispondente, "soggetto", None)
+    if soggetto is not None and soggetto.pec and soggetto.pec.strip().lower() == indirizzo:
+        return True
+    dominio = indirizzo.rsplit("@", 1)[-1] if "@" in indirizzo else ""
+    return any(p.startswith("pec") or p in _DOMINI_PEC for p in dominio.split(".")[:-1])
+
+
+def controllo_canale(protocollo, servizio, destinatari):
+    """Motivo per cui un'email ordinaria non va spedita (protocollo per PEC o destinatari PEC),
+    altrimenti stringa vuota. Una PEC che riceve un'email ordinaria la consegna come «anomalia»,
+    senza valore legale."""
+    if servizio is not None and servizio.pec:
+        return ""
+    pec = [i for c, _, i in destinatari if sembra_pec(i, c)]
+    if pec:
+        elenco = ", ".join(pec[:3]) + ("…" if len(pec) > 3 else "")
+        return (f"{elenco}: {'è un indirizzo' if len(pec) == 1 else 'sono indirizzi'} PEC, ma il "
+                "servizio scelto spedisce un'email ordinaria: arriverebbe come «anomalia», senza "
+                "valore legale.")  # fmt: skip
+    if protocollo.mezzo == Protocollo.Mezzo.PEC:
+        return ("Il protocollo è registrato con mezzo PEC, ma il servizio scelto spedisce "
+                "un'email ordinaria.")  # fmt: skip
+    return ""
+
+
 def indirizzi_proposti(protocollo, pec=False):
     """Un indirizzo per destinatario: prima quello del canale (PEC o email) in anagrafica,
     poi quello registrato nel protocollo, poi l'altro. Vuoto se non ce n'è uno valido."""
@@ -128,9 +160,12 @@ def mittente_generale():
 
 
 @transaction.atomic
-def prepara_spedizione(protocollo, utente, *, servizio, destinatari, testo, allegati):
+def prepara_spedizione(
+    protocollo, utente, *, servizio, destinatari, testo, allegati, email_ordinaria=False
+):
     """Mette in coda la spedizione. `destinatari`: lista di (corrispondente o None, nome,
-    indirizzo); `servizio`: ServizioInvio, None per il server generale."""
+    indirizzo); `servizio`: ServizioInvio, None per il server generale; `email_ordinaria`:
+    conferma di spedire un'email ordinaria anche a indirizzi PEC o per un protocollo PEC."""
     if utente is not None and not utente.has_perm(PERMESSO):
         raise OperazioneNonValida("Non hai il permesso di spedire i protocolli.")
     protocollo = Protocollo.objects.select_for_update().get(pk=protocollo.pk)
@@ -157,6 +192,11 @@ def prepara_spedizione(protocollo, utente, *, servizio, destinatari, testo, alle
         righe.append((corrispondente, nome, indirizzo))
     if not righe:
         raise OperazioneNonValida("Scegliere almeno un destinatario.")
+    if not email_ordinaria and (motivo := controllo_canale(protocollo, servizio, righe)):
+        raise OperazioneNonValida(
+            f"{motivo} Scegliere il servizio PEC, oppure spuntare «Spedisci comunque come email "
+            "ordinaria»."
+        )
     allegati = list(allegati)
     if any(a.protocollo_id != protocollo.pk for a in allegati):
         raise OperazioneNonValida("Documento non appartenente al protocollo.")

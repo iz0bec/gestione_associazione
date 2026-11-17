@@ -204,7 +204,7 @@ class InvioCartaView(PermessoMixin, View):
 
     def get(self, request, pk, formato):
         invio = get_object_or_404(Invio, pk=pk)
-        if formato not in ("csv", "stampa-unione", "buste", "lettere"):
+        if formato not in ("csv", "stampa-unione", "buste", "lettere", "etichette"):
             raise Http404
         if not carta.destinatari_su_carta(invio):
             raise Http404("Nessun destinatario su carta per questa comunicazione.")
@@ -212,6 +212,12 @@ class InvioCartaView(PermessoMixin, View):
             dati, nome = carta.csv(invio, request.user)
         elif formato == "lettere":
             dati, nome = carta.lettere(invio, request.user)
+        elif formato == "etichette":
+            from apps.protocollo import buste
+
+            foglio = buste.formato_etichette(request.GET.get("foglio"))
+            inizio = buste.posizione_iniziale(request.GET.get("inizio"), foglio)
+            dati, nome = carta.etichette(invio, request.user, foglio, inizio)
         else:
             dati, nome = carta.docx(invio, request.user, compilate=formato == "buste")
         tipo = self.TIPI[nome.rsplit(".", 1)[1]]
@@ -452,6 +458,35 @@ class ListaEsportaView(PermessoMixin, View):
         nome = f"lista_{slugify(lista.nome) or lista.pk}_{date.today():%Y%m%d}.xlsx"
         risposta = HttpResponse(contenuto, content_type=(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))  # fmt: skip
+        risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        return risposta
+
+
+class ListaEtichetteView(PermessoMixin, View):
+    """Etichette adesive (PDF) per i membri della lista con un indirizzo postale completo."""
+
+    permission_required = "comunicazioni.view_lista"
+
+    def get(self, request, pk):
+        from django.utils.text import slugify
+
+        from apps.protocollo import buste
+
+        lista = get_object_or_404(Lista, pk=pk)
+        foglio = buste.formato_etichette(request.GET.get("foglio"))
+        inizio = buste.posizione_iniziale(request.GET.get("inizio"), foglio)
+        righe = [
+            buste.riga_busta(
+                s.intestazione, s.qualifica, s.indirizzo, s.cap, s.comune, s.provincia
+            )  # fmt: skip
+            for s in servizi.soggetti_lista(lista).order_by("cognome", "denominazione", "nome")
+        ]
+        dati, n, scartate = buste.pdf_etichette(righe, foglio, inizio)
+        registra(Azione.ESPORTAZIONE, lista, descrizione=f"Etichette della lista «{lista}»",
+                 etichette=n, senza_indirizzo=scartate, formato=foglio)  # fmt: skip
+        nome = f"etichette_{slugify(lista.nome) or lista.pk}.pdf"
+        risposta = HttpResponse(dati, content_type="application/pdf")
         risposta["Content-Disposition"] = f'attachment; filename="{nome}"'
         risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
         return risposta

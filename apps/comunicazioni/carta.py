@@ -81,6 +81,12 @@ def docx(invio, utente, *, compilate=True):
     return dati, nome
 
 
+def etichette(invio, utente, formato, inizio):
+    dati, n, scartate = buste.pdf_etichette(righe(invio), formato, inizio)
+    _registra(invio, utente, "Etichette (PDF)", n)
+    return dati, f"etichette_{invio.pk}.pdf"
+
+
 def lettere(invio, utente):
     """Una lettera per destinatario su carta, con gli stessi segnaposto dell'email."""
     from apps.core.pdf import genera_pdf

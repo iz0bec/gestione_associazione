@@ -100,7 +100,8 @@ class TestFile:
         pagina = client.get(reverse("comunicazioni:invio", args=[invio.pk])).content.decode()
         assert "Su carta: 2 destinatari senza email" in pagina
         assert "manca il consenso" in pagina
-        for formato in ("csv", "buste", "stampa-unione", "lettere"):
+        assert "Etichette adesive" in pagina
+        for formato in ("csv", "buste", "stampa-unione", "lettere", "etichette"):
             r = client.get(reverse("comunicazioni:carta", args=[invio.pk, formato]))
             assert r.status_code == 200 and "attachment" in r["Content-Disposition"]
         assert (

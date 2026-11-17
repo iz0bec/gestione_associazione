@@ -70,7 +70,7 @@ def casella():
     return c
 
 
-def _protocollo(utente, *soggetti, direzione="uscita", mezzo="pec"):
+def _protocollo(utente, *soggetti, direzione="uscita", mezzo="email"):
     corr = [servizi.corrispondente_da_soggetto(s, "destinatario") for s in soggetti] or [
         {"ruolo": "destinatario", "descrizione": "Mario Rossi", "indirizzo": "mario@example.org"}
     ]
@@ -134,6 +134,37 @@ class TestPreparazione:
         pec.save()
         s = _spedisci(_protocollo(utente, comune, mezzo="email"), utente)
         assert s.servizio == pec and s.mittente == "sez@pec.example.it" and s.canale == "email"
+
+
+class TestCanale:
+    """Un'email ordinaria a una PEC arriva come «anomalia»: si blocca senza conferma."""
+
+    def test_indirizzi_pec_riconosciuti(self, comune):
+        assert spedizioni.sembra_pec("ancr-sez-avigliano@pec.asannicola.it")
+        assert spedizioni.sembra_pec("ente@legalmail.it")
+        assert spedizioni.sembra_pec("x@cert.legalmail.it")
+        assert not spedizioni.sembra_pec("info@comune.example.it")
+        assert not spedizioni.sembra_pec("pec@example.it")  # conta il dominio, non il nome
+        assert not spedizioni.sembra_pec("x@concerto.it")  # «cert» dentro una parola
+
+    def test_email_ordinaria_a_una_pec_bloccata(self, utente):
+        p = _protocollo(utente)  # mezzo email, ma l'indirizzo è una PEC
+        destinatari = [(None, "Sezione", "ancr-sez-avigliano@pec.asannicola.it")]
+        with pytest.raises(OperazioneNonValida, match="anomalia"):
+            _spedisci(p, utente, destinatari=destinatari)
+        s = spedizioni.prepara_spedizione(p, utente, servizio=None, destinatari=destinatari,
+                                          testo="T", allegati=[], email_ordinaria=True)  # fmt: skip
+        assert s.canale == "email"
+
+    def test_protocollo_pec_dal_server_email_bloccato(self, utente, comune):
+        p = _protocollo(utente, comune, mezzo="pec")
+        destinatari = [(None, "Comune", comune.email)]
+        with pytest.raises(OperazioneNonValida, match="mezzo PEC"):
+            _spedisci(p, utente, destinatari=destinatari)
+
+    def test_dal_servizio_pec_nessun_blocco(self, utente, comune, pec):
+        p = _protocollo(utente, comune, mezzo="pec")
+        assert _spedisci(p, utente, servizio=pec).canale == "pec"
 
 
 class TestInvio:
@@ -258,19 +289,20 @@ class TestRicevute:
 class TestViste:
     def test_modulo_e_spedizione(self, client_ruolo, comune, pec):
         client = client_ruolo("Addetto protocollo")
-        p = _protocollo(client.utente, comune)
+        p = _protocollo(client.utente, comune, mezzo="pec")
         url = reverse("protocollo:spedisci", args=[p.pk])
         r = client.get(url)
         assert r.status_code == 200
         assert r.context["form"]["da"].initial == str(pec.pk)  # protocollo per PEC
-        assert comune.pec in r.content.decode()
-        r = client.get(url, {"da": ""})  # server generale: indirizzo email
-        assert comune.email in r.content.decode()
+        assert comune.pec in r.content.decode() and not r.context["avviso_canale"]
+        r = client.get(url, {"da": ""})  # server generale: indirizzo email, ma protocollo PEC
+        assert comune.email in r.content.decode() and "mezzo PEC" in r.context["avviso_canale"]
         allegato = p.allegati.get()
-        r = client.post(url, {
-            "da": "", "testo": "Si trasmette.", "documenti": [allegato.pk],
-            "dest_0": "on", "indirizzo_0": comune.email,
-        })  # fmt: skip
+        dati = {"da": "", "testo": "Si trasmette.", "documenti": [allegato.pk],
+                "dest_0": "on", "indirizzo_0": comune.email}  # fmt: skip
+        r = client.post(url, dati)
+        assert r.status_code == 200 and not mail.outbox  # bloccata: serve la conferma
+        r = client.post(url, {**dati, "email_ordinaria": "on"})
         assert r.status_code == 302
         assert len(mail.outbox) == 1
         r = client.get(p.get_absolute_url())

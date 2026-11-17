@@ -28,10 +28,13 @@
     try { localStorage.setItem("menu", nascosto ? "nascosto" : "visibile"); } catch (e) { /* ignorato */ }
   });
 
-  // Conferma per i moduli con data-conferma="testo"
+  // Conferma per i moduli (o i singoli pulsanti di invio) con data-conferma="testo"
   document.addEventListener("submit", function (ev) {
+    var pulsante = ev.submitter && ev.submitter.closest("[data-conferma]");
     var modulo = ev.target.closest("form[data-conferma]");
-    if (modulo && !window.confirm(modulo.getAttribute("data-conferma"))) {
+    var testo = pulsante ? pulsante.getAttribute("data-conferma")
+      : (modulo ? modulo.getAttribute("data-conferma") : null);
+    if (testo && !window.confirm(testo)) {
       ev.preventDefault();
     }
   });

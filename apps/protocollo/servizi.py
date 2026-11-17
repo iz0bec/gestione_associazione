@@ -440,8 +440,8 @@ def scarta_messaggio(messaggio, utente, motivo):
 def ripristina_messaggio(messaggio, utente):
     """Riporta tra quelli da esaminare un messaggio scartato per errore."""
     messaggio = MessaggioRicevuto.objects.select_for_update().get(pk=messaggio.pk)
-    if messaggio.stato != MessaggioRicevuto.Stato.SCARTATO:
-        raise OperazioneNonValida("Si ripristinano solo i messaggi scartati.")
+    if messaggio.stato != MessaggioRicevuto.Stato.SCARTATO or messaggio.ripulito_il:
+        raise OperazioneNonValida("Si ripristinano solo i messaggi scartati e non ripuliti.")
     motivo = messaggio.motivo_scarto
     messaggio.stato = MessaggioRicevuto.Stato.NUOVO
     messaggio.motivo_scarto = ""
@@ -474,6 +474,43 @@ def scarta_messaggi(messaggi, utente, motivo):
 
 def ripristina_messaggi(messaggi, utente):
     return _in_blocco(ripristina_messaggio, messaggi, utente)
+
+
+@transaction.atomic
+def ripulisci_messaggio(messaggio, utente):
+    """Elimina definitivamente il contenuto di un messaggio scartato (file .eml, allegati, testo).
+
+    Resta una riga minima (casella, Message-ID, mittente, oggetto, motivo), così il messaggio non
+    viene riscaricato e il registro attività dice cosa è stato eliminato. Non si annulla.
+    """
+    from django.core.files.storage import default_storage
+
+    if utente is not None and not utente.has_perm("protocollo.ripulisci_posta"):
+        raise OperazioneNonValida("Non hai il permesso di eliminare la posta scartata.")
+    messaggio = MessaggioRicevuto.objects.select_for_update().get(pk=messaggio.pk)
+    if messaggio.stato != MessaggioRicevuto.Stato.SCARTATO or messaggio.ripulito_il:
+        raise OperazioneNonValida("Si eliminano solo i messaggi scartati, una volta.")
+    file = [messaggio.file_eml.name] if messaggio.file_eml else []
+    file += [a["percorso"] for a in messaggio.allegati if a.get("percorso")]
+    registra(Azione.ELIMINAZIONE, messaggio, utente=utente,
+             descrizione=f"Messaggio scartato ripulito: {messaggio}",
+             mittente=messaggio.mittente, data=messaggio.data.isoformat() if messaggio.data else "",
+             motivo_scarto=messaggio.motivo_scarto, impronta=messaggio.impronta,
+             allegati=[a.get("nome", "") for a in messaggio.allegati])  # fmt: skip
+    messaggio.testo = messaggio.destinatari = ""
+    messaggio.allegati = []
+    messaggio.file_eml = ""
+    messaggio.ripulito_il = timezone.now()
+    messaggio.save()
+    for nome in file:  # dopo il salvataggio: se il database fallisce, i file restano
+        transaction.on_commit(lambda nome=nome: default_storage.delete(nome))
+    return messaggio
+
+
+def ripulisci_messaggi(messaggi, utente):
+    if utente is not None and not utente.has_perm("protocollo.ripulisci_posta"):
+        raise OperazioneNonValida("Non hai il permesso di eliminare la posta scartata.")
+    return _in_blocco(ripulisci_messaggio, messaggi, utente)
 
 
 # --- esportazione --------------------------------------------------------------------------

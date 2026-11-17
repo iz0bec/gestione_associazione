@@ -89,6 +89,12 @@ postale manca o è incompleto la scheda lo segnala e la colonna `Avviso` lo indi
 scheda anagrafica per le spedizioni successive, oppure a mano sulla busta. Ogni scaricamento è
 registrato nel registro delle attività.
 
+**Etichette adesive (PDF)**, dallo stesso menu *Buste ed etichette*: un'etichetta per destinatario con
+indirizzo postale completo, su fogli A4 di formato comune (70 × 37 mm da 24, 70 × 36 mm da 24 con
+margini, 63,5 × 38,1 mm da 21, 99,1 × 38,1 mm da 14). *Inizia dall'etichetta n.* permette di riusare un
+foglio già iniziato (1 = in alto a sinistra, si procede per righe). Stampare al 100% («dimensioni
+effettive», non «adatta alla pagina»).
+
 ## Spedire per email o PEC
 
 Un protocollo **in uscita** si spedisce dalla sua scheda con **Spedisci** (serve il permesso di
@@ -107,6 +113,12 @@ spedire, che hanno l'addetto al protocollo e i ruoli superiori). Nel modulo:
   nessuno vede gli indirizzi degli altri e ogni PEC ha le proprie ricevute;
 - **Testo**: è proposto quello del protocollo, o una lettera di trasmissione standard;
 - **Documenti allegati**: quelli del protocollo, tutti spuntati (al massimo 20 MB in tutto).
+
+**Email ordinaria e PEC.** Se il protocollo è registrato con mezzo PEC, o un destinatario ha un
+indirizzo PEC (lo dice l'anagrafica o il dominio, es. `@pec.…`, `@legalmail.it`), e si sceglie un servizio
+email ordinario, il programma lo **segnala** e **non spedisce**: una casella PEC che riceve un'email
+ordinaria la consegna come «**anomalia**», senza valore legale. Si sceglie il servizio PEC, oppure si
+spunta *Spedisci comunque come email ordinaria* se è proprio ciò che si vuole.
 
 L'**oggetto** del messaggio è quello del protocollo con numero e data: «Prot. n. 2026-00042 del
 16/11/2026 - ...». Si possono fare più spedizioni dello stesso protocollo (per esempio a un
@@ -166,6 +178,19 @@ tutti ricevono lo stesso motivo. Nell'elenco *Scartati*, **Riporta tra quelli da
 contrario. I messaggi già gestiti nel frattempo da un altro utente sono saltati e indicati nel
 messaggio di esito; ogni scarto e ripristino è annotato nel registro attività. La protocollazione
 resta una per messaggio, perché ognuno ha il proprio oggetto e la propria classificazione.
+
+**Pulizia della posta scartata.** I messaggi scartati restano nel programma, con testo, allegati e
+file originale, finché qualcuno non li elimina. Nell'elenco *Scartati* si filtra per **motivo** e per
+**data dello scarto** (*scartati prima del*), poi:
+
+- **Elimina definitivamente** elimina i messaggi spuntati;
+- **Elimina tutti i N filtrati** elimina tutti quelli che rispondono ai filtri, anche nelle altre pagine.
+
+Viene eliminato il **contenuto** (testo, allegati, file `.eml`); resta solo una riga invisibile con
+mittente, oggetto e motivo, che serve a non riscaricare lo stesso messaggio e documenta la pulizia
+nel registro attività. L'operazione **non si annulla** (resta solo nei backup, fino alla loro
+rotazione) ed è riservata a chi ha il permesso di eliminare la posta scartata (segretario e
+amministratore di sistema). I messaggi protocollati non si toccano: il loro contenuto è nel protocollo.
 
 Per le **PEC** vengono mostrati mittente, oggetto e allegati del messaggio originale (quello dentro la
 busta di posta certificata); la busta con le ricevute resta nel file `.eml`.

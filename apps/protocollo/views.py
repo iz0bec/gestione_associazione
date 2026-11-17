@@ -322,19 +322,25 @@ class RicevutaView(PermessoMixin, _ProtocolloVisibileMixin, View):
 
 
 class SpedizioneView(PermessoMixin, _ProtocolloVisibileMixin, View):
-    """Destinatari in CSV e buste DL in Word per le spedizioni su carta."""
+    """Destinatari in CSV, buste DL in Word ed etichette adesive in PDF per la carta."""
 
     permission_required = "protocollo.view_protocollo"
     TIPI = {
         "csv": "text/csv; charset=utf-8",
         "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "pdf": "application/pdf",
     }
 
     def get(self, request, pk, formato):
         p = self.protocollo(pk)
-        if formato not in ("csv", "stampa-unione", "buste") or not buste.con_buste(p):
+        if formato not in ("csv", "stampa-unione", "buste", "etichette") or not buste.con_buste(p):
             raise Http404("Nessuna spedizione su carta per questo protocollo.")
-        if formato == "csv":
+        if formato == "etichette":
+            foglio = buste.formato_etichette(request.GET.get("foglio"))
+            inizio = buste.posizione_iniziale(request.GET.get("inizio"), foglio)
+            dati, nome = buste.etichette_protocollo(p, request.user, foglio, inizio)
+            tipo = self.TIPI["pdf"]
+        elif formato == "csv":
             dati, nome = buste.csv_destinatari(p, request.user)
             tipo = self.TIPI["csv"]
         else:
@@ -384,9 +390,20 @@ class SpedisciView(PermessoMixin, _ProtocolloVisibileMixin, TemplateView):
         )  # fmt: skip
         return form, servizio
 
+    def _avviso(self, servizio):
+        destinatari = [
+            (r["corrispondente"], r["nome"], r["indirizzo"])
+            for r in spedizioni.indirizzi_proposti(self.p, pec=bool(servizio and servizio.pec))
+            if r["indirizzo"]
+        ]
+        return spedizioni.controllo_canale(self.p, servizio or invio.servizio_generale(),
+                                           destinatari)  # fmt: skip
+
     def get(self, request, *args, **kwargs):
-        form, _ = self._form(valore=request.GET.get("da"))
-        return self.render_to_response(self.get_context_data(form=form))
+        form, servizio = self._form(valore=request.GET.get("da"))
+        return self.render_to_response(
+            self.get_context_data(form=form, avviso_canale=self._avviso(servizio))
+        )
 
     def post(self, request, *args, **kwargs):
         form, servizio = self._form(request.POST, valore=request.POST.get("da", ""))
@@ -395,13 +412,16 @@ class SpedisciView(PermessoMixin, _ProtocolloVisibileMixin, TemplateView):
                 sped = spedizioni.prepara_spedizione(
                     self.p, request.user, servizio=servizio, destinatari=form.destinatari(),
                     testo=form.cleaned_data["testo"], allegati=form.cleaned_data["documenti"],
+                    email_ordinaria=form.cleaned_data["email_ordinaria"],
                 )  # fmt: skip
             except OperazioneNonValida as e:
                 _errore(request, e)
             else:
                 _esito_spedizione(request, sped)
                 return redirect(self.p)
-        return self.render_to_response(self.get_context_data(form=form))
+        return self.render_to_response(
+            self.get_context_data(form=form, avviso_canale=self._avviso(servizio))
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -521,13 +541,26 @@ class PostaView(PermessoMixin, ListView):
 
     def get_queryset(self):
         stato = self.request.GET.get("stato", MessaggioRicevuto.Stato.NUOVO)
-        qs = MessaggioRicevuto.objects.select_related("casella", "protocollo")
+        qs = MessaggioRicevuto.objects.visibili().select_related("casella", "protocollo")
+        if stato == MessaggioRicevuto.Stato.SCARTATO:
+            return scartati_filtrati(self.request.GET)
         return qs if stato == "tutti" else qs.filter(stato=stato)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["stato"] = self.request.GET.get("stato", MessaggioRicevuto.Stato.NUOVO)
         ctx["stati"] = [*MessaggioRicevuto.Stato.choices, ("tutti", "Tutti")]
+        if ctx["stato"] == MessaggioRicevuto.Stato.SCARTATO:
+            ctx["motivi"] = (
+                MessaggioRicevuto.objects.visibili()
+                .filter(stato=MessaggioRicevuto.Stato.SCARTATO)
+                .values_list("motivo_scarto", flat=True)
+                .distinct()
+                .order_by("motivo_scarto")
+            )
+            ctx["filtro_motivo"] = self.request.GET.get("motivo", "")
+            ctx["filtro_prima_del"] = self.request.GET.get("prima_del", "")
+            ctx["filtrati"] = ctx["paginator"].count if ctx.get("paginator") else 0
         ctx["caselle"] = CasellaPosta.objects.filter(attiva=True)
         from apps.soci.estrazione import probabile_iscrizione
 
@@ -558,9 +591,29 @@ class PostaView(PermessoMixin, ListView):
         return redirect("protocollo:posta")
 
 
+def scartati_filtrati(dati):
+    """Messaggi scartati (non ripuliti) filtrati per motivo e per data dello scarto."""
+    from datetime import date
+
+    qs = (
+        MessaggioRicevuto.objects.visibili()
+        .filter(stato=MessaggioRicevuto.Stato.SCARTATO)
+        .select_related("casella", "protocollo")
+    )
+    if motivo := (dati.get("motivo") or "").strip():
+        qs = qs.filter(motivo_scarto=motivo)
+    try:
+        prima_del = date.fromisoformat(dati.get("prima_del") or "")
+    except ValueError:
+        prima_del = None
+    if prima_del:
+        qs = qs.filter(gestito_il__date__lt=prima_del)
+    return qs
+
+
 class MessaggioView(PermessoMixin, DetailView):
     permission_required = "protocollo.view_messaggioricevuto"
-    model = MessaggioRicevuto
+    queryset = MessaggioRicevuto.objects.visibili()
     template_name = "protocollo/messaggio.html"
     context_object_name = "messaggio"
 
@@ -620,6 +673,9 @@ class AzionePostaView(PermessoMixin, View):
         azione = request.POST.get("azione")
         torna = request.POST.get("stato", MessaggioRicevuto.Stato.NUOVO)
         indietro = redirect(f"{reverse('protocollo:posta')}?stato={torna}")
+        if azione == "ripulisci_filtrati":  # tutti quelli che rispondono ai filtri
+            ids = [str(pk) for pk in scartati_filtrati(request.POST).values_list("pk", flat=True)]
+            azione = "ripulisci"
         if not ids:
             messages.warning(request, "Nessun messaggio selezionato.")
             return indietro
@@ -632,6 +688,9 @@ class AzionePostaView(PermessoMixin, View):
             elif azione == "ripristina":
                 fatti, saltati = servizi.ripristina_messaggi(scelti, request.user)
                 testo = f"{fatti} messaggi riportati tra quelli da esaminare."
+            elif azione == "ripulisci":
+                fatti, saltati = servizi.ripulisci_messaggi(scelti, request.user)
+                testo = f"{fatti} messaggi scartati eliminati definitivamente."
             else:
                 return indietro
         except OperazioneNonValida as e:
@@ -663,7 +722,7 @@ class ScaricaMessaggioView(PermessoMixin, View):
     permission_required = "protocollo.view_messaggioricevuto"
 
     def get(self, request, pk, indice=None):
-        m = get_object_or_404(MessaggioRicevuto, pk=pk)
+        m = get_object_or_404(MessaggioRicevuto.objects.visibili(), pk=pk)
         if indice is None:
             return _scarica(m.file_eml, "messaggio.eml", "message/rfc822")
         try:

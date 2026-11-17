@@ -1,0 +1,15 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modulo per scaricare le etichette adesive in PDF (formato del foglio, prima etichetta)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<form method="get" action="{{ url }}" class="{% if nel_menu %}px-3 py-2{% else %}card card-body{% endif %} modulo-etichette">
+  <div class="fw-medium mb-2"><i class="ti ti-tags me-1"></i>Etichette adesive (PDF)</div>
+  <label class="form-label small mb-1" for="foglio-{{ url|slugify }}">Foglio A4</label>
+  <select class="form-select form-select-sm mb-2" name="foglio" id="foglio-{{ url|slugify }}">
+    {% for valore, nome in formati %}<option value="{{ valore }}"{% if valore == predefinito %} selected{% endif %}>{{ nome }}</option>{% endfor %}
+  </select>
+  <label class="form-label small mb-1" for="inizio-{{ url|slugify }}">Inizia dall'etichetta n.</label>
+  <input class="form-control form-control-sm mb-2" type="number" name="inizio" id="inizio-{{ url|slugify }}" value="1" min="1" max="24">
+  <div class="small text-secondary mb-2">Per riusare un foglio già iniziato. Solo chi ha l'indirizzo postale completo.</div>
+  <button class="btn btn-sm btn-primary w-100" type="submit"><i class="ti ti-download me-1"></i>Scarica le etichette</button>
+</form>

@@ -271,3 +271,70 @@ def docx_da_righe(righe=None, *, riferimento="", raccomandata=False):
         for n, r in enumerate(righe)
     )  # fmt: skip
     return _documento(corpo)
+
+
+# --- etichette adesive in PDF (fogli A4) ---------------------------------------------------------
+
+# misure in mm: colonne, righe, larghezza e altezza dell'etichetta, margini sinistro e superiore,
+# passo orizzontale e verticale (etichetta + spazio fra le etichette)
+FORMATI_ETICHETTE = {
+    "70x37": {"nome": "70 × 37 mm, 24 per foglio (3 × 8)", "colonne": 3, "righe": 8,
+              "larghezza": 70, "altezza": 37, "sinistra": 0, "sopra": 0.5,
+              "passo_x": 70, "passo_y": 37},
+    "70x36": {"nome": "70 × 36 mm, 24 per foglio (3 × 8, con margini)", "colonne": 3,
+              "righe": 8, "larghezza": 70, "altezza": 36, "sinistra": 0, "sopra": 4.5,
+              "passo_x": 70, "passo_y": 36},
+    "63x38": {"nome": "63,5 × 38,1 mm, 21 per foglio (3 × 7, tipo L7160)", "colonne": 3,
+              "righe": 7, "larghezza": 63.5, "altezza": 38.1, "sinistra": 7.2, "sopra": 15.1,
+              "passo_x": 66, "passo_y": 38.1},
+    "99x38": {"nome": "99,1 × 38,1 mm, 14 per foglio (2 × 7, tipo L7163)", "colonne": 2,
+              "righe": 7, "larghezza": 99.1, "altezza": 38.1, "sinistra": 4.7, "sopra": 15.1,
+              "passo_x": 101.6, "passo_y": 38.1},
+}  # fmt: skip
+FORMATO_ETICHETTE = "70x37"
+
+
+def formato_etichette(valore):
+    return valore if valore in FORMATI_ETICHETTE else FORMATO_ETICHETTE
+
+
+def posizione_iniziale(valore, formato):
+    """Prima etichetta libera (1 = in alto a sinistra), per riusare un foglio già iniziato."""
+    f = FORMATI_ETICHETTE[formato]
+    try:
+        n = int(valore)
+    except (TypeError, ValueError):
+        return 1
+    return min(max(n, 1), f["colonne"] * f["righe"])
+
+
+def pdf_etichette(righe, formato=FORMATO_ETICHETTE, inizio=1):
+    """Un'etichetta per riga (le righe di riga_busta), solo con indirizzo postale completo.
+
+    Restituisce (pdf, quante etichette, quante righe scartate perché senza indirizzo).
+    """
+    from apps.core.pdf import genera_pdf
+
+    f = FORMATI_ETICHETTE[formato]
+    per_foglio = f["colonne"] * f["righe"]
+    valide = [r for r in righe if not r["Avviso"]]
+    testi = [[r[f"Riga{i}"] for i in range(1, RIGHE + 1) if r[f"Riga{i}"]] for r in valide]
+    posti = [None] * (inizio - 1) + testi
+    fogli = []
+    for p in range(0, max(len(posti), 1), per_foglio):
+        fogli.append([
+            {"righe": t, "x": f["sinistra"] + (i % f["colonne"]) * f["passo_x"],
+             "y": f["sopra"] + (i // f["colonne"]) * f["passo_y"]}
+            for i, t in enumerate(posti[p:p + per_foglio]) if t is not None
+        ])  # fmt: skip
+    dati = genera_pdf("protocollo/pdf/etichette.html", {"fogli": fogli, "formato": f})
+    return dati, len(testi), len(righe) - len(valide)
+
+
+def etichette_protocollo(protocollo, utente, formato, inizio):
+    righe = righe_destinatari(protocollo)
+    dati, n, scartate = pdf_etichette(righe, formato, inizio)
+    registra(Azione.ESPORTAZIONE, protocollo, utente=utente,
+             descrizione=f"Etichette dei destinatari del protocollo {protocollo.segnatura}",
+             etichette=n, senza_indirizzo=scartate, formato=formato)  # fmt: skip
+    return dati, _nome(protocollo, "pdf").replace("destinatari_", "etichette_")

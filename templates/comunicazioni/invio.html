@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load interfaccia %}
 {% block titolo %}{{ invio.titolo }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a> · {{ invio.finalita_breve }}</div>{% endblock %}
 {% block titolo_pagina %}{{ invio.titolo }} {% include "comunicazioni/_stato_invio.html" with i=invio %}{% endblock %}
@@ -37,6 +38,10 @@
           <a class="btn" href="{% url 'comunicazioni:carta' invio.pk 'buste' %}"><i class="ti ti-file-word me-1"></i>Buste DL (Word)</a>
           <a class="btn" href="{% url 'comunicazioni:carta' invio.pk 'stampa-unione' %}">Buste per stampa unione</a>
           <a class="btn" href="{% url 'comunicazioni:carta' invio.pk 'csv' %}"><i class="ti ti-file-spreadsheet me-1"></i>Elenco (CSV)</a>
+          <div class="dropdown">
+            <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"><i class="ti ti-tags me-1"></i>Etichette</button>
+            <div class="dropdown-menu dropdown-menu-end">{% url 'comunicazioni:carta' invio.pk 'etichette' as url_etichette %}{% modulo_etichette url_etichette nel_menu=True %}</div>
+          </div>
         </div>
       </div>
     </div>

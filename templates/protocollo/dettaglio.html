@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load interfaccia %}
 {% block titolo %}Prot. {{ protocollo.segnatura }}{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a> · {{ protocollo.get_direzione_display|lower }}</div>{% endblock %}
 {% block titolo_pagina %}Prot. n. {{ protocollo.segnatura }}
@@ -9,12 +10,14 @@
   <a class="btn" href="{% url 'protocollo:ricevuta' protocollo.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
   {% if spedizione is not None %}
   <div class="dropdown">
-    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-mail me-1"></i>Buste{% if su_carta %} ({{ su_carta }} senza email){% endif %}</button>
+    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"><i class="ti ti-mail me-1"></i>Buste ed etichette{% if su_carta %} ({{ su_carta }} senza email){% endif %}</button>
     <div class="dropdown-menu dropdown-menu-end">
       {% if su_carta %}<h6 class="dropdown-header">Solo i destinatari senza email</h6>{% endif %}
       <a class="dropdown-item" href="{% url 'protocollo:spedizione' protocollo.pk 'buste' %}"><i class="ti ti-file-word me-2"></i>Buste DL compilate (Word)</a>
       <a class="dropdown-item" href="{% url 'protocollo:spedizione' protocollo.pk 'stampa-unione' %}"><i class="ti ti-file-word me-2"></i>Busta DL per la stampa unione (Word)</a>
       <a class="dropdown-item" href="{% url 'protocollo:spedizione' protocollo.pk 'csv' %}"><i class="ti ti-file-spreadsheet me-2"></i>Elenco dei destinatari (CSV)</a>
+      <div class="dropdown-divider"></div>
+      {% url 'protocollo:spedizione' protocollo.pk 'etichette' as url_etichette %}{% modulo_etichette url_etichette nel_menu=True %}
     </div>
   </div>
   {% endif %}

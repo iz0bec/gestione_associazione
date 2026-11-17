@@ -328,6 +328,10 @@ class MessaggioQuerySet(models.QuerySet):
     def da_esaminare(self):
         return self.filter(stato=MessaggioRicevuto.Stato.NUOVO)
 
+    def visibili(self):
+        """Senza quelli scartati e ripuliti (ne resta solo la riga, per non riscaricarli)."""
+        return self.filter(ripulito_il__isnull=True)
+
 
 class MessaggioRicevuto(models.Model):
     """Messaggio scaricato da una casella: si protocolla o si scarta (con motivo)."""
@@ -360,6 +364,12 @@ class MessaggioRicevuto(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     gestito_il = models.DateTimeField(null=True, blank=True)
+    ripulito_il = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="Scartato e ripulito: testo, allegati e file originale eliminati.",
+    )
 
     objects = MessaggioQuerySet.as_manager()
 
@@ -368,7 +378,8 @@ class MessaggioRicevuto(models.Model):
         verbose_name_plural = "messaggi ricevuti"
         ordering = ["-data", "-id"]
         permissions = [
-            ("gestisci_posta", "Può esaminare, protocollare e scartare la posta ricevuta")
+            ("gestisci_posta", "Può esaminare, protocollare e scartare la posta ricevuta"),
+            ("ripulisci_posta", "Può eliminare definitivamente il contenuto della posta scartata"),
         ]
         constraints = [
             models.UniqueConstraint(
