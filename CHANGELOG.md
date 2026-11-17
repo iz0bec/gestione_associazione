@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.27] - 2026-11-17
+
+Comunicazioni via PEC, su Telegram, per SMS e su WhatsApp Business.
+
 ### Aggiunto
 - **Comunicazioni via PEC**: in *Spedisci da* si sceglie un servizio di invio (anche PEC). Con la PEC, chi
   ha la PEC in anagrafica la riceve per PEC, gli altri per email dal server generale, chi non ha nessuno
