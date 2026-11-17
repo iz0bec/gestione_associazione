@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.22] - 2026-11-17
+
+Servizi di invio separati dalle caselle di lettura.
+
 ### Modificato
 - **Servizi di posta riorganizzati**: *Protocollo → Caselle* serve solo a **leggere** (IMAP);
   **come si spedisce** si configura in *Sistema → Servizi di posta*, con i nuovi **servizi di invio**
