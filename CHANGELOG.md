@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.31] - 2026-11-17
+
+Incassi, note di storno e registro incassi.
+
 ### Aggiunto
 - **Incassi diversi dalle quote** (donazioni, contributi, quote di partecipazione, altro): ricevuta
   numerata nella stessa numerazione delle quote, PDF e prima nota con la voce adatta.

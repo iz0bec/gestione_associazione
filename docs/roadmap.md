@@ -63,6 +63,7 @@
 | **1.0.28** ✅ | avvisi della posta da protocollare su Telegram, SMS o WhatsApp scelti da ciascun utente; interruttore «Invio dei messaggi» | GitHub, GitLab |
 | **1.0.29** ✅ | scadenza dei mandati nel cruscotto e nel calendario; utenti connessi in Sistema → Utenti | GitHub, GitLab |
 | **1.0.30** ✅ | backup incrementali, cifrati con CHIAVE_BACKUP, prova di ripristino settimanale | GitHub, GitLab |
+| **1.0.31** ✅ | incassi diversi dalle quote con ricevuta, note di storno e rimborsi, registro incassi con quadratura | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
