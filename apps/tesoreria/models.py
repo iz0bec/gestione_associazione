@@ -276,3 +276,126 @@ class Previsione(models.Model):
 
     def __str__(self):
         return f"{self.voce} {self.esercizio.anno}: {self.importo}"
+
+
+METODI = [
+    ("contanti", "Contanti"),
+    ("bonifico", "Bonifico"),
+    ("pos", "Carta / POS"),
+    ("altro", "Altro"),
+]
+
+
+class Incasso(ModelloBase):
+    """Incasso diverso dalle quote (donazione, contributo, partecipazione...): ricevuta numerata
+    nella stessa numerazione delle quote e registrazione in prima nota."""
+
+    class Tipo(models.TextChoices):
+        DONAZIONE = "donazione", "Donazione o offerta"
+        CONTRIBUTO = "contributo", "Contributo"
+        PARTECIPAZIONE = "partecipazione", "Quota di partecipazione (eventi, gite, pranzi)"
+        ALTRO = "altro", "Altro"
+
+    VOCI = {"donazione": "E.A.4", "contributo": "E.A.6", "partecipazione": "E.A.3",
+            "altro": "E.A.10"}  # fmt: skip
+
+    data = models.DateField()
+    tipo = models.CharField(max_length=15, choices=Tipo.choices)
+    soggetto = models.ForeignKey(
+        Soggetto, null=True, blank=True, on_delete=models.PROTECT, related_name="incassi"
+    )
+    nominativo = models.CharField(max_length=200, help_text="Come appare sulla ricevuta.")
+    codice_fiscale = models.CharField("codice fiscale", max_length=16, blank=True)
+    importo = models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
+    metodo = models.CharField("metodo di pagamento", max_length=10, choices=METODI)
+    riferimento = models.CharField(max_length=100, blank=True, help_text="Es. CRO del bonifico.")
+    causale = models.CharField(max_length=255)
+    voce = models.ForeignKey("Voce", on_delete=models.PROTECT, related_name="+")
+    movimento = models.OneToOneField(
+        "Movimento", null=True, blank=True, on_delete=models.SET_NULL, related_name="incasso",
+        editable=False,
+    )  # fmt: skip
+    ricevuta_anno = models.PositiveIntegerField(editable=False)
+    ricevuta_numero = models.PositiveIntegerField(editable=False)
+
+    class Meta:
+        verbose_name = "incasso"
+        verbose_name_plural = "incassi"
+        ordering = ["-data", "-ricevuta_numero"]
+        permissions = [("registra_incasso", "Può registrare incassi ed emettere ricevute")]
+
+    def __str__(self):
+        return f"Ricevuta {self.codice_ricevuta} - {self.nominativo}"
+
+    def get_absolute_url(self):
+        return reverse("tesoreria:incasso", args=[self.pk])
+
+    @property
+    def codice_ricevuta(self):
+        return f"{self.ricevuta_anno}/{self.ricevuta_numero:04d}"
+
+    @property
+    def storno(self):
+        return self.storni.first()
+
+
+class Storno(ModelloBase):
+    """Nota di storno di una ricevuta (quota o incasso): annulla l'incasso registrato per errore
+    oppure registra il rimborso del denaro (uscita in prima nota)."""
+
+    anno = models.PositiveIntegerField(editable=False)
+    numero = models.PositiveIntegerField(editable=False)
+    data = models.DateField()
+    tessera = models.ForeignKey(
+        "soci.Tessera", null=True, blank=True, on_delete=models.PROTECT, related_name="storni"
+    )
+    incasso = models.ForeignKey(
+        Incasso, null=True, blank=True, on_delete=models.PROTECT, related_name="storni"
+    )
+    importo = models.DecimalField(max_digits=10, decimal_places=2)
+    motivo = models.CharField(max_length=255)
+    rimborso = models.BooleanField(
+        "somma restituita", default=False,
+        help_text="Sì: il denaro è stato restituito (uscita in prima nota). No: incasso registrato "
+        "per errore (il movimento viene annullato).",
+    )  # fmt: skip
+    metodo = models.CharField("metodo del rimborso", max_length=10, choices=METODI, blank=True)
+    movimento = models.OneToOneField(
+        "Movimento", null=True, blank=True, on_delete=models.SET_NULL, related_name="storno",
+        editable=False,
+    )  # fmt: skip
+
+    class Meta:
+        verbose_name = "nota di storno"
+        verbose_name_plural = "note di storno"
+        ordering = ["-data", "-numero"]
+        permissions = [("storna", "Può stornare quote e incassi")]
+        constraints = [
+            models.UniqueConstraint(fields=["anno", "numero"], name="storno_numero_unico"),
+            models.UniqueConstraint(
+                fields=["tessera"], condition=Q(tessera__isnull=False), name="uno_storno_per_quota"
+            ),
+            models.UniqueConstraint(
+                fields=["incasso"],
+                condition=Q(incasso__isnull=False),
+                name="uno_storno_per_incasso",
+            ),  # fmt: skip
+            models.CheckConstraint(
+                condition=Q(tessera__isnull=True) ^ Q(incasso__isnull=True),
+                name="storno_di_un_solo_documento",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Nota di storno {self.codice}"
+
+    @property
+    def codice(self):
+        return f"{self.anno}/{self.numero:04d}"
+
+    @property
+    def ricevuta(self):
+        documento = self.tessera or self.incasso
+        return documento.codice_ricevuta

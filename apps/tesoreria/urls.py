@@ -9,7 +9,7 @@
 
 from django.urls import path
 
-from . import views
+from . import views, viste_incassi
 
 app_name = "tesoreria"
 
@@ -41,6 +41,17 @@ urlpatterns = [
         name="giustificativo",
     ),
     path("quote/", views.QuoteView.as_view(), name="quote"),
+    path("incassi/", viste_incassi.IncassiView.as_view(), name="incassi"),
+    path("incassi/nuovo/", viste_incassi.IncassoNuovoView.as_view(), name="incasso_nuovo"),
+    path("incassi/<int:pk>/", viste_incassi.IncassoView.as_view(), name="incasso"),
+    path(
+        "incassi/<int:pk>/ricevuta.pdf",
+        viste_incassi.RicevutaIncassoView.as_view(),
+        name="ricevuta_incasso",
+    ),
+    path("storni/nuovo/", viste_incassi.StornoView.as_view(), name="storno"),
+    path("storni/<int:pk>.pdf", viste_incassi.NotaStornoView.as_view(), name="nota_storno"),
+    path("registro-incassi/", viste_incassi.RegistroIncassiView.as_view(), name="registro_incassi"),
     path("conti/", views.ContiView.as_view(), name="conti"),
     path("conti/nuovo/", views.ContoNuovoView.as_view(), name="conto_nuovo"),
     path("conti/<int:pk>/", views.ContoModificaView.as_view(), name="conto"),

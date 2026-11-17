@@ -1,0 +1,38 @@
+{% extends "pdf/base.html" %}
+{% load firme %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Ricevuta di un incasso diverso dalle quote (A5 orizzontale)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Ricevuta {{ incasso.codice_ricevuta }}{% endblock %}
+{% block formato %}A5 landscape{% endblock %}
+{% block stile %}
+  @page { margin: 10mm 12mm 12mm 12mm; }
+  .intestazione { margin-bottom: 8pt; padding-bottom: 4pt; }
+  .intestazione img { height: 12mm; }
+  .intestazione .nome { font-size: 12pt; }
+  h1 { font-size: 13pt; margin: 0 0 6pt; }
+  .riquadro { border: 1pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; padding: 6pt 10pt; }
+  .riquadro p { margin: 3pt 0; }
+  .importo { font-size: 15pt; font-weight: bold; margin: 4pt 0; }
+  .chiusura { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8pt; }
+  .firma { text-align: center; min-width: 55mm; }
+  .firma .linea { border-top: .6pt solid #333; margin-top: 26pt; }
+{% endblock %}
+{% block contenuto %}
+<h1>Ricevuta n. {{ incasso.codice_ricevuta }}{% if incasso.storno %} - STORNATA{% endif %}</h1>
+<div class="riquadro">
+  <p>Si dichiara di aver ricevuto da <strong>{{ incasso.nominativo }}</strong>{% if incasso.codice_fiscale %} (C.F. {{ incasso.codice_fiscale }}){% endif %} la somma di</p>
+  <p class="importo">€ {{ incasso.importo }}</p>
+  <p>a titolo di <strong>{{ incasso.get_tipo_display|lower }}</strong>: {{ incasso.causale }},
+  versata il {{ incasso.data|date:"d/m/Y" }} tramite {{ incasso.get_metodo_display|lower }}{% if incasso.riferimento %} (rif. {{ incasso.riferimento }}){% endif %}.</p>
+</div>
+<div class="chiusura">
+  <div>
+    {% if incasso.storno %}<div class="piccolo"><strong>Stornata con la nota n. {{ incasso.storno.codice }} del {{ incasso.storno.data|date:"d/m/Y" }}.</strong></div>{% endif %}
+    <div>{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ incasso.data|date:"d/m/Y" }}</div>
+  </div>
+  {% firme "tesoriere|presidente" giorno=incasso.data %}
+</div>
+{% endblock %}

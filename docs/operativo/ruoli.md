@@ -111,7 +111,7 @@ poter scrivere comunicazioni.
 
 ### Tesoreria
 
-| Ruolo | Rendiconti | Prima nota, saldi, preventivo | Registra e annulla movimenti, chiude gli esercizi, conti e piano dei conti |
+| Ruolo | Rendiconti | Prima nota, saldi, preventivo, incassi e registro incassi | Registra e annulla movimenti, incassi e storni, chiude gli esercizi, conti e piano dei conti |
 |---|---|---|---|
 | Amministratore di sistema, Tesoriere | sì | sì | sì |
 | Presidente, Revisore | sì | consulta | - |

@@ -137,6 +137,8 @@ TESORERIA_LETTURA = [
     "tesoreria.view_previsione",
     "tesoreria.view_conto",
     "tesoreria.view_voce",
+    "tesoreria.view_incasso",
+    "tesoreria.view_storno",
 ]
 TESORERIA_GESTIONE = [
     *TESORERIA_LETTURA,
@@ -151,6 +153,8 @@ TESORERIA_GESTIONE = [
     "tesoreria.change_conto",
     "tesoreria.add_voce",
     "tesoreria.change_voce",
+    "tesoreria.registra_incasso",
+    "tesoreria.storna",
 ]
 
 PATRIMONIO_LETTURA = [

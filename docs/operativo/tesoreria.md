@@ -57,6 +57,31 @@ prima nota **automaticamente**: voce *A 1) Entrate da quote associative*, conto 
 è aperto (o è chiuso) l'incasso resta valido e la quota compare nell'avviso del cruscotto: **Registra le
 quote** la porta in prima nota.
 
+## Incassi, ricevute e storni
+
+**Tesoreria → Incassi e ricevute** registra gli incassi diversi dalle quote: **donazioni e offerte**,
+**contributi**, **quote di partecipazione** (eventi, gite, pranzi) e **altro**. Si indicano chi ha
+versato (come sulla ricevuta, con il codice fiscale se serve), importo, metodo (contanti, bonifico,
+carta/POS), riferimento e causale. Il programma emette la **ricevuta** con il numero successivo della
+**stessa numerazione delle quote** (un solo registro delle ricevute) e registra l'entrata in prima nota
+sul conto del metodo, con la voce adatta (donazioni E.A.4, contributi E.A.6, partecipazioni E.A.3,
+altro E.A.10; si può scegliere un'altra voce di entrata).
+
+**Storno o rimborso** (dalla scheda dell'incasso, o con l'icona accanto alla ricevuta di una quota
+nella scheda del socio): si registra una **nota di storno**, con un suo numero annuale, e si sceglie:
+
+- *incasso registrato per errore*: il movimento in prima nota viene annullato (solo se l'esercizio è
+  ancora aperto);
+- *somma restituita*: si registra il **rimborso** come uscita (voce U.A.5), con lo stesso metodo
+  dell'incasso o un altro.
+
+Per una quota si può anche **annullare il tesseramento**. La ricevuta originale resta, con la scritta
+*STORNATA*, e la nota di storno si stampa in PDF.
+
+**Registro incassi e quadratura**: ricevute (quote e altri incassi) e note di storno di un periodo, con
+i **totali per metodo** e **per conto** da confrontare con la cassa contata e con l'estratto conto; gli
+storni sono in negativo. Si scarica in PDF (con la firma del tesoriere) ed Excel.
+
 ## Piano dei conti
 
 Le voci sono quelle ufficiali del Modello D, divise in sezioni: **A** attività di interesse generale,

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Registro degli incassi di un periodo con i totali per metodo e per conto
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Registro incassi{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:incassi' %}">Incassi</a></div>{% endblock %}
+{% block titolo_pagina %}Registro degli incassi{% endblock %}
+{% block contenuto %}
+<form method="get" class="card card-body mb-3 d-flex flex-row flex-wrap align-items-end gap-2">
+  <div><label class="form-label small mb-1" for="dal">Dal</label><input class="form-control form-control-sm" type="date" id="dal" name="dal" value="{{ r.dal|date:'Y-m-d' }}"></div>
+  <div><label class="form-label small mb-1" for="al">Al</label><input class="form-control form-control-sm" type="date" id="al" name="al" value="{{ r.al|date:'Y-m-d' }}"></div>
+  <button class="btn btn-sm" type="submit">Mostra</button>
+  <button class="btn btn-sm" type="submit" name="formato" value="pdf"><i class="ti ti-file-type-pdf me-1"></i>PDF</button>
+  <button class="btn btn-sm" type="submit" name="formato" value="xlsx"><i class="ti ti-file-spreadsheet me-1"></i>Excel</button>
+</form>
+<div class="row g-3 mb-3">
+  <div class="col-md-6"><div class="card"><div class="card-header"><h3 class="card-title">Per metodo</h3></div><div class="list-group list-group-flush">{% for nome, valore in r.per_metodo.items %}<div class="list-group-item d-flex"><span class="flex-fill">{{ nome }}</span><strong>{{ valore|floatformat:"2g" }} €</strong></div>{% empty %}<div class="list-group-item text-secondary">—</div>{% endfor %}</div></div></div>
+  <div class="col-md-6"><div class="card"><div class="card-header"><h3 class="card-title">Per conto (da confrontare con cassa ed estratto conto)</h3></div><div class="list-group list-group-flush">{% for nome, valore in r.per_conto.items %}<div class="list-group-item d-flex"><span class="flex-fill">{{ nome }}</span><strong>{{ valore|floatformat:"2g" }} €</strong></div>{% empty %}<div class="list-group-item text-secondary">—</div>{% endfor %}</div></div></div>
+</div>
+<div class="card">
+  <div class="card-header"><h3 class="card-title">{{ r.ricevute }} ricevute{% if r.storni %}, {{ r.storni }} storni{% endif %} · totale {{ r.totale|floatformat:"2g" }} €</h3></div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Data</th><th>Documento</th><th>Tipo</th><th>Nominativo</th><th>Metodo</th><th>Conto</th><th class="text-end">Importo</th></tr></thead>
+      <tbody>{% for x in r.righe %}<tr{% if x.importo < 0 %} class="text-danger"{% endif %}><td class="text-nowrap">{{ x.data|date:"d/m/Y" }}</td><td>{% if x.percorso %}<a href="{{ x.percorso }}">{{ x.documento }}</a>{% else %}{{ x.documento }}{% endif %}</td><td>{{ x.tipo }}</td><td>{{ x.nominativo }}</td><td>{{ x.metodo }}</td><td>{{ x.conto }}</td><td class="text-end text-nowrap">{{ x.importo|floatformat:"2g" }} €</td></tr>{% empty %}<tr><td colspan="7" class="text-secondary text-center py-4">Nessun incasso nel periodo.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

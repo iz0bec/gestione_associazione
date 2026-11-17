@@ -1,0 +1,27 @@
+{% extends "pdf/base.html" %}
+{% load firme %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Registro degli incassi di un periodo con i totali per metodo e per conto
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Registro degli incassi{% endblock %}
+{% block stile %}
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  tr.storno td { color: #a00; }
+  .totali { display: flex; gap: 12mm; margin-top: 10pt; }
+  .totali table { width: auto; min-width: 70mm; }
+{% endblock %}
+{% block contenuto %}
+<h1>Registro degli incassi dal {{ r.dal|date:"d/m/Y" }} al {{ r.al|date:"d/m/Y" }}</h1>
+<table>
+  <thead><tr><th>Data</th><th>Documento</th><th>Tipo</th><th>Nominativo</th><th>Metodo</th><th>Conto</th><th class="n">Importo</th></tr></thead>
+  <tbody>{% for x in r.righe %}<tr{% if x.importo < 0 %} class="storno"{% endif %}><td>{{ x.data|date:"d/m/Y" }}</td><td>{{ x.documento }}</td><td>{{ x.tipo }}</td><td>{{ x.nominativo }}</td><td>{{ x.metodo }}</td><td>{{ x.conto }}</td><td class="n">{{ x.importo|floatformat:"2g" }}</td></tr>{% empty %}<tr><td colspan="7">Nessun incasso nel periodo.</td></tr>{% endfor %}</tbody>
+</table>
+<div class="totali">
+  <table><thead><tr><th>Per metodo</th><th class="n">€</th></tr></thead><tbody>{% for nome, v in r.per_metodo.items %}<tr><td>{{ nome }}</td><td class="n">{{ v|floatformat:"2g" }}</td></tr>{% endfor %}</tbody></table>
+  <table><thead><tr><th>Per conto</th><th class="n">€</th></tr></thead><tbody>{% for nome, v in r.per_conto.items %}<tr><td>{{ nome }}</td><td class="n">{{ v|floatformat:"2g" }}</td></tr>{% endfor %}<tr><td><strong>Totale</strong></td><td class="n"><strong>{{ r.totale|floatformat:"2g" }}</strong></td></tr></tbody></table>
+</div>
+<p class="piccolo">{{ r.ricevute }} ricevute{% if r.storni %} e {{ r.storni }} note di storno{% endif %}. Le note di storno sono in negativo.</p>
+{% firme "tesoriere|presidente" %}
+{% endblock %}

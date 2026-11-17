@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Nuovo incasso diverso dalle quote
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Nuovo incasso{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:incassi' %}">Incassi</a></div>{% endblock %}
+{% block titolo_pagina %}Nuovo incasso{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}{% if soggetto %}<input type="hidden" name="soggetto" value="{{ soggetto.pk }}">{% endif %}
+  <div class="card-body">
+    {% if soggetto %}<div class="alert alert-info py-2">Collegato alla scheda di <a href="{{ soggetto.get_absolute_url }}">{{ soggetto }}</a>.</div>{% endif %}
+    {{ form }}
+    <p class="small text-secondary mb-0">La ricevuta prende il numero successivo della numerazione delle ricevute (la stessa delle quote) e l'incasso va in prima nota sul conto del metodo scelto. Le quote associative si incassano dal tesseramento.</p>
+  </div>
+  <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'tesoreria:incassi' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-receipt me-1"></i>Registra ed emetti la ricevuta</button></div>
+</form>
+{% endblock %}

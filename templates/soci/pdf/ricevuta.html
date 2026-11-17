@@ -21,7 +21,7 @@
   .firma .linea { border-top: .6pt solid #333; margin-top: 26pt; }
 {% endblock %}
 {% block contenuto %}
-<h1>Ricevuta n. {{ tessera.codice_ricevuta }}</h1>
+<h1>Ricevuta n. {{ tessera.codice_ricevuta }}{% with s=tessera.storni.first %}{% if s %} - STORNATA (nota n. {{ s.codice }}){% endif %}{% endwith %}</h1>
 <div class="riquadro">
   <p>Si dichiara di aver ricevuto da <strong>{{ tessera.socio.soggetto.nome_completo }}</strong>{% if tessera.socio.soggetto.codice_fiscale %} (C.F. {{ tessera.socio.soggetto.codice_fiscale }}){% endif %},
   socio n. {{ tessera.socio.numero }}, la somma di</p>

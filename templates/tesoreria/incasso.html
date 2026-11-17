@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di un incasso con ricevuta ed eventuale storno
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Ricevuta {{ incasso.codice_ricevuta }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:incassi' %}">Incassi</a></div>{% endblock %}
+{% block titolo_pagina %}Ricevuta n. {{ incasso.codice_ricevuta }}{% endblock %}
+{% block azioni %}<div class="btn-list">
+  <a class="btn" href="{% url 'tesoreria:ricevuta_incasso' incasso.pk %}" target="_blank" rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
+  {% with s=incasso.storno %}{% if s %}<a class="btn" href="{% url 'tesoreria:nota_storno' s.pk %}" target="_blank" rel="noopener">Nota di storno {{ s.codice }}</a>{% elif perms.tesoreria.storna %}<a class="btn btn-outline-danger" href="{% url 'tesoreria:storno' %}?incasso={{ incasso.pk }}">Storno o rimborso</a>{% endif %}{% endwith %}
+</div>{% endblock %}
+{% block contenuto %}
+<div class="card"><div class="card-body">
+  {% with s=incasso.storno %}{% if s %}<div class="alert alert-danger">Stornata il {{ s.data|date:"d/m/Y" }} con la nota n. {{ s.codice }}: {{ s.motivo }}{% if s.rimborso %} (somma restituita){% endif %}.</div>{% endif %}{% endwith %}
+  <dl class="row mb-0">
+    <dt class="col-sm-3">Ricevuto da</dt><dd class="col-sm-9">{% if incasso.soggetto %}<a href="{{ incasso.soggetto.get_absolute_url }}">{{ incasso.nominativo }}</a>{% else %}{{ incasso.nominativo }}{% endif %}{% if incasso.codice_fiscale %} · C.F. {{ incasso.codice_fiscale }}{% endif %}</dd>
+    <dt class="col-sm-3">Importo</dt><dd class="col-sm-9">{{ incasso.importo|floatformat:"2g" }} € · {{ incasso.get_metodo_display }}{% if incasso.riferimento %} (rif. {{ incasso.riferimento }}){% endif %} · {{ incasso.data|date:"d/m/Y" }}</dd>
+    <dt class="col-sm-3">Tipo e causale</dt><dd class="col-sm-9">{{ incasso.get_tipo_display }}: {{ incasso.causale }}</dd>
+    <dt class="col-sm-3">Prima nota</dt><dd class="col-sm-9">{% if incasso.movimento %}<a href="{% url 'tesoreria:movimento' incasso.movimento.pk %}">movimento n. {{ incasso.movimento.numero }}</a> · {{ incasso.voce }}{% if incasso.movimento.annullato %} <span class="badge bg-red-lt">annullato</span>{% endif %}{% else %}—{% endif %}</dd>
+  </dl>
+</div></div>
+{% endblock %}

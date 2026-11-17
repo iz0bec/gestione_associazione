@@ -139,3 +139,63 @@ class ImportoField(forms.DecimalField):
 
     def clean(self, value):
         return super().clean(value) or Decimal("0.00")
+
+
+class IncassoForm(StileMixin, forms.Form):
+    """Incasso diverso dalle quote: chi ha versato, quanto, come e perché."""
+
+    from .models import METODI, Incasso
+
+    tipo = forms.ChoiceField(choices=Incasso.Tipo.choices, initial="donazione")
+    data = forms.DateField(widget=CampoData, initial=date.today)
+    nominativo = forms.CharField(
+        max_length=200, label="Ricevuto da", help_text="Persona o ente, come sulla ricevuta."
+    )
+    codice_fiscale = forms.CharField(max_length=16, required=False, label="Codice fiscale")
+    importo = forms.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal("0.01"))
+    metodo = forms.ChoiceField(label="Metodo di pagamento", choices=METODI, initial="contanti")
+    riferimento = forms.CharField(max_length=100, required=False, help_text="Es. CRO del bonifico.")
+    causale = forms.CharField(
+        max_length=255, help_text="Es. «Offerta per la cerimonia del 4 novembre»."
+    )
+    voce = forms.ModelChoiceField(
+        label="Voce del rendiconto",
+        queryset=Voce.objects.none(),
+        required=False,
+        empty_label="— secondo il tipo —",
+        help_text="Vuoto: donazioni E.A.4, contributi E.A.6, partecipazioni E.A.3, altro E.A.10.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["voce"].queryset = Voce.objects.filter(tipo="entrata", attiva=True).order_by(
+            "codice"
+        )
+
+
+class StornoForm(StileMixin, forms.Form):
+    from .models import METODI
+
+    data = forms.DateField(widget=CampoData, initial=date.today)
+    motivo = forms.CharField(max_length=255)
+    rimborso = forms.TypedChoiceField(
+        label="Cosa è successo",
+        choices=[
+            ("", "Incasso registrato per errore: si annulla il movimento"),
+            ("1", "Somma restituita: si registra il rimborso (uscita)"),
+        ],  # fmt: skip
+        coerce=bool,
+        empty_value=False,
+        widget=forms.RadioSelect,
+        initial="",
+        required=False,
+    )
+    metodo = forms.ChoiceField(
+        label="Metodo del rimborso",
+        choices=[("", "— lo stesso dell'incasso —"), *METODI],
+        required=False,
+    )
+    annulla_tessera = forms.BooleanField(
+        label="Annulla anche il tesseramento", required=False,
+        help_text="Solo per le quote: la tessera dell'anno risulta annullata.",
+    )  # fmt: skip

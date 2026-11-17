@@ -59,6 +59,8 @@
       <div class="card-header"><h2 class="card-title"><i class="ti ti-file-analytics me-2"></i>Esercizio {{ esercizio.anno }}</h2></div>
       <div class="list-group list-group-flush">
         <a class="list-group-item list-group-item-action" href="{% url 'tesoreria:prima_nota' %}?anno={{ esercizio.anno }}"><i class="ti ti-list-details me-2"></i>Prima nota</a>
+        {% if perms.tesoreria.view_incasso %}<a class="list-group-item list-group-item-action" href="{% url 'tesoreria:incassi' %}"><i class="ti ti-receipt me-2"></i>Incassi e ricevute (donazioni, contributi...)</a>
+        <a class="list-group-item list-group-item-action" href="{% url 'tesoreria:registro_incassi' %}"><i class="ti ti-report-money me-2"></i>Registro incassi e quadratura</a>{% endif %}
         {% if perms.tesoreria.view_previsione %}<a class="list-group-item list-group-item-action" href="{% url 'tesoreria:preventivo' esercizio.anno %}"><i class="ti ti-target me-2"></i>Preventivo e confronto</a>{% endif %}
         {% if perms.tesoreria.view_esercizio %}<a class="list-group-item list-group-item-action" href="{% url 'tesoreria:rendiconto' esercizio.anno %}"><i class="ti ti-report-money me-2"></i>Rendiconto per cassa (Modello D)</a>{% endif %}
       </div>

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Incassi diversi dalle quote, con ricevuta
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Incassi{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:cruscotto' %}">Tesoreria</a></div>{% endblock %}
+{% block titolo_pagina %}Incassi e ricevute{% endblock %}
+{% block azioni %}<div class="btn-list">
+  <a class="btn" href="{% url 'tesoreria:registro_incassi' %}"><i class="ti ti-report-money me-1"></i>Registro incassi</a>
+  {% if perms.tesoreria.registra_incasso %}<a class="btn btn-primary" href="{% url 'tesoreria:incasso_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo incasso</a>{% endif %}
+</div>{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>Ricevuta</th><th>Data</th><th>Ricevuto da</th><th>Tipo</th><th class="text-end">Importo</th></tr></thead>
+      <tbody>
+      {% for i in incassi %}
+        <tr>
+          <td><a href="{{ i.get_absolute_url }}">{{ i.codice_ricevuta }}</a>{% if i.storni.all %} <span class="badge bg-red-lt">stornata</span>{% endif %}</td>
+          <td>{{ i.data|date:"d/m/Y" }}</td>
+          <td>{{ i.nominativo }}<div class="small text-secondary">{{ i.causale|truncatechars:70 }}</div></td>
+          <td>{{ i.get_tipo_display }}<div class="small text-secondary">{{ i.get_metodo_display }}</div></td>
+          <td class="text-end text-nowrap">{{ i.importo|floatformat:"2g" }} €</td>
+        </tr>
+      {% empty %}<tr><td colspan="5" class="text-secondary py-4 text-center">Nessun incasso. Le quote associative si incassano dal tesseramento.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

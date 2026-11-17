@@ -89,6 +89,7 @@
                 {% if not t.annullata %}
                   {% if t.pagata and t.incasso_esterno %}<span class="small text-secondary">incassata fuori dall'applicazione</span>
                   {% elif t.pagata %}<a class="btn btn-sm" href="{% url 'soci:ricevuta' t.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-receipt me-1"></i>Ricevuta</a>
+                  {% with s=t.storni.first %}{% if s %}<a class="btn btn-sm btn-outline-danger" href="{% url 'tesoreria:nota_storno' s.pk %}" target="_blank" rel="noopener" title="{{ s.motivo }}">Stornata ({{ s.codice }})</a>{% elif perms.tesoreria.storna and t.ricevuta_numero %}<a class="btn btn-sm btn-ghost-danger" href="{% url 'tesoreria:storno' %}?tessera={{ t.pk }}" title="Storno o rimborso della quota"><i class="ti ti-receipt-refund"></i></a>{% endif %}{% endwith %}
                   {% if perms.comunicazioni.add_invio and socio.soggetto.email %}<form class="d-inline" method="post" action="{% url 'comunicazioni:da_tessera' t.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Invia la ricevuta per email" aria-label="Invia la ricevuta per email"><i class="ti ti-mail"></i></button></form>{% endif %}
                   {% endif %}
                   {% if t.attribuita %}<a class="btn btn-sm" href="{% url 'soci:tessera_digitale' t.pk %}" target="_blank" data-stampa rel="noopener" title="Tessera digitale in PDF, con il QR di verifica"><i class="ti ti-id-badge-2 me-1"></i>Tessera</a>

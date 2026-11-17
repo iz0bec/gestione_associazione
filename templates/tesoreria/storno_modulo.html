@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Nota di storno o rimborso di una quota o di un incasso
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Storno della ricevuta {{ documento.codice_ricevuta }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'tesoreria:incassi' %}">Incassi</a></div>{% endblock %}
+{% block titolo_pagina %}Storno della ricevuta n. {{ documento.codice_ricevuta }}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}<input type="hidden" name="{% if quota %}tessera{% else %}incasso{% endif %}" value="{{ documento.pk }}">
+  <div class="card-body">
+    <p>{% if quota %}Quota {{ documento.anno }} di <strong>{{ documento.socio.soggetto.nome_completo }}</strong>{% else %}{{ documento.get_tipo_display }} di <strong>{{ documento.nominativo }}</strong>{% endif %}: <strong>{{ documento.importo|floatformat:"2g" }} €</strong>.</p>
+    {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+    {{ form.data.as_field_group }}{{ form.motivo.as_field_group }}{{ form.rimborso.as_field_group }}{{ form.metodo.as_field_group }}
+    {% if quota %}{{ form.annulla_tessera.as_field_group }}{% endif %}
+    <p class="small text-secondary mb-0">La nota di storno ha un suo numero annuale e la ricevuta originale resta, segnata come stornata. Un incasso registrato per errore si annulla solo se l'esercizio è ancora aperto; altrimenti si registra il rimborso.</p>
+  </div>
+  <div class="card-footer d-flex"><a class="btn btn-link" href="{% if quota %}{{ documento.socio.get_absolute_url }}{% else %}{{ documento.get_absolute_url }}{% endif %}">Annulla</a><button class="btn btn-danger ms-auto" type="submit">Registra lo storno</button></div>
+</form>
+{% endblock %}

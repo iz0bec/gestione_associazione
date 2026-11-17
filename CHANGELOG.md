@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Incassi diversi dalle quote** (donazioni, contributi, quote di partecipazione, altro): ricevuta
+  numerata nella stessa numerazione delle quote, PDF e prima nota con la voce adatta.
+- **Note di storno e rimborsi** di quote e incassi: annullamento del movimento registrato per errore
+  oppure rimborso come uscita; per le quote anche l'annullamento del tesseramento. Ricevute segnate
+  come stornate.
+- **Registro incassi e quadratura**: ricevute e storni di un periodo con i totali per metodo e per
+  conto, in PDF ed Excel.
+
 ## [1.0.30] - 2026-11-17
 
 Backup incrementali, cifrati e con prova di ripristino.
