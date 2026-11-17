@@ -86,4 +86,6 @@ def test_messaggi_della_password_in_italiano():
 
     with translation.override("it"), pytest.raises(ValidationError) as e:
         validate_password("corta")
-    assert e.value.messages == ["Questa password è troppo corta: deve contenere almeno 12 caratteri."]
+    assert e.value.messages == [
+        "Questa password è troppo corta: deve contenere almeno 12 caratteri."
+    ]
