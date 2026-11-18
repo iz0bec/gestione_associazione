@@ -11,6 +11,7 @@
       <a class="dropdown-item" href="{% url 'soci:libro_pdf' %}?elenco=1&amp;{{ request.GET.urlencode }}" target="_blank" data-stampa data-filtri="filtri-soci" data-filtri-fissi="elenco=1" rel="noopener" title="Solo i soci mostrati, con i filtri scelti"><i class="ti ti-file-type-pdf me-2"></i>Elenco filtrato (PDF)</a>
       <a class="dropdown-item" href="{% url 'soci:esporta' %}?{{ request.GET.urlencode }}" data-filtri="filtri-soci"><i class="ti ti-file-spreadsheet me-2"></i>Elenco filtrato (CSV)</a>
       <a class="dropdown-item" href="{% url 'soci:esporta_scambio' %}?{{ request.GET.urlencode }}" data-filtri="filtri-soci" title="Stesse colonne dell'importazione: si reimporta in un'altra installazione"><i class="ti ti-arrows-exchange me-2"></i>Per un'altra installazione (Excel)</a>
+      {% if perms.soci.gestisci_ciclo_tessere %}<a class="dropdown-item" href="{% url 'soci:modulo_richiesta' %}{% if request.GET.sezione %}?sezione={{ request.GET.sezione|urlencode }}{% endif %}" data-filtri="filtri-soci" data-filtri-campi="sezione" title="Modulo da compilare e restituire per chiedere le tessere della campagna in preparazione{% if multisezione %}: per la sezione scelta nel filtro{% endif %}"><i class="ti ti-file-spreadsheet me-2"></i>Modulo di richiesta tessere (Excel)</a>{% endif %}
     </div>
   </div>
   {% endif %}

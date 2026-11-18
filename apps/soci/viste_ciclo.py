@@ -541,3 +541,37 @@ class ImportaModuloView(PermessoMixin, View):
         return render(request, self.template_name, {
             "form": form, "dati": dati, "temporaneo": temporanei.salva_temporaneo(contenuto),
         })  # fmt: skip
+
+
+class ModuloRichiestaView(PermessoMixin, View):
+    """Scarica il modulo Excel della richiesta di tessere di una sezione (dall'elenco dei soci,
+    Stampa ed esporta), per la campagna in preparazione o l'anno indicato."""
+
+    permission_required = PERMESSO
+
+    def get(self, request):
+        from . import modulo_tessere, sezioni
+
+        anno = _anno(request, {})
+        scelta = request.GET.get("sezione", "")
+        if scelta.isdigit():
+            sezione = get_object_or_404(Sezione, pk=int(scelta))
+        elif not sezioni.multisezione():
+            sezione = Sezione.predefinita()
+        else:
+            messages.warning(request, "Scegliete prima una sezione nel filtro dell'elenco.")
+            return redirect("soci:elenco")
+        sezioni.controlla(request.user, sezione.pk)
+        voce = ciclo.listino(anno)
+        contenuto = modulo_tessere.genera(
+            anno, sezione, quota=voce.prezzo_sezioni if voce else None,
+            scadenza=voce.scadenza_richieste if voce else None,
+            precedente=ciclo.tessere_anno_precedente(anno, sezione),
+        )  # fmt: skip
+        tipo = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        risposta = HttpResponse(contenuto, content_type=tipo)
+        risposta["Content-Disposition"] = (
+            f'attachment; filename="richiesta-tessere-{anno}-{sezione.codice}.xlsx"'
+        )
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        return risposta

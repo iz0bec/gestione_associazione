@@ -127,6 +127,11 @@ spediscono per email e PEC dal protocollo.
      registra la richiesta»**, che fa le due cose in un passo;
    - se arriva per altra via, si usa **Importa modulo** nella campagna, con anteprima.
 
+   Il modulo di una sezione si scarica anche a parte, ad esempio da consegnare a mano o da
+   rimandare: nell'**elenco dei soci** si filtra la sezione e si sceglie *Stampa ed esporta →
+   Modulo di richiesta tessere (Excel)*. È quello della campagna in preparazione, con gli stessi
+   dati e lo stesso codice di controllo di quello allegato agli avvisi.
+
    Lo stesso modulo non si registra due volte.
 4. **Ordine alla sede nazionale**: somma le richieste non ancora ordinate, con il dettaglio per
    sezione. Il PDF si protocolla e si spedisce. Le richieste arrivate dopo finiscono nell'ordine

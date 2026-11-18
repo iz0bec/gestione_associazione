@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.51] - 2026-11-18
+
+### Aggiunto
+- **Modulo di richiesta tessere scaricabile dall'elenco dei soci**: con la sezione scelta nel
+  filtro, *Stampa ed esporta → Modulo di richiesta tessere (Excel)* scarica il modulo della
+  campagna in preparazione. Con più sezioni bisogna sceglierne una; si rispettano le sezioni
+  assegnate all'utente.
+
 ## [1.0.50] - 2026-11-18
 
 ### Aggiunto

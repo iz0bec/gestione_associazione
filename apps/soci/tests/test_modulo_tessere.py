@@ -151,3 +151,29 @@ def test_caricamento_a_mano_con_anteprima(admin, sezione):
     r = admin.post("/soci/tessere/importa-modulo/",
                    {"temporaneo": r.context["temporaneo"], "conferma": "1"})  # fmt: skip
     assert r.status_code == 302 and RichiestaTessere.objects.get().quantita == 12
+
+
+def test_scaricabile_dall_elenco_dei_soci(admin, sezione, client_ruolo):
+    pagina = admin.get(f"/soci/?sezione={sezione.pk}").content.decode()
+    assert f"/soci/tessere/modulo-richiesta.xlsx?sezione={sezione.pk}" in pagina
+    r = admin.get(f"/soci/tessere/modulo-richiesta.xlsx?sezione={sezione.pk}")
+    assert r.status_code == 200
+    assert f"richiesta-tessere-{ANNO}-007.xlsx" in r["Content-Disposition"]
+    dati = modulo_tessere.leggi(_compila(r.content))
+    assert (dati["sezione"], dati["anno"]) == (sezione, ANNO)  # la campagna in preparazione
+    r = admin.get("/soci/tessere/modulo-richiesta.xlsx")  # più sezioni e nessuna scelta
+    assert r.status_code == 302 and r["Location"] == "/soci/"
+
+
+def test_rispetta_le_sezioni_dell_utente(client_ruolo, sezione):
+    potenza = Sezione.objects.get(codice="003")
+    segretario = client_ruolo("Segretario", username="segretario")
+    segretario.utente.sezioni.add(potenza)
+    assert (
+        segretario.get(f"/soci/tessere/modulo-richiesta.xlsx?sezione={potenza.pk}").status_code
+        == 200
+    )
+    assert (
+        segretario.get(f"/soci/tessere/modulo-richiesta.xlsx?sezione={sezione.pk}").status_code
+        == 403
+    )
