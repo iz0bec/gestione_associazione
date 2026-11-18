@@ -42,11 +42,14 @@ _ga_motd() {
   echo
   echo "  ${c}${b}Gestione Associazione${n} ${b}${versione:-?}${n}  ${d}· container LXC ${ctid}${n}"
   echo "  ${d}──────────────────────────────────────────────────${n}"
+  proto=http
+  [ -f /etc/gestione-associazione/tls/cert.pem ] && proto=https
   if [ -n "$pubblico" ]; then
-    echo "  Indirizzo     ${b}${pubblico%/}/${n}  ${d}(interno http://${ip:-?}:${porta:-8000}/)${n}"
+    echo "  Indirizzo     ${b}${pubblico%/}/${n}  ${d}(interno ${proto}://${ip:-?}:${porta:-8000}/)${n}"
   else
-    echo "  Indirizzo     ${b}http://${ip:-?}:${porta:-8000}/${n}"
+    echo "  Indirizzo     ${b}${proto}://${ip:-?}:${porta:-8000}/${n}"
   fi
+  [ "$proto" = http ] && echo "  ${y}HTTPS non attivo${n}  ${d}consigliato anche in LAN: installa.sh --tls-cert/--tls-key o --tls-autofirmato${n}"
   echo "  Sistema       ${sistema:-Debian} · $(hostname)"
   echo "  Servizi       web $(stato gestione-associazione)   pianificatore $(stato gestione-associazione-pianificatore)"
   echo "  Ultimo backup ${ultimo}"

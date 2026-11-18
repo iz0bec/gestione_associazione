@@ -333,3 +333,183 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   approvati (unico parametro `{{1}}`) e con il consenso registrato della persona (`whatsapp_consenso_il`),
   come richiede Meta. Indirizzo dell'API modificabile, perché le integrazioni sono provate solo con server finti.
 
+
+## ADR-030 - API di interoperabilità (v1) *(proposta, da approvare)*
+
+**Contesto.** Servono due cose con lo stesso strumento: l'allineamento fra installazioni di questo
+software (federazione 1:N sezioni, finora con file Excel) e l'interazione con «altri mondi» (siti
+WordPress, app, gestionali) tramite adattatori **non inclusi in questo progetto**, scritti da terzi in
+qualsiasi linguaggio. Requisito vincolante: canale **sicuro e affidabile**. Il TLS da solo non basta: in
+produzione termina sul proxy (NPM) e prosegue in chiaro sulla LAN; più installazioni possono stare sulla
+stessa rete interna (caso reale: lo stesso Proxmox) e parlarsi senza passare dal proxy.
+
+### 1. Un contratto pubblico, non dei connettori
+
+- Il prodotto è il **contratto**: `docs/api/openapi.yaml` (OpenAPI 3.1) è la fonte di verità; un test
+  confronta viste e contratto. Gli adattatori stanno fuori; qui c'è solo il kit per scriverli
+  (guida, vettori di prova, endpoint di verifica).
+- Risorse **generiche**, non modellate su un sistema esterno: `eventi`, `adesioni`, `sezioni`, `soci`
+  (con le tessere), `lotti`, `domande`, più il feed `cambiamenti`.
+- Il client fra installazioni (federazione ↔ sezioni) è l'unico consumatore interno e usa **solo** l'API
+  pubblica, senza scorciatoie: è la prova continua che il contratto basta.
+- Versioni: `/api/v1`; in una versione solo aggiunte compatibili (campi nuovi, risorse nuove, valori
+  nuovi negli elenchi aperti). Una rottura richiede `/api/v2`, con almeno 12 mesi di convivenza
+  annunciati con `Deprecation` e `Sunset` (RFC 8594/9745).
+
+### 2. Standard al posto di schemi propri
+
+| Esigenza | Standard |
+|---|---|
+| Firma di richieste e risposte | HTTP Message Signatures (RFC 9421), `ed25519` |
+| Integrità del corpo | `Content-Digest` (RFC 9530), `sha-256` |
+| Cifratura per il destinatario | JWE compatto (RFC 7516), `ECDH-ES+A256KW` + `A256GCM`, chiavi X25519 (RFC 8037) |
+| Pubblicazione delle chiavi | JWKS (RFC 7517) |
+| Cambiamenti e notifiche | CloudEvents 1.0, formato JSON |
+| Errori | Problem Details (RFC 9457) |
+| Scritture ripetibili | intestazione `Idempotency-Key` |
+
+### 3. Identità, controparti e abbinamento
+
+- Ogni installazione ha un'**identità**: UUID d'istanza (creato alla prima migrazione) e due coppie di
+  chiavi, Ed25519 per firmare e X25519 per ricevere dati cifrati. Le chiavi private stanno nel DB cifrate
+  con `CHIAVE_CIFRATURA`; la rotazione mantiene la chiave precedente valida per un periodo di
+  sovrapposizione (`kid` distinti). L'identità **non** dipende da indirizzo IP o nome host.
+- **`ClienteApi`** (controparte): tipo `installazione` o `integrazione`, stato (`in_prova`, `attiva`,
+  `sospesa`, `revocata`), chiavi pubbliche, **ambiti**, sezioni visibili, indirizzi IP ammessi,
+  scadenza, indirizzi di raggiungibilità (§6), sottoscrizioni alle notifiche.
+- Ambiti iniziali: `eventi:lettura`, `adesioni:lettura`, `adesioni:scrittura`, `sezioni:lettura`,
+  `soci:lettura`, `lotti:lettura`, `domande:scrittura`, `consegne:scrittura` (modalità a spinta, §7).
+  Un'integrazione non riceve mai `soci:lettura` senza una scelta esplicita dell'amministratore, con
+  avviso sul trattamento dei dati.
+- **Abbinamento**: l'amministratore crea un *invito monouso* (validità 24 ore); la controparte lo usa
+  per presentare le proprie chiavi pubbliche e ricevere le nostre. Entrambe le parti mostrano
+  l'**impronta** delle chiavi (SHA-256, a gruppi di cifre), da confermare per una seconda via (telefono,
+  atto protocollato). Fino alla conferma la controparte resta `in_prova`: solo `/prova` e dati finti.
+  Il passaggio ad `attiva` richiede un permesso nuovo (`api.gestisci_controparti`, solo all'amministratore).
+- Revoca immediata; sospensione automatica alla scadenza; tutto nel registro attività.
+
+### 4. Firma di ogni messaggio
+
+- Richieste **e risposte** firmate (RFC 9421). Componenti coperti nella richiesta: `@method`, `@path`,
+  `@query`, `content-digest` (se c'è un corpo), `destinatario-istanza`; parametri `created`, `expires`,
+  `nonce`, `keyid`, `alg="ed25519"`, `tag="ga-v1"`.
+- **`@authority` non è firmato**, perché la stessa installazione si raggiunge per nome pubblico o per
+  indirizzo interno (§6). Al suo posto l'intestazione firmata **`Destinatario-Istanza`** (UUID
+  dell'istanza destinataria): chi riceve rifiuta i messaggi indirizzati ad altri. Così un messaggio
+  per un'installazione non può essere dirottato su un'altra, anche sullo stesso host.
+- La risposta firma `@status`, `content-digest` e la firma della richiesta (`"signature";req`): una
+  risposta non si può riusare per un'altra richiesta.
+- Rifiuti: firma non valida, `created` fuori da ±300 secondi, `expires` superato, **nonce già visto**
+  (conservato 10 minuti nel DB), controparte non attiva, IP non ammesso, ambito mancante.
+- L'elenco degli IP ammessi è un livello in più, non l'identità: dietro il proxy l'IP viene da
+  `rete.ip_client` (solo da `PROXY_FIDATI`), nelle chiamate dirette è `REMOTE_ADDR`.
+
+### 5. Cifratura dei dati personali
+
+- I corpi con dati personali (soci, tessere, adesioni, domande, consegne) viaggiano **sempre** come JWE
+  per la chiave X25519 del destinatario (`Content-Type: application/jose`), in entrambe le direzioni e
+  indipendentemente dal trasporto. Il proxy, i suoi log e la LAN vedono solo dati cifrati.
+- La firma HTTP copre il corpo cifrato e identifica il mittente; la cifratura autenticata (AES-GCM)
+  garantisce il contenuto. I dati pubblici (eventi pubblici, sezioni) sono solo firmati.
+
+### 6. Trasporto e rete interna
+
+- Ogni controparte ha fino a due indirizzi: **interno** (preferito, se impostato) e **pubblico** (riserva).
+  Se l'interno non risponde si passa al pubblico, e il passaggio finisce nel registro.
+- **HTTPS è la regola anche in rete interna.** Ogni indirizzo ha la propria **modalità di verifica del
+  certificato**, mai disattivabile:
+  - `pubblica`: autorità di certificazione del sistema e nome dell'host (indirizzi pubblici, ma anche
+    interni con certificati Let's Encrypt ottenuti via DNS);
+  - `ca_interna`: autorità di certificazione dell'organizzazione (PEM salvato sulla controparte, es.
+    una CA del Proxmox o di `step-ca`) e nome dell'host o IP presente nel certificato;
+  - `impronta`: certificato anche autofirmato, accettato solo se l'impronta SHA-256 della sua chiave
+    pubblica (SPKI) coincide con quella registrata. L'impronta si scambia durante l'abbinamento
+    (campo `tls_spki` dell'istanza) e si conferma con quella delle chiavi; rinnovando il certificato
+    con la stessa chiave non cambia, con una chiave nuova la controparte la ripresenta firmata con la
+    propria chiave Ed25519 e il cambio finisce nel registro.
+- Verso indirizzi pubblici: solo HTTPS con modalità `pubblica`.
+- **`http://` in chiaro** resta un'eccezione per la rete interna: solo se l'indirizzo è privato o locale
+  (RFC 1918, `fc00::/7`, loopback), la controparte è segnata «rete interna» **e** l'amministratore
+  abilita esplicitamente il trasporto in chiaro, con avviso nel cruscotto *Collegamenti*. Firma, nonce e
+  cifratura dei dati personali non cambiano, ma si perde la riservatezza dei metadati (percorsi, dati
+  pubblici).
+- Ordine dei tentativi: interno HTTPS → interno HTTP (solo se abilitato) → pubblico HTTPS.
+- Il TLS reciproco (mTLS) non è richiesto: l'identità è già data dalla firma, che attraversa anche i
+  proxy. Resta possibile come livello in più sulle connessioni dirette.
+- Lato server, HTTPS in rete interna si ottiene con il proxy locale (NPM o simili) oppure con Gunicorn
+  direttamente (`installa.sh --tls-cert/--tls-key` o `--tls-autofirmato`, dalla 1.0.36).
+  La guida [HTTPS anche in rete interna](../sistema/https-rete-interna.md) spiega come creare la CA
+  (step-ca) o il certificato autofirmato e come calcolare l'impronta SPKI; la documentazione e
+  l'interfaccia consigliano sempre HTTPS anche in LAN.
+- Più installazioni sullo stesso host (porte o container diversi) si distinguono per
+  `Destinatario-Istanza`, non per indirizzo. L'indirizzo interno va aggiunto ad `ALLOWED_HOSTS`.
+- Protezione dalle richieste forgiate (SSRF): le chiamate in uscita vanno **solo** agli indirizzi
+  registrati sulla controparte; gli indirizzi privati solo con il segno «rete interna»; i redirect non
+  si seguono; il nome si risolve e si ricontrolla a ogni chiamata (contro il DNS rebinding).
+
+### 7. Affidabilità: feed dei cambiamenti
+
+- Ogni operazione rilevante dei servizi scrive un **`Cambiamento` nella stessa transazione** (outbox):
+  se l'operazione c'è, c'è anche il cambiamento, e viceversa. I servizi restano l'unico punto di scrittura.
+- **Flussi** separati (`eventi`, `sezioni`, `soci:<codice sezione>`, `lotti:<codice sezione>`), ognuno
+  con un **numero progressivo senza buchi** (`numerazione.prossimo_numero`, sequenza `feed_<flusso>`) e
+  una **catena di impronte**: `impronta = SHA-256(impronta precedente ‖ JSON canonico dell'evento)`.
+  Chi legge si accorge di voci mancanti, alterate o riordinate e si ferma.
+- Gli eventi (CloudEvents) dicono **cosa** è cambiato (tipo, UUID, versione), non portano i dati: la
+  risorsa si legge a parte, con i propri ambiti. Tipi: `it.gestioneassociazione.<risorsa>.<azione>.v1`
+  (`creato`, `modificato`, `annullato`, `cessato`, `anonimizzato`, …). `anonimizzato` obbliga chi
+  legge ad anonimizzare la propria copia (GDPR).
+- Ogni risorsa esposta ha `uuid` (nuovo campo) e `versione` (intero crescente, anche come `ETag`).
+- **Consegna almeno una volta, applicazione una volta sola**: chi legge salva il cursore nella stessa
+  transazione in cui applica. Le scritture in ingresso richiedono `Idempotency-Key` (conservata 30
+  giorni con l'impronta del corpo: stessa chiave e corpo diverso ⇒ 422).
+- Conservazione del feed: 400 giorni. Un cursore più vecchio riceve **410** e va fatta una
+  **risincronizzazione** completa, sempre con anteprima.
+- **Riconciliazione**: `GET /riepiloghi/{flusso}` restituisce numero e impronta delle coppie
+  (uuid, versione) ordinate; se divergono, si propone la risincronizzazione.
+- **Notifiche** (opzionali): un CloudEvent firmato e senza dati personali verso l'indirizzo della
+  controparte. Sono solo un avviso: se si perdono, la lettura periodica recupera tutto. Ripetizioni
+  con attesa crescente (da 1 minuto a 24 ore), poi coda degli errori visibile, mai scarto silenzioso.
+- **Modalità a spinta** per chi non è raggiungibile (sezione dietro NAT o senza HTTPS pubblico):
+  la sezione invia i propri cambiamenti, con le risorse cifrate, a `POST /consegne`. Stesso formato,
+  stessa catena; il destinatario risponde con l'ultimo progressivo applicato. Chi riceve **non**
+  applica alla cieca: memorizza e applica con le regole dell'importazione (anteprima o automatica,
+  a scelta). Resta valido il principio «nessuna installazione scrive nei dati di un'altra».
+- Cruscotto *Collegamenti*: ultima sincronizzazione riuscita, ritardo, errori, scadenza delle chiavi;
+  avviso agli amministratori dopo N fallimenti consecutivi.
+
+### 8. Autorità del dato fra installazioni
+
+- Socio, tessere attribuite e cessazioni: **della sezione**. Lotti e carte (numerazione della sede
+  centrale): **della federazione**. Ognuno legge l'altro e applica con lo stesso codice
+  dell'importazione (`soci.importazione`): abbinamento per codice fiscale, matricola, nominativo.
+
+### 9. Scritture dai sistemi esterni
+
+- **Adesioni agli eventi** (`adesioni:scrittura`): `POST /eventi/{uuid}/adesioni` passa da
+  `eventi.servizi.aderisci` con una nuova origine `integrazione` (stesse regole del modulo pubblico:
+  adesioni aperte, posti, accompagnatori) e la controparte registrata. Solo eventi visibili alla
+  controparte (per un'integrazione: `pubblico=True`). Annullamento con `DELETE` e `If-Match`.
+- **Domande di iscrizione** (`domande:scrittura`): `POST /domande` crea una domanda `in_attesa` con
+  origine nuova `integrazione`, stessi campi e consensi obbligatori del modulo pubblico; **mai**
+  accolta in automatico. L'anti-spam del modulo è sostituito da identità della controparte e limiti
+  di frequenza.
+- Limiti di frequenza per controparte (429 con `Retry-After`); ogni scrittura nel registro attività.
+
+### 10. Implementazione
+
+- Nuovo modulo `apps/api` con **viste Django semplici** (niente framework REST): firma, verifica,
+  cifratura e controlli in un unico punto, sul modello di `cifratura.py`. Ed25519, X25519 e AES-GCM
+  da `cryptography` (già presente). RFC 9421 scritta qui, verificata con gli esempi dell'RFC
+  (Appendice B); per il JWE si valuta `joserfc` (BSD-3), altrimenti un'implementazione minima della
+  sola combinazione ammessa, verificata con vettori di prova.
+- Client fra installazioni in un modulo a parte (`apps/collegamenti`), con lavori rieseguibili nel
+  `pianificatore`.
+- Fasi: **F1** identità, controparti, abbinamento, firma, `/prova`, registro → **F2** feed, `eventi`,
+  `sezioni`, notifiche → **F3** adesioni e domande in ingresso → **F4** cifratura, `soci`, `lotti`,
+  client federazione (lettura e spinta), riconciliazione, cruscotto → **F5** kit per chi integra
+  (guida in `docs/api/`, vettori di prova, dati finti per lo stato `in_prova`).
+
+**Conseguenze.** Lo scambio Excel resta come riserva. Le integrazioni con WordPress e simili non si
+sviluppano qui. Ogni modello esposto riceve `uuid` e `versione`. Nuovi permessi in `ruoli.py` e pagine
+in `docs/operativo/` e `docs/sistema/` (abbinamento, rete interna, `ALLOWED_HOSTS`).

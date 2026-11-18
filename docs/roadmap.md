@@ -133,11 +133,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 - **Allineamento fra installazioni** (federazione ↔ sezioni). ✅ *Fatto*: scambio con file Excel
   nei due sensi. *Da fare*:
   - ✅ opzione **«aggiorna anche i dati diversi»** e passaggio della sospensione (scambio simmetrico);
-  - **collegamento diretto** fra installazioni, senza file: ogni installazione espone un'API in
-    sola lettura dei soci della propria sezione (HTTPS, token per installazione con scadenza e
-    revoca, elenco degli indirizzi ammessi, registro di ogni richiesta); l'altra la interroga a
-    orari fissi, mostra le differenze e le applica con le stesse regole dell'importazione (o dopo
-    conferma). Nessun dato viaggia senza cifratura e nessuna installazione scrive nell'altra.
+  - **collegamento diretto** fra installazioni, senza file: assorbito dall'**API di
+    interoperabilità** (ADR-030, sotto).
 
 - Scadenzario e calendario (assemblee, rinnovi, ricorrenze, cerimonie) con esportazione iCal.
   ✅ *Fatti*: prossimi impegni, vista mensile, appuntamenti e scadenze inseriti a mano,
@@ -178,5 +175,14 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 - ✅ **Chat interna** (1.0.35) fra gli utenti del gestionale (non i soci): conversazioni a due e di
   gruppo, aggiornamento automatico, non letti nella barra, riservate ai partecipanti.
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).
-- API REST con token con scadenza e permessi limitati (per integrazioni esterne).
+- ✅ **HTTPS dall'installatore** (1.0.36): certificato della propria CA o autofirmato, riavvio al rinnovo;
+  guida *HTTPS anche in rete interna* (step-ca, MyCert, OpenSSL).
+- **API di interoperabilità v1** (ADR-030, contratto in `docs/api/openapi.yaml`, *bozza*): un unico
+  contratto pubblico per le installazioni pari (federazione ↔ sezioni) e per adattatori esterni non
+  inclusi nel progetto (es. WordPress). Firma RFC 9421 di ogni messaggio, dati personali cifrati per il
+  destinatario (JWE), feed dei cambiamenti con catena di impronte, idempotenza, modalità a spinta per
+  chi è dietro NAT, rete interna (stesso Proxmox) senza passare dal proxy, in HTTPS anche con CA
+  interna o certificato autofirmato verificato per impronta (HTTP in chiaro solo come eccezione esplicita).
+  Fasi: F1 identità e abbinamento → F2 feed ed eventi → F3 adesioni e domande in ingresso →
+  F4 soci, lotti e client federazione → F5 kit per chi integra.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.

@@ -61,7 +61,9 @@ in prospettiva, dati contabili): la sicurezza è un requisito, non un'aggiunta.
 
 ## Raccomandazioni di esercizio
 
-1. **HTTPS sempre** in produzione (`HTTPS=true`), anche in rete locale se possibile.
+1. **HTTPS sempre** in produzione (`HTTPS=true`), **anche in rete locale**: la LAN non è una rete
+   fidata. Senza un dominio, una CA interna (step-ca) o un certificato autofirmato bastano
+   ([HTTPS anche in rete interna](https-rete-interna.md)).
 2. **Secondo fattore obbligatorio** almeno per amministratore, presidente, segretario e tesoriere.
 3. Un account **personale** per ogni persona; mai account condivisi. Disattivare subito gli account
    di chi lascia un incarico (il passaggio di consegne lo prevede).

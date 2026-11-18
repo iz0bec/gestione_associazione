@@ -31,6 +31,7 @@ SORGENTE="$REPO_PREDEFINITO"
 VERSIONE="main"
 DEBIAN="13"
 AGGIORNA=0
+TLS_AUTOFIRMATO=0
 SRC_CT="/root/gestione-associazione-src"
 
 uso() {
@@ -56,6 +57,8 @@ Applicazione:
   --versione TAG|RAMO     versione da installare (predefinita ${VERSIONE}), es. v0.0.1-rc.1
   --porta N               porta web (predefinita ${PORTA})
   --email EMAIL           email dell'amministratore
+  --tls-autofirmato       HTTPS con un certificato autofirmato (consigliato anche in LAN; poi si può
+                          sostituire con uno della propria CA: vedi docs/sistema/https-rete-interna.md)
 Aggiornamento:
   --aggiorna --id N [--versione TAG] [--sorgente ...]   aggiorna il container N
 EOF
@@ -82,6 +85,7 @@ while [[ $# -gt 0 ]]; do
     --porta) PORTA="$2"; shift 2 ;;
     --email) EMAIL="$2"; shift 2 ;;
     --aggiorna) AGGIORNA=1; shift ;;
+    --tls-autofirmato) TLS_AUTOFIRMATO=1; shift ;;
     -h|--help) uso; exit 0 ;;
     *) echo "Opzione sconosciuta: $1"; uso; exit 1 ;;
   esac
@@ -172,11 +176,13 @@ copia_codice
 passo "Installazione dell'applicazione"
 ARG=(-y --porta "$PORTA")
 [[ -n "$EMAIL" ]] && ARG+=(--email "$EMAIL")
+[[ $TLS_AUTOFIRMATO -eq 1 ]] && ARG+=(--tls-autofirmato)
 nel_ct bash "${SRC_CT}/scripts/installa.sh" "${ARG[@]}"
 installa_motd
 
 INDIRIZZO_CT="$(nel_ct hostname -I | awk '{print $1}')"
-echo -e "\n\033[1;32mContainer ${CTID} pronto: http://${INDIRIZZO_CT}:${PORTA}/\033[0m"
+PROTO="http"; [[ $TLS_AUTOFIRMATO -eq 1 ]] && PROTO="https"
+echo -e "\n\033[1;32mContainer ${CTID} pronto: ${PROTO}://${INDIRIZZO_CT}:${PORTA}/\033[0m"
 echo "Root del container: password ${PASSWORD_ROOT} (pct enter ${CTID})"
 nel_ct cat /root/gestione-associazione-credenziali.txt 2>/dev/null || true
 echo "Aggiornare in seguito con: $0 --aggiorna --id ${CTID} --versione <tag>"

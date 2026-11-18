@@ -72,7 +72,15 @@ cd /root/gestione-associazione-src && git checkout v0.0.1-rc.1
 | `--host NOMI` | nomi aggiuntivi per `ALLOWED_HOSTS`, es. `gestione.example.it` |
 | `--db NOME` | nome del database (predefinito `gestione_associazione`) |
 | `--admin`, `--email` | amministratore creato alla prima installazione |
+| `--tls-cert FILE` `--tls-key FILE` | **HTTPS servito direttamente** con un certificato (es. dalla propria step-ca o con MyCert) |
+| `--tls-autofirmato` | HTTPS con un certificato autofirmato per nome e IP del server (825 giorni); `--tls-nomi` aggiunge nomi o IP |
+| `--senza-tls` | torna all'HTTP (solo dietro un proxy HTTPS) |
 | `-y` | nessuna domanda |
+
+**HTTPS consigliato sempre, anche in rete interna** (vedi [HTTPS anche in rete interna](https-rete-interna.md)).
+Con le opzioni `--tls-*` i file vanno in `/etc/gestione-associazione/tls/` e il servizio risponde solo in
+HTTPS; gli aggiornamenti lo mantengono. Per rinnovare basta sovrascrivere `key.pem` e poi `cert.pem`:
+il servizio si riavvia da solo (`gestione-associazione-tls.path`).
 
 Lo script è **rieseguibile**: se trova il `.env` lo considera un aggiornamento. In quel caso non
 tocca `.env`, database, file e backup, e prima di migrare crea un backup completo. Se il backup non
@@ -104,6 +112,7 @@ bash crea-lxc.sh --versione v0.0.1-rc.1 --ip 192.168.0.40/24 --gw 192.168.0.1 --
 | `--sorgente` | repository GitLab | URL git oppure una cartella locale dell'host con il codice |
 | `--versione` | `main` | tag o ramo da installare |
 | `--porta` | 8000 | porta web |
+| `--tls-autofirmato` | - | HTTPS con certificato autofirmato (consigliato; poi sostituibile con uno della propria CA) |
 
 Alla fine lo script stampa l'indirizzo, la password di root del container e le credenziali
 dell'amministratore dell'applicazione. Il container si avvia con l'host (`onboot`).
@@ -118,7 +127,7 @@ a ogni `--aggiorna`; non compare con `pct enter`, che non apre una shell di logi
 Aggiornamento, con backup automatico prima:
 
 ```bash
-bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.35
+bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.36
 ```
 
 Per i backup conviene anche il backup del container di Proxmox (snapshot o vzdump), in aggiunta ai
@@ -165,6 +174,12 @@ ALLOWED_HOSTS=gestione.example.it
   generati (es. il collegamento al calendario) sono in `https://`. Le passkey funzionano solo in
   HTTPS (o su `localhost`). **Da quel momento non si entra più dall'indirizzo in chiaro**
   (`http://server:porta`): anche dalla rete interna si usa il nome in HTTPS.
+
+> **Usare HTTPS anche in rete interna.** In LAN il traffico in chiaro (password, cookie, dati dei
+> soci) è leggibile da qualunque dispositivo collegato. La guida
+> [HTTPS anche in rete interna](https-rete-interna.md) spiega passo passo come creare una CA interna
+> con step-ca (consigliata) o un certificato autofirmato, e come configurare proxy e `.env`.
+
 - `PROXY_COUNT`: quanti proxy ci sono in catena (di solito 1, es. Nginx Proxy Manager). Serve a
   ricavare l'**IP reale** del visitatore da `X-Forwarded-For`, usato dal blocco dei tentativi di
   accesso e dal registro attività: senza, tutte le richieste sembrano arrivare dal proxy e chi
@@ -195,7 +210,7 @@ git pull && docker compose up -d --build
 Senza Docker, dalla copia del repository usata per l'installazione:
 
 ```bash
-cd /root/gestione-associazione-src && git fetch --tags && git checkout v1.0.35
+cd /root/gestione-associazione-src && git fetch --tags && git checkout v1.0.36
 ./scripts/installa.sh -y      # backup automatico, migrazioni, riavvio dei servizi
 ```
 

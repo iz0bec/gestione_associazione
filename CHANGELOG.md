@@ -5,6 +5,27 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.36] - 2026-11-18
+
+HTTPS servito direttamente dall'applicazione e guida all'HTTPS in rete interna.
+
+### Aggiunto
+- **HTTPS dall'installatore** (`scripts/installa.sh`): `--tls-cert`/`--tls-key` per un certificato
+  della propria CA (step-ca, MyCert, …) oppure `--tls-autofirmato` (nome e IP del server, `--tls-nomi`
+  per altri nomi; rinnovando riusa la chiave, così l'impronta non cambia). Controlli su coppia chiave/
+  certificato e scadenza, file in `/etc/gestione-associazione/tls/`, **riavvio automatico** quando il
+  certificato viene sovrascritto (rinnovo), scelta mantenuta negli aggiornamenti, `--senza-tls` per
+  tornare indietro. Alla fine stampa emittente, scadenza e impronta SPKI. Anche
+  `crea-lxc.sh --tls-autofirmato`; il messaggio di benvenuto del container segnala se l'HTTPS manca.
+
+### Documentazione
+- Proposta dell'**API di interoperabilità** (ADR-030) e bozza del contratto OpenAPI in
+  `docs/api/openapi.yaml`, da approvare prima dello sviluppo.
+- Nuova guida **HTTPS anche in rete interna** nel manuale di sistema: autorità di certificazione
+  interna con step-ca (installazione, inizializzazione, rilascio automatico ACME, certificato radice
+  sui dispositivi) oppure certificato autofirmato con OpenSSL e impronta per i collegamenti fra
+  installazioni, gestione della vita dei certificati con MyCert. HTTPS raccomandato sempre, anche in LAN.
+
 ## [1.0.35] - 2026-11-18
 
 Chat interna fra gli utenti del gestionale.
