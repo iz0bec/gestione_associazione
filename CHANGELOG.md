@@ -5,6 +5,74 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+API di interoperabilità, fase F1: identità, abbinamento e firma di ogni messaggio (ADR-030, approvata).
+
+### Aggiunto
+- **Identità dell'istanza**:
+  - UUID creato alla migrazione;
+  - chiavi Ed25519 (firma) e X25519 (cifratura), con le private cifrate con `CHIAVE_CIFRATURA`;
+  - JWKS pubblica e rotazione con 7 giorni di sovrapposizione;
+  - `/.well-known/gestione-associazione`, con le impronte SPKI del certificato servito
+    dall'installatore (`API_TLS_CERTIFICATO`, `API_TLS_SPKI`).
+- **Firma di ogni richiesta e risposta** con HTTP Message Signatures (RFC 9421, ed25519):
+  - integrità del corpo con `Content-Digest` (RFC 9530);
+  - destinatario firmato (`Destinatario-Istanza`) al posto del nome host;
+  - nonce non riutilizzabili e tolleranza dell'orologio di ±5 minuti;
+  - risposte legate alla richiesta;
+  - errori in formato Problem Details (RFC 9457).
+  - L'implementazione è verificata con i vettori ufficiali dell'RFC 9421 (Appendice B.2.6).
+- **Abbinamento con invito monouso** (24 ore, il codice si vede una volta):
+  - prova di possesso delle chiavi e impronta comune alle due parti, da confermare per una seconda
+    via prima di attivare;
+  - stati *in prova*, *attiva*, *sospesa* (anche da sola alla scadenza) e *revocata*;
+  - ambiti e indirizzi IP ammessi;
+  - per un'integrazione esterna, i dati dei soci solo con la conferma del trattamento.
+- **`POST /api/v1/prova`**: diagnosi del collegamento (firma, orologio, stato, ambiti, IP visto).
+- **Sistema → Collegamenti API** (solo Amministratore di sistema):
+  - identità dell'istanza, controparti, nuovo invito e uso di un invito ricevuto;
+  - conferma dell'impronta, prova del collegamento, sospensione, revoca, rotazione delle chiavi;
+  - registro delle chiamate ricevute.
+- **Client verso le altre installazioni** (`apps/collegamenti`), che usa solo l'API pubblica:
+  - prova prima l'indirizzo interno e poi quello pubblico;
+  - verifica sempre il certificato: CA di sistema, CA interna (PEM) o impronta SPKI, anche per
+    i certificati autofirmati;
+  - http in chiaro solo verso IP privati, con consenso esplicito;
+  - niente redirect;
+  - controllo degli indirizzi privati a ogni risoluzione del nome, contro SSRF e DNS rebinding.
+- Lavoro periodico `pulizia_api` nel pianificatore.
+
+API di interoperabilità, fase F2: feed dei cambiamenti, eventi e sezioni, notifiche.
+
+- **Feed dei cambiamenti** (`GET /api/v1/cambiamenti`):
+  - CloudEvents senza dati personali, scritti nella stessa transazione di ogni creazione, modifica
+    o annullamento di eventi e sezioni, anche da importazioni e configurazione guidata;
+  - progressivo senza buchi per flusso e catena di impronte SHA-256;
+  - conservazione di 400 giorni (`410` per i cursori più vecchi);
+  - ogni adesione o rinuncia fa avanzare la versione dell'evento.
+- Eventi e sezioni hanno `uuid` e `versione` (assegnati anche a quelli esistenti).
+- **Risorse**:
+  - `GET /api/v1/eventi`, a pagine con cursore e filtro `dal`, e `GET /api/v1/eventi/{uuid}` con
+    `ETag`; alle integrazioni solo gli eventi con modulo pubblico;
+  - `GET /api/v1/sezioni`;
+  - `GET /api/v1/riepiloghi/{flusso}` per la riconciliazione.
+- **Notifiche** alle controparti:
+  - CloudEvent firmato all'indirizzo indicato, per i flussi scelti nella scheda;
+  - ripetizioni da 1 minuto a 24 ore, poi restano visibili come non consegnate e si possono
+    riprovare;
+  - lavoro `invia_notifiche_api`.
+- **Rotazione delle chiavi** senza interruzioni:
+  - durante la sovrapposizione le risposte sono firmate anche con la chiave in uscita;
+  - le altre installazioni rileggono da sole la JWKS firmata (anche alla prima chiamata con una
+    chiave sconosciuta);
+  - le integrazioni presentano le chiavi nuove con `PUT /api/v1/chiavi`.
+- **Impronte TLS aggiornate** ogni notte (`aggiorna_collegamenti`) dalla `/.well-known` firmata
+  delle installazioni collegate, ad esempio dopo un rinnovo con chiave nuova.
+- Documentazione:
+  - manuale operativo *Collegamenti API*;
+  - manuale di sistema *API di interoperabilità* (proxy, rete interna, impronte);
+  - guida per chi integra in `docs/api/README.md`;
+  - contratto OpenAPI aggiornato.
+
 ## [1.0.37] - 2026-11-18
 
 Certificati HTTPS con rinnovo automatico e CA interna su Proxmox in un solo comando.

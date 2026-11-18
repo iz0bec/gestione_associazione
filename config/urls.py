@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.api import endpoint as api
 from apps.core.aspetto import aspetto_css, logo
 from apps.core.configurazione import ConfigurazioneView
 from apps.core.views import (
@@ -35,6 +36,10 @@ admin.site.index_title = "Amministrazione tecnica"
 
 urlpatterns = [
     path("salute/", salute, name="salute"),
+    path(".well-known/gestione-associazione", api.well_known, name="api_istanza"),
+    path(".well-known/gestione-associazione/jwks.json", api.jwks, name="api_jwks"),
+    path("api/v1/", include("apps.api.urls_v1")),
+    path("sistema/api/", include("apps.api.urls")),
     path("aspetto.css", aspetto_css, name="aspetto_css"),
     path("logo.png", logo, name="logo"),
     path("ripristino/", StatoRipristinoView.as_view(), name="stato_ripristino"),

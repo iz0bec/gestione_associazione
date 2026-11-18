@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Collegamenti API: identità dell'istanza e controparti (installazioni e integrazioni)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Collegamenti API{% endblock %}
+{% block titolo_pagina %}Collegamenti API{% endblock %}
+{% block azioni %}{% if perms.api.gestisci_controparti and cifratura %}
+<div class="btn-list">
+  <a class="btn" href="{% url 'api:usa_invito' %}"><i class="ti ti-link me-1"></i>Usa un invito ricevuto</a>
+  <a class="btn btn-primary" href="{% url 'api:invito_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo invito</a>
+</div>{% endif %}{% endblock %}
+{% block contenuto %}
+{% if not cifratura %}<div class="alert alert-warning"><i class="ti ti-key me-1"></i><strong>Manca la chiave di cifratura</strong> (<code>CHIAVE_CIFRATURA</code>): senza non si creano le chiavi dell'istanza e l'API non risponde. Vedi <a href="{% url 'core:servizi_posta' %}">Servizi di posta</a> per come crearla.</div>{% endif %}
+{% if not https %}<div class="alert alert-info"><i class="ti ti-lock-open me-1"></i>Questa pagina è aperta in <strong>http</strong>. Anche in rete interna è consigliato HTTPS: vedi la guida «HTTPS anche in rete interna» del manuale di sistema.</div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>Controparti</h3></div>
+      {% if controparti %}
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Nome</th><th>Tipo</th><th>Stato</th><th>Ultima chiamata</th></tr></thead>
+          <tbody>
+          {% for c in controparti %}
+            <tr>
+              <td><a href="{% url 'api:controparte' c.pk %}">{{ c.nome }}</a>{% if not c.abbinata %}<div class="small text-secondary">in attesa dell'abbinamento</div>{% endif %}</td>
+              <td class="small">{% if c.tipo == 'installazione' %}Installazione{% else %}Integrazione{% endif %}</td>
+              <td><span class="badge {% if c.stato == 'attiva' %}bg-green-lt{% elif c.stato == 'in_prova' %}bg-yellow-lt{% elif c.stato == 'sospesa' %}bg-orange-lt{% else %}bg-secondary-lt{% endif %}">{{ c.get_stato_display }}</span></td>
+              <td class="small text-secondary">{{ c.ultima_chiamata_il|date:"d/m/Y H:i"|default:"mai" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card-body small text-secondary">Nessuna controparte. Per collegare un'altra installazione o un'integrazione create un <strong>invito</strong>; per collegarvi a un'altra installazione usate l'invito che vi ha mandato.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    {% if cifratura %}
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-fingerprint me-1"></i>Questa istanza</h3></div>
+      <div class="card-body small">
+        <div class="mb-2"><div class="text-secondary">Identità (UUID)</div><input class="form-control form-control-sm font-monospace" type="text" readonly data-copia value="{{ istanza.uuid }}" aria-label="UUID dell'istanza"></div>
+        <div class="mb-2"><div class="text-secondary">Indirizzo da comunicare</div><input class="form-control form-control-sm font-monospace" type="text" readonly data-copia value="{{ indirizzo }}" aria-label="Indirizzo dell'istanza"></div>
+        <div class="text-secondary">Chiavi pubbliche</div>
+        <ul class="list-unstyled mb-2">{% for k in jwks %}<li><span class="badge {% if k.exp %}bg-secondary-lt{% else %}bg-blue-lt{% endif %}">{% if k.use == 'sig' %}firma{% else %}cifratura{% endif %}{% if k.exp %} · in uscita{% endif %}</span> <code class="small">{{ k.kid|truncatechars:20 }}</code></li>{% endfor %}</ul>
+        <div class="text-secondary">Flussi dei cambiamenti (ultimo progressivo)</div>
+        <ul class="list-unstyled mb-2">{% for nome, ultimo in flussi %}<li><code>{{ nome }}</code>: {{ ultimo }}</li>{% endfor %}</ul>
+        <div class="text-secondary">Impronte SPKI del certificato</div>
+        {% if tls_spki %}<ul class="list-unstyled mb-0">{% for s in tls_spki %}<li><code class="small">{{ s }}</code></li>{% endfor %}</ul>{% else %}<div>nessuna (certificato gestito dal proxy: indicarla in <code>API_TLS_SPKI</code> se serve la verifica per impronta)</div>{% endif %}
+      </div>
+      {% if perms.api.gestisci_controparti %}<div class="card-footer">
+        <form method="post" action="{% url 'api:ruota_chiavi' %}" data-conferma="Creare chiavi nuove? Le controparti le ricevono dalla JWKS; le precedenti restano valide 7 giorni.">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-refresh me-1"></i>Ruota le chiavi</button></form>
+      </div>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

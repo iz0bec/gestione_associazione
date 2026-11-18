@@ -334,7 +334,7 @@ una nuova che la sostituisce, non riscrivendo quella vecchia.
   come richiede Meta. Indirizzo dell'API modificabile, perché le integrazioni sono provate solo con server finti.
 
 
-## ADR-030 - API di interoperabilità (v1) *(proposta, da approvare)*
+## ADR-030 - API di interoperabilità (v1) *(approvata il 18/11/2026; F1 e F2 completate)*
 
 **Contesto.** Servono due cose con lo stesso strumento: l'allineamento fra installazioni di questo
 software (federazione 1:N sezioni, finora con file Excel) e l'interazione con «altri mondi» (siti
@@ -509,6 +509,66 @@ stessa rete interna (caso reale: lo stesso Proxmox) e parlarsi senza passare dal
   `sezioni`, notifiche → **F3** adesioni e domande in ingresso → **F4** cifratura, `soci`, `lotti`,
   client federazione (lettura e spinta), riconciliazione, cruscotto → **F5** kit per chi integra
   (guida in `docs/api/`, vettori di prova, dati finti per lo stato `in_prova`).
+
+**Dettagli fissati con la F1.**
+
+- Il `kid` di ogni chiave, nostra e delle controparti, è la sua impronta **RFC 7638**: si rifiutano
+  JWKS con `kid` scelti a mano. Così la chiave si trova senza ambiguità e non si può «prestare» un
+  `kid` altrui.
+- **Impronta dell'abbinamento**: SHA-256 delle impronte RFC 7638 di tutte le chiavi in uso delle due
+  parti, ordinate e unite da `\n`, mostrata come 8 gruppi di 4 cifre esadecimali. È identica sulle
+  due installazioni e l'abbinamento si interrompe se le due parti non la calcolano uguale.
+- Il codice d'invito si conserva solo come impronta SHA-256 e si mostra una volta.
+- Il nonce si registra **dopo** la verifica della firma, perché chi non ha la chiave non deve poter
+  «bruciare» nonce altrui. Si conserva 10 minuti.
+- Ogni risposta è firmata, anche quelle senza autenticazione (`/.well-known`) e gli errori.
+- Con la verifica **impronta**, un certificato rinnovato con chiave nuova (`step ca renew`, certbot)
+  cambia l'impronta. Fino all'aggiornamento automatico delle impronte, previsto in F2, per i
+  certificati che si rinnovano da soli è da preferire **CA interna**. `/.well-known` è firmato e
+  pubblica già le impronte correnti (`tls_spki`).
+
+**Dettagli fissati con la F2.**
+
+- L'outbox sta nel `save()` dei modelli esposti (`apps.api.risorse.RisorsaApi`): salvataggio,
+  versione e cambiamento sono nella stessa transazione da qualunque punto di scrittura. Restano
+  fuori solo gli `update()` di massa, che non si usano su questi modelli. La versione si aumenta
+  con un `UPDATE … + 1` atomico e non viene mai scritta dal `save()` ordinario, così una copia in
+  memoria non aggiornata non la riporta indietro.
+- Le adesioni fanno avanzare la versione dell'evento, perché cambiano `posti_liberi`.
+- Il feed porta tutte le voci del flusso. Le risorse non visibili alla controparte, ad esempio gli
+  eventi non pubblici per le integrazioni, rispondono 404 e il riepilogo conta solo quelle
+  visibili.
+- Rotazione delle chiavi dell'istanza: firme multiple sulle risposte (`ga` per la chiave in uso,
+  `ga1`… per quelle in uscita). Il client accetta una JWKS nuova solo se è firmata da una chiave
+  già nota e la rilegge da solo quando incontra un `keyid` sconosciuto. Le integrazioni usano
+  `PUT /chiavi`.
+- Impronte TLS: `aggiorna_collegamenti` le rilegge ogni notte dalla `/.well-known` firmata.
+- Notifiche come outbox: righe `NotificaApi` create nella stessa transazione del cambiamento e
+  consegnate dal pianificatore.
+
+**Perimetro deciso il 18/11/2026** (sostituisce l'elenco delle fasi del §10).
+
+| Fra | Direzione | Cosa |
+|---|---|---|
+| Esterno (sito, app) | dal gestionale | eventi pubblici e sezioni (F2), **documenti pubblici**, **organigramma pubblico**, **verifica di una tessera** (valida sì/no, anno, sezione) |
+| Esterno | verso il gestionale | **adesioni** agli eventi (e annullamento), **domande di iscrizione** (mai accolte in automatico), **messaggi del modulo contatti** (tra la posta da protocollare) |
+| Federazione ↔ sezione | sezione → federazione | soci e tessere, cessazioni, anonimizzazioni; **cariche sociali**; **numeri del tesseramento** (conteggi senza dati personali) |
+| Federazione ↔ sezione | federazione → sezione | lotti e carte; **eventi provinciali** a cui le sezioni iscrivono i propri soci (adesioni come installazione) |
+| Sezione ↔ sezione | in entrambe le direzioni | **trasferimento di un socio** con consenso (consegna della scheda, accolta dalla sezione di arrivo), **eventi condivisi**, **verifica di una tessera**; mai elenchi dei soci altrui |
+
+**Principio (18/11/2026): l'interoperabilità è sempre facoltativa.** Ogni processo che coinvolge più
+installazioni deve funzionare per intero anche senza API: documenti stampabili e spedibili dal
+protocollo (email, PEC), file importabili con anteprima, registrazioni a mano. L'API automatizza
+lo scambio degli stessi documenti, non introduce passaggi propri. Il primo processo analizzato
+così è il ciclo delle tessere ([analisi](../analisi/ciclo-tessere.md)): si realizza prima come
+funzione del gestionale, poi lo scambio via API in F4.
+
+Esclusi per ora: documenti protocollati fra installazioni, iscrizione alle liste da sistemi esterni,
+pagamenti online.
+
+Fasi: **F3** cifratura JWE, `Idempotency-Key`, limiti di frequenza, tutto il perimetro «esterno»
+(primo collaudo in produzione fra 192.168.0.34 e la sezione di Avigliano) → **F4** federazione ↔
+sezione → **F5** sezione ↔ sezione e kit per chi integra.
 
 **Conseguenze.** Lo scambio Excel resta come riserva. Le integrazioni con WordPress e simili non si
 sviluppano qui. Ogni modello esposto riceve `uuid` e `versione`. Nuovi permessi in `ruoli.py` e pagine

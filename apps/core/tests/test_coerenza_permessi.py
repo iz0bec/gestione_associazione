@@ -23,6 +23,9 @@ PUBBLICHE = {
     "iscrizione", "iscrizione_inviata", "feed_pubblico", "documenti_pubblici", "documento_pubblico",
     "presentazione", "verifica_tessera", "verifica_tessera_codice", "evento_pubblico",
     "evento_pubblico_inviato",
+    # API di interoperabilità: autenticate dalla firma delle controparti, non dagli utenti
+    "api_istanza", "api_jwks", "api_v1:abbinamenti", "api_v1:prova", "api_v1:chiavi",
+    "api_v1:cambiamenti", "api_v1:riepilogo", "api_v1:eventi", "api_v1:evento", "api_v1:sezioni",
     # area personale dei soci: protetta dalla sessione del socio, non dagli utenti (nomi completi)
     "area:area", "area:accesso", "area:inviato", "area:entra", "area:ricevuta", "area:aderisci",
     "area:rinuncia", "area:richiesta", "area:telegram", "area:esci",

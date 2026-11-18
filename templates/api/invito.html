@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Codice d'invito appena creato (mostrato una sola volta)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Invito per {{ cliente }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'api:elenco' %}">Collegamenti API</a></div>{% endblock %}
+{% block titolo_pagina %}Invito per {{ cliente }}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="alert alert-warning"><i class="ti ti-eye-off me-1"></i>Il codice si vede <strong>solo ora</strong>: copiatelo prima di lasciare la pagina. Vale {{ validita_ore }} ore e una sola volta.</div>
+        <div class="mb-3"><label class="form-label" for="codice-invito">Codice d'invito</label><input id="codice-invito" class="form-control font-monospace" type="text" readonly data-copia value="{{ codice }}"></div>
+        <div class="mb-3"><label class="form-label" for="indirizzo-istanza">Indirizzo di questa installazione</label><input id="indirizzo-istanza" class="form-control font-monospace" type="text" readonly data-copia value="{{ indirizzo }}"></div>
+        <p class="small mb-0">Comunicate codice e indirizzo all'amministratore della controparte per un canale riservato. {% if cliente.tipo == 'installazione' %}Nella sua installazione userà <em>Sistema → Collegamenti API → Usa un invito ricevuto</em>.{% else %}L'integrazione li usa con la chiamata <code>POST /api/v1/abbinamenti</code> descritta nel contratto.{% endif %}</p>
+      </div>
+      <div class="card-footer"><a class="btn btn-primary" href="{% url 'api:controparte' cliente.pk %}">Ho copiato il codice</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

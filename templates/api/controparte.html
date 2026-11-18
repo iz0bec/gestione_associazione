@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di una controparte dell'API: stato, impronta, azioni e ultime chiamate
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ cliente }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'api:elenco' %}">Collegamenti API</a></div>{% endblock %}
+{% block titolo_pagina %}{{ cliente }}{% endblock %}
+{% block azioni %}{% if perms.api.gestisci_controparti and cliente.stato != 'revocata' %}<a class="btn" href="{% url 'api:modifica' cliente.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}{% endblock %}
+{% block contenuto %}
+{% with c=cliente %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Dati</h3><div class="card-actions"><span class="badge {% if c.stato == 'attiva' %}bg-green-lt{% elif c.stato == 'in_prova' %}bg-yellow-lt{% elif c.stato == 'sospesa' %}bg-orange-lt{% else %}bg-secondary-lt{% endif %}">{{ c.get_stato_display }}</span></div></div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5">Tipo</dt><dd class="col-7">{{ c.get_tipo_display }}</dd>
+          <dt class="col-5">Abbinamento</dt><dd class="col-7">{{ c.get_origine_display }}{% if c.abbinata_il %}, il {{ c.abbinata_il|date:"d/m/Y H:i" }}{% else %} · <span class="text-warning">non ancora completato</span>{% endif %}</dd>
+          {% if c.nome_dichiarato %}<dt class="col-5">Nome dichiarato</dt><dd class="col-7">{{ c.nome_dichiarato }}</dd>{% endif %}
+          {% if c.istanza %}<dt class="col-5">Identità (UUID)</dt><dd class="col-7"><code>{{ c.istanza }}</code></dd>{% endif %}
+          <dt class="col-5">Ambiti concessi</dt><dd class="col-7">{% for codice, nome in ambiti %}<div>{{ nome }} <code class="small text-secondary">{{ codice }}</code></div>{% empty %}nessuno{% endfor %}</dd>
+          <dt class="col-5">Indirizzo interno</dt><dd class="col-7">{% if c.indirizzo_interno %}<code>{{ c.indirizzo_interno }}</code> · verifica {{ c.get_verifica_tls_display|lower }}{% if c.http_in_chiaro %} · <span class="text-warning">http in chiaro consentito</span>{% endif %}{% else %}—{% endif %}</dd>
+          <dt class="col-5">Indirizzo pubblico</dt><dd class="col-7">{% if c.indirizzo_pubblico %}<code>{{ c.indirizzo_pubblico }}</code>{% else %}—{% endif %}</dd>
+          <dt class="col-5">IP ammessi</dt><dd class="col-7">{{ c.ip_ammessi|linebreaksbr|default:"nessun limite" }}</dd>
+          <dt class="col-5">Scadenza</dt><dd class="col-7">{{ c.scade_il|date:"d/m/Y"|default:"nessuna" }}</dd>
+          {% if c.attivata_il %}<dt class="col-5">Attivata</dt><dd class="col-7">{{ c.attivata_il|date:"d/m/Y H:i" }}{% if c.attivata_da %} da {{ c.attivata_da }}{% endif %}</dd>{% endif %}
+          {% if c.note %}<dt class="col-5">Note</dt><dd class="col-7">{{ c.note|linebreaksbr }}</dd>{% endif %}
+        </dl>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Ultime chiamate ricevute</h3></div>
+      {% if chiamate %}
+      <div class="table-responsive"><table class="table table-sm card-table">
+        <thead><tr><th>Quando</th><th>Richiesta</th><th>Esito</th><th>IP</th></tr></thead>
+        <tbody>{% for x in chiamate %}<tr class="small"><td>{{ x.momento|date:"d/m H:i:s" }}</td><td><code>{{ x.metodo }} {{ x.percorso }}</code></td><td>{{ x.stato }}{% if x.codice %} <span class="text-danger">{{ x.codice }}</span>{% endif %}</td><td>{{ x.indirizzo_ip|default:"" }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="card-body small text-secondary">Nessuna chiamata.</div>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if c.notifiche_flussi %}
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-bell me-1"></i>Notifiche</h3></div>
+      <div class="card-body small">
+        <div>Flussi: {{ c.notifiche_flussi|join:", " }} → <code>{{ c.indirizzo_notifiche|default:"nessun indirizzo" }}</code></div>
+        <div>In coda: {{ notifiche_in_coda }}</div>
+        {% if notifiche_fallite %}<div class="mt-2 text-danger"><strong>Non consegnate</strong> (dopo i tentativi fino a 24 ore):</div>
+        <ul class="mb-2">{% for n in notifiche_fallite %}<li><code>{{ n.cambiamento.flusso }}:{{ n.cambiamento.progressivo }}</code> {{ n.ultimo_errore|truncatechars:80 }}</li>{% endfor %}</ul>
+        {% if perms.api.gestisci_controparti %}<form method="post" action="{% url 'api:azione' c.pk 'riprova_notifiche' %}">{% csrf_token %}<button class="btn btn-sm" type="submit"><i class="ti ti-reload me-1"></i>Riprova</button></form>{% endif %}{% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% if c.impronta %}
+    <div class="card{% if c.stato == 'in_prova' %} border-warning{% endif %}">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-fingerprint me-1"></i>Impronta dell'abbinamento</h3></div>
+      <div class="card-body">
+        <div class="fs-3 font-monospace text-center mb-2">{{ c.impronta }}</div>
+        <p class="small text-secondary mb-0">È la stessa sulle due installazioni. Confrontatela con l'amministratore della controparte per una <strong>seconda via</strong> (telefono, di persona, atto protocollato): se coincide nessuno si è messo in mezzo.</p>
+      </div>
+      {% if perms.api.gestisci_controparti and c.stato == 'in_prova' %}
+      <form method="post" action="{% url 'api:azione' c.pk 'attiva' %}" class="card-footer">{% csrf_token %}
+        <label class="form-check mb-2"><input class="form-check-input" type="checkbox" name="impronta_confermata" value="1" required><span class="form-check-label">Ho confrontato l'impronta con la controparte e coincide</span></label>
+        <button class="btn btn-success w-100" type="submit"><i class="ti ti-check me-1"></i>Attiva</button>
+      </form>
+      {% endif %}
+    </div>
+    {% elif invito_aperto %}
+    <div class="card"><div class="card-body small">Invito creato il {{ invito_aperto.creato_il|date:"d/m/Y H:i" }}, {% if invito_aperto.scade_il > adesso %}valido fino al {{ invito_aperto.scade_il|date:"d/m/Y H:i" }}{% else %}<span class="text-warning">scaduto</span>{% endif %}. In attesa che la controparte lo usi.</div></div>
+    {% endif %}
+    {% if perms.api.gestisci_controparti and c.stato != 'revocata' %}
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Azioni</h3></div>
+      <div class="card-body d-flex flex-wrap gap-2">
+        {% if c.abbinata and c.indirizzo_interno or c.abbinata and c.indirizzo_pubblico %}<form method="post" action="{% url 'api:azione' c.pk 'prova' %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-plug-connected me-1"></i>Prova il collegamento</button></form>
+        {% if c.tipo == 'installazione' %}<form method="post" action="{% url 'api:azione' c.pk 'aggiorna' %}">{% csrf_token %}<button class="btn" type="submit" title="Rilegge chiavi e impronte TLS dalla sua /.well-known firmata"><i class="ti ti-refresh me-1"></i>Aggiorna chiavi e impronte</button></form>{% endif %}{% endif %}
+        {% if not c.abbinata %}<form method="post" action="{% url 'api:azione' c.pk 'invito' %}" data-conferma="Creare un nuovo codice? Quello precedente smette di valere.">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-send me-1"></i>Nuovo codice d'invito</button></form>{% endif %}
+        {% if c.stato == 'attiva' %}<form method="post" action="{% url 'api:azione' c.pk 'sospendi' %}" data-conferma="Sospendere la controparte? Le sue chiamate saranno rifiutate finché non la riattivate.">{% csrf_token %}<button class="btn btn-warning" type="submit"><i class="ti ti-player-pause me-1"></i>Sospendi</button></form>{% endif %}
+        {% if c.stato == 'sospesa' %}<form method="post" action="{% url 'api:azione' c.pk 'riattiva' %}">{% csrf_token %}<button class="btn btn-success" type="submit"><i class="ti ti-player-play me-1"></i>Riattiva</button></form>{% endif %}
+        <form method="post" action="{% url 'api:azione' c.pk 'revoca' %}" data-conferma="Revocare definitivamente la controparte? Per ricollegarsi servirà un nuovo abbinamento.">{% csrf_token %}<button class="btn btn-outline-danger" type="submit"><i class="ti ti-ban me-1"></i>Revoca</button></form>
+      </div>
+      {% if c.ultima_prova_il %}<div class="card-footer small"><strong>Ultima prova</strong> ({{ c.ultima_prova_il|date:"d/m/Y H:i" }}): {{ c.ultimo_esito_prova }}</div>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

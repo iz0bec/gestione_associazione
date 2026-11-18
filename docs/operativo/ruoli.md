@@ -153,6 +153,13 @@ in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 | Amministratore di sistema, Presidente, Segretario, Tesoriere | sì | sì |
 | Addetto protocollo, Consigliere, Revisore | sì | - |
 
+### Collegamenti API
+
+| Ruolo | Consulta controparti | Inviti, abbinamento, attivazione, sospensione, revoca, rotazione delle chiavi |
+|---|---|---|
+| Amministratore di sistema | sì | sì |
+| Tutti gli altri | - | - |
+
 ### Chat interna
 
 La **Chat** è aperta a tutti gli utenti con almeno un ruolo (non ai soci dell'area personale). Ognuno

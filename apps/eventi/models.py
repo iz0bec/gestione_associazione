@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.anagrafica.models import Soggetto
+from apps.api.risorse import RisorsaApi
 from apps.core.models import ModelloBase
 
 
@@ -23,7 +24,10 @@ def _token():
     return secrets.token_urlsafe(18)
 
 
-class Evento(ModelloBase):
+class Evento(RisorsaApi, ModelloBase):
+    FLUSSO = "eventi"
+    RISORSA = "evento"
+
     class Tipo(models.TextChoices):
         CERIMONIA = "cerimonia", "Cerimonia o commemorazione"
         INCONTRO = "incontro", "Incontro o conferenza"
@@ -68,6 +72,14 @@ class Evento(ModelloBase):
 
     def get_absolute_url(self):
         return reverse("eventi:evento", args=[self.pk])
+
+    def azione_api(self, nuovo):
+        if not nuovo and self.annullato:
+            precedente = type(self).objects.filter(pk=self.pk)
+            prima = precedente.values_list("annullato", flat=True).first()
+            if prima is False:
+                return "annullato"
+        return super().azione_api(nuovo)
 
     def adesioni_valide(self):
         return self.adesioni.filter(annullata=False)

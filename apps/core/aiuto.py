@@ -48,6 +48,7 @@ PAGINE_PER_SEZIONE = {
     "eventi": "eventi",
     "chat": "chat",
     "utenti": "utenti",
+    "api": "collegamenti-api",
     "core:servizi_posta": "sistema#servizi-di-posta",
     "core:servizio_nuovo": "sistema#servizi-di-invio-smtp",
     "protocollo:avvisi": "protocollo#posta-da-protocollare",

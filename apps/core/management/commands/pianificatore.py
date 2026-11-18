@@ -70,6 +70,8 @@ class Command(BaseCommand):
             adesso = timezone.localtime()
             if opzioni["una_volta"] or time.monotonic() - ultima_coda >= 60:
                 self._esegui("invia_coda")
+                self._esegui("pulizia_api")
+                self._esegui("invia_notifiche_api")
                 ultima_coda = time.monotonic()
             intervallo = opzioni["minuti_posta"] * 60
             if opzioni["una_volta"] or time.monotonic() - ultima_posta >= intervallo:
@@ -80,6 +82,7 @@ class Command(BaseCommand):
             ):
                 self._esegui("registro_giornaliero")
                 self._esegui("conservazione_dati")  # una volta al giorno, insieme al registro
+                self._esegui("aggiorna_collegamenti")
                 ultimo_registro = adesso.date()
             if (
                 settings.BACKUP_AUTOMATICO

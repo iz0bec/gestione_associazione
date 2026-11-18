@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Nuovo invito di abbinamento per una controparte dell'API
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Nuovo invito{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'api:elenco' %}">Collegamenti API</a></div>{% endblock %}
+{% block titolo_pagina %}Nuovo invito{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'api:elenco' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-send me-1"></i>Crea l'invito</button></div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body small">
+      <p>L'invito è un codice <strong>monouso</strong> valido 24 ore: lo comunicate all'amministratore della controparte, che lo usa per presentare le proprie chiavi.</p>
+      <p>Dopo l'abbinamento la controparte resta <strong>in prova</strong> (può solo verificare il collegamento) finché non confrontate l'<strong>impronta</strong> per telefono o con un atto e la attivate.</p>
+      <p class="mb-0">Concedete solo gli ambiti necessari: si possono cambiare in ogni momento.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.area",
     "apps.chat",
     "apps.migrazione",
+    "apps.api",
 ]
 
 MIDDLEWARE = [
@@ -210,6 +211,12 @@ CHIAVE_CIFRATURA = env("CHIAVE_CIFRATURA", default="")
 # Indirizzo pubblico dell'applicazione (es. https://gestione.miassociazione.it),
 # usato nei QR stampati
 URL_PUBBLICO = env("URL_PUBBLICO", default="").rstrip("/")
+
+# API di interoperabilità (ADR-030): impronte SPKI dei certificati con cui l'istanza si presenta
+# alle controparti in rete interna. Quella del certificato servito da Gunicorn si calcola dal file;
+# API_TLS_SPKI aggiunge altre impronte (es. certificato del proxy locale), separate da virgola.
+API_TLS_CERTIFICATO = env("API_TLS_CERTIFICATO", default="/etc/gestione-associazione/tls/cert.pem")
+API_TLS_SPKI = env.list("API_TLS_SPKI", default=[])
 
 # Comunicazioni: messaggi spediti a ogni giro della coda (il pianificatore gira ogni minuto)
 COMUNICAZIONI_LOTTO = env.int("COMUNICAZIONI_LOTTO", default=30)

@@ -206,6 +206,8 @@ RUOLI = {
         "core.gestisci_servizi_posta",
         "core.ripristina_backup",
         "core.view_eventoaudit",
+        "api.view_clienteapi",
+        "api.gestisci_controparti",
         "accounts.view_utente",
         "accounts.add_utente",
         "accounts.change_utente",

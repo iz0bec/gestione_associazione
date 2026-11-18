@@ -77,6 +77,7 @@ def aderisci(evento, dati, *, origine, utente=None, ip=None, soggetto=None):
     )  # fmt: skip
     registra(Azione.CREAZIONE, adesione, utente=utente, ip=ip,
              descrizione=f"Adesione a «{evento}»: {adesione}", origine=origine)  # fmt: skip
+    evento.tocca()  # cambiano i posti liberi: nuova versione dell'evento nel feed
     return adesione
 
 
@@ -86,6 +87,7 @@ def annulla_adesione(adesione, utente=None):
         raise OperazioneNonValida("L'adesione è già annullata.")
     adesione.annullata = True
     adesione.save(update_fields=["annullata"])
+    adesione.evento.tocca()
     registra(Azione.ANNULLAMENTO, adesione, utente=utente,
              descrizione=f"Adesione a «{adesione.evento}» annullata: {adesione}")  # fmt: skip
     return adesione

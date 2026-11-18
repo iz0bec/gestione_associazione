@@ -19,6 +19,7 @@ from django.urls import reverse
 
 from apps.anagrafica.models import Soggetto
 from apps.anagrafica.validatori import valida_codice_fiscale
+from apps.api.risorse import RisorsaApi
 from apps.core.models import ModelloBase, validatore_cap, validatore_provincia
 
 # chiavi delle sequenze di numerazione (apps.core.numerazione)
@@ -26,12 +27,15 @@ SEQ_LIBRO_SOCI = "libro_soci"  # progressivo unico, mai riavviato
 SEQ_RICEVUTA = "ricevuta_quota"  # annuale, per anno di incasso
 
 
-class Sezione(models.Model):
+class Sezione(RisorsaApi):
     """Sezione territoriale a cui appartengono i soci e le tessere fisiche.
 
     Un'associazione singola ha una sola sezione (creata in automatico); una federazione ne ha
     molte e può limitare ogni utente alle proprie (Utente.sezioni).
     """
+
+    FLUSSO = "sezioni"
+    RISORSA = "sezione"
 
     codice = models.CharField(
         max_length=20, unique=True, help_text="Codice della sezione nel registro nazionale."
@@ -42,6 +46,7 @@ class Sezione(models.Model):
     email = models.EmailField(blank=True)
     attiva = models.BooleanField(default=True)
     ordine = models.PositiveSmallIntegerField(default=0)
+    modificato_il = models.DateTimeField("modificato il", auto_now=True)
 
     class Meta:
         verbose_name = "sezione"

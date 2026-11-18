@@ -10,13 +10,15 @@
 openapi: 3.1.0
 info:
   title: Gestione Associazione - API di interoperabilità
-  version: 1.0.0-bozza
+  version: 1.0.0-f2
   license:
     name: CC0 1.0 Universal
     identifier: CC0-1.0
   summary: Contratto pubblico per installazioni pari e per adattatori esterni.
   description: |
-    **Bozza da approvare (ADR-030).** Il contratto è pubblico: gli adattatori verso altri sistemi
+    **Approvato (ADR-030).** Implementati: F1 `/.well-known/…`, `/abbinamenti`, `/prova`,
+    `/chiavi`; F2 `/cambiamenti`, `/riepiloghi/{flusso}`, `/eventi` (lettura), `/sezioni`. Le altre
+    risorse arrivano con le fasi successive. Il contratto è pubblico: gli adattatori verso altri sistemi
     (WordPress, app, gestionali) non fanno parte del progetto e si scrivono su questo documento.
 
     ## Sicurezza (obbligatoria per ogni chiamata tranne `/.well-known/…`)
@@ -33,11 +35,24 @@ info:
       `alg=ECDH-ES+A256KW`, `enc=A256GCM`, chiave X25519 del destinatario, `cty=application/json`).
       Gli schemi qui sotto descrivono il JSON **dopo** la decifratura.
     - Tolleranza dell'orologio ±300 s; nonce non riutilizzabili.
+    - **Rotazione delle chiavi**: ogni risposta è firmata con la chiave in uso (etichetta `ga`) e con
+      quelle in uscita ancora valide (`ga1`, `ga2`, …). Chi conosce solo una chiave precedente
+      verifica con la sua etichetta e accetta la nuova JWKS. Una controparte presenta le proprie
+      chiavi nuove con `PUT /chiavi`, firmata con una chiave già nota.
 
     ## Affidabilità
 
     - Ogni cambiamento è un CloudEvent in un **flusso** con progressivo senza buchi e catena di
       impronte SHA-256. Chi legge salva il cursore insieme ai dati applicati.
+    - **Prima sincronizzazione**: si legge `ultimo` (o `progressivo` del riepilogo), poi l'elenco
+      completo della risorsa, poi il feed da quel progressivo. Le voci viste due volte si
+      riconoscono dalla `versione`. Una risorsa che risponde 404 non è (più) visibile alla
+      controparte e va tolta dalla propria copia.
+    - **Notifiche** (facoltative): a ogni cambiamento dei flussi sottoscritti si invia il CloudEvent
+      con `POST` all'indirizzo delle notifiche della controparte (`application/cloudevents+json`),
+      firmato come le richieste, con `Destinatario-Istanza` = UUID della controparte. Rispondere
+      `2xx`. Sono solo un avviso, ripetuto con attesa crescente fino a 24 ore: la lettura periodica
+      del feed resta la fonte.
     - Le scritture richiedono `Idempotency-Key`.
     - Errori in formato Problem Details (RFC 9457).
   contact:
@@ -148,6 +163,8 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/EsitoAbbinamento" }
         "400": { $ref: "#/components/responses/Problema" }
+        "401": { $ref: "#/components/responses/Problema" }
+        "409": { $ref: "#/components/responses/Problema" }
         "410":
           description: Invito scaduto o già usato.
           content:
@@ -178,6 +195,39 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Diagnosi" }
         "401": { $ref: "#/components/responses/Problema" }
+        "403": { $ref: "#/components/responses/Problema" }
+        "421": { $ref: "#/components/responses/Problema" }
+
+  /chiavi:
+    put:
+      tags: [istanza]
+      operationId: aggiornaChiavi
+      summary: Presenta chiavi nuove (rotazione)
+      description: |
+        Firmata con una chiave già nota. Sostituisce la JWKS della controparte (stesse regole
+        dell'abbinamento: `kid` = impronta RFC 7638). Disponibile anche alle controparti in prova.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jwks]
+              properties:
+                jwks: { $ref: "#/components/schemas/Jwks" }
+      responses:
+        "200":
+          description: Chiavi registrate.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwks: { $ref: "#/components/schemas/Jwks" }
+        "400": { $ref: "#/components/responses/Problema" }
+        "401": { $ref: "#/components/responses/Problema" }
 
   /cambiamenti:
     get:
@@ -189,7 +239,10 @@ paths:
         - name: flusso
           in: query
           required: true
-          description: "`eventi`, `sezioni`, `soci:<codice sezione>`, `lotti:<codice sezione>`."
+          description: |
+            `eventi` (ambito `eventi:lettura`), `sezioni` (`sezioni:lettura`); con le fasi
+            successive `soci:<codice sezione>`, `lotti:<codice sezione>`. Un flusso sconosciuto
+            risponde 404.
           schema: { type: string, examples: ["soci:PZ001"] }
         - name: dopo
           in: query
@@ -223,7 +276,9 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: Numero di risorse e impronta delle coppie (uuid, versione) ordinate per uuid.
+          description: |
+            Numero di risorse visibili alla controparte e impronta: SHA-256 (hex) delle righe
+            `uuid:versione` ordinate, unite da "\n".
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Riepilogo" }
@@ -572,6 +627,8 @@ components:
             - cursore-scaduto
             - catena-interrotta
             - troppe-richieste
+            - invito-non-valido
+            - non-configurata
 
     Istanza:
       type: object
@@ -602,7 +659,7 @@ components:
               kty: { const: OKP }
               crv: { enum: [Ed25519, X25519] }
               x: { type: string, description: Chiave pubblica in base64url. }
-              kid: { type: string }
+              kid: { type: string, description: Impronta RFC 7638 della chiave (obbligatorio). }
               use: { enum: [sig, enc] }
               exp: { type: integer, description: Fine validità (Unix), per le chiavi in rotazione. }
 
@@ -633,7 +690,10 @@ components:
         stato: { const: in_prova }
         impronta:
           type: string
-          description: Impronta delle chiavi, da confermare per una seconda via.
+          description: |
+            Impronta dell'abbinamento, uguale per le due parti: SHA-256 delle impronte RFC 7638 di
+            tutte le chiavi in uso di entrambe, ordinate e unite da "\n"; prime 32 cifre
+            esadecimali maiuscole in gruppi di 4. Da confermare per una seconda via.
           examples: ["4F2A 91C3 0B7E 55D1 A2C8 6E40 9F13 7B2D"]
         jwks: { $ref: "#/components/schemas/Jwks" }
 
@@ -647,6 +707,7 @@ components:
         cifratura: { enum: [valida, non-valida, assente] }
         risposta_cifrata: { $ref: "#/components/schemas/Jwe" }
         indirizzo_ip_visto: { type: string }
+        istanza: { type: string, format: uuid, description: UUID dell'istanza che risponde. }
 
     Cambiamento:
       description: CloudEvent 1.0 (formato JSON). Non contiene dati personali.
@@ -662,12 +723,15 @@ components:
             - it.gestioneassociazione.socio.modificato.v1
             - it.gestioneassociazione.evento.annullato.v1
             - it.gestioneassociazione.socio.anonimizzato.v1
+            - it.gestioneassociazione.sezione.creato.v1
         subject: { type: string, format: uuid, description: UUID della risorsa. }
-        time: { type: string, format: date-time }
+        time: { type: string, format: date-time, description: UTC, al secondo (`…Z`). }
         datacontenttype: { const: application/json }
         ga_flusso: { type: string }
         ga_progressivo: { type: integer, minimum: 1 }
-        ga_precedente: { type: string, description: Impronta della voce precedente (hex). }
+        ga_precedente:
+          type: string
+          description: Impronta della voce precedente (hex); 64 zeri per la prima voce del flusso.
         ga_impronta:
           type: string
           description: SHA-256(ga_precedente ‖ JSON canonico RFC 8785 dell'evento senza ga_impronta), hex.

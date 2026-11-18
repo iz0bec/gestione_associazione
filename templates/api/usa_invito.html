@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Abbinamento con un'altra installazione usando il suo invito
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Usa un invito ricevuto{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'api:elenco' %}">Collegamenti API</a></div>{% endblock %}
+{% block titolo_pagina %}Usa un invito ricevuto{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'api:elenco' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-link me-1"></i>Abbina</button></div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body small">
+      <p><strong>Indirizzo interno</strong>: se l'altra installazione è nella vostra rete (anche lo stesso Proxmox) indicatelo e segnate <em>rete interna</em>: si usa per primo, quello pubblico resta di riserva.</p>
+      <p><strong>Verifica del certificato</strong> (sempre attiva):</p>
+      <ul>
+        <li><em>CA del sistema</em>: certificati pubblici (Let's Encrypt).</li>
+        <li><em>CA interna</em>: incollate il certificato radice della vostra CA (es. step-ca).</li>
+        <li><em>Impronta</em>: anche autofirmato; l'impronta la stampa l'installatore dell'altra installazione.</li>
+      </ul>
+      <p class="mb-0"><strong>http in chiaro</strong> solo come eccezione, verso indirizzi privati: firma e controlli restano, ma il traffico è leggibile in rete.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

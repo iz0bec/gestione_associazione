@@ -179,12 +179,15 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   guida *HTTPS anche in rete interna* (step-ca, MyCert, OpenSSL).
 - ✅ **Certificati con rinnovo automatico** (1.0.37): `installa.sh --tls-step` (step-ca, token monouso) e
   `--tls-acme` (certbot); CA interna su Proxmox con `crea-ca.sh`.
-- **API di interoperabilità v1** (ADR-030, contratto in `docs/api/openapi.yaml`, *bozza*): un unico
+- **API di interoperabilità v1** (ADR-030, approvata; contratto in `docs/api/openapi.yaml`): un unico
   contratto pubblico per le installazioni pari (federazione ↔ sezioni) e per adattatori esterni non
   inclusi nel progetto (es. WordPress). Firma RFC 9421 di ogni messaggio, dati personali cifrati per il
   destinatario (JWE), feed dei cambiamenti con catena di impronte, idempotenza, modalità a spinta per
   chi è dietro NAT, rete interna (stesso Proxmox) senza passare dal proxy, in HTTPS anche con CA
   interna o certificato autofirmato verificato per impronta (HTTP in chiaro solo come eccezione esplicita).
-  Fasi: F1 identità e abbinamento → F2 feed ed eventi → F3 adesioni e domande in ingresso →
-  F4 soci, lotti e client federazione → F5 kit per chi integra.
+  Fasi: ✅ F1 identità e abbinamento → ✅ F2 feed, eventi, sezioni, notifiche, rotazione e
+  aggiornamento delle impronte TLS → F3 cifratura e sistemi esterni (adesioni, domande, contatti;
+  documenti pubblici, organigramma, verifica tessera) → F4 federazione ↔ sezione (soci e tessere,
+  lotti, cariche, numeri del tesseramento, eventi provinciali) → F5 sezione ↔ sezione
+  (trasferimento del socio, eventi condivisi, verifica tessera) e kit per chi integra.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.
