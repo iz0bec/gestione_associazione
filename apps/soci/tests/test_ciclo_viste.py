@@ -145,3 +145,10 @@ def test_importa_consegna_con_anteprima(admin, sezione):
         5,
     )
     assert lotto.riferimento == f"Consegna n. {ANNO}/7 del {ANNO}-01-15"
+
+
+def test_voce_nel_menu(client_ruolo):
+    tesoriere = client_ruolo("Tesoriere", username="tesoriere").get("/").content.decode()
+    assert "Campagna delle tessere" in tesoriere
+    consigliere = client_ruolo("Consigliere", username="consigliere").get("/").content.decode()
+    assert "Campagna delle tessere" not in consigliere

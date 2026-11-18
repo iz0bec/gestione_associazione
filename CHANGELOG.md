@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.40] - 2026-11-18
+
+### Corretto
+- La **campagna delle tessere** non aveva una voce nel menu laterale: era raggiungibile solo dai
+  pulsanti in cima a *Tesseramento → Tessere fisiche*. Ora c'è la voce **Campagna delle tessere**
+  sotto *Tesseramento*, per chi ha il permesso; *Importa consegna* è anche nella pagina della
+  campagna.
+
 ## [1.0.39] - 2026-11-18
 
 Ciclo delle tessere fra federazione e sezioni, dalla richiesta alla distribuzione.

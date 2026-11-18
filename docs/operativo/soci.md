@@ -91,7 +91,8 @@ dell'anagrafica). Dai pulsanti in alto:
 ## Campagna delle tessere con le sezioni
 
 Per chi distribuisce le tessere alle sezioni, come la federazione (o l'ente sovraordinato di
-un'associazione con più sezioni): *Soci → Tessere fisiche → **Campagna con le sezioni***. Tutto il
+un'associazione con più sezioni): voce **Campagna delle tessere** del menu (anche da *Tesseramento →
+Tessere fisiche → Campagna con le sezioni*). Tutto il
 ciclo funziona **anche senza collegamenti fra installazioni**: i documenti si stampano o si
 spediscono per email e PEC dal protocollo.
 

@@ -10,6 +10,7 @@
 {% block azioni %}
 <div class="btn-list">
   <form method="get" action="{% url 'soci:campagna_corrente' %}"><select class="form-select" name="anno" aria-label="Anno" data-invio-automatico>{% for a in anni %}<option value="{{ a }}"{% if a == anno %} selected{% endif %}>{{ a }}</option>{% endfor %}</select><noscript><button class="btn" type="submit">Vai</button></noscript></form>
+  <a class="btn" href="{% url 'soci:importa_consegna' %}" title="Per la sezione: file dei numeri ricevuto con il documento di consegna"><i class="ti ti-file-import me-1"></i>Importa consegna</a>
   <div class="dropdown">
     <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-mail me-1"></i>Avvisi alle sezioni</button>
     <div class="dropdown-menu dropdown-menu-end">
