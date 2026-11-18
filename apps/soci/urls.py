@@ -9,7 +9,7 @@
 
 from django.urls import path
 
-from . import views
+from . import views, viste_ciclo
 
 app_name = "soci"
 
@@ -64,6 +64,58 @@ urlpatterns = [
     ),
     path("domande/<int:pk>/respingi/", views.RespingiView.as_view(), name="respingi"),
     path("tessere/listino/", views.ListinoView.as_view(), name="listino"),
+    # ciclo delle tessere con le sezioni
+    path("tessere/campagna/", viste_ciclo.CampagnaView.as_view(), name="campagna_corrente"),
+    path("tessere/campagna/<int:anno>/", viste_ciclo.CampagnaView.as_view(), name="campagna"),
+    path(
+        "tessere/campagna/<int:anno>/richiesta/",
+        viste_ciclo.RichiestaNuovaView.as_view(),
+        name="richiesta_tessere",
+    ),
+    path(
+        "tessere/campagna/<int:anno>/blocco/",
+        viste_ciclo.BloccoNuovoView.as_view(),
+        name="blocco_tessere",
+    ),
+    path(
+        "tessere/campagna/<int:anno>/consegna/",
+        viste_ciclo.ConsegnaNuovaView.as_view(),
+        name="consegna_tessere",
+    ),
+    path(
+        "tessere/campagna/<int:anno>/ordine/",
+        viste_ciclo.OrdineNuovoView.as_view(),
+        name="ordine_tessere",
+    ),
+    path(
+        "tessere/campagna/<int:anno>/avvisi/<str:tipo>/",
+        viste_ciclo.AvvisiView.as_view(),
+        name="avvisi_tessere",
+    ),
+    path(
+        "tessere/consegne/<int:pk>/pdf/", viste_ciclo.ConsegnaPdfView.as_view(), name="consegna_pdf"
+    ),
+    path(
+        "tessere/consegne/<int:pk>/numeri.csv",
+        viste_ciclo.ConsegnaCsvView.as_view(),
+        name="consegna_csv",
+    ),
+    path(
+        "tessere/consegne/<int:pk>/presa-in-carico/",
+        viste_ciclo.PresaInCaricoView.as_view(),
+        name="consegna_presa",
+    ),
+    path("tessere/ordini/<int:pk>/pdf/", viste_ciclo.OrdinePdfView.as_view(), name="ordine_pdf"),
+    path(
+        "tessere/richieste/<int:pk>/pdf/",
+        viste_ciclo.RichiestaPdfView.as_view(),
+        name="richiesta_pdf",
+    ),
+    path(
+        "tessere/importa-consegna/",
+        viste_ciclo.ImportaConsegnaView.as_view(),
+        name="importa_consegna",
+    ),
     path("importa/", views.ImportaView.as_view(), name="importa"),
     path(
         "importa/<str:lavoro>/avanzamento/",

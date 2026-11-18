@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Nuovo ordine di tessere alla sede nazionale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:campagna' anno %}">Campagna delle tessere {{ anno }}</a></div>{% endblock %}
+{% block titolo_pagina %}{{ titolo }}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">
+        {% if da_ordinare %}<table class="table table-sm"><thead><tr><th>Sezione</th><th class="text-end">Tessere</th></tr></thead><tbody>{% for r in da_ordinare %}<tr><td>{{ r.nome }}</td><td class="text-end">{{ r.quantita }}</td></tr>{% endfor %}</tbody></table>
+        {% else %}<div class="alert alert-info">Nessuna richiesta da ordinare.</div>{% endif %}
+        {{ form }}
+        <p class="small text-secondary mb-0">L'ordine comprende le richieste non ancora ordinate: le integrazioni arrivate dopo un ordine finiscono nel successivo.</p>
+      </div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'soci:campagna' anno %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"{% if not da_ordinare %} disabled{% endif %}><i class="ti ti-shopping-cart me-1"></i>Crea l'ordine</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

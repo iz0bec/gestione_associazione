@@ -43,6 +43,7 @@ SOCI_SEGRETERIA = [
     "soci.add_tipologiasocio",
     "soci.change_tipologiasocio",
     "soci.gestisci_tessere_fisiche",
+    "soci.gestisci_ciclo_tessere",
 ]
 SOCI_TESORERIA = [
     *SOCI_LETTURA,
@@ -52,6 +53,7 @@ SOCI_TESORERIA = [
     "soci.gestisci_tessere_fisiche",
     "soci.add_listinotessere",
     "soci.change_listinotessere",
+    "soci.gestisci_ciclo_tessere",
 ]
 
 PROTOCOLLO_LETTURA = [

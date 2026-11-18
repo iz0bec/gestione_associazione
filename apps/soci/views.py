@@ -1118,6 +1118,10 @@ class ListinoView(PermessoMixin, FormView):
             costo_acquisto=form.cleaned_data["costo_acquisto"],
             quote=form.quote(),
             note=form.cleaned_data["note"],
+            quota_federale=form.cleaned_data["quota_federale"] or 0,
+            delibera=form.cleaned_data["delibera"],
+            scadenza_richieste=form.cleaned_data["scadenza_richieste"],
+            istruzioni_pagamento=form.cleaned_data["istruzioni_pagamento"],
         )
         messages.success(self.request, f"Listino {self.anno} salvato.")
         return redirect(f"{reverse('soci:tessere')}?anno={self.anno}")

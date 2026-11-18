@@ -51,6 +51,15 @@ class IncassoNuovoView(PermessoMixin, FormView):
         iniziali = super().get_initial()
         if s := self._soggetto():
             iniziali.update(nominativo=s.nome_completo, codice_fiscale=s.codice_fiscale or "")
+        if self.request.GET.get("tipo") == "tessere":  # dalla quadratura del ciclo delle tessere
+            from apps.soci.models import Sezione
+
+            sezione = Sezione.objects.filter(pk=self.request.GET.get("sezione") or 0).first()
+            anno = self.request.GET.get("anno", "")
+            iniziali.update(tipo="tessere", sezione=sezione,
+                            anno_tessere=int(anno) if anno.isdigit() else None,
+                            nominativo=f"Sezione {sezione.nome}" if sezione else "",
+                            causale=f"Tessere {anno}" if anno.isdigit() else "")  # fmt: skip
         return iniziali
 
     def get_context_data(self, **kwargs):

@@ -11,8 +11,8 @@
 
 # Ciclo delle tessere fra i livelli dell'associazione
 
-*Analisi del 18/11/2026, base della fase F4 dell'API (ADR-030). Da completare con i punti aperti
-in fondo.*
+*Analisi del 18/11/2026, base della fase F4 dell'API (ADR-030). **Realizzato come funzione del
+gestionale** (senza API): *Soci → Tessere fisiche → Campagna con le sezioni*.*
 
 ## Il processo reale
 

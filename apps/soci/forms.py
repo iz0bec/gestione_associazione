@@ -290,14 +290,41 @@ class ListinoForm(StileMixin, forms.Form):
         min_value=0,
         help_text="Quanto si paga alla sede centrale per ogni tessera fisica.",
     )
+    quota_federale = forms.DecimalField(
+        label="Quota federale per tessera (€)", max_digits=8, decimal_places=2, min_value=0,
+        initial=0, required=False,
+        help_text="Solo per chi distribuisce le tessere alle sezioni: si aggiunge al costo.",
+    )  # fmt: skip
+    delibera = forms.ModelChoiceField(
+        queryset=None, required=False, label="Delibera della quota",
+        help_text="Delibera del consiglio direttivo che ha fissato la quota (negli avvisi).",
+    )  # fmt: skip
+    scadenza_richieste = forms.DateField(
+        label="Richieste delle tessere entro", required=False, widget=CampoData
+    )
+    istruzioni_pagamento = forms.CharField(
+        label="Modalità di pagamento", required=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text="Per gli avvisi alle sezioni: IBAN, causale, termini.",
+    )  # fmt: skip
     note = forms.CharField(required=False, max_length=255)
 
     def __init__(self, *args, listino=None, **kwargs):
+        from apps.organi.models import Delibera
+
         super().__init__(*args, **kwargs)
+        self.fields["delibera"].queryset = (
+            Delibera.objects.filter(esito="approvata", numero__isnull=False)
+            .select_related("verbale__riunione__organo")
+            .order_by("-anno", "-numero")[:200]
+        )
         attuali = {q.tipologia_id: q.importo for q in listino.quote.all()} if listino else {}
         if listino:
             self.fields["costo_acquisto"].initial = listino.costo_acquisto
             self.fields["note"].initial = listino.note
+            for campo in ("quota_federale", "delibera", "scadenza_richieste",
+                          "istruzioni_pagamento"):  # fmt: skip
+                self.fields[campo].initial = getattr(listino, campo)
         self.tipologie = list(TipologiaSocio.objects.filter(attiva=True))
         for t in self.tipologie:
             self.fields[f"quota_{t.pk}"] = forms.DecimalField(
@@ -621,3 +648,122 @@ class DomandaPubblicaForm(DomandaForm):
                 "Troppe domande inviate di recente: riprovare più tardi.", code="limite"
             )
         return super().clean()
+
+
+# --- ciclo delle tessere con le sezioni -------------------------------------------------------
+
+
+class RichiestaTessereForm(StileMixin, forms.Form):
+    sezione = forms.ModelChoiceField(queryset=Sezione.objects.filter(attiva=True))
+    quantita = forms.IntegerField(label="Tessere richieste", min_value=1)
+    data = forms.DateField(widget=CampoData, initial=date.today)
+    note = forms.CharField(max_length=255, required=False)
+
+
+class BloccoTessereForm(StileMixin, forms.Form):
+    serie = forms.CharField(
+        max_length=10, required=False,
+        help_text="Lettere o prefisso stampati prima del numero, se presenti.",
+    )  # fmt: skip
+    numero_da = forms.IntegerField(label="Dal numero", min_value=0)
+    numero_a = forms.IntegerField(label="Al numero", min_value=0)
+    cifre = forms.IntegerField(
+        min_value=0, max_value=12, initial=0, required=False,
+        help_text="Cifre del numero stampato (zeri iniziali); 0 = come scritto.",
+    )  # fmt: skip
+    data_arrivo = forms.DateField(widget=CampoData, initial=date.today)
+    fornitore = forms.CharField(max_length=100, initial="Sede nazionale")
+    riferimento = forms.CharField(
+        max_length=200, required=False,
+        help_text="Es. documento di trasporto o protocollo di arrivo.",
+    )  # fmt: skip
+
+
+class ConsegnaTessereForm(StileMixin, forms.Form):
+    from .models import ConsegnaTessere
+
+    blocco = forms.ModelChoiceField(queryset=None, label="Dal blocco in magazzino")
+    sezione = forms.ModelChoiceField(queryset=Sezione.objects.filter(attiva=True))
+    numero_da = forms.IntegerField(label="Dal numero", min_value=0)
+    numero_a = forms.IntegerField(label="Al numero", min_value=0)
+    data = forms.DateField(widget=CampoData, initial=date.today)
+    modalita = forms.ChoiceField(label="Modalità di distribuzione",
+                                 choices=ConsegnaTessere.Modalita.choices)  # fmt: skip
+    note_distribuzione = forms.CharField(
+        label="Luogo, date e orari", required=False, widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Riportati nell'avviso di attribuzione.",
+    )  # fmt: skip
+    prezzo_unitario = forms.DecimalField(
+        label="Importo per tessera (€)", required=False, min_value=0, max_digits=8,
+        decimal_places=2, help_text="Vuoto: costo nazionale + quota federale del listino.",
+    )  # fmt: skip
+
+    def __init__(self, *args, anno, **kwargs):
+        from .models import BloccoTessere
+
+        super().__init__(*args, **kwargs)
+        self.fields["blocco"].queryset = BloccoTessere.objects.filter(anno=anno)
+
+
+class OrdineTessereForm(StileMixin, forms.Form):
+    data = forms.DateField(widget=CampoData, initial=date.today)
+    note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
+
+
+class AvvisiTessereForm(StileMixin, forms.Form):
+    sezioni = forms.ModelMultipleChoiceField(
+        queryset=Sezione.objects.filter(attiva=True), widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )  # fmt: skip
+    consegne = forms.ModelMultipleChoiceField(
+        queryset=None, widget=forms.CheckboxSelectMultiple, required=False,
+        label="Consegne da comunicare",
+    )  # fmt: skip
+    riferimento_avviso = forms.CharField(
+        label="Riferimento dell'avviso", required=False, max_length=200,
+        help_text="Es. «prot. n. 2026-00042 del 10/01/2026».",
+    )  # fmt: skip
+    nuova_scadenza = forms.DateField(label="Nuovo termine", required=False, widget=CampoData)
+    servizio = forms.ModelChoiceField(
+        queryset=None, required=False, label="Spedisci con",
+        empty_label="— server generale (email) —",
+        help_text="Con un servizio PEC parte per PEC a chi ha un indirizzo PEC.",
+    )  # fmt: skip
+    protocolla = forms.BooleanField(label="Protocolla in uscita", required=False, initial=True)
+
+    def __init__(self, *args, tipo, anno, **kwargs):
+        from apps.core.models import ServizioInvio
+
+        from .models import ConsegnaTessere
+
+        super().__init__(*args, **kwargs)
+        self.tipo = tipo
+        self.fields["servizio"].queryset = ServizioInvio.objects.filter(attivo=True)
+        self.fields["consegne"].queryset = ConsegnaTessere.objects.filter(anno=anno).select_related(
+            "sezione"
+        )
+        if tipo == "attribuzione":
+            del (
+                self.fields["sezioni"],
+                self.fields["riferimento_avviso"],
+                self.fields["nuova_scadenza"],
+            )
+        else:
+            del self.fields["consegne"]
+            if tipo != "sollecito":
+                del self.fields["riferimento_avviso"], self.fields["nuova_scadenza"]
+
+    def clean(self):
+        dati = super().clean()
+        if not (dati.get("sezioni") or dati.get("consegne")):
+            raise forms.ValidationError("Scegliere almeno un destinatario.")
+        return dati
+
+
+class ImportaConsegnaForm(StileMixin, forms.Form):
+    file = forms.FileField(
+        label="File della consegna", widget=forms.FileInput(attrs={"accept": ".csv"}),
+        help_text="Il file CSV ricevuto dalla federazione insieme al documento di consegna.",
+    )  # fmt: skip
+    sezione = forms.ModelChoiceField(queryset=Sezione.objects.filter(attiva=True), required=False,
+                                     help_text="Vuoto: la sezione principale.")  # fmt: skip

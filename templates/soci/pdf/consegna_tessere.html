@@ -1,0 +1,32 @@
+{% extends "pdf/base.html" %}
+{% load firme %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Documento di consegna di tessere a una sezione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Consegna n. {{ consegna.anno }}/{{ consegna.numero }}{% endblock %}
+{% block stile %}
+  h1 { font-size: 14pt; margin: 0 0 8pt; }
+  table.dati { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt; }
+  table.dati th, table.dati td { border: .5pt solid #999; padding: 3pt 5pt; text-align: left; }
+  table.dati td.num, table.dati th.num { text-align: right; }
+  .chiusura { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18pt; }
+  .destinatario { margin: 0 0 12pt 55%; }
+{% endblock %}
+{% block contenuto %}
+<div class="destinatario">Alla Direzione della<br><strong>{{ consegna.sezione.nome }}</strong>{% if consegna.sezione.comune %}<br>{{ consegna.sezione.comune }}{% endif %}</div>
+<h1>Documento di consegna n. {{ consegna.anno }}/{{ consegna.numero }} del {{ consegna.data|date:"d/m/Y" }}</h1>
+<p>Si consegnano alla {{ consegna.sezione.nome }} le seguenti tessere del tesseramento <strong>{{ consegna.anno }}</strong>:</p>
+<table class="dati">
+  <tr><th>Serie</th><th>Dal numero</th><th>Al numero</th><th class="num">Quantità</th><th class="num">Importo per tessera</th><th class="num">Totale</th></tr>
+  <tr><td>{{ consegna.blocco.serie|default:"—" }}</td><td>{{ consegna.numero_da }}</td><td>{{ consegna.numero_a }}</td><td class="num">{{ consegna.quantita }}</td><td class="num">€ {{ consegna.prezzo_unitario|floatformat:"2g" }}</td><td class="num">€ {{ consegna.importo|floatformat:"2g" }}</td></tr>
+</table>
+<p><strong>Distribuzione:</strong> {{ consegna.get_modalita_display|lower }}{% if consegna.note_distribuzione %}. {{ consegna.note_distribuzione|linebreaksbr }}{% endif %}</p>
+{% if riga %}<p>Situazione dell'anno per la sezione: dovuto € {{ riga.dovuto|floatformat:"2g" }}, versato € {{ riga.pagato|floatformat:"2g" }}{% if riga.saldo > 0 %}, <strong>da versare € {{ riga.saldo|floatformat:"2g" }}</strong>{% endif %}.</p>{% endif %}
+<p>La sezione è pregata di restituire copia del presente documento, firmata per presa in carico.</p>
+<div class="chiusura">
+  <div>{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ consegna.data|date:"d/m/Y" }}<br><br>Per presa in carico: ______________________</div>
+  {% firme "presidente" giorno=consegna.data %}
+</div>
+{% endblock %}

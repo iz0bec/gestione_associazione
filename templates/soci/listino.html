@@ -23,6 +23,12 @@
         <fieldset><legend class="h3">Acquisto dalla sede centrale</legend>
           {{ form.costo_acquisto.as_field_group }}
         </fieldset>
+        <fieldset><legend class="h3">Distribuzione alle sezioni (ciclo delle tessere)</legend>
+          <div class="row"><div class="col-sm-6">{{ form.quota_federale.as_field_group }}</div><div class="col-sm-6">{{ form.scadenza_richieste.as_field_group }}</div></div>
+          {{ form.delibera.as_field_group }}
+          {{ form.istruzioni_pagamento.as_field_group }}
+          <p class="text-secondary small">Servono solo a chi distribuisce le tessere alle sezioni (federazione): compaiono negli avvisi del tesseramento. Una sezione lascia la quota federale a zero.</p>
+        </fieldset>
         <fieldset><legend class="h3">Distribuzione ai soci (quota annuale)</legend>
           <div class="row">{% for campo in form.campi_quota %}<div class="col-sm-6">{{ campo.as_field_group }}</div>{% endfor %}</div>
         </fieldset>

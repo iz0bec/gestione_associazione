@@ -163,14 +163,39 @@ class IncassoForm(StileMixin, forms.Form):
         queryset=Voce.objects.none(),
         required=False,
         empty_label="— secondo il tipo —",
-        help_text="Vuoto: donazioni E.A.4, contributi E.A.6, partecipazioni E.A.3, altro E.A.10.",
+        help_text="Vuoto: donazioni E.A.4, contributi E.A.6, partecipazioni E.A.3, tessere E.A.1, "
+        "altro E.A.10.",
     )
+    sezione = forms.ModelChoiceField(
+        queryset=None, required=False,
+        help_text="Solo per «Tessere fornite a una sezione»: la sezione che versa.",
+    )  # fmt: skip
+    anno_tessere = forms.IntegerField(
+        label="Anno di tesseramento", required=False, min_value=2000, max_value=2100,
+        help_text="Solo per le tessere: l'anno delle tessere pagate.",
+    )  # fmt: skip
 
     def __init__(self, *args, **kwargs):
+        from apps.soci.models import Sezione
+
         super().__init__(*args, **kwargs)
         self.fields["voce"].queryset = Voce.objects.filter(tipo="entrata", attiva=True).order_by(
             "codice"
         )
+        self.fields["sezione"].queryset = Sezione.objects.filter(attiva=True)
+
+    def clean(self):
+        dati = super().clean()
+        if dati.get("tipo") == "tessere":
+            if not dati.get("sezione"):
+                self.add_error("sezione", "Indicare la sezione che versa per le tessere.")
+            dati["anno_tessere"] = dati.get("anno_tessere") or (
+                dati["data"].year if dati.get("data") else date.today().year
+            )
+        else:
+            dati["sezione"] = None
+            dati["anno_tessere"] = None
+        return dati
 
 
 class StornoForm(StileMixin, forms.Form):

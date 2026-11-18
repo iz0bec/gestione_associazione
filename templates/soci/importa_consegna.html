@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Importazione del file della consegna di tessere ricevuto dalla federazione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Importa una consegna di tessere{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere_fisiche' %}">Tessere fisiche</a></div>{% endblock %}
+{% block titolo_pagina %}Importa una consegna di tessere{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    {% if righe %}
+    <form method="post" class="card">{% csrf_token %}
+      <input type="hidden" name="temporaneo" value="{{ temporaneo }}"><input type="hidden" name="conferma" value="1">{% if sezione %}<input type="hidden" name="sezione" value="{{ sezione.pk }}">{% endif %}
+      <div class="card-header"><h3 class="card-title">Anteprima: nulla è ancora stato caricato</h3></div>
+      <div class="table-responsive"><table class="table card-table">
+        <thead><tr><th>Anno</th><th>Serie</th><th>Numeri</th><th class="text-end">Importo/tessera</th><th>Consegna</th><th>Da</th></tr></thead>
+        <tbody>{% for r in righe %}<tr><td>{{ r.anno }}</td><td>{{ r.serie|default:"—" }}</td><td>{{ r.numero_da }}–{{ r.numero_a }}</td><td class="text-end">€ {{ r.prezzo_unitario|floatformat:"2g" }}</td><td>n. {{ r.consegna }} del {{ r.data }}</td><td>{{ r.fornitore }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'soci:importa_consegna' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-package-import me-1"></i>Carica le tessere</button></div>
+    </form>
+    {% else %}
+    <form method="post" enctype="multipart/form-data" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'soci:tessere_fisiche' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-eye me-1"></i>Anteprima</button></div>
+    </form>
+    {% endif %}
+  </div>
+  <div class="col-lg-4"><div class="card"><div class="card-body small">
+    <p>Con il <strong>documento di consegna</strong> la federazione invia un file con i numeri delle tessere attribuite alla sezione. Importandolo, le tessere entrano nel vostro magazzino pronte da attribuire ai soci, con l'importo e il riferimento della consegna.</p>
+    <p class="mb-0">Ricordate di protocollare il documento di consegna ricevuto e di registrare in tesoreria il versamento alla federazione, con la sua ricevuta.</p>
+  </div></div></div>
+</div>
+{% endblock %}

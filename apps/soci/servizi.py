@@ -282,7 +282,7 @@ def prepara_listino(anno, utente=None):
 
 
 @transaction.atomic
-def salva_listino(anno, utente, *, costo_acquisto, quote, note=""):
+def salva_listino(anno, utente, *, costo_acquisto, quote, note="", **ciclo):
     """`quote`: {tipologia: importo}. Le tessere già rilasciate conservano la loro quota."""
     lst = prepara_listino(anno, utente)
     prima = {
@@ -291,13 +291,19 @@ def salva_listino(anno, utente, *, costo_acquisto, quote, note=""):
     }
     lst.costo_acquisto = costo_acquisto
     lst.note = note
+    # ciclo delle tessere: quota federale, delibera, scadenza delle richieste, pagamento
+    for campo, valore in ciclo.items():
+        if str(getattr(lst, campo) or "") != str(valore or ""):
+            prima[campo] = str(getattr(lst, campo) or "")
+        setattr(lst, campo, valore)
     lst.modificato_da = utente
     lst.save()
     for tipologia, importo in quote.items():
         QuotaListino.objects.update_or_create(
             listino=lst, tipologia=tipologia, defaults={"importo": importo}
         )
-    dopo = {"costo": str(costo_acquisto), **{t.nome: str(v) for t, v in quote.items()}}
+    dopo = {"costo": str(costo_acquisto), **{t.nome: str(v) for t, v in quote.items()},
+            **{c: str(v or "") for c, v in ciclo.items() if c in prima}}  # fmt: skip
     cambiati = {k: {"prima": prima.get(k), "dopo": v} for k, v in dopo.items() if prima.get(k) != v}
     if cambiati:
         registra(Azione.MODIFICA, lst, utente=utente, valori=cambiati)

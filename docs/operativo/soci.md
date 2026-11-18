@@ -88,6 +88,58 @@ dell'anagrafica). Dai pulsanti in alto:
 4. **Elenco tesserati (CSV)**: numero di tessera e dati dei soci tesserati nell'anno, da inviare
    alla sede centrale.
 
+## Campagna delle tessere con le sezioni
+
+Per chi distribuisce le tessere alle sezioni, come la federazione (o l'ente sovraordinato di
+un'associazione con più sezioni): *Soci → Tessere fisiche → **Campagna con le sezioni***. Tutto il
+ciclo funziona **anche senza collegamenti fra installazioni**: i documenti si stampano o si
+spediscono per email e PEC dal protocollo.
+
+1. **Listino dell'anno** (*Listino del tesseramento*):
+   - costo nazionale e **quota federale** per tessera, la cui somma è l'importo che paga la
+     sezione;
+   - la **delibera** del consiglio direttivo che li ha fissati;
+   - il **termine per le richieste** e le **modalità di pagamento** (IBAN, causale), che compaiono
+     negli avvisi.
+2. **Avviso di nuovo tesseramento** (*Avvisi alle sezioni*): un messaggio per sezione, all'indirizzo
+   della sezione con il **presidente** in copia, protocollato in uscita. I messaggi restano in
+   bozza e si confermano da *Comunicazioni*. I testi sono in *Comunicazioni → Modelli* e si possono
+   cambiare. Ciò che manca (ad esempio la delibera) compare come «[da indicare]».
+3. **Richieste delle sezioni** (*Registra*): quante tessere chiede ogni sezione, anche più volte
+   nell'anno. Il **sollecito** propone da solo le sezioni che non hanno ancora chiesto.
+4. **Ordine alla sede nazionale**: somma le richieste non ancora ordinate, con il dettaglio per
+   sezione. Il PDF si protocolla e si spedisce. Le richieste arrivate dopo finiscono nell'ordine
+   successivo.
+5. **Arrivo dal nazionale**: i blocchi di numeri entrano nel **magazzino**. Le tessere del magazzino
+   non si possono attribuire ai soci finché non vengono consegnate a una sezione.
+6. **Consegna** a una sezione:
+   - si sceglie un intervallo libero del magazzino, anche una parte;
+   - si indicano la modalità di distribuzione (ritiro in sede, consegna a mano, spedizione) e le
+     note su luogo, date e orari;
+   - la consegna crea il lotto della sezione con le sue tessere e un **documento di consegna**
+     numerato in PDF;
+   - si scarica anche il **file dei numeri** (CSV) da mandare alla sezione;
+   - poi si invia l'**avviso di attribuzione**.
+
+   Si consegna anche se la sezione non ha ancora pagato: la quadratura lo segnala.
+7. **Versamenti** (*Versamento* nella quadratura): è un incasso di tipo «Tessere fornite a una
+   sezione», con la sua ricevuta numerata da mandare alla sezione. Si chiede preferibilmente
+   l'intero importo, ma il saldo può restare in sospeso.
+8. **Presa in carico**: quando la sezione restituisce il documento firmato, si segna *presa in
+   carico*.
+
+La **quadratura** mostra per ogni sezione richieste, consegnate, dovuto, versato e saldo. Segnala
+cosa seguire: consegnate senza pagamento, da versare, versato in più, da consegnare, presa in
+carico da confermare.
+
+**Nella sezione**, se ha la propria installazione:
+
+- con *Importa consegna* carica il file dei numeri ricevuto, con anteprima: le tessere entrano nel
+  magazzino della sezione con l'importo e il riferimento alla consegna;
+- protocolla il documento di consegna e la ricevuta della federazione;
+- registra in tesoreria l'uscita del versamento, con la ricevuta come giustificativo;
+- il PDF della propria richiesta di tessere si stampa dalla campagna.
+
 ## Attribuire le tessere
 
 - **Al rinnovo annuale**: con la casella *Attribuisci subito le tessere disponibili* ogni socio

@@ -1,0 +1,31 @@
+{% extends "pdf/base.html" %}
+{% load firme %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Ordine di tessere alla sede nazionale con il dettaglio per sezione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Ordine n. {{ ordine.anno }}/{{ ordine.numero }}{% endblock %}
+{% block stile %}
+  h1 { font-size: 14pt; margin: 0 0 8pt; }
+  table.dati { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt; }
+  table.dati th, table.dati td { border: .5pt solid #999; padding: 3pt 5pt; text-align: left; }
+  table.dati td.num, table.dati th.num { text-align: right; }
+  .chiusura { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18pt; }
+  .destinatario { margin: 0 0 12pt 55%; }
+{% endblock %}
+{% block contenuto %}
+<div class="destinatario">Alla Sede nazionale</div>
+<h1>Ordine di tessere n. {{ ordine.anno }}/{{ ordine.numero }} del {{ ordine.data|date:"d/m/Y" }}</h1>
+<p>Si richiedono <strong>{{ ordine.quantita }}</strong> tessere per il tesseramento <strong>{{ ordine.anno }}</strong>{% if listino %}, al costo di € {{ listino.costo_acquisto|floatformat:"2g" }} ciascuna (totale € {{ totale|floatformat:"2g" }}){% endif %}, così ripartite fra le sezioni:</p>
+<table class="dati">
+  <tr><th>Codice</th><th>Sezione</th><th class="num">Tessere</th></tr>
+  {% for r in ordine.dettaglio %}<tr><td>{{ r.codice }}</td><td>{{ r.nome }}</td><td class="num">{{ r.quantita }}</td></tr>{% endfor %}
+  <tr><th colspan="2">Totale</th><th class="num">{{ ordine.quantita }}</th></tr>
+</table>
+{% if ordine.note %}<p>{{ ordine.note|linebreaksbr }}</p>{% endif %}
+<div class="chiusura">
+  <div>{{ organizzazione.comune|default:"" }}{% if organizzazione.comune %}, {% endif %}{{ ordine.data|date:"d/m/Y" }}</div>
+  {% firme "presidente" giorno=ordine.data %}
+</div>
+{% endblock %}

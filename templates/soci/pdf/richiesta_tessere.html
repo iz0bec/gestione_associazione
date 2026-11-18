@@ -1,0 +1,26 @@
+{% extends "pdf/base.html" %}
+{% load firme %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Richiesta di tessere di una sezione alla federazione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Richiesta di tessere {{ richiesta.anno }}{% endblock %}
+{% block stile %}
+  h1 { font-size: 14pt; margin: 0 0 8pt; }
+  table.dati { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt; }
+  table.dati th, table.dati td { border: .5pt solid #999; padding: 3pt 5pt; text-align: left; }
+  table.dati td.num, table.dati th.num { text-align: right; }
+  .chiusura { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18pt; }
+  .destinatario { margin: 0 0 12pt 55%; }
+{% endblock %}
+{% block contenuto %}
+<div class="destinatario">Alla Federazione</div>
+<h1>Richiesta di tessere per il tesseramento {{ richiesta.anno }}</h1>
+<p>La Direzione della <strong>{{ richiesta.sezione.nome }}</strong> chiede <strong>{{ richiesta.quantita }}</strong> tessere per il tesseramento {{ richiesta.anno }}{% if listino and listino.prezzo_sezioni %}, al costo di € {{ listino.prezzo_sezioni|floatformat:"2g" }} ciascuna{% endif %}.</p>
+{% if richiesta.note %}<p>{{ richiesta.note }}</p>{% endif %}
+<div class="chiusura">
+  <div>{{ richiesta.sezione.comune|default:organizzazione.comune|default:"" }}, {{ richiesta.data|date:"d/m/Y" }}</div>
+  {% firme "presidente" giorno=richiesta.data %}
+</div>
+{% endblock %}

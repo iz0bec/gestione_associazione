@@ -43,6 +43,9 @@ class Modello(models.Model):
         RICORRENZA = "ricorrenza", "Ricorrenza"
         RINNOVO = "rinnovo", "Promemoria di rinnovo della quota"
         TESSERA = "tessera", "Tessera digitale"
+        TESSERAMENTO = "tesseramento", "Avviso di nuovo tesseramento alle sezioni"
+        SOLLECITO_TESSERE = "sollecito_tess", "Sollecito della richiesta di tessere"
+        ATTRIBUZIONE_TESSERE = "attribuz_tess", "Avviso di attribuzione delle tessere"
 
     nome = models.CharField(max_length=100, unique=True)
     uso = models.CharField(max_length=15, choices=Uso.choices, default=Uso.GENERICO)

@@ -53,6 +53,10 @@ e Segretario, l'anonimizzazione al solo Amministratore di sistema (vedi [Anagraf
 | Consigliere, Revisore | consulta | consulta | consulta | - | consulta | consulta | - | consulta | - | consulta |
 | Addetto protocollo | - | - | - | - | - | - | - | - | - | - |
 
+La **campagna delle tessere con le sezioni** (richieste, ordine al nazionale, magazzino, consegne,
+avvisi, importazione della consegna) è di Amministratore di sistema, Segretario e Tesoriere. I
+versamenti delle sezioni sono incassi, quindi li registra chi registra gli incassi.
+
 **Sezioni.** In una federazione a un utente si possono assegnare una o più sezioni: con qualunque
 ruolo, vedrà e gestirà solo soci, tessere, carichi e domande di quelle sezioni. Gli utenti senza
 sezioni assegnate, e l'amministratore tecnico, vedono tutto.

@@ -74,6 +74,25 @@ SEGNAPOSTO = {
     "richiedente": "nome e cognome di chi chiede l'iscrizione",
     "protocollo": "numero di protocollo",
     "data_protocollo": "data della registrazione di protocollo",
+    # ciclo delle tessere (avvisi alle sezioni)
+    "anno": "anno di tesseramento",
+    "sezione": "nome della sezione",
+    "quota_tessera": "importo per tessera (costo nazionale + quota federale)",
+    "costo_nazionale": "costo di una tessera alla sede nazionale",
+    "quota_federale": "quota federale per tessera",
+    "delibera": "delibera del consiglio direttivo che ha fissato la quota",
+    "scadenza_richiesta": "termine per chiedere le tessere",
+    "modalita_pagamento": "modalità di pagamento (dal listino)",
+    "riferimento_avviso": "riferimento dell'avviso di tesseramento",
+    "nuova_scadenza": "nuovo termine indicato nel sollecito",
+    "numero_consegna": "numero del documento di consegna",
+    "tessere": "numeri delle tessere attribuite (serie, dal, al)",
+    "quantita": "quantità di tessere",
+    "importo_dovuto": "importo dovuto dalla sezione per l'anno",
+    "importo_versato": "importo già versato dalla sezione",
+    "saldo": "importo ancora da versare",
+    "modalita_distribuzione": "ritiro in sede, consegna a mano o spedizione",
+    "note_distribuzione": "luogo, date e orari della distribuzione",
 }
 _RE_SEGNAPOSTO = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
 

@@ -5,6 +5,26 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Campagna delle tessere con le sezioni** (*Soci → Tessere fisiche*), il ciclo completo dalla
+  richiesta alla distribuzione, utilizzabile anche senza collegamenti fra installazioni:
+  - listino con quota federale, delibera del direttivo, termine delle richieste e modalità di
+    pagamento;
+  - richieste delle sezioni anche integrative;
+  - ordine alla sede nazionale in PDF con il dettaglio per sezione;
+  - magazzino dei blocchi ricevuti (le tessere non si attribuiscono finché non sono consegnate);
+  - consegne anche parziali che creano il lotto della sezione, con documento di consegna in PDF e
+    file dei numeri;
+  - presa in carico;
+  - versamenti delle sezioni come incassi con ricevuta numerata;
+  - quadratura per sezione (richieste, consegnate, dovuto, versato, saldo e avvisi).
+- **Avvisi alle sezioni** con tre modelli predefiniti e modificabili (nuovo tesseramento,
+  sollecito a chi non ha chiesto, attribuzione delle tessere con le modalità di distribuzione):
+  un messaggio per sezione all'indirizzo della sezione e al presidente in carica, in bozza e
+  protocollabile.
+- **Importa consegna**: la sezione carica, con anteprima, il file dei numeri ricevuto dalla
+  federazione.
+
 ## [1.0.38] - 2026-11-18
 
 API di interoperabilità (ADR-030), fasi F1-F3: collegamenti firmati fra installazioni e con sistemi esterni.

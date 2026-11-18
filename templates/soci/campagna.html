@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Campagna delle tessere con le sezioni: quadratura, richieste, magazzino, consegne, ordini, avvisi
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Campagna delle tessere {{ anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere_fisiche' %}?anno={{ anno }}">Tessere fisiche</a></div>{% endblock %}
+{% block titolo_pagina %}Campagna delle tessere {{ anno }}{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  <form method="get" action="{% url 'soci:campagna_corrente' %}"><select class="form-select" name="anno" aria-label="Anno" data-invio-automatico>{% for a in anni %}<option value="{{ a }}"{% if a == anno %} selected{% endif %}>{{ a }}</option>{% endfor %}</select><noscript><button class="btn" type="submit">Vai</button></noscript></form>
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-mail me-1"></i>Avvisi alle sezioni</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      <a class="dropdown-item" href="{% url 'soci:avvisi_tessere' anno 'tesseramento' %}">Avviso di nuovo tesseramento</a>
+      <a class="dropdown-item" href="{% url 'soci:avvisi_tessere' anno 'sollecito' %}">Sollecito della richiesta{% if senza_richiesta %} ({{ senza_richiesta|length }}){% endif %}</a>
+      <a class="dropdown-item" href="{% url 'soci:avvisi_tessere' anno 'attribuzione' %}">Avviso di attribuzione</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if not listino %}<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>Il <a href="{% url 'soci:listino' %}?anno={{ anno }}">listino {{ anno }}</a> non è ancora fissato: senza, avvisi e consegne non hanno l'importo per tessera.</div>
+{% else %}<div class="alert alert-info small"><i class="ti ti-receipt me-1"></i>Importo per tessera alle sezioni: <strong>€ {{ listino.prezzo_sezioni|floatformat:"2g" }}</strong> (costo nazionale € {{ listino.costo_acquisto|floatformat:"2g" }} + quota federale € {{ listino.quota_federale|floatformat:"2g" }}){% if listino.delibera %} · {{ listino.delibera }}{% else %} · <span class="text-warning">delibera non indicata</span>{% endif %}{% if listino.scadenza_richieste %} · richieste entro il {{ listino.scadenza_richieste|date:"d/m/Y" }}{% endif %} · <a href="{% url 'soci:listino' %}?anno={{ anno }}">modifica il listino</a></div>{% endif %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-scale me-1"></i>Quadratura per sezione</h3></div>
+  {% if quadratura %}
+  <div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr><th>Sezione</th><th class="text-end">Richieste</th><th class="text-end">Consegnate</th><th class="text-end">Dovuto</th><th class="text-end">Versato</th><th class="text-end">Saldo</th><th>Da seguire</th><th></th></tr></thead>
+    <tbody>{% for r in quadratura %}<tr>
+      <td>{{ r.sezione }}</td><td class="text-end">{{ r.richieste }}</td><td class="text-end">{{ r.consegnate }}</td>
+      <td class="text-end text-nowrap">€ {{ r.dovuto|floatformat:"2g" }}</td><td class="text-end text-nowrap">€ {{ r.pagato|floatformat:"2g" }}</td>
+      <td class="text-end text-nowrap{% if r.saldo > 0 %} text-danger{% endif %}">€ {{ r.saldo|floatformat:"2g" }}</td>
+      <td class="small">{% for a in r.avvisi %}<span class="badge bg-yellow-lt me-1">{{ a }}</span>{% empty %}<span class="text-green">in regola</span>{% endfor %}</td>
+      <td class="text-nowrap">{% if perms.tesoreria.registra_incasso %}<a class="btn btn-sm" href="{% url 'tesoreria:incasso_nuovo' %}?tipo=tessere&amp;sezione={{ r.sezione.pk }}&amp;anno={{ anno }}" title="Registra un versamento della sezione (ricevuta numerata)">Versamento</a>{% endif %}
+        <a class="btn btn-sm" href="{% url 'soci:consegna_tessere' anno %}?sezione={{ r.sezione.pk }}">Consegna</a></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="card-body small text-secondary">Nessuna richiesta né consegna per il {{ anno }}.</div>{% endif %}
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Richieste delle sezioni</h3><div class="card-actions"><a class="btn btn-sm btn-primary" href="{% url 'soci:richiesta_tessere' anno %}"><i class="ti ti-plus me-1"></i>Registra</a></div></div>
+      <div class="list-group list-group-flush">{% for r in richieste %}<div class="list-group-item small d-flex align-items-center gap-2"><span class="flex-fill">{{ r.data|date:"d/m/Y" }} · <strong>{{ r.sezione }}</strong>: {{ r.quantita }} tessere{% if r.note %} · {{ r.note }}{% endif %}</span><a class="btn btn-sm" href="{% url 'soci:richiesta_pdf' r.pk %}" title="Modulo di richiesta (per la sezione)"><i class="ti ti-file-type-pdf"></i></a></div>{% empty %}<div class="list-group-item small text-secondary">Nessuna richiesta.</div>{% endfor %}</div>
+      {% if senza_richiesta %}<div class="card-footer small text-secondary">Senza richiesta: {{ senza_richiesta|join:", " }}.</div>{% endif %}
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Ordini alla sede nazionale</h3><div class="card-actions">{% if da_ordinare %}<a class="btn btn-sm btn-primary" href="{% url 'soci:ordine_tessere' anno %}"><i class="ti ti-plus me-1"></i>Nuovo ordine</a>{% endif %}</div></div>
+      <div class="list-group list-group-flush">{% for o in ordini %}<div class="list-group-item small d-flex align-items-center gap-2"><span class="flex-fill">n. {{ o.anno }}/{{ o.numero }} del {{ o.data|date:"d/m/Y" }} · {{ o.quantita }} tessere</span><a class="btn btn-sm" href="{% url 'soci:ordine_pdf' o.pk %}"><i class="ti ti-file-type-pdf me-1"></i>PDF</a></div>{% empty %}<div class="list-group-item small text-secondary">Nessun ordine.</div>{% endfor %}</div>
+      {% if da_ordinare %}<div class="card-footer small">Da ordinare: {% for r in da_ordinare %}{{ r.nome }} {{ r.quantita }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Magazzino</h3><div class="card-actions"><a class="btn btn-sm btn-primary" href="{% url 'soci:blocco_tessere' anno %}"><i class="ti ti-package-import me-1"></i>Arrivo dal nazionale</a></div></div>
+      <div class="card-body small">Ricevute {{ magazzino.ricevute }} · consegnate {{ magazzino.consegnate }} · <strong>disponibili {{ magazzino.disponibili }}</strong></div>
+      <div class="list-group list-group-flush">{% for b, liberi in blocchi %}<div class="list-group-item small"><strong>{{ b }}</strong> ({{ b.quantita }}){% if b.riferimento %} · {{ b.riferimento }}{% endif %}<div class="text-secondary">liberi: {% for da, a in liberi %}{{ da }}–{{ a }}{% if not forloop.last %}, {% endif %}{% empty %}nessuno{% endfor %}</div></div>{% endfor %}</div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Consegne</h3><div class="card-actions">{% if magazzino.disponibili %}<a class="btn btn-sm btn-primary" href="{% url 'soci:consegna_tessere' anno %}"><i class="ti ti-truck-delivery me-1"></i>Nuova consegna</a>{% endif %}</div></div>
+      <div class="list-group list-group-flush">{% for c in consegne %}<div class="list-group-item small">
+        <div class="d-flex align-items-center gap-2"><span class="flex-fill">n. {{ c.anno }}/{{ c.numero }} del {{ c.data|date:"d/m/Y" }} · <strong>{{ c.sezione }}</strong>: {{ c.numero_da }}–{{ c.numero_a }} ({{ c.quantita }}) · € {{ c.importo|floatformat:"2g" }}</span>
+          <a class="btn btn-sm" href="{% url 'soci:consegna_pdf' c.pk %}" title="Documento di consegna"><i class="ti ti-file-type-pdf"></i></a>
+          <a class="btn btn-sm" href="{% url 'soci:consegna_csv' c.pk %}" title="File dei numeri per la sezione"><i class="ti ti-file-type-csv"></i></a></div>
+        <div class="text-secondary">{{ c.get_modalita_display }}{% if c.presa_in_carico_il %} · presa in carico il {{ c.presa_in_carico_il|date:"d/m/Y" }}{% else %} · <form method="post" action="{% url 'soci:consegna_presa' c.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-link btn-sm p-0" type="submit">segna presa in carico</button></form>{% endif %}</div>
+      </div>{% empty %}<div class="list-group-item small text-secondary">Nessuna consegna.</div>{% endfor %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

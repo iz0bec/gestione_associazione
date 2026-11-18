@@ -339,3 +339,128 @@ def riepilogo_magazzino(anno):
     disponibili = sum(in_magazzino(b) for b in blocchi)
     return {"blocchi": blocchi, "ricevute": ricevute, "disponibili": disponibili,
             "consegnate": ricevute - disponibili}  # fmt: skip
+
+
+# --- avvisi alle sezioni (email/PEC con i modelli del ciclo) --------------------------------
+
+DA_INDICARE = "[da indicare]"
+
+
+def _euro(valore):
+    return f"{valore:.2f}".replace(".", ",")
+
+
+def _data(valore):
+    return valore.strftime("%d/%m/%Y") if valore else DA_INDICARE
+
+
+def descrivi_delibera(delibera):
+    if delibera is None:
+        return "la delibera " + DA_INDICARE
+    giorno = delibera.verbale.riunione.prima_convocazione
+    codice = delibera.codice or DA_INDICARE
+    return f"la delibera {codice} del {_data(giorno.date())}"
+
+
+def contesto_anno(anno):
+    """Segnaposto comuni agli avvisi dell'anno, dal listino (mai valori inventati)."""
+    voce = listino(anno)
+    org = Organizzazione.corrente()
+    if voce is None:
+        return {"anno": anno, "organizzazione": org.denominazione, "quota_tessera": DA_INDICARE,
+                "costo_nazionale": DA_INDICARE, "quota_federale": DA_INDICARE,
+                "delibera": "la delibera " + DA_INDICARE, "scadenza_richiesta": DA_INDICARE,
+                "modalita_pagamento": DA_INDICARE}  # fmt: skip
+    return {
+        "anno": anno,
+        "organizzazione": org.denominazione,
+        "quota_tessera": _euro(voce.prezzo_sezioni),
+        "costo_nazionale": _euro(voce.costo_acquisto),
+        "quota_federale": _euro(voce.quota_federale),
+        "delibera": descrivi_delibera(voce.delibera),
+        "scadenza_richiesta": _data(voce.scadenza_richieste),
+        "modalita_pagamento": voce.istruzioni_pagamento.strip() or DA_INDICARE,
+    }
+
+
+def contesto_consegna(documento):
+    """Segnaposto dell'avviso di attribuzione per una consegna, con la quadratura della sezione."""
+    riga = next((r for r in quadratura(documento.anno) if r.sezione.pk == documento.sezione_id),
+                None)  # fmt: skip
+    serie = f"serie {documento.blocco.serie}, " if documento.blocco.serie else ""
+    return {
+        "numero_consegna": f"{documento.anno}/{documento.numero}",
+        "tessere": f"{serie}dal n. {documento.numero_da} al n. {documento.numero_a}",
+        "quantita": documento.quantita,
+        "importo_dovuto": _euro(riga.dovuto if riga else documento.importo),
+        "importo_versato": _euro(riga.pagato if riga else Decimal("0")),
+        "saldo": _euro(max(riga.saldo, Decimal("0")) if riga else documento.importo),
+        "modalita_distribuzione": documento.get_modalita_display().lower(),
+        "note_distribuzione": documento.note_distribuzione.strip(),
+    }
+
+
+def destinatari(sezione):
+    """Indirizzo della sezione e presidente in carica della sezione (in copia)."""
+    from apps.organi.firme import in_carica_al
+
+    indirizzi = [(f"Direzione della {sezione.nome}", sezione.email)] if sezione.email else []
+    presidente = in_carica_al("presidente", sezione=sezione)
+    soggetti = [presidente] if presidente is not None else []
+    return indirizzi, soggetti
+
+
+def sezioni_senza_richiesta(anno):
+    con = RichiestaTessere.objects.filter(anno=anno).values_list("sezione_id", flat=True)
+    return Sezione.objects.filter(attiva=True).exclude(pk__in=con)
+
+
+AVVISI = {
+    "tesseramento": ("tesseramento", "tessere_avviso"),
+    "sollecito": ("sollecito_tess", "tessere_sollecito"),
+    "attribuzione": ("attribuz_tess", "tessere_attribuzione"),
+}
+
+
+def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_avviso="",
+                   nuova_scadenza=None, servizio=None, protocolla=True):  # fmt: skip
+    """Un invio in bozza per ogni sezione (o consegna, per l'attribuzione), con il modello del
+    ciclo: si confermano poi da Comunicazioni come gli altri invii. Restituisce (invii, saltate)."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.comunicazioni.models import Finalita, Modello
+
+    uso, origine = AVVISI[tipo]
+    modello = Modello.objects.filter(uso=uso, attivo=True).order_by("pk").first()
+    if modello is None:
+        raise OperazioneNonValida("Manca il modello del messaggio (Comunicazioni → Modelli).")
+    base = contesto_anno(anno)
+    if tipo == "sollecito":
+        base |= {"riferimento_avviso": riferimento_avviso.strip() or DA_INDICARE,
+                 "nuova_scadenza": _data(nuova_scadenza)}  # fmt: skip
+    voci = (
+        [(c.sezione, c) for c in consegne]
+        if tipo == "attribuzione"
+        else [(s, None) for s in sezioni]
+    )
+    invii, saltate = [], []
+    for sezione, documento in voci:
+        indirizzi, soggetti = destinatari(sezione)
+        if not indirizzi and not soggetti:
+            saltate.append((sezione, "senza email della sezione né presidente in carica"))
+            continue
+        contesto = base | {"sezione": sezione.nome}
+        if documento is not None:
+            contesto |= contesto_consegna(documento)
+        try:
+            invio = comunicazioni.crea_invio(
+                utente, oggetto=modello.oggetto, corpo=modello.corpo,
+                finalita=Finalita.ISTITUZIONALE, soggetti=soggetti, indirizzi=indirizzi,
+                modello=modello, protocolla=protocolla, origine=origine,
+                origine_id=documento.pk if documento else sezione.pk, contesto=contesto,
+                servizio=servizio,
+            )  # fmt: skip
+        except comunicazioni.OperazioneNonValida as e:
+            saltate.append((sezione, " ".join(e.messages)))
+            continue
+        invii.append(invio)
+    return invii, saltate

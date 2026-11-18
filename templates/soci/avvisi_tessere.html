@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Avvisi del ciclo delle tessere alle direzioni delle sezioni
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} {{ anno }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:campagna' anno %}">Campagna delle tessere {{ anno }}</a></div>{% endblock %}
+{% block titolo_pagina %}{{ titolo }} {{ anno }}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'soci:campagna' anno %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-mail me-1"></i>Prepara i messaggi</button></div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body small">
+      <p>Si prepara <strong>un messaggio per ogni sezione</strong>{% if tipo == 'attribuzione' %} (per ogni consegna){% endif %}, all'indirizzo della sezione e in copia al <strong>presidente in carica</strong>, con il modello «{{ titolo }}» di <a href="{% url 'comunicazioni:modelli' %}">Comunicazioni → Modelli</a>.</p>
+      <p>I messaggi restano <strong>in bozza</strong>: li controllate e confermate da Comunicazioni; con «protocolla» ognuno riceve il suo protocollo in uscita.</p>
+      <p class="mb-1">Dati dell'anno usati nel testo:</p>
+      <ul class="mb-0">
+        <li>importo per tessera: € {{ contesto.quota_tessera }} ({{ contesto.costo_nazionale }} + {{ contesto.quota_federale }})</li>
+        <li>{{ contesto.delibera }}</li>
+        <li>richieste entro: {{ contesto.scadenza_richiesta }}</li>
+        <li>modalità di pagamento: {{ contesto.modalita_pagamento|linebreaksbr }}</li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
