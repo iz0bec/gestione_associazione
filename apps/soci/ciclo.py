@@ -404,7 +404,9 @@ def destinatari(sezione):
     """Indirizzo della sezione e presidente in carica della sezione (in copia)."""
     from apps.organi.firme import in_carica_al
 
-    indirizzi = [(f"Direzione della {sezione.nome}", sezione.email)] if sezione.email else []
+    indirizzi = (
+        [(f"Direzione della {sezione.denominazione}", sezione.email)] if sezione.email else []
+    )
     presidente = in_carica_al("presidente", sezione=sezione)
     soggetti = [presidente] if presidente is not None else []
     return indirizzi, soggetti
@@ -448,7 +450,7 @@ def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_a
         if not indirizzi and not soggetti:
             saltate.append((sezione, "senza email della sezione né presidente in carica"))
             continue
-        contesto = base | {"sezione": sezione.nome}
+        contesto = base | {"sezione": sezione.denominazione}
         if documento is not None:
             contesto |= contesto_consegna(documento)
         try:

@@ -5,6 +5,23 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.41] - 2026-11-18
+
+### Aggiunto
+- **Azioni su più comunicazioni** (*Comunicazioni*): si selezionano bozze e invii in coda e si
+  possono confermare e inviare, annullare o eliminare (solo le bozze, con gli allegati) tutti
+  insieme. Le operazioni finiscono nel registro attività e gli invii non elaborabili vengono
+  segnalati con il motivo.
+
+### Modificato
+- L'**email istituzionale** della sezione è obbligatoria nel modulo (*Sistema → Sezioni*). La
+  campagna delle tessere elenca le sezioni che non ce l'hanno ancora, con il collegamento per
+  completarla.
+
+### Corretto
+- Avvisi e documenti del ciclo delle tessere scrivevano «Alla Direzione della Ruoti». Ora usano la
+  denominazione «Sezione di Ruoti», o il nome com'è se comincia già con «Sezione».
+
 ## [1.0.40] - 2026-11-18
 
 ### Corretto

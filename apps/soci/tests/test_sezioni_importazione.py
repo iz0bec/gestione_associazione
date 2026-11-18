@@ -108,7 +108,8 @@ class TestSezioni:
         client.force_login(capo)
         assert client.get(reverse("soci:sezioni")).status_code == 200
         r = client.post(reverse("soci:sezione_nuova"), {"codice": "S02", "nome": "Sud",
-                                                       "provincia": "pz", "ordine": 2, "attiva": "on"})  # fmt: skip
+                                                       "provincia": "pz", "ordine": 2, "attiva": "on",
+                                                       "email": "sud@example.org"})  # fmt: skip
         assert r.status_code == 302 and Sezione.objects.get(codice="S02").provincia == "PZ"
 
 
@@ -495,12 +496,12 @@ class TestAbbinamentoSezioni:
         r = importazione.elabora(self.righe("Ruoti"), importazione.Opzioni(tipologia=ordinario),
                                  capo)  # fmt: skip
         assert r.riepilogo["errore"] == 0 and list(r.abbinamenti.values()) == ["B Due"]
-        form = SezioneForm({"codice": "C", "nome": "Tre", "comune": "ruoti, pz", "ordine": 0,
+        form = SezioneForm({"codice": "C", "nome": "Tre", "comune": "ruoti, pz", "ordine": 0, "email": "t@example.org",
                             "attiva": "on"})  # fmt: skip
         assert not form.is_valid() and "già una sezione" in str(form.errors["comune"])
         # una sezione con comune ripetuto si può sempre disattivare
         a = Sezione.objects.get(codice="A")
-        form = SezioneForm({"codice": "A", "nome": "Uno", "comune": "Ruoti", "ordine": 0},
+        form = SezioneForm({"codice": "A", "nome": "Uno", "comune": "Ruoti", "ordine": 0, "email": "u@example.org"},
                            instance=a)  # fmt: skip
         assert form.is_valid(), form.errors
 

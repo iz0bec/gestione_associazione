@@ -162,7 +162,9 @@ tutto in caso di problemi.
 
 ![Le sezioni, con organigramma e creazione degli organi](immagini/sezioni.jpg)
 
-**Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia, email. Ogni
+**Sistema → Sezioni**: codice (come nel registro nazionale), nome, comune, provincia ed **email
+istituzionale**, obbligatoria. È l'indirizzo a cui vanno gli avvisi del tesseramento. Nei documenti
+la sezione si scrive «Sezione di …» (es. «Sezione di Ruoti»), a meno che il nome non lo dica già. Ogni
 comune ha **una sola sezione attiva**: il comune serve anche a riconoscere la sezione nell'importazione
 dal registro nazionale, quindi va scritto come nel registro (es. «Rionero in Vulture»). Con
 una sola sezione l'applicazione si comporta come per un'associazione singola. Con più sezioni

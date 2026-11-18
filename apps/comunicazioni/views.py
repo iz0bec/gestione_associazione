@@ -17,7 +17,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Count, Prefetch, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -271,6 +271,39 @@ class AnnullaInvioView(_AzioneInvioView):
     def esegui(self, request, invio):
         servizi.annulla(invio, request.user)
         messages.success(request, "Invio annullato.")
+
+
+class AzioneMassivaView(PermessoMixin, View):
+    """Conferma, annullamento o eliminazione di più invii selezionati nell'elenco."""
+
+    permission_required = "comunicazioni.conferma_invio"
+    http_method_names = ["post"]
+
+    def post(self, request):
+        azione = request.POST.get("azione", "")
+        ritorno = request.POST.get("ritorno") or reverse("comunicazioni:invii")
+        if not ritorno.startswith("/comunicazioni/"):
+            ritorno = reverse("comunicazioni:invii")
+        scelti = [int(x) for x in request.POST.getlist("invii") if x.isdigit()]
+        if azione not in servizi.AZIONI_MASSIVE or not scelti:
+            messages.warning(request, "Selezionare almeno una comunicazione e un'azione.")
+            return redirect(ritorno)
+        invii = list(Invio.objects.filter(pk__in=scelti).order_by("pk"))
+        riusciti, rifiutati = servizi.azione_massiva(azione, invii, request.user)
+        if azione == "conferma" and riusciti:
+            inviati, errori = servizi.elabora_coda()  # i primi partono subito, gli altri dopo
+            messages.success(request, f"Confermate {riusciti} comunicazioni: inviati {inviati} "
+                             "messaggi, gli altri partiranno a breve.")  # fmt: skip
+            if errori:
+                messages.warning(request, f"{errori} messaggi non partiti: verranno ritentati.")
+        elif riusciti:
+            fatto = {"annulla": "annullate", "elimina": "eliminate"}[azione]
+            messages.success(request, f"Comunicazioni {fatto}: {riusciti}.")
+        for invio, motivo in rifiutati[:10]:
+            messages.warning(request, f"«{invio.oggetto}»: {motivo}")
+        if len(rifiutati) > 10:
+            messages.warning(request, f"Altre {len(rifiutati) - 10} non elaborate.")
+        return redirect(ritorno)
 
 
 class RitentaView(_AzioneInvioView):

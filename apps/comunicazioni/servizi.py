@@ -76,7 +76,7 @@ SEGNAPOSTO = {
     "data_protocollo": "data della registrazione di protocollo",
     # ciclo delle tessere (avvisi alle sezioni)
     "anno": "anno di tesseramento",
-    "sezione": "nome della sezione",
+    "sezione": "denominazione della sezione (es. «Sezione di Ruoti»)",
     "quota_tessera": "importo per tessera (costo nazionale + quota federale)",
     "costo_nazionale": "costo di una tessera alla sede nazionale",
     "quota_federale": "quota federale per tessera",
@@ -388,6 +388,40 @@ def conferma(invio, utente):
 
 
 @transaction.atomic
+def elimina_bozza(invio, utente):
+    """Cancella una bozza mai confermata, con i suoi allegati (resta la traccia nel registro)."""
+    invio = Invio.objects.select_for_update().get(pk=invio.pk)
+    if invio.stato != Invio.Stato.BOZZA:
+        raise OperazioneNonValida("Si eliminano solo le bozze: gli invii confermati si annullano.")
+    registra(Azione.ELIMINAZIONE, invio, utente=utente, descrizione=f"Bozza «{invio.oggetto}»",
+             destinatari=invio.destinatari.count())  # fmt: skip
+    for allegato in invio.allegati.all():
+        allegato.file.delete(save=False)
+    invio.delete()
+
+
+AZIONI_MASSIVE = {
+    "conferma": "Conferma e invia",
+    "annulla": "Annulla",
+    "elimina": "Elimina le bozze",
+}
+
+
+def azione_massiva(azione, invii, utente):
+    """Applica l'azione a più invii, uno per uno (ognuno nella sua transazione): restituisce
+    (riusciti, [(invio, motivo) dei non riusciti])."""
+    esegui = {"conferma": conferma, "annulla": annulla, "elimina": elimina_bozza}[azione]
+    riusciti, rifiutati = 0, []
+    for invio in invii:
+        try:
+            with transaction.atomic():
+                esegui(invio, utente)
+            riusciti += 1
+        except OperazioneNonValida as e:
+            rifiutati.append((invio, " ".join(e.messages)))
+    return riusciti, rifiutati
+
+
 def annulla(invio, utente):
     invio = Invio.objects.select_for_update().get(pk=invio.pk)
     if invio.stato not in (Invio.Stato.BOZZA, Invio.Stato.IN_CODA):

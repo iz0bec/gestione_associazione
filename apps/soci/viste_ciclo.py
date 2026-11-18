@@ -31,7 +31,7 @@ from .forms import (
     OrdineTessereForm,
     RichiestaTessereForm,
 )
-from .models import ConsegnaTessere, OrdineTessere, RichiestaTessere
+from .models import ConsegnaTessere, OrdineTessere, RichiestaTessere, Sezione
 from .servizi import OperazioneNonValida
 
 PERMESSO = "soci.gestisci_ciclo_tessere"
@@ -68,6 +68,7 @@ class CampagnaView(PermessoMixin, TemplateView):
             ordini=OrdineTessere.objects.filter(anno=anno),
             da_ordinare=ciclo.da_ordinare(anno),
             senza_richiesta=ciclo.sezioni_senza_richiesta(anno),
+            senza_email=Sezione.objects.filter(attiva=True, email=""),
         )
         return ctx
 

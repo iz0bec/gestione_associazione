@@ -22,6 +22,7 @@
 </div>
 {% endblock %}
 {% block contenuto %}
+{% if senza_email %}<div class="alert alert-warning"><i class="ti ti-mail-off me-1"></i><strong>Sezioni senza email istituzionale</strong>: {% for s in senza_email %}{% if perms.soci.change_sezione %}<a href="{% url 'soci:sezione_modifica' s.pk %}">{{ s.nome }}</a>{% else %}{{ s.nome }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}. Gli avvisi del tesseramento vanno all'email della sezione (e in copia al presidente): completatela in <a href="{% url 'soci:sezioni' %}">Sistema → Sezioni</a>.</div>{% endif %}
 {% if not listino %}<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>Il <a href="{% url 'soci:listino' %}?anno={{ anno }}">listino {{ anno }}</a> non è ancora fissato: senza, avvisi e consegne non hanno l'importo per tessera.</div>
 {% else %}<div class="alert alert-info small"><i class="ti ti-receipt me-1"></i>Importo per tessera alle sezioni: <strong>€ {{ listino.prezzo_sezioni|floatformat:"2g" }}</strong> (costo nazionale € {{ listino.costo_acquisto|floatformat:"2g" }} + quota federale € {{ listino.quota_federale|floatformat:"2g" }}){% if listino.delibera %} · {{ listino.delibera }}{% else %} · <span class="text-warning">delibera non indicata</span>{% endif %}{% if listino.scadenza_richieste %} · richieste entro il {{ listino.scadenza_richieste|date:"d/m/Y" }}{% endif %} · <a href="{% url 'soci:listino' %}?anno={{ anno }}">modifica il listino</a></div>{% endif %}
 <div class="card mb-3">

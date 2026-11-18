@@ -20,18 +20,31 @@
       {% for v, e in stati %}<li class="nav-item"><a class="nav-link{% if stato == v %} active{% endif %}" href="?stato={{ v }}">{{ e }}</a></li>{% endfor %}
     </ul>
   </div>
+  {% if perms.comunicazioni.conferma_invio %}
+  <form method="post" action="{% url 'comunicazioni:azione_massiva' %}" id="azioni-invii">{% csrf_token %}
+    <input type="hidden" name="ritorno" value="{{ request.get_full_path }}">
+    <div class="card-body border-bottom py-2 d-flex flex-wrap align-items-center gap-2">
+      <span class="small text-secondary me-1">Selezionate:</span>
+      <button class="btn btn-sm btn-primary" type="submit" name="azione" value="conferma" data-conferma="Confermare e inviare le comunicazioni selezionate? Si confermano solo le bozze."><i class="ti ti-send me-1"></i>Conferma e invia</button>
+      <button class="btn btn-sm" type="submit" name="azione" value="annulla" data-conferma="Annullare le comunicazioni selezionate (bozze e in coda)? I messaggi non ancora partiti non partiranno."><i class="ti ti-ban me-1"></i>Annulla</button>
+      <button class="btn btn-sm btn-outline-danger" type="submit" name="azione" value="elimina" data-conferma="Eliminare definitivamente le bozze selezionate? Gli invii già confermati non si eliminano (si annullano)."><i class="ti ti-trash me-1"></i>Elimina bozze</button>
+      <span class="small text-secondary ms-auto">Si selezionano bozze e comunicazioni in coda.</span>
+    </div>
+  </form>
+  {% endif %}
   <div class="table-responsive">
     <table class="table table-vcenter card-table table-hover">
-      <thead><tr><th>Data</th><th>Oggetto</th><th class="d-none d-md-table-cell">Destinatari</th><th>Stato</th></tr></thead>
+      <thead><tr>{% if perms.comunicazioni.conferma_invio %}<th class="w-1"><input class="form-check-input" type="checkbox" data-seleziona-tutte="invii" form="azioni-invii" aria-label="Seleziona tutte"></th>{% endif %}<th>Data</th><th>Oggetto</th><th class="d-none d-md-table-cell">Destinatari</th><th>Stato</th></tr></thead>
       <tbody>
       {% for i in invii %}
         <tr>
+          {% if perms.comunicazioni.conferma_invio %}<td>{% if i.stato == "bozza" or i.stato == "in_coda" %}<input class="form-check-input" type="checkbox" name="invii" value="{{ i.pk }}" form="azioni-invii" aria-label="Seleziona {{ i.titolo }}">{% endif %}</td>{% endif %}
           <td class="text-nowrap">{{ i.creato_il|date:"d/m/Y H:i" }}</td>
           <td><a class="text-reset fw-medium" href="{{ i.get_absolute_url }}">{{ i.titolo }}</a><div class="small text-secondary">{{ i.finalita_breve }}{% if i.creato_da %} · {{ i.creato_da }}{% elif i.origine %} · automatico{% endif %}</div></td>
           <td class="d-none d-md-table-cell">{{ i.n_inviati }} / {{ i.n_totale }}</td>
           <td>{% include "comunicazioni/_stato_invio.html" %}</td>
         </tr>
-      {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Nessuna comunicazione.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="5" class="text-secondary py-4 text-center">Nessuna comunicazione.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

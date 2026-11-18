@@ -55,6 +55,17 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 Lo stato di ogni destinatario (in attesa, inviato, errore, escluso) resta nel registro. Se il server di
 posta non risponde, il programma ritenta tre volte; poi si può usare **Ritenta gli errori**.
 
+**Più comunicazioni insieme**: nell'elenco si selezionano le bozze e quelle in coda, con la casella a
+sinistra o con *seleziona tutte* nell'intestazione. Poi si sceglie:
+
+- **Conferma e invia**: solo le bozze;
+- **Annulla**: le bozze e quelle in coda; i messaggi non ancora partiti non partono più;
+- **Elimina bozze**: cancella le bozze, con gli allegati. Le comunicazioni già confermate non si
+  eliminano, si annullano.
+
+Ogni operazione finisce nel registro attività, e chi non può essere elaborata viene segnalata con il
+motivo.
+
 ### Comunicazioni via PEC
 
 Scegliendo in *Spedisci da* un servizio **PEC**:

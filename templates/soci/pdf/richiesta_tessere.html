@@ -17,7 +17,7 @@
 {% block contenuto %}
 <div class="destinatario">Alla Federazione</div>
 <h1>Richiesta di tessere per il tesseramento {{ richiesta.anno }}</h1>
-<p>La Direzione della <strong>{{ richiesta.sezione.nome }}</strong> chiede <strong>{{ richiesta.quantita }}</strong> tessere per il tesseramento {{ richiesta.anno }}{% if listino and listino.prezzo_sezioni %}, al costo di € {{ listino.prezzo_sezioni|floatformat:"2g" }} ciascuna{% endif %}.</p>
+<p>La Direzione della <strong>{{ richiesta.sezione.denominazione }}</strong> chiede <strong>{{ richiesta.quantita }}</strong> tessere per il tesseramento {{ richiesta.anno }}{% if listino and listino.prezzo_sezioni %}, al costo di € {{ listino.prezzo_sezioni|floatformat:"2g" }} ciascuna{% endif %}.</p>
 {% if richiesta.note %}<p>{{ richiesta.note }}</p>{% endif %}
 <div class="chiusura">
   <div>{{ richiesta.sezione.comune|default:organizzazione.comune|default:"" }}, {{ richiesta.data|date:"d/m/Y" }}</div>

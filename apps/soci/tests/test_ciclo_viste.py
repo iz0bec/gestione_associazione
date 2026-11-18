@@ -152,3 +152,16 @@ def test_voce_nel_menu(client_ruolo):
     assert "Campagna delle tessere" in tesoriere
     consigliere = client_ruolo("Consigliere", username="consigliere").get("/").content.decode()
     assert "Campagna delle tessere" not in consigliere
+
+
+def test_denominazione_della_sezione_negli_avvisi(admin):
+    from apps.comunicazioni.models import Invio
+
+    ruoti = Sezione.objects.create(codice="007", nome="Ruoti", email="ruoti@example.org")
+    assert ruoti.denominazione == "Sezione di Ruoti"
+    assert Sezione(nome="Sezione di Avigliano").denominazione == "Sezione di Avigliano"
+    admin.post(f"/soci/tessere/campagna/{ANNO}/avvisi/tesseramento/", {"sezioni": [ruoti.pk]})
+    invio = Invio.objects.get()
+    assert invio.contesto["sezione"] == "Sezione di Ruoti"
+    assert invio.destinatari.get().nome == "Direzione della Sezione di Ruoti"
+    assert "Alla Direzione della {{ sezione }}" in invio.corpo

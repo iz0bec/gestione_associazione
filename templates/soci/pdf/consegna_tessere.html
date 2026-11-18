@@ -15,9 +15,9 @@
   .destinatario { margin: 0 0 12pt 55%; }
 {% endblock %}
 {% block contenuto %}
-<div class="destinatario">Alla Direzione della<br><strong>{{ consegna.sezione.nome }}</strong>{% if consegna.sezione.comune %}<br>{{ consegna.sezione.comune }}{% endif %}</div>
+<div class="destinatario">Alla Direzione della<br><strong>{{ consegna.sezione.denominazione }}</strong>{% if consegna.sezione.comune %}<br>{{ consegna.sezione.comune }}{% endif %}</div>
 <h1>Documento di consegna n. {{ consegna.anno }}/{{ consegna.numero }} del {{ consegna.data|date:"d/m/Y" }}</h1>
-<p>Si consegnano alla {{ consegna.sezione.nome }} le seguenti tessere del tesseramento <strong>{{ consegna.anno }}</strong>:</p>
+<p>Si consegnano alla {{ consegna.sezione.denominazione }} le seguenti tessere del tesseramento <strong>{{ consegna.anno }}</strong>:</p>
 <table class="dati">
   <tr><th>Serie</th><th>Dal numero</th><th>Al numero</th><th class="num">Quantità</th><th class="num">Importo per tessera</th><th class="num">Totale</th></tr>
   <tr><td>{{ consegna.blocco.serie|default:"—" }}</td><td>{{ consegna.numero_da }}</td><td>{{ consegna.numero_a }}</td><td class="num">{{ consegna.quantita }}</td><td class="num">€ {{ consegna.prezzo_unitario|floatformat:"2g" }}</td><td class="num">€ {{ consegna.importo|floatformat:"2g" }}</td></tr>

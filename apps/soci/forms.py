@@ -446,6 +446,15 @@ class SezioneForm(StileMixin, forms.ModelForm):
         model = Sezione
         fields = ["codice", "nome", "comune", "provincia", "email", "attiva", "ordine"]
         widgets = {"provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"})}
+        labels = {"email": "Email istituzionale"}
+        help_texts = {
+            "email": "Indirizzo istituzionale della sezione (email o PEC): riceve gli avvisi "
+            "del tesseramento e le comunicazioni della federazione."
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
 
     def clean_provincia(self):
         return self.cleaned_data["provincia"].strip().upper()

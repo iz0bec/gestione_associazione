@@ -59,6 +59,12 @@ class Sezione(RisorsaApi):
     def __str__(self):
         return self.nome
 
+    @property
+    def denominazione(self):
+        """Come si scrive nei documenti: «Sezione di Ruoti» (o il nome, se lo dice già)."""
+        nome = self.nome.strip()
+        return nome if nome.lower().startswith("sezione") else f"Sezione di {nome}"
+
     @classmethod
     def predefinita(cls):
         per_ordine = cls.objects.order_by("ordine", "pk")
