@@ -190,4 +190,23 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   documenti pubblici, organigramma, verifica tessera) → F4 federazione ↔ sezione (soci e tessere,
   lotti, cariche, numeri del tesseramento, eventi provinciali) → F5 sezione ↔ sezione
   (trasferimento del socio, eventi condivisi, verifica tessera) e kit per chi integra.
+  ✅ Già fatto della F4: ruolo federazione/sezione e ciclo delle tessere (richieste, consegne,
+  ricevute, prese in carico).
+  - **Prossimo passo (F4, in programma dal 19/11/2026): popolare la base soci di una sezione via API
+    dalla federazione**, al posto del file Excel. L'ambito `soci:lettura` è dichiarato ma ancora
+    senza indirizzi.
+    - *Federazione*: indirizzo `/soci` e flusso `soci` nel feed, con l'ambito `soci:lettura`.
+      Risposte sempre cifrate e risolte per chi chiama: ogni sezione vede solo i propri soci,
+      cessati compresi.
+    - *Sezione*: la prima volta una lettura completa, poi i cambiamenti dal cursore
+      (`sincronizza_collegamenti`).
+    - *Regole*: stessi servizi e stesse regole dell'importazione Excel (iscrizione, tessere col
+      loro numero, quote incassate altrove senza ricevuta né prima nota, cessazioni con la causa).
+      Nome, cognome e codice fiscale non cambiano mai e un socio cessato non viene riattivato.
+    - *Conferma*: il primo caricamento con anteprima e conferma.
+    - *Da decidere*: gli aggiornamenti successivi entrano da soli o vanno in «documenti in arrivo»
+      da confermare?
+    - *Ordine*: prima federazione → sezione; il ritorno sezione → federazione in un secondo passo.
+    - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
+    - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.
