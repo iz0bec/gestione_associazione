@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.49] - 2026-11-18
+
+### Corretto
+- **Comunicazioni protocollate con i segnaposto**: oggetto del protocollo e allegato
+  `comunicazione.txt` riportavano il modello («Tesseramento {{ anno }}…») invece del testo
+  spedito. Le email erano corrette. Ora si registrano oggetto e testo con i valori dell'invio; con
+  un solo destinatario, esattamente il messaggio spedito.
+
 ## [1.0.48] - 2026-11-18
 
 ### Corretto

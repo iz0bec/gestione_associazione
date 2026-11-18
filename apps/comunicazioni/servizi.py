@@ -690,30 +690,43 @@ def _concludi_se_finito(invio):
     )
 
 
+def testo_da_protocollare(invio, inviati):
+    """Oggetto e testo da registrare: con un solo destinatario il messaggio spedito, altrimenti
+    composti con i segnaposto comuni dell'invio (quelli della singola persona restano visibili,
+    perché ognuno ha ricevuto il proprio)."""
+    if len(inviati) == 1:
+        contesto = contesto_destinatario(invio, inviati[0])
+    else:
+        contesto = {**contesto_generale(), **invio.contesto}
+    return " ".join(componi(invio.oggetto, contesto).split()), componi(invio.corpo, contesto)
+
+
 def _protocolla(invio):
     from apps.protocollo import servizi as protocollo
     from apps.protocollo.models import Protocollo
 
+    inviati = list(
+        invio.destinatari.filter(stato=Destinatario.Stato.INVIATO).select_related("soggetto")
+    )
     destinatari = [
         protocollo.corrispondente_da_soggetto(d.soggetto, "destinatario")
         if d.soggetto
         else {"ruolo": "destinatario", "descrizione": d.nome, "indirizzo": d.email}
-        for d in invio.destinatari.filter(stato=Destinatario.Stato.INVIATO).select_related(
-            "soggetto"
-        )
+        for d in inviati
     ]
+    oggetto, corpo = testo_da_protocollare(invio, inviati)
     p = protocollo.registra_protocollo(
         {
             "direzione": Protocollo.Direzione.USCITA,
             "mezzo": Protocollo.Mezzo.PEC
             if invio.servizio_id and invio.servizio.pec
             else Protocollo.Mezzo.EMAIL,
-            "oggetto": invio.oggetto[:500],
+            "oggetto": oggetto[:500],
         },
         destinatari,
         invio.creato_da,
     )
-    testo = f"Oggetto: {invio.oggetto}\n\n{invio.corpo}".encode()
+    testo = f"Oggetto: {oggetto}\n\n{corpo}".encode()
     protocollo.aggiungi_allegato(
         p,
         ContentFile(testo, name="comunicazione.txt"),

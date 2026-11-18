@@ -275,3 +275,24 @@ def test_richiesta_ricevuta_mostra_il_pdf_originale(admin, sezione):
                                          uuid_origine=origine, cliente_api=cliente)  # fmt: skip
     r = admin.get(f"/soci/tessere/richieste/{richiesta.pk}/pdf/")
     assert b"".join(r.streaming_content) == b"%PDF-1.4 originale della sezione"
+
+
+def test_avviso_protocollato_con_i_valori_e_non_i_segnaposto(admin, sezione, settings):
+    """Il protocollo (oggetto e comunicazione.txt) riporta il testo spedito, non il modello."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.comunicazioni.models import Invio
+
+    settings.MAILERS = {"default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}}
+    admin.post(f"/soci/tessere/campagna/{ANNO}/avvisi/tesseramento/",
+               {"sezioni": [sezione.pk], "protocolla": "on"})  # fmt: skip
+    invio = Invio.objects.get()
+    comunicazioni.conferma(invio, admin.utente)
+    comunicazioni.elabora_coda()
+    invio.refresh_from_db()
+    protocollo = invio.protocollo
+    assert protocollo is not None
+    assert protocollo.oggetto == f"Tesseramento {ANNO}: quota e richiesta delle tessere"
+    allegato = protocollo.allegati.get(nome="comunicazione.txt")
+    with allegato.file.open("rb") as f:
+        testo = f.read().decode()
+    assert "{{" not in testo and "Sezione di Avigliano" in testo and "5,00" in testo
