@@ -36,7 +36,7 @@ class StileMixin:
 CAMPI_ENTE = [
     "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva", "iscrizione_runts",
     "indirizzo", "cap", "comune", "provincia", "telefono", "email", "pec", "sito_web",
-    "federazione",
+    "federazione", "federazione_email",
 ]  # fmt: skip
 CAMPI_MODULO = [
     "modulo_intestazione", "modulo_articoli_statuto", "modulo_dichiarazione", "modulo_piede",

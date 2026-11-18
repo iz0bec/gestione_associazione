@@ -37,11 +37,16 @@ from .servizi import OperazioneNonValida
 PERMESSO = "soci.gestisci_ciclo_tessere"
 
 
+def anno_campagna():
+    """La campagna delle tessere riguarda sempre l'anno successivo a quello in corso."""
+    return date.today().year + 1
+
+
 def _anno(request, kwargs):
     try:
-        return int(kwargs.get("anno") or request.GET.get("anno") or date.today().year)
+        return int(kwargs.get("anno") or request.GET.get("anno") or anno_campagna())
     except ValueError:
-        return date.today().year
+        return anno_campagna()
 
 
 def _alla_campagna(anno):
@@ -58,7 +63,8 @@ class CampagnaView(PermessoMixin, TemplateView):
         magazzino = ciclo.riepilogo_magazzino(anno)
         ctx.update(
             anno=anno,
-            anni=range(date.today().year + 1, date.today().year - 5, -1),
+            anni=range(anno_campagna() + 1, anno_campagna() - 5, -1),
+            anno_campagna=anno_campagna(),
             listino=ciclo.listino(anno),
             quadratura=ciclo.quadratura(anno),
             magazzino=magazzino,
@@ -182,6 +188,26 @@ class PresaInCaricoView(PermessoMixin, View):
 
 def _contesto_pdf(**extra):
     return {"organizzazione": Organizzazione.corrente(), "oggi": date.today(), **extra}
+
+
+class RispostaRichiestaView(PermessoMixin, View):
+    """Lato sezione: prepara in bozza la richiesta di tessere da spedire alla federazione."""
+
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        richiesta = get_object_or_404(RichiestaTessere.objects.select_related("sezione"), pk=pk)
+        try:
+            invio = ciclo.prepara_risposta(
+                request.user, richiesta,
+                riferimento_avviso=request.POST.get("riferimento_avviso", "")[:200],
+            )  # fmt: skip
+        except OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return _alla_campagna(richiesta.anno)
+        messages.success(request, "Richiesta preparata in bozza: controllala, modificala se serve "
+                         "e confermala per spedirla alla federazione.")  # fmt: skip
+        return redirect(invio)
 
 
 class ConsegnaPdfView(PermessoMixin, View):

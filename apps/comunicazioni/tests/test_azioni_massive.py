@@ -95,24 +95,33 @@ def test_seleziona_tutte_trova_le_caselle_collegate_al_modulo():
     assert "document.querySelectorAll" in blocco and "c.form === modulo" in blocco
 
 
-@pytest.mark.django_db(transaction=True)
-def test_servizi_fuori_da_una_transazione(crea_utente):
-    """Come in produzione (ATOMIC_REQUESTS spento): i servizi aprono da soli la transazione che
-    serve a select_for_update. I test normali girano già dentro una transazione e non lo vedono."""
-    from django.contrib.auth.models import Group
+def test_le_operazioni_aprono_la_propria_transazione(segreteria, monkeypatch):
+    """In produzione le richieste non sono in una transazione (ATOMIC_REQUESTS spento): annulla,
+    modifica ed eliminazione devono aprirla da sole prima del select_for_update. Si misura la
+    profondità delle transazioni al momento del blocco rispetto a quella del test (un test
+    transazionale svuoterebbe il database e disturberebbe i test di ripristino del backup)."""
+    from django.db import connection
+    from django.db.models.query import QuerySet
 
-    from apps.accounts.ruoli import configura_ruoli
+    profondita = []
+    originale = QuerySet.select_for_update
 
-    if not Group.objects.exists():
-        configura_ruoli()
-    utente = crea_utente("fuori", ruoli=["Amministratore di sistema"])
-    a, b, c = (_bozza(utente, n) for n in range(3))
-    servizi.modifica_bozza(a, utente, oggetto="Nuovo", corpo="Testo")
-    servizi.annulla(b, utente)
-    servizi.elimina_bozza(c, utente)
-    assert Invio.objects.get(pk=a.pk).oggetto == "Nuovo"
-    assert Invio.objects.get(pk=b.pk).stato == "annullato"
-    assert not Invio.objects.filter(pk=c.pk).exists()
+    def registra_profondita(self, *args, **kwargs):
+        profondita.append(len(connection.atomic_blocks))
+        return originale(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, "select_for_update", registra_profondita)
+    operazioni = {
+        "modifica": lambda b: servizi.modifica_bozza(b, segreteria.utente, oggetto="N", corpo="T"),
+        "annulla": lambda b: servizi.annulla(b, segreteria.utente),
+        "elimina": lambda b: servizi.elimina_bozza(b, segreteria.utente),
+    }
+    for nome, operazione in operazioni.items():
+        bozza = _bozza(segreteria.utente, 9)
+        base = len(connection.atomic_blocks)
+        profondita.clear()
+        operazione(bozza)
+        assert profondita and profondita[0] > base, f"{nome}: select_for_update senza transazione"
 
 
 def test_annullate_in_un_elenco_a_parte(segreteria):

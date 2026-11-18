@@ -13,7 +13,7 @@ publiccodeYmlVersion: "0.4"
 name: Gestione Associazione
 url: "https://github.com/iz0bec/gestione_associazione"
 landingURL: "https://github.com/iz0bec/gestione_associazione"
-softwareVersion: "1.0.45"
+softwareVersion: "1.0.46"
 releaseDate: "2026-11-18"
 logo: static/img/favicon.svg
 

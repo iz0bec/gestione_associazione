@@ -90,6 +90,10 @@ dell'anagrafica). Dai pulsanti in alto:
 
 ## Campagna delle tessere con le sezioni
 
+La campagna riguarda sempre **l'anno successivo** a quello in corso: nel 2026 si prepara il
+tesseramento 2027, e la voce di menu apre direttamente quella. Gli anni precedenti si consultano
+dal selettore in alto.
+
 Per chi distribuisce le tessere alle sezioni, come la federazione (o l'ente sovraordinato di
 un'associazione con più sezioni): voce **Campagna delle tessere** del menu (anche da *Tesseramento →
 Tessere fisiche → Campagna con le sezioni*). Tutto il
@@ -141,7 +145,11 @@ carico da confermare.
   magazzino della sezione con l'importo e il riferimento alla consegna;
 - protocolla il documento di consegna e la ricevuta della federazione;
 - registra in tesoreria l'uscita del versamento, con la ricevuta come giustificativo;
-- il PDF della propria richiesta di tessere si stampa dalla campagna.
+- registra la propria **richiesta di tessere** nella campagna. Con il pulsante della busta prepara
+  in bozza la **risposta alla federazione**: il modello «Richiesta di tessere alla federazione»,
+  con il PDF della richiesta in allegato e protocollabile. Va all'email della federazione indicata
+  in *Sistema → Organizzazione*. La bozza si controlla, si modifica se serve e si conferma da
+  *Comunicazioni*.
 
 ## Attribuire le tessere
 

@@ -120,6 +120,11 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Federazione provinciale di appartenenza, es. «Potenza Matera».",
     )
+    federazione_email = models.EmailField(
+        "email della federazione",
+        blank=True,
+        help_text="Indirizzo istituzionale della federazione: riceve le richieste di tessere.",
+    )
     modulo_intestazione = models.TextField(
         "intestazione del modulo di adesione",
         blank=True,

@@ -93,6 +93,8 @@ SEGNAPOSTO = {
     "saldo": "importo ancora da versare",
     "modalita_distribuzione": "ritiro in sede, consegna a mano o spedizione",
     "note_distribuzione": "luogo, date e orari della distribuzione",
+    "federazione": "nome della federazione (da Sistema → Organizzazione)",
+    "note_richiesta": "note della richiesta di tessere",
 }
 _RE_SEGNAPOSTO = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
 

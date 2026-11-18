@@ -112,6 +112,11 @@ urlpatterns = [
         name="richiesta_pdf",
     ),
     path(
+        "tessere/richieste/<int:pk>/rispondi/",
+        viste_ciclo.RispostaRichiestaView.as_view(),
+        name="richiesta_rispondi",
+    ),
+    path(
         "tessere/importa-consegna/",
         viste_ciclo.ImportaConsegnaView.as_view(),
         name="importa_consegna",

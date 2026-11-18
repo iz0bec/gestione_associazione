@@ -5,7 +5,7 @@
 {% block azioni %}
 <div class="btn-list">
   <form method="get"><select class="form-select" name="anno" aria-label="Anno" data-invio-automatico>{% for a in anni %}<option value="{{ a }}"{% if a == anno %} selected{% endif %}>{{ a }}</option>{% endfor %}</select><noscript><button class="btn" type="submit">Vai</button></noscript></form>
-  {% if perms.soci.gestisci_ciclo_tessere %}<a class="btn" href="{% url 'soci:campagna' anno %}"><i class="ti ti-truck-delivery me-1"></i>Campagna con le sezioni</a>
+  {% if perms.soci.gestisci_ciclo_tessere %}<a class="btn" href="{% url 'soci:campagna_corrente' %}"><i class="ti ti-truck-delivery me-1"></i>Campagna con le sezioni</a>
   <a class="btn" href="{% url 'soci:importa_consegna' %}" title="File ricevuto con il documento di consegna della federazione"><i class="ti ti-file-import me-1"></i>Importa consegna</a>{% endif %}
   {% if perms.soci.gestisci_tessere_fisiche %}<a class="btn btn-primary" href="{% url 'soci:lotto_nuovo' %}"><i class="ti ti-package-import me-1"></i>Carico tessere</a>{% endif %}
 </div>

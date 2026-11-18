@@ -5,6 +5,23 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.46] - 2026-11-18
+
+### Aggiunto
+- **Risposta della sezione all'avviso di tesseramento**: dalla richiesta di tessere si prepara
+  in bozza l'email alla federazione, con il nuovo modello «Richiesta di tessere alla federazione»
+  (modificabile), il PDF della richiesta allegato e la protocollazione in uscita.
+- **Email della federazione** in *Sistema → Organizzazione*.
+
+### Modificato
+- La **campagna delle tessere** si apre sempre sull'anno successivo a quello in corso. Gli anni
+  precedenti si consultano dal selettore, con un rimando alla campagna in preparazione.
+
+### Corretto
+- Un test aggiunto nella 1.0.44 svuotava il database di prova e faceva fallire i test di
+  ripristino del backup. È sostituito da un controllo equivalente che non lo tocca. Nessun effetto
+  sulle installazioni.
+
 ## [1.0.45] - 2026-11-18
 
 ### Modificato

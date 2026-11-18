@@ -485,3 +485,45 @@ def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_a
             continue
         invii.append(invio)
     return invii, saltate
+
+
+def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None, protocolla=True):
+    """Lato sezione: la richiesta di tessere inviata alla federazione (risposta all'avviso), in
+    bozza con il PDF della richiesta allegato. Indirizzo da Sistema → Organizzazione."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.comunicazioni.models import Finalita, Modello
+    from apps.core.pdf import genera_pdf
+
+    org = Organizzazione.corrente()
+    if not org.federazione_email:
+        raise OperazioneNonValida(
+            "Manca l'email della federazione: indicarla in Sistema → Organizzazione."
+        )
+    modello = Modello.objects.filter(uso="risposta_tess", attivo=True).order_by("pk").first()
+    if modello is None:
+        raise OperazioneNonValida("Manca il modello «Richiesta di tessere alla federazione».")
+    rif = riferimento_avviso.strip()
+    contesto = {
+        "anno": richiesta.anno,
+        "sezione": richiesta.sezione.denominazione,
+        "quantita": richiesta.quantita,
+        "federazione": org.federazione or DA_INDICARE,
+        "riferimento_avviso": f" ({rif})" if rif else "",
+        "note_richiesta": richiesta.note,
+        "organizzazione": org.denominazione,
+    }
+    pdf = genera_pdf("soci/pdf/richiesta_tessere.html", {
+        "richiesta": richiesta, "listino": listino(richiesta.anno), "organizzazione": org,
+    })  # fmt: skip
+    nome_federazione = f"Federazione {org.federazione}".strip()
+    try:
+        invio = comunicazioni.crea_invio(
+            utente, oggetto=modello.oggetto, corpo=modello.corpo,
+            finalita=Finalita.ISTITUZIONALE, indirizzi=[(nome_federazione, org.federazione_email)],
+            modello=modello, protocolla=protocolla, origine="tessere_richiesta",
+            origine_id=richiesta.pk, contesto=contesto, servizio=servizio,
+            allegati=[(f"richiesta-tessere-{richiesta.anno}.pdf", pdf)],
+        )  # fmt: skip
+    except comunicazioni.OperazioneNonValida as e:
+        raise OperazioneNonValida(" ".join(e.messages)) from None
+    return invio

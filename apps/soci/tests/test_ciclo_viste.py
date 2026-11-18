@@ -194,3 +194,35 @@ def test_testo_dell_avviso_modificabile(admin, sezione, client_ruolo):
     # il tesoriere corregge il testo dell'invio ma non salva nel modello
     tesoriere = client_ruolo("Tesoriere", username="tesoriere2")
     assert "salva_modello" not in tesoriere.get(url).context["form"].fields
+
+
+def test_la_campagna_e_quella_dell_anno_successivo(admin):
+    r = admin.get("/soci/tessere/campagna/")
+    assert r.context["anno"] == ANNO + 1 == r.context["anno_campagna"]
+    r = admin.get(f"/soci/tessere/campagna/{ANNO}/")
+    assert (
+        f'href="/soci/tessere/campagna/{ANNO + 1}/"' in r.content.decode()
+    )  # rimando alla corrente
+    pagina = admin.get("/soci/tessere/fisiche/").content.decode()
+    assert 'href="/soci/tessere/campagna/"' in pagina
+
+
+def test_risposta_della_sezione_alla_federazione(admin, sezione):
+    from apps.comunicazioni.models import Invio
+    from apps.core.models import Organizzazione
+
+    richiesta = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=40,
+                                         note="Servono entro marzo.")  # fmt: skip
+    url = f"/soci/tessere/richieste/{richiesta.pk}/rispondi/"
+    r = admin.post(url, follow=True)
+    assert "email della federazione: indicarla" in r.content.decode()
+    Organizzazione.objects.filter(pk=1).update(federazione="Potenza Matera",
+                                               federazione_email="fed@example.org")  # fmt: skip
+    r = admin.post(url, {"riferimento_avviso": "prot. n. 12 del 10/01"})
+    invio = Invio.objects.get()
+    assert r.status_code == 302 and r["Location"] == invio.get_absolute_url()
+    assert invio.stato == "bozza" and invio.origine == "tessere_richiesta"
+    assert list(invio.destinatari.values_list("email", flat=True)) == ["fed@example.org"]
+    assert invio.contesto["quantita"] == 40 and invio.contesto["federazione"] == "Potenza Matera"
+    assert invio.contesto["riferimento_avviso"] == " (prot. n. 12 del 10/01)"
+    assert invio.allegati.get().nome == f"richiesta-tessere-{ANNO}.pdf"
