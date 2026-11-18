@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.48] - 2026-11-18
+
+### Corretto
+- **Richiesta di tessere firmata dal presidente sbagliato**: sulla federazione il PDF di una
+  richiesta veniva rigenerato e firmato dal presidente della federazione. Ora:
+  - una richiesta arrivata via API mostra il **PDF originale della sezione**, con la sua firma e
+    la sua intestazione, lo stesso protocollato;
+  - una richiesta registrata a mano porta la firma del **presidente della sezione** che chiede,
+    vacante se la carica non è registrata.
+
 ## [1.0.47] - 2026-11-18
 
 API di interoperabilità, fase F4 blocco A: il ciclo delle tessere passa da solo fra federazione e

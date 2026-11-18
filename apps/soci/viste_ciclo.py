@@ -262,10 +262,19 @@ class RichiestaPdfView(PermessoMixin, View):
     permission_required = PERMESSO
 
     def get(self, request, pk):
+        from django.http import FileResponse
+
         r = get_object_or_404(RichiestaTessere.objects.select_related("sezione"), pk=pk)
-        return risposta_pdf("soci/pdf/richiesta_tessere.html",
-                            _contesto_pdf(richiesta=r, listino=ciclo.listino(r.anno)),
-                            f"richiesta-tessere-{r.anno}-{r.sezione.codice}.pdf")  # fmt: skip
+        nome = f"richiesta-tessere-{r.anno}-{r.sezione.codice}.pdf"
+        if originale := ciclo.pdf_originale_richiesta(r):
+            # arrivata via API: il documento della sezione, con la sua firma e la sua intestazione
+            risposta = FileResponse(originale.open("rb"), content_type="application/pdf",
+                                    filename=nome)  # fmt: skip
+            risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+            return risposta
+        risposta = HttpResponse(ciclo.pdf_richiesta(r), content_type="application/pdf")
+        risposta["Content-Disposition"] = f'inline; filename="{nome}"'
+        return risposta
 
 
 class AvvisiView(PermessoMixin, FormView):

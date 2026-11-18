@@ -226,3 +226,52 @@ def test_risposta_della_sezione_alla_federazione(admin, sezione):
     assert invio.contesto["quantita"] == 40 and invio.contesto["federazione"] == "Potenza Matera"
     assert invio.contesto["riferimento_avviso"] == " (prot. n. 12 del 10/01)"
     assert invio.allegati.get().nome == f"richiesta-tessere-{ANNO}.pdf"
+
+
+def _presidente(nome, cognome, sezione=None):
+    from apps.anagrafica.models import Soggetto
+    from apps.organi.models import Carica, Organo
+
+    organo = Organo.objects.create(nome=f"Consiglio {cognome}", sigla="CD", tipo="consiglio",
+                                   sezione=sezione)  # fmt: skip
+    persona = Soggetto.objects.create(tipo="persona", nome=nome, cognome=cognome)
+    Carica.objects.create(organo=organo, soggetto=persona, ruolo="presidente", dal=date(2024, 1, 1))
+    return persona
+
+
+def _testo_pdf(contenuto):
+    import io
+
+    from pypdf import PdfReader
+
+    return "".join(p.extract_text() for p in PdfReader(io.BytesIO(contenuto)).pages)
+
+
+def test_richiesta_firmata_dal_presidente_della_sezione(admin, sezione):
+    """Sulla federazione (più sezioni) la richiesta la firma il presidente della sezione che
+    chiede, non quello della federazione."""
+    Sezione.objects.create(codice="PZ02", nome="Potenza", email="p@example.org")
+    _presidente("Federico", "Federale")  # presidente della federazione
+    _presidente("Silvia", "Sezionale", sezione=sezione)
+    richiesta = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=10)
+    testo = _testo_pdf(admin.get(f"/soci/tessere/richieste/{richiesta.pk}/pdf/").content)
+    assert "Sezionale" in testo and "Federale" not in testo
+
+
+def test_richiesta_ricevuta_mostra_il_pdf_originale(admin, sezione):
+    import uuid as uuid_mod
+
+    from django.core.files.base import ContentFile
+
+    from apps.api.models import ClienteApi, DocumentoRicevuto
+
+    cliente = ClienteApi.objects.create(nome="Avigliano", tipo="installazione",
+                                        origine="invito_nostro", ruolo="sezione", sezione=sezione)  # fmt: skip
+    origine = uuid_mod.uuid4()
+    documento = DocumentoRicevuto.objects.create(cliente=cliente, tipo="richiesta",
+                                                 uuid_origine=origine, dati={})  # fmt: skip
+    documento.pdf.save("r.pdf", ContentFile(b"%PDF-1.4 originale della sezione"), save=True)
+    richiesta = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=10,
+                                         uuid_origine=origine, cliente_api=cliente)  # fmt: skip
+    r = admin.get(f"/soci/tessere/richieste/{richiesta.pk}/pdf/")
+    assert b"".join(r.streaming_content) == b"%PDF-1.4 originale della sezione"

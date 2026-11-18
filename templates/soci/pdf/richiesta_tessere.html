@@ -21,6 +21,6 @@
 {% if richiesta.note %}<p>{{ richiesta.note }}</p>{% endif %}
 <div class="chiusura">
   <div>{{ richiesta.sezione.comune|default:organizzazione.comune|default:"" }}, {{ richiesta.data|date:"d/m/Y" }}</div>
-  {% firme "presidente" giorno=richiesta.data %}
+  {% firme "presidente" giorno=richiesta.data sezione=sezione_firma %}
 </div>
 {% endblock %}

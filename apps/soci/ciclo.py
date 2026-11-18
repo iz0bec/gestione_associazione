@@ -493,7 +493,6 @@ def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None,
     bozza con il PDF della richiesta allegato. Indirizzo da Sistema → Organizzazione."""
     from apps.comunicazioni import servizi as comunicazioni
     from apps.comunicazioni.models import Finalita, Modello
-    from apps.core.pdf import genera_pdf
 
     org = Organizzazione.corrente()
     if not org.federazione_email:
@@ -513,9 +512,7 @@ def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None,
         "note_richiesta": richiesta.note,
         "organizzazione": org.denominazione,
     }
-    pdf = genera_pdf("soci/pdf/richiesta_tessere.html", {
-        "richiesta": richiesta, "listino": listino(richiesta.anno), "organizzazione": org,
-    })  # fmt: skip
+    pdf = pdf_richiesta(richiesta)
     nome_federazione = f"Federazione {org.federazione}".strip()
     try:
         invio = comunicazioni.crea_invio(
@@ -528,3 +525,32 @@ def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None,
     except comunicazioni.OperazioneNonValida as e:
         raise OperazioneNonValida(" ".join(e.messages)) from None
     return invio
+
+
+def pdf_richiesta(richiesta) -> bytes:
+    """PDF della richiesta di tessere, firmato da chi chiede: nell'installazione della sezione
+    il presidente dell'associazione; in una federazione (più sezioni) il presidente della sezione
+    che chiede, dalle cariche dei suoi organi (vacante se manca), mai quello della federazione."""
+    from apps.core.pdf import genera_pdf
+
+    from .sezioni import multisezione
+
+    return genera_pdf("soci/pdf/richiesta_tessere.html", {
+        "richiesta": richiesta, "listino": listino(richiesta.anno),
+        "organizzazione": Organizzazione.corrente(),
+        "sezione_firma": richiesta.sezione if multisezione() else None,
+    })  # fmt: skip
+
+
+def pdf_originale_richiesta(richiesta):
+    """Il PDF ricevuto dalla sezione, per una richiesta arrivata via API (o None)."""
+    from apps.api.models import DocumentoRicevuto
+
+    if not richiesta.uuid_origine:
+        return None
+    documento = (
+        DocumentoRicevuto.objects.filter(tipo="richiesta", uuid_origine=richiesta.uuid_origine)
+        .exclude(pdf="")
+        .first()
+    )
+    return documento.pdf if documento else None

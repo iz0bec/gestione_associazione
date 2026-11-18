@@ -91,8 +91,7 @@ def richiesta(r: RichiestaTessere, con_pdf=True):
         "mittente": _mittente(),
     }  # fmt: skip
     if con_pdf:
-        dati["pdf"] = _pdf("soci/pdf/richiesta_tessere.html",
-                           {"richiesta": r, "listino": ciclo.listino(r.anno)})  # fmt: skip
+        dati["pdf"] = base64.b64encode(ciclo.pdf_richiesta(r)).decode()
     return dati
 
 
