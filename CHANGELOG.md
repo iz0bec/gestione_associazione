@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.53] - 2026-11-18
+
+### Aggiunto
+- **Reverse proxy nel `.env` generato**: `installa.sh --dominio NOME --proxy IP` imposta nome
+  pubblico (`ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `URL_PUBBLICO`), `HTTPS`, `PROXY_COUNT` e
+  `PROXY_FIDATI`, anche in un aggiornamento; `sezioni.sh imposta DOMINIO 'schema-{sezione}'` e
+  `imposta PROXY IP` li applicano a tutte le sezioni.
+
 ## [1.0.52] - 2026-11-18
 
 ### Aggiunto

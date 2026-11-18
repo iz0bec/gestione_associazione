@@ -169,6 +169,22 @@ bash scripts/proxmox/sezioni.sh motd           # messaggio di benvenuto con tutt
 git fetch --tags && git checkout vX.Y.Z && bash scripts/proxmox/sezioni.sh aggiorna
 ```
 
+Se le sezioni sono pubblicate da un reverse proxy HTTPS (es. Nginx Proxy Manager) con un nome
+per sezione, basta indicare una volta lo schema del nome (`{sezione}` diventa il nome
+dell'istanza) e l'indirizzo del proxy:
+
+```bash
+bash scripts/proxmox/sezioni.sh imposta DOMINIO 'sez-{sezione}.associazione.it'
+bash scripts/proxmox/sezioni.sh imposta PROXY 192.168.1.10
+bash scripts/proxmox/sezioni.sh aggiorna      # corregge anche il .env delle sezioni esistenti
+```
+
+`aggiungi` e `aggiorna` passano a `installa.sh` le opzioni `--dominio` e `--proxy`, che nel `.env`
+aggiungono il nome ad `ALLOWED_HOSTS` e `https://nome` a `CSRF_TRUSTED_ORIGINS`, impostano
+`URL_PUBBLICO`, `HTTPS=true`, `PROXY_COUNT=1` e aggiungono il proxy a `PROXY_FIDATI`. Le stesse
+opzioni valgono per una installazione singola (`installa.sh --dominio … --proxy …`). Nel proxy,
+ogni nome punta alla porta della sua sezione (in `https` se l'istanza ha il certificato).
+
 Prima di ogni aggiornamento si fa un backup per istanza; se una non riesce, le altre proseguono e
 in fondo compare l'elenco di quelle non aggiornate. Con 2 worker, ogni sezione occupa circa
 400 MB di RAM fra servizio web e pianificatore: 8 GB bastano per una decina di sezioni.

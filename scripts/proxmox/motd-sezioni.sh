@@ -29,7 +29,7 @@ _gs_motd() {
   echo "  PostgreSQL  ${pg}  ${d}(un database per sezione)${n}"
   echo "  ${d}──────────────────────────────────────────────────────────────────────${n}"
   printf "  ${d}%-20s %-30s %-8s %-5s %s${n}\n" "sezione" "indirizzo" "versione" "w p" "ultimo backup"
-  grep -Ev '^[[:space:]]*(#|$)' /etc/gestione-sezioni.conf 2>/dev/null | while read -r i p _; do
+  grep -Ev '^[[:space:]]*(#|$)|=' /etc/gestione-sezioni.conf 2>/dev/null | while read -r i p _; do
     v=$(grep -m1 '^APP_VERSIONE' "/opt/sezione-$i/config/settings.py" 2>/dev/null | cut -d'"' -f2)
     proto=http; [ -f "/etc/sezione-$i/tls/cert.pem" ] && proto=https
     bk=$(ls -1t "/var/lib/sezione-$i/backup" 2>/dev/null | head -1)

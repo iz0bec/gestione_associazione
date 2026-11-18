@@ -43,6 +43,8 @@ DIR_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ISTANZA=""     # più installazioni sullo stesso host (es. una per sezione): --istanza potenza
 WORKER=3
 DB_SCELTO=""
+DOMINIO=""     # nome pubblico dietro un reverse proxy HTTPS (es. Nginx Proxy Manager)
+PROXY=""       # IP del reverse proxy, unico da cui si accetta X-Forwarded-For
 
 uso() {
   cat <<EOF
@@ -51,6 +53,10 @@ Uso: $0 [opzioni]
   --indirizzo IP      indirizzo di ascolto (predefinito 0.0.0.0; 127.0.0.1 dietro reverse proxy;
                       negli aggiornamenti resta quello in uso)
   --host NOMI         nomi o IP aggiuntivi per ALLOWED_HOSTS, separati da virgola
+  --dominio NOME      nome pubblico (es. gestione.associazione.it) servito in HTTPS da un reverse
+                      proxy: va in ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS e URL_PUBBLICO
+  --proxy IP          reverse proxy davanti all'applicazione: HTTPS=true, PROXY_COUNT=1, PROXY_FIDATI.
+                      Con --dominio e --proxy anche un aggiornamento corregge il .env esistente
   --db NOME           nome del database (predefinito ${DB_NOME})
   --istanza NOME      una di più installazioni sullo stesso host (lettere minuscole, cifre, «-»):
                       servizio gestione-NOME, codice in /opt/sezione-NOME, dati in
@@ -85,6 +91,8 @@ while [[ $# -gt 0 ]]; do
     --porta) PORTA="$2"; shift 2 ;;
     --indirizzo) INDIRIZZO="$2"; shift 2 ;;
     --host) HOST_EXTRA="$2"; shift 2 ;;
+    --dominio) DOMINIO="$2"; shift 2 ;;
+    --proxy) PROXY="$2"; shift 2 ;;
     --db) DB_SCELTO="$2"; shift 2 ;;
     --istanza) ISTANZA="$2"; shift 2 ;;
     --worker) WORKER="$2"; shift 2 ;;
@@ -118,6 +126,8 @@ if [[ -n "$ISTANZA" ]]; then
 fi
 [[ -n "$DB_SCELTO" ]] && DB_NOME="$DB_SCELTO"
 [[ "$WORKER" =~ ^[1-9][0-9]?$ ]] || { echo "Numero di worker non valido."; exit 1; }
+[[ -z "$DOMINIO" || "$DOMINIO" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo "Dominio non valido: ${DOMINIO}"; exit 1; }
+[[ -z "$PROXY" || "$PROXY" =~ ^[0-9a-fA-F.:/]+$ ]] || { echo "Proxy non valido: ${PROXY}"; exit 1; }
 DESCRIZIONE="Gestione Associazione${ISTANZA:+ (${ISTANZA})}"
 
 passo() { echo -e "\n\033[1;34m==> $*\033[0m"; }
@@ -238,6 +248,30 @@ BACKUP_ROOT=${DIR_DATI}/backup
 EOF
   umask 022
 fi
+
+# reverse proxy: valori impostati (o aggiunti alle liste) anche nel .env di un'installazione esistente
+env_imposta() {
+  if grep -q "^$1=" "${DIR_APP}/.env"; then sed -i "s|^$1=.*|$1=$2|" "${DIR_APP}/.env"
+  else echo "$1=$2" >> "${DIR_APP}/.env"; fi
+}
+env_aggiungi() {
+  local attuale; attuale="$(grep -m1 "^$1=" "${DIR_APP}/.env" | cut -d= -f2- || true)"
+  [[ ",${attuale}," == *",$2,"* ]] || env_imposta "$1" "${attuale:+${attuale},}$2"
+}
+if [[ -n "$DOMINIO" || -n "$PROXY" ]]; then
+  passo "Reverse proxy (.env)"
+  if [[ -n "$DOMINIO" ]]; then
+    env_aggiungi ALLOWED_HOSTS "$DOMINIO"
+    env_aggiungi CSRF_TRUSTED_ORIGINS "https://${DOMINIO}"
+    env_imposta URL_PUBBLICO "https://${DOMINIO}"
+  fi
+  if [[ -n "$PROXY" ]]; then
+    env_imposta HTTPS true
+    env_imposta PROXY_COUNT 1
+    env_aggiungi PROXY_FIDATI "$PROXY"
+  fi
+  grep -E '^(ALLOWED_HOSTS|CSRF_TRUSTED_ORIGINS|URL_PUBBLICO|HTTPS|PROXY_COUNT|PROXY_FIDATI)=' "${DIR_APP}/.env"
+fi
 chown -R "$UTENTE:$UTENTE" "$DIR_APP" "$DIR_DATI"
 chmod 600 "${DIR_APP}/.env"
 
@@ -348,4 +382,5 @@ if [[ -n "$PASSWORD_ADMIN" ]]; then
   echo "Primo accesso: utente ${ADMIN}, password ${PASSWORD_ADMIN}"
   echo "(salvate anche in /root/${NOME}-credenziali.txt: cambiarla al primo accesso e cancellare il file)"
 fi
+[[ -n "$DOMINIO" ]] && echo "Indirizzo pubblico: https://${DOMINIO}/ (reverse proxy${PROXY:+ ${PROXY}} → ${PROTO}://$(hostname -I | awk '{print $1}'):${PORTA})"
 echo "Configurazione: ${DIR_APP}/.env  ·  Log: journalctl -u ${NOME}  ·  Backup: ${DIR_DATI}/backup"
