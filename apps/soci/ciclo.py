@@ -424,17 +424,36 @@ AVVISI = {
 }
 
 
+def modello_avviso(tipo):
+    from apps.comunicazioni.models import Modello
+
+    return Modello.objects.filter(uso=AVVISI[tipo][0], attivo=True).order_by("pk").first()
+
+
 def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_avviso="",
-                   nuova_scadenza=None, servizio=None, protocolla=True):  # fmt: skip
+                   nuova_scadenza=None, servizio=None, protocolla=True, oggetto=None, corpo=None,
+                   salva_modello=False):  # fmt: skip
     """Un invio in bozza per ogni sezione (o consegna, per l'attribuzione), con il modello del
     ciclo: si confermano poi da Comunicazioni come gli altri invii. Restituisce (invii, saltate)."""
     from apps.comunicazioni import servizi as comunicazioni
-    from apps.comunicazioni.models import Finalita, Modello
+    from apps.comunicazioni.models import Finalita
 
-    uso, origine = AVVISI[tipo]
-    modello = Modello.objects.filter(uso=uso, attivo=True).order_by("pk").first()
+    _, origine = AVVISI[tipo]
+    modello = modello_avviso(tipo)
     if modello is None:
         raise OperazioneNonValida("Manca il modello del messaggio (Comunicazioni → Modelli).")
+    oggetto = (oggetto or modello.oggetto).strip()
+    corpo = corpo or modello.corpo
+    if salva_modello and (oggetto, corpo) != (modello.oggetto, modello.corpo):
+        if not utente.has_perm("comunicazioni.change_modello"):
+            raise OperazioneNonValida("Non hai il permesso di modificare i modelli.")
+        prima = {"oggetto": modello.oggetto, "corpo": modello.corpo}
+        modello.oggetto, modello.corpo = oggetto, corpo
+        modello.save(update_fields=["oggetto", "corpo"])
+        registra(Azione.MODIFICA, modello, utente=utente, campi={
+            k: {"prima": v, "dopo": getattr(modello, k)} for k, v in prima.items()
+            if v != getattr(modello, k)
+        })  # fmt: skip
     base = contesto_anno(anno)
     if tipo == "sollecito":
         base |= {"riferimento_avviso": riferimento_avviso.strip() or DA_INDICARE,
@@ -455,7 +474,7 @@ def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_a
             contesto |= contesto_consegna(documento)
         try:
             invio = comunicazioni.crea_invio(
-                utente, oggetto=modello.oggetto, corpo=modello.corpo,
+                utente, oggetto=oggetto, corpo=corpo,
                 finalita=Finalita.ISTITUZIONALE, soggetti=soggetti, indirizzi=indirizzi,
                 modello=modello, protocolla=protocolla, origine=origine,
                 origine_id=documento.pk if documento else sezione.pk, contesto=contesto,

@@ -165,3 +165,32 @@ def test_denominazione_della_sezione_negli_avvisi(admin):
     assert invio.contesto["sezione"] == "Sezione di Ruoti"
     assert invio.destinatari.get().nome == "Direzione della Sezione di Ruoti"
     assert "Alla Direzione della {{ sezione }}" in invio.corpo
+
+
+def test_testo_dell_avviso_modificabile(admin, sezione, client_ruolo):
+    from apps.comunicazioni.models import Invio, Modello
+
+    url = f"/soci/tessere/campagna/{ANNO}/avvisi/tesseramento/"
+    modello = Modello.objects.get(uso="tesseramento")
+    form = admin.get(url).context["form"]
+    assert form.initial["corpo"] == modello.corpo and "salva_modello" in form.fields
+    # solo per questo invio
+    admin.post(url, {"sezioni": [sezione.pk], "oggetto": "Tesseramento {{ anno }}",
+                     "corpo": "Cara {{ sezione }}, quota {{ quota_tessera }}."})  # fmt: skip
+    invio = Invio.objects.get()
+    assert invio.corpo == "Cara {{ sezione }}, quota {{ quota_tessera }}."
+    modello.refresh_from_db()
+    assert "Alla Direzione" in modello.corpo  # il modello non cambia
+    # anche nel modello
+    admin.post(url, {"sezioni": [sezione.pk], "oggetto": "Nuovo oggetto {{ anno }}",
+                     "corpo": "Testo predefinito {{ sezione }}", "salva_modello": "on"})  # fmt: skip
+    modello.refresh_from_db()
+    assert (modello.oggetto, modello.corpo) == (
+        "Nuovo oggetto {{ anno }}",
+        "Testo predefinito {{ sezione }}",
+    )
+    r = admin.post(url, {"sezioni": [sezione.pk], "corpo": "{{ inventato }}"})
+    assert "Segnaposto sconosciuti" in r.content.decode()
+    # il tesoriere corregge il testo dell'invio ma non salva nel modello
+    tesoriere = client_ruolo("Tesoriere", username="tesoriere2")
+    assert "salva_modello" not in tesoriere.get(url).context["form"].fields

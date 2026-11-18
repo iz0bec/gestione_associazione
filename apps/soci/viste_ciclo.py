@@ -252,21 +252,24 @@ class AvvisiView(PermessoMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
-        return {**super().get_form_kwargs(), "tipo": self.tipo, "anno": self.anno}
+        puo = self.request.user.has_perm("comunicazioni.change_modello")
+        return {**super().get_form_kwargs(), "tipo": self.tipo, "anno": self.anno,
+                "puo_modificare_modello": puo}  # fmt: skip
 
     def get_initial(self):
-        from .models import Sezione
-
+        modello = ciclo.modello_avviso(self.tipo)
+        testo = {"oggetto": modello.oggetto, "corpo": modello.corpo} if modello else {}
         if self.tipo == "sollecito":
-            return {"sezioni": list(ciclo.sezioni_senza_richiesta(self.anno))}
+            return {"sezioni": list(ciclo.sezioni_senza_richiesta(self.anno)), **testo}
         if self.tipo == "tesseramento":
-            return {"sezioni": list(Sezione.objects.filter(attiva=True))}
-        return {"consegne": list(ConsegnaTessere.objects.filter(anno=self.anno))}
+            return {"sezioni": list(Sezione.objects.filter(attiva=True)), **testo}
+        return {"consegne": list(ConsegnaTessere.objects.filter(anno=self.anno)), **testo}
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             anno=self.anno, tipo=self.tipo, titolo=self.TITOLI[self.tipo],
-            contesto=ciclo.contesto_anno(self.anno), **kwargs,
+            contesto=ciclo.contesto_anno(self.anno), modello=ciclo.modello_avviso(self.tipo),
+            **kwargs,
         )  # fmt: skip
 
     def form_valid(self, form):
@@ -277,7 +280,8 @@ class AvvisiView(PermessoMixin, FormView):
                 sezioni=d.get("sezioni") or (), consegne=d.get("consegne") or (),
                 riferimento_avviso=d.get("riferimento_avviso") or "",
                 nuova_scadenza=d.get("nuova_scadenza"), servizio=d.get("servizio"),
-                protocolla=d.get("protocolla"),
+                protocolla=d.get("protocolla"), oggetto=d.get("oggetto"), corpo=d.get("corpo"),
+                salva_modello=d.get("salva_modello", False),
             )  # fmt: skip
         except OperazioneNonValida as e:
             form.add_error(None, " ".join(e.messages))

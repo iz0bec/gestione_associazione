@@ -104,8 +104,10 @@ spediscono per email e PEC dal protocollo.
      negli avvisi.
 2. **Avviso di nuovo tesseramento** (*Avvisi alle sezioni*): un messaggio per sezione, all'indirizzo
    della sezione con il **presidente** in copia, protocollato in uscita. I messaggi restano in
-   bozza e si confermano da *Comunicazioni*. I testi sono in *Comunicazioni → Modelli* e si possono
-   cambiare. Ciò che manca (ad esempio la delibera) compare come «[da indicare]».
+   bozza e si confermano da *Comunicazioni*. Il **testo** compare nella pagina dell'avviso già
+   compilato dal modello e si può correggere per quell'invio. Con «Salva il testo anche nel
+   modello» la correzione resta per le volte successive: lo vedono Amministratore e Segretario, che
+   possono cambiare i modelli. Ogni singola bozza si può ancora correggere da *Comunicazioni*. Ciò che manca (ad esempio la delibera) compare come «[da indicare]».
 3. **Richieste delle sezioni** (*Registra*): quante tessere chiede ogni sezione, anche più volte
    nell'anno. Il **sollecito** propone da solo le sezioni che non hanno ancora chiesto.
 4. **Ordine alla sede nazionale**: somma le richieste non ancora ordinate, con il dettaglio per

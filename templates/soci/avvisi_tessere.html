@@ -17,6 +17,7 @@
   </div>
   <div class="col-lg-5">
     <div class="card"><div class="card-body small">
+      <p>Il <strong>testo</strong> qui a sinistra viene dal modello{% if modello %} «{{ modello.nome }}»{% endif %} e si può correggere per questo invio{% if perms.comunicazioni.change_modello %}; con «Salva il testo anche nel modello» diventa quello predefinito{% endif %}.{% if modello and perms.comunicazioni.change_modello %} <a href="{% url 'comunicazioni:modello' modello.pk %}">Apri il modello</a>.{% endif %}</p>
       <p>Si prepara <strong>un messaggio per ogni sezione</strong>{% if tipo == 'attribuzione' %} (per ogni consegna){% endif %}, all'indirizzo della sezione e in copia al <strong>presidente in carica</strong>, con il modello «{{ titolo }}» di <a href="{% url 'comunicazioni:modelli' %}">Comunicazioni → Modelli</a>.</p>
       <p>I messaggi restano <strong>in bozza</strong>: li controllate e confermate da Comunicazioni; con «protocolla» ognuno riceve il suo protocollo in uscita.</p>
       <p class="mb-1">Dati dell'anno usati nel testo:</p>

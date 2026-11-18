@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.43] - 2026-11-18
+
+### Aggiunto
+- **Testo degli avvisi del tesseramento modificabile** dalla pagina dell'avviso: oggetto e testo
+  vengono dal modello e si correggono per quell'invio. Chi può modificare i modelli può salvarli
+  anche nel modello predefinito, con la traccia nel registro attività. I segnaposto vengono
+  controllati e c'è il collegamento diretto al modello.
+
 ## [1.0.42] - 2026-11-18
 
 ### Aggiunto

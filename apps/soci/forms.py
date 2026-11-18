@@ -739,8 +739,16 @@ class AvvisiTessereForm(StileMixin, forms.Form):
         help_text="Con un servizio PEC parte per PEC a chi ha un indirizzo PEC.",
     )  # fmt: skip
     protocolla = forms.BooleanField(label="Protocolla in uscita", required=False, initial=True)
+    oggetto = forms.CharField(max_length=200, required=False)
+    corpo = forms.CharField(
+        label="Testo", required=False, widget=forms.Textarea(attrs={"rows": 14})
+    )
+    salva_modello = forms.BooleanField(
+        label="Salva il testo anche nel modello", required=False,
+        help_text="Diventa il testo predefinito delle prossime volte.",
+    )  # fmt: skip
 
-    def __init__(self, *args, tipo, anno, **kwargs):
+    def __init__(self, *args, tipo, anno, puo_modificare_modello=False, **kwargs):
         from apps.core.models import ServizioInvio
 
         from .models import ConsegnaTessere
@@ -751,6 +759,13 @@ class AvvisiTessereForm(StileMixin, forms.Form):
         self.fields["consegne"].queryset = ConsegnaTessere.objects.filter(anno=anno).select_related(
             "sezione"
         )
+        from apps.comunicazioni.servizi import SEGNAPOSTO
+
+        self.fields["corpo"].help_text = "Segnaposto: " + ", ".join(
+            "{{ " + k + " }}" for k in SEGNAPOSTO
+        )
+        if not puo_modificare_modello:
+            del self.fields["salva_modello"]
         if tipo == "attribuzione":
             del (
                 self.fields["sezioni"],
@@ -766,6 +781,10 @@ class AvvisiTessereForm(StileMixin, forms.Form):
         dati = super().clean()
         if not (dati.get("sezioni") or dati.get("consegne")):
             raise forms.ValidationError("Scegliere almeno un destinatario.")
+        from apps.comunicazioni.servizi import segnaposto_sconosciuti
+
+        if sconosciuti := segnaposto_sconosciuti(dati.get("oggetto", "") + dati.get("corpo", "")):
+            self.add_error("corpo", f"Segnaposto sconosciuti: {', '.join(sconosciuti)}.")
         return dati
 
 
