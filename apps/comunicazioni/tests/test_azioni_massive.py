@@ -113,3 +113,13 @@ def test_servizi_fuori_da_una_transazione(crea_utente):
     assert Invio.objects.get(pk=a.pk).oggetto == "Nuovo"
     assert Invio.objects.get(pk=b.pk).stato == "annullato"
     assert not Invio.objects.filter(pk=c.pk).exists()
+
+
+def test_annullate_in_un_elenco_a_parte(segreteria):
+    a, b = _bozza(segreteria.utente, 1), _bozza(segreteria.utente, 2)
+    servizi.annulla(b, segreteria.utente)
+    tutte = segreteria.get("/comunicazioni/")
+    assert [i.pk for i in tutte.context["invii"]] == [a.pk]
+    assert tutte.context["n_annullate"] == 1 and "Annullate" in tutte.content.decode()
+    annullate = segreteria.get("/comunicazioni/?stato=annullato")
+    assert [i.pk for i in annullate.context["invii"]] == [b.pk]

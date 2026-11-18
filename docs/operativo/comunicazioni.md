@@ -60,6 +60,9 @@ conferma non si modifica più: si annulla e se ne prepara un'altra.
 Lo stato di ogni destinatario (in attesa, inviato, errore, escluso) resta nel registro. Se il server di
 posta non risponde, il programma ritenta tre volte; poi si può usare **Ritenta gli errori**.
 
+Le comunicazioni **annullate** non compaiono fra *Tutte*: hanno una scheda a parte, **Annullate**,
+in fondo alle schede, con il loro numero.
+
 **Più comunicazioni insieme**: nell'elenco si selezionano le bozze e quelle in coda, con la casella a
 sinistra o con *seleziona tutte* nell'intestazione. Poi si sceglie:
 

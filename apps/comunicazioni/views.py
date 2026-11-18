@@ -86,11 +86,14 @@ class InviiView(PermessoMixin, ListView):
         )
         if stato := self.request.GET.get("stato"):
             qs = qs.filter(stato=stato)
+        else:  # le annullate hanno un elenco a parte
+            qs = qs.exclude(stato=Invio.Stato.ANNULLATO)
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["stati"] = Invio.Stato.choices
+        ctx["stati"] = [(v, e) for v, e in Invio.Stato.choices if v != Invio.Stato.ANNULLATO]
+        ctx["n_annullate"] = Invio.objects.filter(stato=Invio.Stato.ANNULLATO).count()
         ctx["stato"] = self.request.GET.get("stato", "")
         ctx["oggi"] = anniversari.eventi(giorni=0)
         return ctx

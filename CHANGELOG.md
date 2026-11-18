@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.45] - 2026-11-18
+
+### Modificato
+- **Comunicazioni annullate in un elenco a parte**: non compaiono più fra *Tutte*, ma nella scheda
+  *Annullate*, in fondo, con il loro numero.
+
 ## [1.0.44] - 2026-11-18
 
 ### Corretto

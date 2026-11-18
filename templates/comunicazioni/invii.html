@@ -18,6 +18,7 @@
     <ul class="nav nav-pills card-header-pills">
       <li class="nav-item"><a class="nav-link{% if not stato %} active{% endif %}" href="?">Tutte</a></li>
       {% for v, e in stati %}<li class="nav-item"><a class="nav-link{% if stato == v %} active{% endif %}" href="?stato={{ v }}">{{ e }}</a></li>{% endfor %}
+      <li class="nav-item ms-auto"><a class="nav-link{% if stato == 'annullato' %} active{% endif %}" href="?stato=annullato"><i class="ti ti-archive me-1"></i>Annullate{% if n_annullate %} <span class="badge bg-secondary-lt ms-1">{{ n_annullate }}</span>{% endif %}</a></li>
     </ul>
   </div>
   {% if perms.comunicazioni.conferma_invio %}
