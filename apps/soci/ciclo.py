@@ -1,0 +1,341 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Ciclo delle tessere fra sede nazionale, federazione e sezioni
+# *              (docs/analisi/ciclo-tessere.md): richieste delle sezioni, ordine al nazionale,
+# *              magazzino dei blocchi ricevuti, consegne con il lotto della sezione, pagamenti e
+# *              quadratura. Funziona per intero senza API: documenti PDF e file della consegna.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+import csv
+import io
+from dataclasses import dataclass, field
+from decimal import Decimal
+
+from django.db import transaction
+from django.db.models import Sum
+
+from apps.core.audit import Azione, registra
+from apps.core.models import Organizzazione
+from apps.core.numerazione import prossimo_numero
+
+from .models import (
+    SEQ_CONSEGNA,
+    SEQ_ORDINE,
+    BloccoTessere,
+    ConsegnaTessere,
+    ListinoTessere,
+    OrdineTessere,
+    RichiestaTessere,
+    Sezione,
+)
+from .servizi import MASSIMO_PER_LOTTO, OperazioneNonValida, carica_lotto
+
+INTESTAZIONE_CSV = ["anno", "serie", "numero_da", "numero_a", "cifre", "prezzo_unitario",
+                    "consegna", "data", "fornitore"]  # fmt: skip
+
+
+def listino(anno):
+    return ListinoTessere.objects.filter(anno=anno).first()
+
+
+def prezzo_sezioni(anno):
+    voce = listino(anno)
+    return voce.prezzo_sezioni if voce else Decimal("0")
+
+
+# --- richieste ------------------------------------------------------------------------------
+
+
+def registra_richiesta(utente, *, anno, sezione, quantita, data=None, protocollo=None, note=""):
+    if quantita < 1:
+        raise OperazioneNonValida("Indicare almeno una tessera.")
+    richiesta = RichiestaTessere(
+        anno=anno, sezione=sezione, quantita=quantita, protocollo=protocollo, note=note,
+        creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    if data:
+        richiesta.data = data
+    richiesta.save()
+    registra(Azione.CREAZIONE, richiesta, utente=utente, quantita=quantita, anno=anno,
+             sezione=sezione.codice)  # fmt: skip
+    return richiesta
+
+
+# --- magazzino ------------------------------------------------------------------------------
+
+
+def _sovrapposti(qs, numero_da, numero_a):
+    return qs.filter(numero_da__lte=numero_a, numero_a__gte=numero_da)
+
+
+def carica_blocco(utente, *, anno, numero_da, numero_a, serie="", cifre=0, **dati):
+    """Blocco di tessere arrivato dalla sede nazionale, in magazzino finché non si consegna."""
+    serie = (serie or "").strip().upper()
+    if numero_a < numero_da:
+        raise OperazioneNonValida("Il numero finale precede quello iniziale.")
+    with transaction.atomic():
+        stesso_anno = BloccoTessere.objects.select_for_update().filter(anno=anno, serie=serie)
+        altri = _sovrapposti(stesso_anno, numero_da, numero_a)
+        if altri.exists():
+            raise OperazioneNonValida(f"I numeri si sovrappongono al blocco {altri.first()}.")
+        blocco = BloccoTessere.objects.create(
+            anno=anno, serie=serie, numero_da=numero_da, numero_a=numero_a, cifre=cifre,
+            creato_da=utente, modificato_da=utente, **dati,
+        )  # fmt: skip
+        registra(Azione.CREAZIONE, blocco, utente=utente, descrizione=f"Blocco di tessere {blocco}",
+                 quantita=blocco.quantita)  # fmt: skip
+    return blocco
+
+
+def intervalli_liberi(blocco):
+    """Intervalli del blocco non ancora consegnati: [(da, a)]."""
+    liberi, inizio = [], blocco.numero_da
+    for da, a in blocco.consegne.order_by("numero_da").values_list("numero_da", "numero_a"):
+        if da > inizio:
+            liberi.append((inizio, da - 1))
+        inizio = max(inizio, a + 1)
+    if inizio <= blocco.numero_a:
+        liberi.append((inizio, blocco.numero_a))
+    return liberi
+
+
+def in_magazzino(blocco):
+    return sum(a - da + 1 for da, a in intervalli_liberi(blocco))
+
+
+# --- consegne -------------------------------------------------------------------------------
+
+
+def consegna(utente, *, blocco, sezione, numero_da, numero_a, data=None, modalita=None,
+             note_distribuzione="", prezzo_unitario=None):  # fmt: skip
+    """Consegna di un intervallo del magazzino a una sezione: documento numerato e lotto della
+    sezione con le sue tessere. Possibile anche senza pagamento (la quadratura lo mostra)."""
+    if numero_a < numero_da:
+        raise OperazioneNonValida("Il numero finale precede quello iniziale.")
+    if numero_a - numero_da + 1 > MASSIMO_PER_LOTTO:
+        raise OperazioneNonValida(
+            f"Una consegna può contenere al massimo {MASSIMO_PER_LOTTO} tessere."
+        )
+    with transaction.atomic():
+        blocco = BloccoTessere.objects.select_for_update().get(pk=blocco.pk)
+        if not (blocco.numero_da <= numero_da and numero_a <= blocco.numero_a):
+            raise OperazioneNonValida(
+                f"I numeri vanno scelti dentro il blocco ({blocco.numero_da}–{blocco.numero_a})."
+            )
+        gia = _sovrapposti(blocco.consegne.all(), numero_da, numero_a).first()
+        if gia is not None:
+            raise OperazioneNonValida(
+                f"Una parte dei numeri è già stata consegnata ({gia}: "
+                f"{gia.numero_da}–{gia.numero_a})."
+            )
+        if prezzo_unitario is None:
+            prezzo_unitario = prezzo_sezioni(blocco.anno)
+        numero = prossimo_numero(SEQ_CONSEGNA, blocco.anno)
+        org = Organizzazione.corrente()
+        lotto = carica_lotto(
+            utente, anno=blocco.anno, numero_da=numero_da, numero_a=numero_a, serie=blocco.serie,
+            cifre=blocco.cifre, costo_unitario=prezzo_unitario, sezione=sezione,
+            fornitore=(org.denominazione_breve or org.denominazione)[:100],
+            riferimento=f"Consegna n. {blocco.anno}/{numero}",
+        )  # fmt: skip
+        documento = ConsegnaTessere(
+            anno=blocco.anno, numero=numero, sezione=sezione, blocco=blocco, numero_da=numero_da,
+            numero_a=numero_a, prezzo_unitario=prezzo_unitario, lotto=lotto,
+            modalita=modalita or ConsegnaTessere.Modalita.RITIRO,
+            note_distribuzione=note_distribuzione, creato_da=utente, modificato_da=utente,
+        )  # fmt: skip
+        if data:
+            documento.data = data
+        documento.save()
+        registra(Azione.CREAZIONE, documento, utente=utente, quantita=documento.quantita,
+                 sezione=sezione.codice, importo=str(documento.importo))  # fmt: skip
+    return documento
+
+
+def prendi_in_carico(documento, utente, data):
+    documento.presa_in_carico_il = data
+    documento.modificato_da = utente
+    documento.save(update_fields=["presa_in_carico_il", "modificato_da", "modificato_il"])
+    registra(Azione.MODIFICA, documento, utente=utente, presa_in_carico_il=str(data))
+
+
+def csv_consegna(documento) -> bytes:
+    """File con i numeri della consegna, da importare nell'installazione della sezione."""
+    uscita = io.StringIO()
+    scrittore = csv.writer(uscita, delimiter=";")
+    scrittore.writerow(INTESTAZIONE_CSV)
+    org = Organizzazione.corrente()
+    scrittore.writerow([
+        documento.anno, documento.blocco.serie, documento.numero_da, documento.numero_a,
+        documento.blocco.cifre, f"{documento.prezzo_unitario:.2f}",
+        f"{documento.anno}/{documento.numero}", documento.data.isoformat(),
+        org.denominazione_breve or org.denominazione,
+    ])  # fmt: skip
+    return uscita.getvalue().encode("utf-8")
+
+
+def leggi_csv_consegna(contenuto: bytes):
+    """Righe del file di consegna, controllate: [{anno, serie, numero_da, …}]."""
+    try:
+        testo = contenuto.decode("utf-8-sig")
+    except UnicodeDecodeError as e:
+        raise OperazioneNonValida("Il file non è in UTF-8.") from e
+    lettore = csv.DictReader(io.StringIO(testo), delimiter=";")
+    if lettore.fieldnames is None or set(INTESTAZIONE_CSV) - set(lettore.fieldnames):
+        raise OperazioneNonValida("Il file non è un file di consegna delle tessere.")
+    righe = []
+    for n, riga in enumerate(lettore, start=2):
+        try:
+            righe.append({
+                "anno": int(riga["anno"]), "serie": riga["serie"].strip(),
+                "numero_da": int(riga["numero_da"]), "numero_a": int(riga["numero_a"]),
+                "cifre": int(riga["cifre"] or 0),
+                "prezzo_unitario": Decimal(riga["prezzo_unitario"]),
+                "consegna": riga["consegna"].strip(), "data": riga["data"].strip(),
+                "fornitore": riga["fornitore"].strip()[:100],
+            })  # fmt: skip
+        except (ValueError, ArithmeticError) as e:
+            raise OperazioneNonValida(f"Riga {n} del file non valida.") from e
+    if not righe:
+        raise OperazioneNonValida("Il file non contiene consegne.")
+    return righe
+
+
+def importa_consegna(utente, contenuto: bytes, *, sezione=None, esegui=False):
+    """Lato sezione: carica i lotti dal file di consegna della federazione. Senza `esegui`
+    restituisce solo l'anteprima (e i controlli), senza salvare nulla."""
+    righe = leggi_csv_consegna(contenuto)
+    lotti = []
+    with transaction.atomic():
+        for r in righe:
+            lotti.append(carica_lotto(
+                utente, anno=r["anno"], numero_da=r["numero_da"], numero_a=r["numero_a"],
+                serie=r["serie"], cifre=r["cifre"], costo_unitario=r["prezzo_unitario"],
+                sezione=sezione, fornitore=r["fornitore"] or "Federazione",
+                riferimento=f"Consegna n. {r['consegna']} del {r['data']}",
+            ))  # fmt: skip
+        if not esegui:
+            transaction.set_rollback(True)
+    return righe, lotti
+
+
+# --- ordine al nazionale --------------------------------------------------------------------
+
+
+def da_ordinare(anno):
+    """Per sezione: richiesto nell'anno meno quanto già ordinato (le integrazioni producono un
+    ordine supplementare)."""
+    richiesto = {
+        r["sezione"]: r["totale"]
+        for r in RichiestaTessere.objects.filter(anno=anno)
+        .values("sezione")
+        .annotate(totale=Sum("quantita"))
+    }
+    ordinato = {}
+    for ordine in OrdineTessere.objects.filter(anno=anno):
+        for riga in ordine.dettaglio:
+            ordinato[riga["sezione"]] = ordinato.get(riga["sezione"], 0) + riga["quantita"]
+    sezioni = Sezione.objects.in_bulk(richiesto)
+    return [
+        {"sezione": pk, "codice": sezioni[pk].codice, "nome": sezioni[pk].nome,
+         "quantita": richiesto[pk] - ordinato.get(pk, 0)}
+        for pk in sorted(richiesto, key=lambda pk: (sezioni[pk].ordine, sezioni[pk].nome))
+        if richiesto[pk] - ordinato.get(pk, 0) > 0
+    ]  # fmt: skip
+
+
+def crea_ordine(utente, *, anno, data=None, note=""):
+    with transaction.atomic():
+        dettaglio = da_ordinare(anno)
+        quantita = sum(r["quantita"] for r in dettaglio)
+        if not quantita:
+            raise OperazioneNonValida("Nessuna richiesta da ordinare per questo anno.")
+        ordine = OrdineTessere(
+            anno=anno, numero=prossimo_numero(SEQ_ORDINE, anno), quantita=quantita,
+            dettaglio=dettaglio, note=note, creato_da=utente, modificato_da=utente,
+        )  # fmt: skip
+        if data:
+            ordine.data = data
+        ordine.save()
+        registra(Azione.CREAZIONE, ordine, utente=utente, quantita=quantita)
+    return ordine
+
+
+# --- quadratura -----------------------------------------------------------------------------
+
+
+@dataclass
+class RigaQuadratura:
+    sezione: Sezione
+    richieste: int = 0
+    consegnate: int = 0
+    dovuto: Decimal = Decimal("0")
+    pagato: Decimal = Decimal("0")
+    consegne_senza_presa: int = 0
+    avvisi: list = field(default_factory=list)
+
+    @property
+    def saldo(self):
+        return self.dovuto - self.pagato
+
+    @property
+    def da_consegnare(self):
+        return max(self.richieste - self.consegnate, 0)
+
+
+def pagato_per_sezione(anno):
+    """Versamenti netti delle sezioni per le tessere dell'anno (incassi meno storni)."""
+    from apps.tesoreria.models import Incasso
+
+    pagato = {}
+    incassi = Incasso.objects.filter(
+        tipo=Incasso.Tipo.TESSERE, anno_tessere=anno, sezione__isnull=False
+    ).prefetch_related("storni")
+    for incasso in incassi:
+        netto = incasso.importo - sum((s.importo for s in incasso.storni.all()), Decimal("0"))
+        pagato[incasso.sezione_id] = pagato.get(incasso.sezione_id, Decimal("0")) + netto
+    return pagato
+
+
+def quadratura(anno):
+    """Per sezione: richieste, consegnate, dovuto, pagato, saldo e avvisi."""
+    righe = {}
+
+    def riga(sezione):
+        return righe.setdefault(sezione.pk, RigaQuadratura(sezione))
+
+    for r in RichiestaTessere.objects.filter(anno=anno).select_related("sezione"):
+        riga(r.sezione).richieste += r.quantita
+    for c in ConsegnaTessere.objects.filter(anno=anno).select_related("sezione"):
+        voce = riga(c.sezione)
+        voce.consegnate += c.quantita
+        voce.dovuto += c.importo
+        if not c.presa_in_carico_il:
+            voce.consegne_senza_presa += 1
+    pagato = pagato_per_sezione(anno)
+    for sezione in Sezione.objects.filter(pk__in=pagato):
+        riga(sezione).pagato = pagato[sezione.pk]
+    for voce in righe.values():
+        if voce.consegnate and not voce.pagato:
+            voce.avvisi.append("consegnate senza alcun pagamento")
+        elif voce.saldo > 0:
+            voce.avvisi.append(f"da versare € {voce.saldo:.2f}")
+        elif voce.saldo < 0:
+            voce.avvisi.append(f"versato in più € {-voce.saldo:.2f}")
+        if voce.da_consegnare:
+            voce.avvisi.append(f"{voce.da_consegnare} da consegnare")
+        if voce.consegne_senza_presa:
+            voce.avvisi.append("presa in carico da confermare")
+    return sorted(righe.values(), key=lambda r: (r.sezione.ordine, r.sezione.nome))
+
+
+def riepilogo_magazzino(anno):
+    blocchi = list(BloccoTessere.objects.filter(anno=anno).prefetch_related("consegne"))
+    ricevute = sum(b.quantita for b in blocchi)
+    disponibili = sum(in_magazzino(b) for b in blocchi)
+    return {"blocchi": blocchi, "ricevute": ricevute, "disponibili": disponibili,
+            "consegnate": ricevute - disponibili}  # fmt: skip

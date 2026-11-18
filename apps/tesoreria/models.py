@@ -294,10 +294,11 @@ class Incasso(ModelloBase):
         DONAZIONE = "donazione", "Donazione o offerta"
         CONTRIBUTO = "contributo", "Contributo"
         PARTECIPAZIONE = "partecipazione", "Quota di partecipazione (eventi, gite, pranzi)"
+        TESSERE = "tessere", "Tessere fornite a una sezione"
         ALTRO = "altro", "Altro"
 
     VOCI = {"donazione": "E.A.4", "contributo": "E.A.6", "partecipazione": "E.A.3",
-            "altro": "E.A.10"}  # fmt: skip
+            "tessere": "E.A.1", "altro": "E.A.10"}  # fmt: skip
 
     data = models.DateField()
     tipo = models.CharField(max_length=15, choices=Tipo.choices)
@@ -312,6 +313,14 @@ class Incasso(ModelloBase):
     metodo = models.CharField("metodo di pagamento", max_length=10, choices=METODI)
     riferimento = models.CharField(max_length=100, blank=True, help_text="Es. CRO del bonifico.")
     causale = models.CharField(max_length=255)
+    sezione = models.ForeignKey(
+        "soci.Sezione", null=True, blank=True, on_delete=models.PROTECT, related_name="+",
+        help_text="Per le tessere fornite a una sezione: la sezione che ha versato.",
+    )  # fmt: skip
+    anno_tessere = models.PositiveIntegerField(
+        "anno di tesseramento", null=True, blank=True,
+        help_text="Per le tessere fornite a una sezione: l'anno delle tessere pagate.",
+    )  # fmt: skip
     voce = models.ForeignKey("Voce", on_delete=models.PROTECT, related_name="+")
     movimento = models.OneToOneField(
         "Movimento", null=True, blank=True, on_delete=models.SET_NULL, related_name="incasso",

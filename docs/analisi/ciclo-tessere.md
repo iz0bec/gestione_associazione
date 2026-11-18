@@ -40,7 +40,10 @@ Fatti stabiliti:
 | Aspetto | Regola |
 |---|---|
 | Importo | la sezione paga per ogni tessera il **costo nazionale più una quota federale** |
-| Quando | **misto**: in genere un acconto e un saldo, ma le regole possono cambiare da sezione a sezione |
+| Quando | si chiede **preferibilmente l'intero importo delle tessere richieste**, ma il pagamento può restare **in sospeso** (anche in parte) e saldarsi dopo; acconti e saldi sono versamenti distinti |
+| Consegna | possibile **anche senza pagamento**: il gestionale lo segnala e la quadratura ne tiene conto |
+| Richieste e consegne | **più richieste** nello stesso anno (integrazioni) e **più consegne**, anche parziali |
+| Quota | **uguale per tutte le tipologie** di socio: un solo importo per tessera nell'anno |
 | Tessere non usate | **restano alla sezione**: pagate comunque, a fine campagna si annullano o restano in carico come scadute; non si rendono |
 | Numerazione | il nazionale consegna blocchi alla federazione, che **li suddivide** fra le sezioni |
 | Soldi | i movimenti di cassa si registrano **a mano** nella prima nota di ciascuno |
@@ -149,9 +152,21 @@ Regole:
   la consegna arrivano anche come documenti strutturati, ma il messaggio parte comunque: resta la
   traccia formale protocollata.
 
-## Punti aperti
+## Decisioni del 18/11/2026
 
-1. **Pagamento misto**: l'acconto è una percentuale fissa, un importo libero o le tessere
+- Avvisi del ciclo: alla **sezione** (email o PEC in *Sistema → Sezioni*) e in copia al
+  **presidente in carica** della sezione.
+- Modalità di distribuzione: **elenco** (ritiro in sede, consegna a mano, spedizione) più **note
+  libere** per luogo, date e orari.
+- **Ordine al nazionale**: documento PDF generato dal gestionale, con la quantità totale e il
+  dettaglio per sezione, da protocollare e spedire.
+- **Ricevute del nazionale**: arrivano per **PEC** (dalla posta da protocollare) **o su carta**
+  (scansione protocollata a mano). In entrambi i casi si legano al pagamento della federazione.
+
+## Punti aperti (superati)
+
+1. ~~Pagamento misto~~ deciso: intero preferibile, in sospeso ammesso.
+   *Testo originale:* **Pagamento misto**: l'acconto è una percentuale fissa, un importo libero o le tessere
    richieste? Quando si chiede il saldo: alla consegna, a una data o a fine campagna?
 2. **Regole per sezione**: servono condizioni diverse per alcune sezioni (es. tutto anticipato)?
    Basta un'impostazione per sezione e per anno?

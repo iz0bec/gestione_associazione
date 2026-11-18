@@ -26,6 +26,8 @@ from apps.core.models import ModelloBase, validatore_cap, validatore_provincia
 # chiavi delle sequenze di numerazione (apps.core.numerazione)
 SEQ_LIBRO_SOCI = "libro_soci"  # progressivo unico, mai riavviato
 SEQ_RICEVUTA = "ricevuta_quota"  # annuale, per anno di incasso
+SEQ_CONSEGNA = "consegna_tessere"  # annuale: documenti di consegna alle sezioni
+SEQ_ORDINE = "ordine_tessere"  # annuale: ordini alla sede nazionale
 
 
 class Sezione(RisorsaApi):
@@ -247,7 +249,34 @@ class ListinoTessere(ModelloBase):
         validators=[MinValueValidator(Decimal("0"))],
         help_text="Prezzo pagato alla sede centrale per ogni tessera.",
     )
+    quota_federale = models.DecimalField(
+        "quota federale per tessera",
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Solo per chi distribuisce alle sezioni: si aggiunge al costo d'acquisto.",
+    )
+    delibera = models.ForeignKey(
+        "organi.Delibera",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Delibera del consiglio direttivo che ha fissato la quota.",
+    )
+    scadenza_richieste = models.DateField("richieste delle tessere entro", null=True, blank=True)
+    istruzioni_pagamento = models.TextField(
+        "modalità di pagamento",
+        blank=True,
+        help_text="Testo per gli avvisi alle sezioni (es. IBAN, causale, termini).",
+    )
     note = models.CharField(max_length=255, blank=True)
+
+    @property
+    def prezzo_sezioni(self):
+        """Quanto paga una sezione per ogni tessera: costo d'acquisto più quota federale."""
+        return self.costo_acquisto + self.quota_federale
 
     class Meta:
         verbose_name = "listino del tesseramento"
@@ -610,3 +639,138 @@ class DomandaIscrizione(models.Model):
 
     def get_absolute_url(self):
         return reverse("soci:domanda", args=[self.pk])
+
+
+# --- ciclo delle tessere fra federazione e sezioni (docs/analisi/ciclo-tessere.md) -----------
+
+
+class RichiestaTessere(ModelloBase):
+    """Fabbisogno di tessere di una sezione per un anno (anche più richieste nell'anno)."""
+
+    anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
+    sezione = models.ForeignKey(Sezione, on_delete=models.PROTECT, related_name="richieste_tessere")
+    quantita = models.PositiveIntegerField("tessere richieste", validators=[MinValueValidator(1)])
+    data = models.DateField(default=date.today)
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "richiesta di tessere"
+        verbose_name_plural = "richieste di tessere"
+        ordering = ["-anno", "data", "pk"]
+        permissions = [("gestisci_ciclo_tessere", "Gestire il ciclo delle tessere con le sezioni")]
+
+    def __str__(self):
+        return f"{self.sezione}: {self.quantita} tessere {self.anno}"
+
+
+class BloccoTessere(ModelloBase):
+    """Tessere numerate ricevute dalla sede nazionale e non ancora consegnate (magazzino):
+    solo l'intervallo dei numeri. Le tessere vere nascono nel lotto della sezione alla consegna,
+    così una tessera di magazzino non si può attribuire a un socio."""
+
+    anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
+    serie = models.CharField(max_length=10, blank=True)
+    numero_da = models.PositiveIntegerField("dal numero")
+    numero_a = models.PositiveIntegerField("al numero")
+    cifre = models.PositiveSmallIntegerField(default=0)
+    data_arrivo = models.DateField(default=date.today)
+    fornitore = models.CharField(max_length=100, default="Sede nazionale")
+    riferimento = models.CharField(max_length=200, blank=True)
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "blocco di tessere in magazzino"
+        verbose_name_plural = "blocchi di tessere in magazzino"
+        ordering = ["-anno", "serie", "numero_da"]
+
+    def __str__(self):
+        serie = f"{self.serie} " if self.serie else ""
+        return f"{self.anno} {serie}{self.numero_da}–{self.numero_a}"
+
+    @property
+    def quantita(self):
+        return self.numero_a - self.numero_da + 1
+
+
+class ConsegnaTessere(ModelloBase):
+    """Documento di consegna di un intervallo del magazzino a una sezione: crea il lotto della
+    sezione. Numerato per anno (sequenza consegna_tessere)."""
+
+    class Modalita(models.TextChoices):
+        RITIRO = "ritiro", "Ritiro presso la sede"
+        MANO = "mano", "Consegna a mano"
+        SPEDIZIONE = "spedizione", "Spedizione"
+
+    anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
+    numero = models.PositiveIntegerField(editable=False)
+    data = models.DateField(default=date.today)
+    sezione = models.ForeignKey(Sezione, on_delete=models.PROTECT, related_name="consegne_tessere")
+    blocco = models.ForeignKey(BloccoTessere, on_delete=models.PROTECT, related_name="consegne")
+    numero_da = models.PositiveIntegerField("dal numero")
+    numero_a = models.PositiveIntegerField("al numero")
+    prezzo_unitario = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("0"))
+    lotto = models.OneToOneField(
+        LottoTessere, on_delete=models.PROTECT, related_name="consegna", editable=False
+    )
+    modalita = models.CharField(
+        "modalità di distribuzione",
+        max_length=12,
+        choices=Modalita.choices,
+        default=Modalita.RITIRO,
+    )
+    note_distribuzione = models.TextField(
+        "luogo, date e orari", blank=True, help_text="Riportate nell'avviso di attribuzione."
+    )
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    presa_in_carico_il = models.DateField("presa in carico il", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "consegna di tessere"
+        verbose_name_plural = "consegne di tessere"
+        ordering = ["-anno", "-numero"]
+        constraints = [
+            models.UniqueConstraint(fields=["anno", "numero"], name="consegna_tessere_numero")
+        ]
+
+    def __str__(self):
+        return f"Consegna {self.anno}/{self.numero} a {self.sezione}"
+
+    @property
+    def quantita(self):
+        return self.numero_a - self.numero_da + 1
+
+    @property
+    def importo(self):
+        return self.quantita * self.prezzo_unitario
+
+
+class OrdineTessere(ModelloBase):
+    """Ordine alla sede nazionale con il dettaglio per sezione (numerato per anno)."""
+
+    anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
+    numero = models.PositiveIntegerField(editable=False)
+    data = models.DateField(default=date.today)
+    quantita = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    dettaglio = models.JSONField(default=list, help_text="[{sezione, codice, quantita}]")
+    note = models.TextField(blank=True)
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "ordine di tessere"
+        verbose_name_plural = "ordini di tessere"
+        ordering = ["-anno", "-numero"]
+        constraints = [
+            models.UniqueConstraint(fields=["anno", "numero"], name="ordine_tessere_numero")
+        ]
+
+    def __str__(self):
+        return f"Ordine {self.anno}/{self.numero} ({self.quantita} tessere)"
