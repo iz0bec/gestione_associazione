@@ -128,6 +128,12 @@ urlpatterns = [
     ),
     path("tessere/arrivi/<int:pk>/pdf/", viste_ciclo.ArrivoPdfView.as_view(), name="arrivo_pdf"),
     path("tessere/sincronizza/", viste_ciclo.SincronizzaView.as_view(), name="sincronizza"),
+    path("tessere/importa-modulo/", viste_ciclo.ImportaModuloView.as_view(), name="importa_modulo"),
+    path(
+        "tessere/da-messaggio/<int:pk>/<int:indice>/",
+        viste_ciclo.RichiestaDaMessaggioView.as_view(),
+        name="richiesta_da_messaggio",
+    ),
     path(
         "tessere/importa-consegna/",
         viste_ciclo.ImportaConsegnaView.as_view(),

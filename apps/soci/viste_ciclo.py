@@ -29,6 +29,7 @@ from .forms import (
     BloccoTessereForm,
     ConsegnaTessereForm,
     ImportaConsegnaForm,
+    ImportaModuloForm,
     OrdineTessereForm,
     RichiestaTessereForm,
 )
@@ -463,3 +464,80 @@ class SincronizzaView(PermessoMixin, View):
             else:
                 messages.success(request, f"{nome}: {ricevuti} documenti ricevuti o aggiornati.")
         return _alla_campagna(_anno(request, {}))
+
+
+# --- modulo Excel della richiesta, compilato dalle sezioni senza gestionale ------------------
+
+
+class RichiestaDaMessaggioView(PermessoMixin, View):
+    """Posta da protocollare: protocolla il messaggio e registra la richiesta del modulo."""
+
+    permission_required = ("protocollo.add_protocollo", "protocollo.gestisci_posta", PERMESSO)
+
+    def post(self, request, pk, indice):
+        from django.db import transaction
+
+        from apps.protocollo import servizi as protocollo
+        from apps.protocollo.models import MessaggioRicevuto
+
+        from . import modulo_tessere
+
+        messaggio = get_object_or_404(MessaggioRicevuto, pk=pk)
+        try:
+            contenuto = modulo_tessere.contenuto_allegato(messaggio, indice)
+            dati = modulo_tessere.leggi(contenuto)
+            with transaction.atomic():
+                oggetto = (
+                    f"Richiesta di tessere {dati['anno']} della {dati['sezione'].denominazione}"
+                )
+                p = protocollo.protocolla_messaggio(messaggio, request.user, oggetto=oggetto)
+                richiesta = ciclo.richiesta_da_modulo(request.user, contenuto, protocollo=p)
+        except (IndexError, OSError):
+            messages.error(request, "Allegato non trovato.")
+            return redirect(messaggio)
+        except (modulo_tessere.ModuloNonValido, OperazioneNonValida,
+                protocollo.OperazioneNonValida) as e:  # fmt: skip
+            messages.error(request, " ".join(getattr(e, "messages", [str(e)])))
+            return redirect(messaggio)
+        messages.success(request, f"Protocollo {p.segnatura}: richiesta registrata ({richiesta}).")
+        return _alla_campagna(richiesta.anno)
+
+
+class ImportaModuloView(PermessoMixin, View):
+    """Caricamento a mano del modulo compilato (es. arrivato su carta o per altra via)."""
+
+    permission_required = PERMESSO
+    template_name = "soci/importa_modulo.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {"form": ImportaModuloForm()})
+
+    def post(self, request):
+        from . import modulo_tessere
+
+        nome = request.POST.get("temporaneo", "")
+        if nome and request.POST.get("conferma"):
+            contenuto = temporanei.leggi_temporaneo(nome)
+            if contenuto is None:
+                messages.error(request, "Il file non è più disponibile: caricatelo di nuovo.")
+                return redirect("soci:importa_modulo")
+            try:
+                richiesta = ciclo.richiesta_da_modulo(request.user, contenuto)
+            except OperazioneNonValida as e:
+                messages.error(request, " ".join(e.messages))
+                return redirect("soci:importa_modulo")
+            temporanei.elimina_temporaneo(nome)
+            messages.success(request, f"Richiesta registrata: {richiesta}.")
+            return _alla_campagna(richiesta.anno)
+        form = ImportaModuloForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+        contenuto = form.cleaned_data["file"].read()
+        try:
+            dati = modulo_tessere.leggi(contenuto)
+        except modulo_tessere.ModuloNonValido as e:
+            form.add_error("file", str(e))
+            return render(request, self.template_name, {"form": form})
+        return render(request, self.template_name, {
+            "form": form, "dati": dati, "temporaneo": temporanei.salva_temporaneo(contenuto),
+        })  # fmt: skip

@@ -464,6 +464,13 @@ def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_a
         if tipo == "attribuzione"
         else [(s, None) for s in sezioni]
     )
+    con_modulo = tipo in ("tesseramento", "sollecito")
+    if con_modulo and "tessere_anno_precedente" not in corpo:
+        corpo = corpo.rstrip() + (f"\n\nPer informazione, nel {anno - 1} la sezione ha avuto "
+                                  "{{ tessere_anno_precedente }} tessere.")  # fmt: skip
+    if con_modulo and "istruzioni_risposta" not in corpo:
+        corpo = corpo.rstrip() + "\n\n{{ istruzioni_risposta }}"  # come rispondere, sempre
+    voce_listino = listino(anno)
     invii, saltate = [], []
     for sezione, documento in voci:
         indirizzi, soggetti = destinatari(sezione)
@@ -471,15 +478,29 @@ def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_a
             saltate.append((sezione, "senza email della sezione né presidente in carica"))
             continue
         contesto = base | {"sezione": sezione.denominazione}
+        allegati = []
         if documento is not None:
             contesto |= contesto_consegna(documento)
+        if con_modulo:
+            from . import modulo_tessere
+
+            scadenza = (nuova_scadenza if tipo == "sollecito" else None) or (
+                voce_listino.scadenza_richieste if voce_listino else None
+            )
+            precedente = tessere_anno_precedente(anno, sezione)
+            contesto["istruzioni_risposta"] = modulo_tessere.istruzioni(anno, sezione, scadenza)
+            contesto["tessere_anno_precedente"] = precedente
+            allegati = [(f"richiesta-tessere-{anno}-{sezione.codice}.xlsx", modulo_tessere.genera(
+                anno, sezione, quota=voce_listino.prezzo_sezioni if voce_listino else None,
+                scadenza=scadenza, precedente=precedente,
+            ))]  # fmt: skip
         try:
             invio = comunicazioni.crea_invio(
                 utente, oggetto=oggetto, corpo=corpo,
                 finalita=Finalita.ISTITUZIONALE, soggetti=soggetti, indirizzi=indirizzi,
                 modello=modello, protocolla=protocolla, origine=origine,
                 origine_id=documento.pk if documento else sezione.pk, contesto=contesto,
-                servizio=servizio,
+                servizio=servizio, allegati=allegati,
             )  # fmt: skip
         except comunicazioni.OperazioneNonValida as e:
             saltate.append((sezione, " ".join(e.messages)))
@@ -554,3 +575,38 @@ def pdf_originale_richiesta(richiesta):
         .first()
     )
     return documento.pdf if documento else None
+
+
+def richiesta_da_modulo(utente, contenuto: bytes, *, protocollo=None):
+    """Richiesta registrata dal modulo Excel compilato dalla sezione. Lo stesso file non si
+    registra due volte (l'impronta del file diventa l'identificativo d'origine)."""
+    import hashlib
+    import uuid
+
+    from . import modulo_tessere
+
+    try:
+        dati = modulo_tessere.leggi(contenuto)
+    except modulo_tessere.ModuloNonValido as e:
+        raise OperazioneNonValida(str(e)) from None
+    origine = uuid.uuid5(uuid.NAMESPACE_URL, "modulo:" + hashlib.sha256(contenuto).hexdigest())
+    gia = RichiestaTessere.objects.filter(uuid_origine=origine).first()
+    if gia is not None:
+        raise OperazioneNonValida(f"Questo modulo è già stato registrato ({gia}).")
+    return registra_richiesta(
+        utente, anno=dati["anno"], sezione=dati["sezione"], quantita=dati["quantita"],
+        protocollo=protocollo, note=modulo_tessere.note_richiesta(dati), uuid_origine=origine,
+    )  # fmt: skip
+
+
+def tessere_anno_precedente(anno, sezione):
+    """Quante tessere ebbe la sezione l'anno prima (per informazione negli avvisi): tessere
+    rilasciate ai suoi soci e non annullate; se non ce ne sono, quelle consegnate."""
+    from .models import Tessera
+
+    rilasciate = Tessera.objects.filter(
+        anno=anno - 1, socio__sezione=sezione, annullata=False
+    ).count()
+    if rilasciate:
+        return rilasciate
+    return sum(c.quantita for c in ConsegnaTessere.objects.filter(anno=anno - 1, sezione=sezione))

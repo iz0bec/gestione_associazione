@@ -178,7 +178,8 @@ def test_testo_dell_avviso_modificabile(admin, sezione, client_ruolo):
     admin.post(url, {"sezioni": [sezione.pk], "oggetto": "Tesseramento {{ anno }}",
                      "corpo": "Cara {{ sezione }}, quota {{ quota_tessera }}."})  # fmt: skip
     invio = Invio.objects.get()
-    assert invio.corpo == "Cara {{ sezione }}, quota {{ quota_tessera }}."
+    assert invio.corpo.startswith("Cara {{ sezione }}, quota {{ quota_tessera }}.")
+    assert invio.corpo.endswith("{{ istruzioni_risposta }}")  # come rispondere, sempre in fondo
     modello.refresh_from_db()
     assert "Alla Direzione" in modello.corpo  # il modello non cambia
     # anche nel modello

@@ -788,6 +788,13 @@ class AvvisiTessereForm(StileMixin, forms.Form):
         return dati
 
 
+class ImportaModuloForm(StileMixin, forms.Form):
+    file = forms.FileField(
+        label="Modulo compilato", widget=forms.FileInput(attrs={"accept": ".xlsx"}),
+        help_text="Il file Excel «richiesta-tessere-…xlsx» restituito dalla sezione.",
+    )  # fmt: skip
+
+
 class ImportaConsegnaForm(StileMixin, forms.Form):
     file = forms.FileField(
         label="File della consegna", widget=forms.FileInput(attrs={"accept": ".csv"}),

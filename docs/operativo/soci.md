@@ -112,8 +112,22 @@ spediscono per email e PEC dal protocollo.
    compilato dal modello e si può correggere per quell'invio. Con «Salva il testo anche nel
    modello» la correzione resta per le volte successive: lo vedono Amministratore e Segretario, che
    possono cambiare i modelli. Ogni singola bozza si può ancora correggere da *Comunicazioni*. Ciò che manca (ad esempio la delibera) compare come «[da indicare]».
+   L'avviso e il sollecito portano in allegato il **modulo Excel di richiesta**, già intestato a
+   ogni sezione: sezione, codice, anno, importo per tessera, termine e, per informazione, le
+   **tessere dell'anno precedente**. Le celle gialle sono da compilare: numero di tessere,
+   referente, telefono, note; il totale da versare si calcola da solo. Nel modulo e in fondo
+   all'email ci sono le **istruzioni per rispondere**: compilare, salvare senza cambiare nome né
+   formato, rispondere all'email allegandolo, entro il termine. Le altre celle sono bloccate e il
+   file ha un codice di controllo: un modulo modificato o di un'altra installazione non viene
+   accettato.
 3. **Richieste delle sezioni** (*Registra*): quante tessere chiede ogni sezione, anche più volte
    nell'anno. Il **sollecito** propone da solo le sezioni che non hanno ancora chiesto.
+   Il **modulo compilato** si recupera da solo:
+   - se arriva per email o PEC, nella *posta da protocollare* il messaggio mostra **«Protocolla e
+     registra la richiesta»**, che fa le due cose in un passo;
+   - se arriva per altra via, si usa **Importa modulo** nella campagna, con anteprima.
+
+   Lo stesso modulo non si registra due volte.
 4. **Ordine alla sede nazionale**: somma le richieste non ancora ordinate, con il dettaglio per
    sezione. Il PDF si protocolla e si spedisce. Le richieste arrivate dopo finiscono nell'ordine
    successivo.

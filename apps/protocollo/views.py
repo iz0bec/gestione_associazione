@@ -683,6 +683,10 @@ class MessaggioView(PermessoMixin, DetailView):
         from apps.soci.estrazione import probabile_iscrizione
 
         ctx["probabile_iscrizione"] = probabile_iscrizione(m)
+        if m.stato == MessaggioRicevuto.Stato.NUOVO:
+            from apps.soci import modulo_tessere
+
+            ctx["modulo_tessere"] = modulo_tessere.cerca_nel_messaggio(m)
         return ctx
 
 

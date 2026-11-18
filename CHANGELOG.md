@@ -5,6 +5,22 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.50] - 2026-11-18
+
+### Aggiunto
+- **Modulo Excel della richiesta di tessere** per le sezioni senza gestionale, allegato da solo
+  all'avviso di tesseramento e al sollecito, intestato a ogni sezione:
+  - dati bloccati: sezione, codice, anno, importo per tessera, termine;
+  - per informazione, le tessere dell'anno precedente;
+  - celle da compilare: tessere richieste, referente, telefono, note; il totale si calcola da solo;
+  - le istruzioni per rispondere, anche nell'email (segnaposto `{{ istruzioni_risposta }}` e
+    `{{ tessere_anno_precedente }}`, aggiunti in fondo se il modello non li contiene);
+  - un codice di controllo che rifiuta i moduli modificati o di altre installazioni.
+- **Recupero del modulo compilato**:
+  - dalla posta da protocollare, con «Protocolla e registra la richiesta» in un passo;
+  - a mano, con *Importa modulo* nella campagna e l'anteprima;
+  - lo stesso file non si registra due volte.
+
 ## [1.0.49] - 2026-11-18
 
 ### Corretto
