@@ -40,7 +40,8 @@ def _trova_soggetto(email, cognome, nome):
 
 
 @transaction.atomic
-def aderisci(evento, dati, *, origine, utente=None, ip=None, soggetto=None):
+def aderisci(evento, dati, *, origine, utente=None, ip=None, soggetto=None, cliente_api=None,
+             riferimento_esterno=""):  # fmt: skip
     """Registra un'adesione. `dati`: cognome, nome, email, telefono, accompagnatori, note.
     La segreteria può aderire anche a adesioni chiuse o oltre la scadenza, mai oltre i posti."""
     evento = Evento.objects.select_for_update().get(pk=evento.pk)
@@ -49,7 +50,12 @@ def aderisci(evento, dati, *, origine, utente=None, ip=None, soggetto=None):
     chiuse = not evento.adesioni_aperte or timezone.now() >= evento.scadenza_adesioni
     if origine != Adesione.Origine.SEGRETERIA and chiuse:
         raise OperazioneNonValida("Le adesioni sono chiuse.")
-    accompagnatori = int(dati.get("accompagnatori") or 0)
+    try:
+        accompagnatori = int(dati.get("accompagnatori") or 0)
+    except (TypeError, ValueError):
+        raise OperazioneNonValida("Numero di accompagnatori non valido.") from None
+    if accompagnatori < 0:
+        raise OperazioneNonValida("Numero di accompagnatori non valido.")
     if accompagnatori > evento.accompagnatori:
         raise OperazioneNonValida(
             f"Al massimo {evento.accompagnatori} accompagnator"
@@ -74,6 +80,7 @@ def aderisci(evento, dati, *, origine, utente=None, ip=None, soggetto=None):
         evento=evento, soggetto=soggetto, cognome=cognome[:100], nome=nome[:100], email=email,
         telefono=(dati.get("telefono") or "").strip()[:30], accompagnatori=accompagnatori,
         note=(dati.get("note") or "").strip()[:255], origine=origine, indirizzo_ip=ip,
+        cliente_api=cliente_api, riferimento_esterno=(riferimento_esterno or "")[:100],
     )  # fmt: skip
     registra(Azione.CREAZIONE, adesione, utente=utente, ip=ip,
              descrizione=f"Adesione a «{evento}»: {adesione}", origine=origine)  # fmt: skip
@@ -86,7 +93,8 @@ def annulla_adesione(adesione, utente=None):
     if adesione.annullata:
         raise OperazioneNonValida("L'adesione è già annullata.")
     adesione.annullata = True
-    adesione.save(update_fields=["annullata"])
+    adesione.versione += 1
+    adesione.save(update_fields=["annullata", "versione", "modificata_il"])
     adesione.evento.tocca()
     registra(Azione.ANNULLAMENTO, adesione, utente=utente,
              descrizione=f"Adesione a «{adesione.evento}» annullata: {adesione}")  # fmt: skip

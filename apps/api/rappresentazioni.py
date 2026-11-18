@@ -72,3 +72,63 @@ FLUSSI = {
     "eventi": ("eventi:lettura", eventi_visibili),
     "sezioni": ("sezioni:lettura", sezioni_visibili),
 }
+
+
+def adesione(a) -> dict:
+    return {
+        "uuid": str(a.uuid),
+        "versione": a.versione,
+        "modificato_il": data_ora(a.modificata_il),
+        "evento": str(a.evento.uuid),
+        "cognome": a.cognome,
+        "nome": a.nome,
+        "email": a.email,
+        "telefono": a.telefono,
+        "accompagnatori": a.accompagnatori,
+        "note": a.note,
+        "riferimento_esterno": a.riferimento_esterno,
+        "annullata": a.annullata,
+        "origine": a.origine,
+    }
+
+
+def documento(request, d) -> dict:
+    from django.urls import reverse
+
+    return {
+        "id": d.pk,
+        "titolo": d.titolo,
+        "descrizione": d.descrizione,
+        "nome_file": d.nome_file,
+        "dimensione": d.dimensione,
+        "modificato_il": data_ora(d.modificato_il),
+        "file": reverse("api_v1:documento_file", args=[d.pk]),
+        "pagina_pubblica": request.build_absolute_uri(d.get_absolute_url()),
+    }
+
+
+def organigramma() -> list:
+    """Cariche in corso degli organi attivi (assemblee escluse): ruolo e nome, nient'altro."""
+    from apps.organi.models import Organo
+    from apps.organi.servizi import organigramma as livelli
+
+    risultato = []
+    organi = (
+        Organo.objects.filter(attivo=True)
+        .exclude(tipo=Organo.Tipo.ASSEMBLEA)
+        .select_related("sezione")
+        .order_by("sezione__ordine", "ordine", "nome")
+    )
+    for organo in organi:
+        componenti = [
+            {"ruolo": c.ruolo, "ruolo_descrizione": c.get_ruolo_display(),
+             "nome": c.soggetto.nome_completo, "dal": c.dal.isoformat() if c.dal else None}
+            for riga in livelli(organo) for c in riga
+        ]  # fmt: skip
+        if componenti:
+            risultato.append({
+                "organo": organo.nome, "tipo": organo.tipo,
+                "sezione": organo.sezione.codice if organo.sezione_id else None,
+                "componenti": componenti,
+            })  # fmt: skip
+    return risultato

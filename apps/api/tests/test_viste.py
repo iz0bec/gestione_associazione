@@ -38,6 +38,15 @@ IMPLEMENTATI = {
     "elencaEventi": ("get", "/eventi", "/api/v1/eventi"),
     "leggiEvento": ("get", "/eventi/{uuid}", "/api/v1/eventi/7c1e2a9e-5d0b-4c71-9a43-0d2f7f6f3b11"),
     "elencaSezioni": ("get", "/sezioni", "/api/v1/sezioni"),
+    "elencaAdesioni": ("get", "/eventi/{uuid}/adesioni", "/api/v1/eventi/7c1e2a9e-5d0b-4c71-9a43-0d2f7f6f3b11/adesioni"),
+    "aderisci": ("post", "/eventi/{uuid}/adesioni", "/api/v1/eventi/7c1e2a9e-5d0b-4c71-9a43-0d2f7f6f3b11/adesioni"),
+    "annullaAdesione": ("delete", "/adesioni/{uuid}", "/api/v1/adesioni/7c1e2a9e-5d0b-4c71-9a43-0d2f7f6f3b11"),
+    "presentaDomanda": ("post", "/domande", "/api/v1/domande"),
+    "inviaContatto": ("post", "/contatti", "/api/v1/contatti"),
+    "elencaDocumenti": ("get", "/documenti", "/api/v1/documenti"),
+    "scaricaDocumento": ("get", "/documenti/{id}/file", "/api/v1/documenti/1/file"),
+    "organigramma": ("get", "/organigramma", "/api/v1/organigramma"),
+    "verificaTessera": ("get", "/tessere/{codice}", "/api/v1/tessere/abc"),
 }  # fmt: skip
 
 

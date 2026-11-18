@@ -41,6 +41,16 @@
     </div>
   </div>
   <div class="col-lg-5">
+    {% if adesioni_ricevute or domande_ricevute %}
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-inbox me-1"></i>Ricevuti da questa controparte</h3></div>
+      <div class="card-body small">
+        <div>Adesioni agli eventi: {{ adesioni_ricevute }}</div>
+        <div>Domande di iscrizione: {{ domande_ricevute }}{% if domande_ricevute and perms.soci.view_domandaiscrizione %} (<a href="{% url 'soci:domande' %}">Domande</a>){% endif %}</div>
+        <div class="text-secondary mt-1">I messaggi del modulo contatti arrivano tra la posta da protocollare, casella «Modulo contatti (API)».</div>
+      </div>
+    </div>
+    {% endif %}
     {% if c.notifiche_flussi %}
     <div class="card mb-3">
       <div class="card-header"><h3 class="card-title"><i class="ti ti-bell me-1"></i>Notifiche</h3></div>

@@ -9,6 +9,7 @@
 # ******************************************************
 
 import secrets
+import uuid
 
 from django.db import models
 from django.db.models import Q, Sum
@@ -113,6 +114,10 @@ class Adesione(models.Model):
         SEGRETERIA = "segreteria", "Segreteria"
         PUBBLICO = "pubblico", "Modulo pubblico"
         AREA = "area", "Area del socio"
+        INTEGRAZIONE = "integrazione", "Integrazione (API)"
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    versione = models.PositiveIntegerField(default=1, editable=False)
 
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="adesioni")
     soggetto = models.ForeignKey(
@@ -124,9 +129,15 @@ class Adesione(models.Model):
     telefono = models.CharField(max_length=30, blank=True)
     accompagnatori = models.PositiveSmallIntegerField(default=0)
     note = models.CharField(max_length=255, blank=True)
-    origine = models.CharField(max_length=10, choices=Origine.choices)
+    origine = models.CharField(max_length=12, choices=Origine.choices)
+    cliente_api = models.ForeignKey(
+        "api.ClienteApi", null=True, blank=True, on_delete=models.SET_NULL, related_name="adesioni",
+        verbose_name="inviata da",
+    )  # fmt: skip
+    riferimento_esterno = models.CharField(max_length=100, blank=True, editable=False)
     annullata = models.BooleanField(default=False)
     creata_il = models.DateTimeField(auto_now_add=True)
+    modificata_il = models.DateTimeField(auto_now=True)
     indirizzo_ip = models.GenericIPAddressField(null=True, blank=True, editable=False)
 
     class Meta:

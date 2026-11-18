@@ -235,10 +235,19 @@ class RegistroGiornaliero(models.Model):
         return f"Registro del {self.data:%d/%m/%Y}"
 
 
+class CaselleReali(models.Manager):
+    """Le caselle IMAP vere: la casella interna dei contatti via API resta fuori da elenchi,
+    configurazione e scaricamento (i suoi messaggi la raggiungono come relazione)."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(interna=False)
+
+
 class CasellaPosta(models.Model):
     """Casella IMAP (email o PEC) da cui scaricare i messaggi da protocollare."""
 
     nome = models.CharField(max_length=100)
+    interna = models.BooleanField(default=False, editable=False)
     pec = models.BooleanField("è una PEC", default=False)
     server = models.CharField("server IMAP", max_length=200)
     porta = models.PositiveIntegerField(default=993)
@@ -297,10 +306,14 @@ class CasellaPosta(models.Model):
         "Vuoto: quello con lo stesso indirizzo della casella.",
     )
 
+    tutte = models.Manager()
+    objects = CaselleReali()
+
     class Meta:
         verbose_name = "casella di posta"
         verbose_name_plural = "caselle di posta"
         ordering = ["nome"]
+        default_manager_name = "objects"
 
     def __str__(self):
         return self.nome

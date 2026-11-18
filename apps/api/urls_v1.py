@@ -22,4 +22,12 @@ urlpatterns = [
     path("eventi", endpoint.eventi, name="eventi"),
     path("eventi/<uuid:uuid_risorsa>", endpoint.evento, name="evento"),
     path("sezioni", endpoint.sezioni, name="sezioni"),
+    path("eventi/<uuid:uuid_risorsa>/adesioni", endpoint.adesioni_evento, name="adesioni_evento"),
+    path("adesioni/<uuid:uuid_risorsa>", endpoint.adesione, name="adesione"),
+    path("domande", endpoint.domande, name="domande"),
+    path("contatti", endpoint.contatti, name="contatti"),
+    path("documenti", endpoint.documenti, name="documenti"),
+    path("documenti/<int:pk>/file", endpoint.documento_file, name="documento_file"),
+    path("organigramma", endpoint.organigramma, name="organigramma"),
+    path("tessere/<str:codice>", endpoint.verifica_tessera, name="verifica_tessera"),
 ]

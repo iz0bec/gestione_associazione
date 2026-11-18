@@ -10,15 +10,21 @@
 openapi: 3.1.0
 info:
   title: Gestione Associazione - API di interoperabilità
-  version: 1.0.0-f2
+  version: 1.0.0-f3
   license:
     name: CC0 1.0 Universal
     identifier: CC0-1.0
   summary: Contratto pubblico per installazioni pari e per adattatori esterni.
   description: |
     **Approvato (ADR-030).** Implementati: F1 `/.well-known/…`, `/abbinamenti`, `/prova`,
-    `/chiavi`; F2 `/cambiamenti`, `/riepiloghi/{flusso}`, `/eventi` (lettura), `/sezioni`. Le altre
-    risorse arrivano con le fasi successive. Il contratto è pubblico: gli adattatori verso altri sistemi
+    `/chiavi`; F2 `/cambiamenti`, `/riepiloghi/{flusso}`, `/eventi` (lettura), `/sezioni`; F3
+    cifratura, adesioni, `/domande`, `/contatti`, `/documenti`, `/organigramma`, `/tessere/{codice}`.
+    `/soci`, `/lotti` e `/consegne` arrivano con le fasi successive.
+
+    **Ambiti**: `eventi:lettura`, `adesioni:lettura`, `adesioni:scrittura`, `sezioni:lettura`,
+    `domande:scrittura`, `contatti:scrittura`, `documenti:lettura`, `organigramma:lettura`,
+    `tessere:verifica` (e, dalle fasi successive, `soci:lettura`, `lotti:lettura`,
+    `consegne:scrittura`). Li concede l'amministratore per ogni controparte. Il contratto è pubblico: gli adattatori verso altri sistemi
     (WordPress, app, gestionali) non fanno parte del progetto e si scrivono su questo documento.
 
     ## Sicurezza (obbligatoria per ogni chiamata tranne `/.well-known/…`)
@@ -53,7 +59,14 @@ info:
       firmato come le richieste, con `Destinatario-Istanza` = UUID della controparte. Rispondere
       `2xx`. Sono solo un avviso, ripetuto con attesa crescente fino a 24 ore: la lettura periodica
       del feed resta la fonte.
-    - Le scritture richiedono `Idempotency-Key`.
+    - Le scritture (`POST`) richiedono `Idempotency-Key` (8-64 caratteri `A-Za-z0-9._:-`), conservata
+      30 giorni: la ripetizione con lo stesso contenuto (anche cifrato di nuovo) restituisce la
+      risposta originale con `Idempotent-Replayed: true`; un contenuto diverso dà
+      `422 idempotenza-conflitto`.
+    - Limiti per controparte: chiamate al minuto e scritture all'ora (predefiniti 120); oltre si
+      riceve `429 troppe-richieste` con `Retry-After`.
+    - I dati personali **in ingresso** devono essere cifrati: un corpo in chiaro dà
+      `415 cifratura-richiesta`; un JWE illeggibile `400 decifratura-fallita`.
     - Errori in formato Problem Details (RFC 9457).
   contact:
     name: Gestione Associazione
@@ -536,6 +549,145 @@ paths:
                   stato: { const: in_attesa }
         "422": { $ref: "#/components/responses/Problema" }
 
+  /contatti:
+    post:
+      tags: [contatti]
+      operationId: inviaContatto
+      summary: Messaggio del modulo contatti (arriva tra la posta da protocollare)
+      description: Ambito `contatti:scrittura`. Corpo cifrato.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/jose:
+            schema: { $ref: "#/components/schemas/Jwe" }
+            x-contenuto-decifrato:
+              type: object
+              required: [nome, email, testo]
+              properties:
+                nome: { type: string, maxLength: 200 }
+                email: { type: string, format: email }
+                telefono: { type: string, maxLength: 30 }
+                oggetto: { type: string, maxLength: 200 }
+                testo: { type: string, maxLength: 10000 }
+                riferimento_esterno: { type: string, maxLength: 100 }
+      responses:
+        "201":
+          description: Messaggio ricevuto.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ricevuto: { const: true }
+                  riferimento: { type: string, description: Message-ID assegnato. }
+        "415": { $ref: "#/components/responses/Problema" }
+        "422": { $ref: "#/components/responses/Problema" }
+
+  /documenti:
+    get:
+      tags: [pubblici]
+      operationId: elencaDocumenti
+      summary: Documenti pubblici (statuto, regolamenti, bilanci)
+      description: Ambito `documenti:lettura`. Solo i documenti pubblicati.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+      responses:
+        "200":
+          description: Elenco.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    titolo: { type: string }
+                    descrizione: { type: string }
+                    nome_file: { type: string }
+                    dimensione: { type: integer }
+                    modificato_il: { type: string, format: date-time }
+                    file: { type: string, description: Percorso del file nell'API. }
+                    pagina_pubblica: { type: string, format: uri }
+
+  /documenti/{id}/file:
+    get:
+      tags: [pubblici]
+      operationId: scaricaDocumento
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Il documento.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        "404": { $ref: "#/components/responses/Problema" }
+
+  /organigramma:
+    get:
+      tags: [pubblici]
+      operationId: organigramma
+      summary: Cariche in corso degli organi (assemblee escluse)
+      description: Ambito `organigramma:lettura`. Solo ruolo e nome.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+      responses:
+        "200":
+          description: Organi con i componenti in carica.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    organo: { type: string }
+                    tipo: { type: string }
+                    sezione: { type: [string, "null"], description: Codice della sezione o null. }
+                    componenti:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          ruolo: { type: string }
+                          ruolo_descrizione: { type: string }
+                          nome: { type: string }
+                          dal: { type: [string, "null"], format: date }
+
+  /tessere/{codice}:
+    get:
+      tags: [pubblici]
+      operationId: verificaTessera
+      summary: Verifica di una tessera dal codice della tessera digitale (QR)
+      description: Ambito `tessere:verifica`. Nessun dato della persona.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - name: codice
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Esito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valida: { type: boolean }
+                  motivo: { type: string }
+                  anno: { type: integer }
+                  sezione: { type: string }
+        "404": { $ref: "#/components/responses/Problema" }
+
 components:
   securitySchemes:
     firmaHttp:
@@ -629,6 +781,7 @@ components:
             - troppe-richieste
             - invito-non-valido
             - non-configurata
+            - cifratura-richiesta
 
     Istanza:
       type: object
@@ -839,6 +992,7 @@ components:
             evento: { type: string, format: uuid }
             annullata: { type: boolean }
             origine: { enum: [segreteria, pubblico, area, integrazione] }
+            riferimento_esterno: { type: string }
 
     Sezione:
       allOf:

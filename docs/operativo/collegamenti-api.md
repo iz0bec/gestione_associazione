@@ -20,8 +20,13 @@ Ogni messaggio fra le due parti è **firmato**: chi lo riceve sa con certezza ch
 nessuno lo ha modificato, anche se passa da un proxy o dalla rete interna. Le controparti si
 riconoscono dalle loro chiavi, non dall'indirizzo.
 
-> Oggi le controparti possono leggere **eventi** e **sezioni**, con il feed dei loro cambiamenti.
-> Adesioni, domande, soci e tessere arrivano con le fasi successive.
+> Cosa può fare oggi una controparte, se ne ha l'ambito:
+>
+> - **leggere**: eventi e sezioni (con il feed dei cambiamenti), documenti pubblici, organigramma,
+>   verifica di una tessera;
+> - **inviare**: adesioni agli eventi, domande di iscrizione, messaggi del modulo contatti.
+>
+> Lo scambio di soci e tessere fra federazione e sezioni arriva con la fase successiva.
 
 ## Questa istanza
 
@@ -90,6 +95,18 @@ impronta. Poi confrontatela anche voi e attivate, come sopra. Ognuna delle due p
 - **Revoca**: chiude il collegamento in modo definitivo. Per ricollegarsi serve un nuovo invito.
 - **Ultime chiamate ricevute**: data, richiesta, esito e IP; gli errori hanno un codice, ad esempio
   `firma-scaduta` se l'orologio di una delle due macchine è fuori di oltre 5 minuti.
+
+## Cosa arriva dalle integrazioni
+
+- **Adesioni**: compaiono nell'evento come le altre, con origine «Integrazione (API)». Valgono le
+  stesse regole del modulo pubblico: adesioni aperte, posti, accompagnatori. Un'integrazione può
+  aderire solo agli eventi con modulo pubblico e annullare solo le adesioni che ha inviato lei.
+- **Domande di iscrizione**: arrivano in *Soci → Domande* «in attesa», con origine «Integrazione
+  (API)». Si valutano come quelle del modulo online: niente viene accolto da solo.
+- **Messaggi del modulo contatti**: arrivano tra la **posta da protocollare**, casella «Modulo
+  contatti (API)», e si protocollano o si scartano come le email.
+
+La scheda della controparte riporta quante adesioni e domande ha inviato.
 
 ## Dati personali
 

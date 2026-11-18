@@ -45,11 +45,12 @@ class Controparte:
         self.jwks = {"keys": [sig, enc]}
 
     def intestazioni(self, metodo, percorso, corpo=b"", *, destinatario=None, adesso=None,
-                     nonce=None, extra=None, componenti=None):  # fmt: skip
+                     nonce=None, extra=None, componenti=None,
+                     tipo="application/json"):  # fmt: skip
         destinatario = destinatario or str(chiavi.istanza().uuid)
         intestazioni = {"Destinatario-Istanza": str(destinatario), **(extra or {})}
         if corpo:
-            intestazioni["Content-Type"] = "application/json"
+            intestazioni["Content-Type"] = tipo
             intestazioni["Content-Digest"] = f.content_digest(corpo)
         percorso_solo, _, query = percorso.partition("?")
         msg = f.Messaggio(
@@ -75,6 +76,20 @@ class Controparte:
             corpo = alterato
         tipo = intestazioni.get("Content-Type", "application/json")
         return client.generic(metodo, percorso, data=corpo, content_type=tipo, headers=intestazioni)
+
+    def cifrato(self, client, metodo, percorso, dati, **opzioni):
+        """Richiesta con il corpo cifrato (JWE) per la chiave X25519 dell'istanza."""
+        from apps.api import jwe
+
+        enc = next(k for k in chiavi.jwks()["keys"] if k["use"] == "enc" and "exp" not in k)
+        corpo = jwe.cifra(dati, enc).encode()
+        return self.chiama(client, metodo, percorso, corpo=corpo, tipo=jwe.TIPO, **opzioni)
+
+    def decifra(self, risposta):
+        from apps.api import jwe
+
+        assert risposta["Content-Type"] == jwe.TIPO, risposta.content
+        return jwe.decifra_json(risposta.content.decode(), lambda kid: self.cifratura)
 
     def richiesta_abbinamento(self, tipo="integrazione"):
         return {"istanza": str(self.uuid), "nome": self.nome, "tipo": tipo, "jwks": self.jwks}

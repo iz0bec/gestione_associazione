@@ -186,7 +186,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   chi è dietro NAT, rete interna (stesso Proxmox) senza passare dal proxy, in HTTPS anche con CA
   interna o certificato autofirmato verificato per impronta (HTTP in chiaro solo come eccezione esplicita).
   Fasi: ✅ F1 identità e abbinamento → ✅ F2 feed, eventi, sezioni, notifiche, rotazione e
-  aggiornamento delle impronte TLS → F3 cifratura e sistemi esterni (adesioni, domande, contatti;
+  aggiornamento delle impronte TLS → ✅ F3 cifratura e sistemi esterni (adesioni, domande, contatti;
   documenti pubblici, organigramma, verifica tessera) → F4 federazione ↔ sezione (soci e tessere,
   lotti, cariche, numeri del tesseramento, eventi provinciali) → F5 sezione ↔ sezione
   (trasferimento del socio, eventi condivisi, verifica tessera) e kit per chi integra.

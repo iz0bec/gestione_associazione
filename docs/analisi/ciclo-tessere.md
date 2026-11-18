@@ -122,6 +122,33 @@ E per la federazione verso il nazionale: tessere ricevute (5), pagato (4), saldo
   dell'anno» oppure «lascia in carico come scadute»), con il motivo, senza movimenti verso la
   federazione.
 
+## Comunicazioni del ciclo (email e PEC)
+
+Modelli di messaggio predefiniti, modificabili come gli altri in *Comunicazioni → Modelli*. Usano i
+segnaposto `{{ chiave }}` e si spediscono per email o PEC dal protocollo, con la protocollazione in
+uscita. Destinatari: le **direzioni delle associazioni dipendenti** (sezioni), cioè l'indirizzo
+della sezione o il suo presidente.
+
+| Modello | Quando | Contenuto | Segnaposto proposti |
+|---|---|---|---|
+| **Avviso di nuovo tesseramento e richiesta del fabbisogno** | apertura della campagna | annuncia il tesseramento dell'anno; comunica la **quota decisa con delibera del consiglio direttivo** (costo nazionale + quota federale), le modalità e le scadenze di pagamento (acconto/saldo); chiede il **quantitativo di tessere** entro una data | `anno`, `sezione`, `quota_tessera`, `costo_nazionale`, `quota_federale`, `delibera` (numero e data), `scadenza_richiesta`, `modalita_pagamento`, `iban` |
+| **Sollecito della richiesta del fabbisogno** | dopo la scadenza, alle sezioni che non hanno ancora chiesto | richiama l'avviso (con il suo protocollo) e la nuova scadenza | come sopra + `protocollo_avviso`, `nuova_scadenza` |
+| **Avviso di attribuzione delle tessere e modalità di distribuzione** | dopo la suddivisione dal magazzino | numeri attribuiti alla sezione (anno, serie, dal/al, quantità), importo dovuto e già versato, **modalità di distribuzione** (ritiro presso la sede, consegna a mano, spedizione) con luogo e date | `anno`, `sezione`, `serie`, `numero_da`, `numero_a`, `quantita`, `importo_dovuto`, `importo_versato`, `saldo`, `modalita_distribuzione`, `luogo_ritiro`, `date_ritiro`, `protocollo_consegna` |
+
+Regole:
+
+- La **quota** non si scrive nel messaggio a mano: viene dal listino dell'anno, che tiene il
+  riferimento alla **delibera del consiglio direttivo** che l'ha decisa (organi: numero e data).
+  Senza delibera collegata l'avviso segnala «[delibera da indicare]», come fa il manuale di
+  gestione con i dati mancanti.
+- Gli invii sono **per sezione**: un messaggio per destinatario con i dati della sua sezione, in
+  coda come gli altri invii, protocollati in uscita (uno per sezione o un protocollo cumulativo, a
+  scelta).
+- Il **sollecito** si propone solo per le sezioni senza richiesta registrata dopo la scadenza.
+- Senza interoperabilità questi messaggi *sono* il canale. Con l'API la richiesta del fabbisogno e
+  la consegna arrivano anche come documenti strutturati, ma il messaggio parte comunque: resta la
+  traccia formale protocollata.
+
 ## Punti aperti
 
 1. **Pagamento misto**: l'acconto è una percentuale fissa, un importo libero o le tessere
@@ -136,3 +163,7 @@ E per la federazione verso il nazionale: tessere ricevute (5), pagato (4), saldo
    interoperabilità. Vedi il principio all'inizio di «Il ciclo nel gestionale».
 6. **Ricevute del nazionale**: arrivano per PEC o su carta? Con la PEC il protocollo le aggancia già
    alla posta in arrivo.
+7. **Destinatari degli avvisi**: indirizzo della sezione (email/PEC in *Sezioni*) o il presidente in
+   carica? Uno solo o entrambi?
+8. **Modalità di distribuzione**: elenco fisso (ritiro in sede, consegna a mano, spedizione) o testo
+   libero per ogni campagna?

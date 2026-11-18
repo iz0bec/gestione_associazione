@@ -24,6 +24,10 @@ AMBITI = {
     "lotti:lettura": "Lotti di tessere: lettura",
     "domande:scrittura": "Domande di iscrizione: invio",
     "consegne:scrittura": "Consegna dei cambiamenti (modalità a spinta)",
+    "contatti:scrittura": "Messaggi del modulo contatti: invio",
+    "documenti:lettura": "Documenti pubblici: lettura",
+    "organigramma:lettura": "Organigramma pubblico: lettura",
+    "tessere:verifica": "Verifica di una tessera",
 }
 AMBITI_DATI_PERSONALI = {"soci:lettura"}
 
@@ -285,3 +289,28 @@ class NotificaApi(models.Model):
 
     def __str__(self):
         return f"{self.cambiamento} → {self.cliente}"
+
+
+class ChiaveIdempotenza(models.Model):
+    """Scrittura già eseguita per (controparte, Idempotency-Key): stessa chiave e stesso
+    contenuto restituiscono la stessa risposta, contenuto diverso è un errore (conservata 30
+    giorni)."""
+
+    cliente = models.ForeignKey(ClienteApi, on_delete=models.CASCADE, related_name="+")
+    chiave = models.CharField(max_length=64)
+    impronta = models.CharField(max_length=64)
+    stato = models.PositiveSmallIntegerField()
+    tipo = models.CharField(max_length=100)
+    corpo = models.TextField()
+    intestazioni = models.JSONField(default=dict)
+    creata_il = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "chiave di idempotenza"
+        verbose_name_plural = "chiavi di idempotenza"
+        constraints = [
+            models.UniqueConstraint(fields=["cliente", "chiave"], name="api_idempotenza_unica")
+        ]
+
+    def __str__(self):
+        return self.chiave

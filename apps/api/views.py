@@ -128,6 +128,8 @@ class ControparteView(PermessoMixin, DetailView):
             invito_aperto=self.object.inviti.filter(usato_il__isnull=True).first(),
             adesso=timezone.now(),
             notifiche_in_coda=self.object.notifiche.filter(stato="in_coda").count(),
+            adesioni_ricevute=self.object.adesioni.count(),
+            domande_ricevute=self.object.domande.count(),
             notifiche_fallite=self.object.notifiche.filter(stato="fallita")
             .select_related("cambiamento")
             .order_by("-prossimo_tentativo")[:10],

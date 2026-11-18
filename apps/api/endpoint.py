@@ -23,15 +23,24 @@ from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 
 from apps.core import rete
+from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
 
-from . import chiavi, feed, rappresentazioni, servizi
+from . import chiavi, feed, jwe, rappresentazioni, servizi
 from . import firma as f
-from .sicurezza import Problema, controlla_firma, endpoint, json_richiesta, registra_nonce
+from .sicurezza import (
+    Problema,
+    controlla_firma,
+    corpo,
+    endpoint,
+    json_richiesta,
+    registra_nonce,
+    risposta_cifrata,
+)
 
 VERSIONI = ["v1"]
 
@@ -156,8 +165,18 @@ def prova(request):
     """Diagnosi del collegamento: non modifica nulla. Anche per le controparti in prova."""
     cliente = request.cliente_api
     creata = request.firma_api.parametri["created"]
-    # la cifratura JWE arriva con la fase F4: per ora un corpo cifrato non si decifra
-    cifratura = "non-valida" if request.content_type == "application/jose" else "assente"
+    diagnosi_extra = {}
+    if request.content_type == jwe.TIPO:
+        try:
+            dati = corpo(request)
+            cifratura = "valida"
+            chiavi_enc = [k for k in cliente.chiavi("enc") if "exp" not in k]
+            if chiavi_enc:
+                diagnosi_extra["risposta_cifrata"] = jwe.cifra({"eco": dati}, chiavi_enc[0])
+        except Problema:
+            cifratura = "non-valida"
+    else:
+        cifratura = "assente"
     return JsonResponse(
         {
             "firma": "valida",
@@ -166,6 +185,7 @@ def prova(request):
             "cifratura": cifratura,
             "indirizzo_ip_visto": rete.ip_client(request),
             "istanza": str(chiavi.istanza().uuid),
+            **diagnosi_extra,
         }
     )
 
@@ -288,3 +308,184 @@ def chiavi_controparte(request):
         raise Problema("operazione-non-valida", 400, str(e)) from e
     servizi.aggiorna_chiavi_controparte(request.cliente_api, nuove)
     return JsonResponse({"jwks": request.cliente_api.jwks})
+
+
+# ---------------------------------------------------------------- fase F3: dati dall'esterno
+
+
+def _richiedi(request, ambito):
+    if ambito not in request.cliente_api.ambiti:
+        raise Problema("ambito-mancante", 403, f"Ambito non concesso: {ambito}.")
+
+
+def _messaggi(errore):
+    return " ".join(getattr(errore, "messages", None) or [str(errore)])
+
+
+def _evento_visibile(request, uuid_risorsa):
+    e = rappresentazioni.eventi_visibili(request.cliente_api).filter(uuid=uuid_risorsa).first()
+    if e is None:
+        raise Problema("operazione-non-valida", 404, "Evento inesistente o non visibile.")
+    return e
+
+
+@endpoint(metodi=("GET", "POST"), idempotente=True, cifrato=True)
+def adesioni_evento(request, uuid_risorsa):
+    from apps.eventi import servizi as eventi
+    from apps.eventi.models import Adesione
+
+    evento_ = _evento_visibile(request, uuid_risorsa)
+    cliente = request.cliente_api
+    if request.method == "GET":
+        _richiedi(request, "adesioni:lettura")
+        proprie = evento_.adesioni.filter(cliente_api=cliente).order_by("creata_il")
+        return risposta_cifrata(request, [rappresentazioni.adesione(a) for a in proprie])
+    _richiedi(request, "adesioni:scrittura")
+    dati = corpo(request, cifrato=True)
+    try:
+        adesione = eventi.aderisci(
+            evento_, dati, origine=Adesione.Origine.INTEGRAZIONE, cliente_api=cliente,
+            riferimento_esterno=str(dati.get("riferimento_esterno") or ""),
+        )  # fmt: skip
+    except eventi.OperazioneNonValida as e:
+        raise Problema("operazione-non-valida", 409, _messaggi(e)) from e
+    risposta = risposta_cifrata(request, rappresentazioni.adesione(adesione), 201)
+    risposta["Location"] = reverse("api_v1:adesione", args=[adesione.uuid])
+    risposta["ETag"] = f'"{adesione.versione}"'
+    return risposta
+
+
+@endpoint(metodi=("DELETE",), ambito="adesioni:scrittura")
+def adesione(request, uuid_risorsa):
+    from apps.eventi import servizi as eventi
+    from apps.eventi.models import Adesione
+
+    trovata = Adesione.objects.filter(uuid=uuid_risorsa, cliente_api=request.cliente_api).first()
+    if trovata is None:
+        raise Problema("operazione-non-valida", 404, "Adesione inesistente o di un'altra fonte.")
+    if request.headers.get("if-match", "") != f'"{trovata.versione}"':
+        dettaglio = f"If-Match non corrisponde alla versione attuale ({trovata.versione})."
+        raise Problema("operazione-non-valida", 412, dettaglio)
+    try:
+        eventi.annulla_adesione(trovata)
+    except eventi.OperazioneNonValida as e:
+        raise Problema("operazione-non-valida", 409, _messaggi(e)) from e
+    return HttpResponse(status=204)
+
+
+CAMPI_DOMANDA_API = [
+    "cognome", "nome", "codice_fiscale", "data_nascita", "luogo_nascita", "email", "telefono",
+    "cellulare", "indirizzo", "cap", "comune", "provincia", "motivazione", "accetta_statuto",
+    "consenso_trattamento", "consenso_particolari", "consenso_immagini",
+]  # fmt: skip
+
+
+@endpoint(metodi=("POST",), ambito="domande:scrittura", idempotente=True, cifrato=True)
+def domande(request):
+    """Domanda di iscrizione: stessi campi e controlli del modulo, resta «in attesa»."""
+    from apps.soci.forms import DomandaForm
+    from apps.soci.models import DomandaIscrizione, Sezione, TipologiaSocio
+
+    dati = corpo(request, cifrato=True)
+    campi = {c: dati[c] for c in CAMPI_DOMANDA_API if dati.get(c) not in (None, "", False)}
+    sezione = Sezione.objects.filter(codice=str(dati.get("sezione") or ""), attiva=True).first()
+    if dati.get("sezione") and sezione is None:
+        raise Problema("operazione-non-valida", 422, "Sezione sconosciuta.")
+    sezione = sezione or Sezione.predefinita()
+    campi["sezione"] = sezione.pk
+    if dati.get("tipologia"):
+        tipologia = TipologiaSocio.objects.filter(nome=dati["tipologia"], attiva=True).first()
+        if tipologia is None:
+            raise Problema("operazione-non-valida", 422, "Tipologia sconosciuta.")
+        campi["tipologia"] = tipologia.pk
+    if dati.get("dichiarazione") is not None:
+        campi["dichiarazione"] = str(bool(dati["dichiarazione"]))
+    form = DomandaForm(data=campi)
+    if not form.is_valid():
+        errori = "; ".join(
+            f"{form.fields[n].label if n in form.fields else n}: {' '.join(e)}"
+            for n, e in form.errors.items()
+        )
+        raise Problema("operazione-non-valida", 422, errori)
+    domanda = form.save(commit=False)
+    domanda.origine = DomandaIscrizione.Origine.INTEGRAZIONE
+    domanda.cliente_api = request.cliente_api
+    domanda.save()
+    form.save_m2m()
+    registra(Azione.CREAZIONE, domanda, descrizione=f"Domanda di iscrizione n. {domanda.pk} da "
+             f"{request.cliente_api}", origine="integrazione",
+             riferimento_esterno=str(dati.get("riferimento_esterno") or "")[:100],
+             consensi_prestati_il=str(dati.get("prestato_il") or "")[:40])  # fmt: skip
+    return JsonResponse({"uuid": str(domanda.uuid), "stato": domanda.stato}, status=201)
+
+
+@endpoint(metodi=("POST",), ambito="contatti:scrittura", idempotente=True, cifrato=True)
+def contatti(request):
+    """Messaggio del modulo contatti: arriva tra la posta da protocollare."""
+    from django.core.validators import validate_email
+    from django.forms import ValidationError
+
+    from . import contatti as modulo
+
+    dati = corpo(request, cifrato=True)
+    nome = str(dati.get("nome") or "").strip()[:200]
+    email = str(dati.get("email") or "").strip()[:254]
+    testo = str(dati.get("testo") or "").strip()
+    if not nome or not testo:
+        raise Problema("operazione-non-valida", 422, "Servono nome e testo del messaggio.")
+    if len(testo) > 10000:
+        raise Problema("operazione-non-valida", 422, "Testo troppo lungo (al massimo 10000).")
+    try:
+        validate_email(email)
+    except ValidationError as e:
+        raise Problema("operazione-non-valida", 422, "Indirizzo email non valido.") from e
+    messaggio = modulo.ricevi(
+        request.cliente_api, nome=nome, email=email, testo=testo,
+        oggetto=str(dati.get("oggetto") or "").strip()[:200],
+        telefono=str(dati.get("telefono") or "").strip()[:30],
+        riferimento_esterno=str(dati.get("riferimento_esterno") or "").strip()[:100],
+    )  # fmt: skip
+    return JsonResponse({"ricevuto": True, "riferimento": messaggio.message_id}, status=201)
+
+
+# ---------------------------------------------------------------- fase F3: dati verso l'esterno
+
+
+@endpoint(metodi=("GET",), ambito="documenti:lettura")
+def documenti(request):
+    from apps.core.models import DocumentoPubblico
+
+    elenco = DocumentoPubblico.objects.filter(pubblicato=True).order_by("ordine", "titolo")
+    return JsonResponse([rappresentazioni.documento(request, d) for d in elenco], safe=False)
+
+
+@endpoint(metodi=("GET",), ambito="documenti:lettura")
+def documento_file(request, pk):
+    from apps.core.models import DocumentoPubblico
+
+    d = DocumentoPubblico.objects.filter(pk=pk, pubblicato=True).first()
+    if d is None:
+        raise Problema("operazione-non-valida", 404, "Documento inesistente o non pubblicato.")
+    with d.file.open("rb") as f_:
+        dati = f_.read()
+    risposta = HttpResponse(dati, content_type="application/pdf")
+    risposta["Content-Disposition"] = f'attachment; filename="{d.nome_file}"'
+    return risposta
+
+
+@endpoint(metodi=("GET",), ambito="organigramma:lettura")
+def organigramma(request):
+    return JsonResponse(rappresentazioni.organigramma(), safe=False)
+
+
+@endpoint(metodi=("GET",), ambito="tessere:verifica")
+def verifica_tessera(request, codice):
+    from apps.soci import tessera_digitale
+
+    tessera = tessera_digitale.da_codice(codice)
+    if tessera is None:
+        raise Problema("operazione-non-valida", 404, "Codice di verifica sconosciuto.")
+    esito = tessera_digitale.esito(tessera)
+    # solo validità, anno e sezione: nessun altro dato della persona (decisione del 18/11/2026)
+    return JsonResponse({"valida": esito.valida, "motivo": esito.motivo, "anno": esito.anno,
+                         "sezione": esito.sezione})  # fmt: skip

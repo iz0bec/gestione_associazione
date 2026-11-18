@@ -45,6 +45,12 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/api/v1/riepiloghi/{flusso}` | firma + ambito | numero e impronta delle risorse, per la riconciliazione |
 | `/api/v1/eventi`, `/api/v1/eventi/{uuid}` | firma + `eventi:lettura` | eventi; alle integrazioni solo quelli con modulo pubblico |
 | `/api/v1/sezioni` | firma + `sezioni:lettura` | sezioni |
+| `/api/v1/eventi/{uuid}/adesioni` (GET/POST), `/api/v1/adesioni/{uuid}` (DELETE) | firma + `adesioni:…`, **cifrato** | adesioni inviate dalla controparte |
+| `/api/v1/domande` (POST) | firma + `domande:scrittura`, **cifrato** | domanda di iscrizione, in attesa |
+| `/api/v1/contatti` (POST) | firma + `contatti:scrittura`, **cifrato** | messaggio tra la posta da protocollare |
+| `/api/v1/documenti`, `/api/v1/documenti/{id}/file` | firma + `documenti:lettura` | documenti pubblici |
+| `/api/v1/organigramma` | firma + `organigramma:lettura` | cariche in corso (ruolo e nome) |
+| `/api/v1/tessere/{codice}` | firma + `tessere:verifica` | validità, anno e sezione di una tessera (nient'altro) |
 
 Le risposte, comprese quelle pubbliche e gli errori, sono **firmate** con la chiave dell'istanza.
 
@@ -103,6 +109,21 @@ Rinnovando il certificato con la **stessa chiave** l'impronta non cambia. `step 
 creano invece una chiave nuova a ogni rinnovo. L'installazione chiamante la rilegge ogni notte dalla
 `/.well-known` firmata (`aggiorna_collegamenti`), passando dall'indirizzo pubblico se quello interno
 non è più verificabile. Senza indirizzo pubblico conviene la verifica **CA interna**.
+
+## Dati personali e scritture
+
+- I dati personali viaggiano solo **cifrati** per il destinatario (JWE `ECDH-ES+A256KW` /
+  `A256GCM`, chiavi X25519), sia in ingresso che in uscita. Un corpo in chiaro su questi indirizzi
+  è rifiutato (`415 cifratura-richiesta`).
+- Ogni scrittura richiede `Idempotency-Key`. La stessa chiave con lo stesso contenuto restituisce
+  la risposta già data e non crea doppioni. Le chiavi si conservano 30 giorni.
+- **Limiti per controparte**: `API_LIMITE_MINUTO` chiamate al minuto e `API_LIMITE_SCRITTURE_ORA`
+  scritture all'ora (predefiniti 120). Oltre si risponde `429` con `Retry-After`.
+- **Adesioni e domande** passano dagli stessi servizi del modulo pubblico, con le stesse regole e
+  gli stessi consensi obbligatori. Le domande restano «in attesa» e non sono mai accolte in
+  automatico. Restano registrate l'origine «integrazione» e la controparte che le ha inviate.
+- **Contatti**: ogni messaggio diventa un `.eml` nella casella interna «Modulo contatti (API)» e
+  compare tra la posta da protocollare. La casella non si configura e non si scarica.
 
 ## Feed dei cambiamenti
 

@@ -44,6 +44,8 @@ permessi `600`, mai nel repository.
 | `CHIAVE_CIFRATURA` | per le caselle di posta e l'API | - | chiave Fernet per le password salvate nel database; generarla e aggiungerla al `.env` con `cd /opt/gestione-associazione && echo "CHIAVE_CIFRATURA=$(.venv/bin/python manage.py genera_chiave_cifratura)" >> .env`, poi riavviare i servizi (*Sistema → Servizi di posta* mostra il comando esatto dell'installazione se la chiave manca). Più chiavi separate da virgola per la rotazione (la prima cifra). **Conservarla con i backup.** |
 | `API_TLS_CERTIFICATO` | | `/etc/gestione-associazione/tls/cert.pem` | certificato da cui l'API calcola l'impronta SPKI pubblicata (vedi [API](api.md)) |
 | `API_TLS_SPKI` | | - | altre impronte SPKI da pubblicare, separate da virgola (es. certificato del proxy locale) |
+| `API_LIMITE_MINUTO` | | `120` | chiamate all'API al minuto per controparte (oltre: 429) |
+| `API_LIMITE_SCRITTURE_ORA` | | `120` | scritture all'API all'ora per controparte (adesioni, domande, contatti) |
 | `PROTOCOLLO_ALLEGATO_MAX_MB` | | `25` | dimensione massima di un documento protocollato |
 | `PROTOCOLLO_SPEDIZIONE_MAX_MB` | | `20` | totale dei documenti allegati a una spedizione per email o PEC di un protocollo (nel messaggio crescono di circa un terzo) |
 | `PROTOCOLLO_ESTENSIONI` | | pdf, p7m, xml, eml, office, immagini, zip | estensioni ammesse per i documenti (separate da virgola) |
@@ -56,7 +58,7 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 |---|---|---|
 | `manage.py pianificatore` | sempre attivo (servizio) | esegue i comandi seguenti alle scadenze |
 | `manage.py invia_coda` | ogni minuto | prepara auguri e promemoria di rinnovo del giorno e spedisce le email in coda (anche via PEC e Telegram), compresi i protocolli da spedire per email o PEC (se l'invio è attivo); legge i collegamenti al bot Telegram (HTTPS in uscita verso `api.telegram.org`, e verso i fornitori di SMS e WhatsApp se configurati) |
-| `manage.py pulizia_api` | ogni minuto | API: cancella i nonce oltre 10 minuti, il registro delle chiamate oltre 90 giorni e i cambiamenti del feed oltre 400 giorni, toglie le chiavi private uscite dalla rotazione, sospende le controparti scadute |
+| `manage.py pulizia_api` | ogni minuto | API: cancella i nonce oltre 10 minuti, il registro delle chiamate oltre 90 giorni e i cambiamenti del feed oltre 400 giorni, toglie le chiavi private uscite dalla rotazione e le chiavi di idempotenza oltre 30 giorni, sospende le controparti scadute |
 | `manage.py invia_notifiche_api` | ogni minuto | API: consegna gli avvisi dei cambiamenti alle controparti, con ripetizioni fino a 24 ore |
 | `manage.py aggiorna_collegamenti` | ogni notte | API: rilegge chiavi e impronte TLS delle installazioni collegate dalla loro `/.well-known` firmata |
 | `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo, li sposta nella cartella `PROCESSATA` della casella e aggancia le ricevute PEC ai protocolli spediti |

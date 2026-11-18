@@ -73,6 +73,26 @@ API di interoperabilità, fase F2: feed dei cambiamenti, eventi e sezioni, notif
   - guida per chi integra in `docs/api/README.md`;
   - contratto OpenAPI aggiornato.
 
+API di interoperabilità, fase F3: cifratura dei dati personali e sistemi esterni (siti, app).
+
+- **Cifratura per il destinatario** (JWE `ECDH-ES+A256KW` / `A256GCM` su X25519), senza dipendenze
+  nuove e verificata con i vettori ufficiali (RFC 7518, 8037, 3394). I dati personali in ingresso
+  devono essere cifrati; quelli in uscita sono cifrati per la controparte. `/prova` verifica la
+  cifratura in andata e ritorno.
+- **`Idempotency-Key`** su ogni scrittura (30 giorni) e **limiti di frequenza** per controparte
+  (`API_LIMITE_MINUTO`, `API_LIMITE_SCRITTURE_ORA`, risposta 429 con `Retry-After`).
+- **Dall'esterno verso il gestionale**:
+  - adesioni agli eventi con lettura delle proprie e annullamento con `If-Match`, con le regole del
+    modulo pubblico e solo sugli eventi pubblici;
+  - domande di iscrizione, che restano in attesa, con gli stessi consensi obbligatori del modulo;
+  - messaggi del modulo contatti, tra la posta da protocollare (casella «Modulo contatti (API)»).
+- **Dal gestionale verso l'esterno**:
+  - documenti pubblici con il file;
+  - organigramma (ruolo e nome delle cariche in corso);
+  - verifica di una tessera (validità, anno e sezione, senza il nome).
+- Origine «Integrazione (API)» e controparte registrate su adesioni e domande; la scheda della
+  controparte riporta i dati ricevuti.
+
 ## [1.0.37] - 2026-11-18
 
 Certificati HTTPS con rinnovo automatico e CA interna su Proxmox in un solo comando.

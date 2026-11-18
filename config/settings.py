@@ -217,6 +217,9 @@ URL_PUBBLICO = env("URL_PUBBLICO", default="").rstrip("/")
 # API_TLS_SPKI aggiunge altre impronte (es. certificato del proxy locale), separate da virgola.
 API_TLS_CERTIFICATO = env("API_TLS_CERTIFICATO", default="/etc/gestione-associazione/tls/cert.pem")
 API_TLS_SPKI = env.list("API_TLS_SPKI", default=[])
+# limiti per controparte: chiamate al minuto, scritture (POST/PUT/DELETE) all'ora
+API_LIMITE_MINUTO = env.int("API_LIMITE_MINUTO", default=120)
+API_LIMITE_SCRITTURE_ORA = env.int("API_LIMITE_SCRITTURE_ORA", default=120)
 
 # Comunicazioni: messaggi spediti a ogni giro della coda (il pianificatore gira ogni minuto)
 COMUNICAZIONI_LOTTO = env.int("COMUNICAZIONI_LOTTO", default=30)

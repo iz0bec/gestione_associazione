@@ -8,6 +8,7 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+import uuid as uuid_mod
 from datetime import date
 from decimal import Decimal
 
@@ -509,6 +510,9 @@ class DomandaIscrizione(models.Model):
         PUBBLICA = "pubblica", "Modulo online"
         SEGRETERIA = "segreteria", "Segreteria"
         EMAIL = "email", "Email"
+        INTEGRAZIONE = "integrazione", "Integrazione (API)"
+
+    uuid = models.UUIDField(default=uuid_mod.uuid4, unique=True, editable=False)
 
     # dati del richiedente (copiati nell'anagrafica all'accoglimento)
     nome = models.CharField(max_length=100)
@@ -555,7 +559,11 @@ class DomandaIscrizione(models.Model):
     consenso_comunicazioni = models.BooleanField(default=False)  # compreso nel trattamento
     consenso_immagini = models.BooleanField("consenso all'uso dell'immagine", default=False)
     # gestione
-    origine = models.CharField(max_length=10, choices=Origine.choices, default=Origine.SEGRETERIA)
+    origine = models.CharField(max_length=12, choices=Origine.choices, default=Origine.SEGRETERIA)
+    cliente_api = models.ForeignKey(
+        "api.ClienteApi", null=True, blank=True, on_delete=models.SET_NULL, related_name="domande",
+        verbose_name="inviata da", editable=False,
+    )  # fmt: skip
     ricevuta_il = models.DateTimeField("ricevuta il", auto_now_add=True, db_index=True)
     indirizzo_ip = models.GenericIPAddressField(null=True, blank=True, editable=False)
     stato = models.CharField(

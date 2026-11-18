@@ -18,7 +18,7 @@ import uuid
 from datetime import timedelta
 from urllib.parse import urlsplit
 
-from apps.api import chiavi, endpoint, servizi
+from apps.api import chiavi, endpoint, jwe, servizi
 from apps.api import firma as f
 from apps.api.models import ClienteApi
 from apps.core.models import Organizzazione
@@ -94,7 +94,12 @@ def _json(risposta):
 def _richiesta_firmata(dest, metodo, percorso, destinatario, corpo=None, extra=None,
                        tipo="application/json"):  # fmt: skip
     """Esegue una richiesta firmata; restituisce (risposta, messaggio della richiesta)."""
-    dati = b"" if corpo is None else json.dumps(corpo, ensure_ascii=False).encode()
+    if corpo is None:
+        dati = b""
+    elif isinstance(corpo, str | bytes):  # già serializzato (es. JWE)
+        dati = corpo.encode() if isinstance(corpo, str) else corpo
+    else:
+        dati = json.dumps(corpo, ensure_ascii=False).encode()
     solo_percorso, _, query = percorso.partition("?")
     percorso_completo = urlsplit(dest.url).path.rstrip("/") + solo_percorso
     intestazioni = {"Destinatario-Istanza": str(destinatario), **(extra or {})}
@@ -201,16 +206,23 @@ def abbina(utente, *, codice, nome, ambiti, indirizzo_pubblico="", indirizzo_int
     raise ErroreCollegamento(ultimo_errore or "Nessun indirizzo indicato.")
 
 
-def chiama(cliente: ClienteApi, metodo, percorso, corpo=None):
-    """Chiamata firmata all'API della controparte; prova gli indirizzi in ordine. Restituisce
-    (risposta verificata, destinazione usata, errori sugli indirizzi precedenti)."""
+def chiama(cliente: ClienteApi, metodo, percorso, corpo=None, *, cifra=False, extra=None):
+    """Chiamata firmata all'API della controparte; prova gli indirizzi in ordine. Con `cifra`
+    il corpo parte come JWE per la sua chiave X25519. Restituisce (risposta verificata,
+    destinazione usata, errori sugli indirizzi precedenti)."""
     if not cliente.abbinata:
         raise ErroreCollegamento("Controparte non abbinata.")
+    tipo = "application/json"
+    if cifra and corpo is not None:
+        chiavi_enc = [k for k in cliente.chiavi("enc") if "exp" not in k]
+        if not chiavi_enc:
+            raise ErroreCollegamento("La controparte non ha una chiave di cifratura.")
+        corpo, tipo = jwe.cifra(corpo, chiavi_enc[0]), jwe.TIPO
     errori = []
     for dest in destinazioni(cliente):
         try:
             risposta, msg = _richiesta_firmata(dest, metodo, PREFISSO_API + percorso,
-                                               cliente.istanza, corpo)  # fmt: skip
+                                               cliente.istanza, corpo, extra, tipo)  # fmt: skip
         except ErroreTrasporto as e:
             errori.append(f"{dest.descrizione}: {e}")
             continue
@@ -230,14 +242,21 @@ def chiama(cliente: ClienteApi, metodo, percorso, corpo=None):
 def prova(cliente: ClienteApi):
     """Esegue /prova sulla controparte e salva l'esito (testo per l'amministratore)."""
     try:
-        risposta, dest, errori = chiama(cliente, "POST", "/prova", {"prova": True})
+        risposta, dest, errori = chiama(cliente, "POST", "/prova", {"prova": True}, cifra=True)
         if risposta.stato != 200:
             esito = f"Rifiutata da {dest.url}: {_problema(risposta)}"
             riuscita = False
         else:
             diagnosi = _json(risposta)
+            try:
+                eco = decifra(diagnosi.get("risposta_cifrata") or "")
+                andata_ritorno = "ok" if eco == {"eco": {"prova": True}} else "contenuto diverso"
+            except ErroreCollegamento:
+                andata_ritorno = "non riuscita"
             esito = (
-                f"Riuscita su {dest.url}: firma {diagnosi.get('firma')}, scarto dell'orologio "
+                f"Riuscita su {dest.url}: firma {diagnosi.get('firma')}, cifratura "
+                f"{diagnosi.get('cifratura')} (andata e ritorno: {andata_ritorno}), "
+                "scarto dell'orologio "
                 f"{diagnosi.get('orologio', {}).get('scarto_secondi')} s, stato presso la "
                 f"controparte «{diagnosi.get('controparte', {}).get('stato')}», "
                 f"IP visto {diagnosi.get('indirizzo_ip_visto')}."
@@ -249,6 +268,21 @@ def prova(cliente: ClienteApi):
         esito, riuscita = f"Non riuscita: {e}", False
     servizi.registra_esito_prova(cliente, esito)
     return riuscita, esito
+
+
+def decifra(testo):
+    """Contenuto JSON di un JWE ricevuto da una controparte, con le nostre chiavi X25519."""
+    try:
+        return jwe.decifra_json(testo, chiavi.chiave_cifratura)
+    except jwe.ErroreJwe as e:
+        raise ErroreCollegamento(f"Risposta cifrata non leggibile: {e}") from e
+
+
+def json_risposta(risposta):
+    """Corpo della risposta come JSON, decifrato se è un JWE."""
+    if risposta.intestazioni.get("content-type", "").startswith(jwe.TIPO):
+        return decifra(risposta.corpo.decode("ascii", "replace"))
+    return _json(risposta)
 
 
 def aggiorna_identita(cliente: ClienteApi):

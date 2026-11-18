@@ -26,6 +26,8 @@ PUBBLICHE = {
     # API di interoperabilità: autenticate dalla firma delle controparti, non dagli utenti
     "api_istanza", "api_jwks", "api_v1:abbinamenti", "api_v1:prova", "api_v1:chiavi",
     "api_v1:cambiamenti", "api_v1:riepilogo", "api_v1:eventi", "api_v1:evento", "api_v1:sezioni",
+    "api_v1:adesioni_evento", "api_v1:adesione", "api_v1:domande", "api_v1:contatti",
+    "api_v1:documenti", "api_v1:documento_file", "api_v1:organigramma", "api_v1:verifica_tessera",
     # area personale dei soci: protetta dalla sessione del socio, non dagli utenti (nomi completi)
     "area:area", "area:accesso", "area:inviato", "area:entra", "area:ricevuta", "area:aderisci",
     "area:rinuncia", "area:richiesta", "area:telegram", "area:esci",

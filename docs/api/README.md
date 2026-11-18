@@ -18,9 +18,11 @@ eventi, **non fanno parte del progetto**: si scrivono su questo contratto, in qu
 Disponibile oggi:
 
 - descrizione dell'istanza, chiavi, abbinamento, `/prova` e `PUT /chiavi` (fase F1);
-- feed dei cambiamenti, riepiloghi, lettura di `eventi` e `sezioni`, notifiche (fase F2).
+- feed dei cambiamenti, riepiloghi, lettura di `eventi` e `sezioni`, notifiche (fase F2);
+- cifratura, adesioni, domande di iscrizione, messaggi del modulo contatti, documenti pubblici,
+  organigramma, verifica di una tessera (fase F3).
 
-Adesioni e domande in ingresso, `soci` e `lotti` arrivano con le fasi successive.
+`soci` e `lotti`, che servono fra installazioni, arrivano con le fasi successive.
 
 ## 1. Le vostre chiavi
 
@@ -115,6 +117,29 @@ con il CloudEvent (`application/cloudevents+json`).
   (`ga2`…), fatta con la chiave in uscita. Se il `keyid` di `ga` non è nella vostra copia della
   JWKS, verificate `ga1` con la chiave che conoscete e poi rileggete la JWKS.
 
+## 8. Inviare dati (adesioni, domande, contatti)
+
+1. **Cifrate il corpo** per la chiave `use: enc` (X25519) della JWKS dell'istanza: JWE compatto,
+   `alg: ECDH-ES+A256KW`, `enc: A256GCM`, `kid` della chiave, `Content-Type: application/jose`.
+   `Content-Digest` e firma si calcolano sul testo del JWE. Le risposte con dati personali tornano
+   cifrate per la **vostra** chiave `enc`.
+2. **`Idempotency-Key`**: un valore unico per operazione (consigliato un UUID). Se la risposta si
+   perde, ripetete con la stessa chiave: riceverete la stessa risposta, senza doppioni.
+3. **Adesione**:
+   - `POST /api/v1/eventi/{uuid}/adesioni` con `cognome` (obbligatorio), `nome`, `email`,
+     `telefono`, `accompagnatori`, `note`, `riferimento_esterno` (il vostro identificativo);
+   - risponde `201` con l'adesione cifrata, `Location` ed `ETag`;
+   - `409` se l'evento è annullato, le adesioni sono chiuse o i posti sono finiti, con un
+     messaggio da mostrare alla persona;
+   - per annullarla, `DELETE /api/v1/adesioni/{uuid}` con `If-Match: "<versione>"`.
+4. **Domanda**:
+   - `POST /api/v1/domande` con i campi di `NuovaDomanda`: `accetta_statuto` e
+     `consenso_trattamento` devono essere `true`;
+   - `sezione` è il codice della sezione;
+   - `prestato_il` è il momento in cui la persona ha dato i consensi sul vostro sito;
+   - un dato non valido (es. il codice fiscale) dà `422` con il motivo.
+5. **Contatti**: `POST /api/v1/contatti` con `nome`, `email`, `testo` (e `oggetto`, `telefono`).
+
 ## Errori
 
 Formato Problem Details (RFC 9457), `application/problem+json`, con il campo `codice`:
@@ -126,5 +151,7 @@ Formato Problem Details (RFC 9457), `application/problem+json`, con il campo `co
   questa richiesta;
 - `invito-non-valido`, con stato 410;
 - `cursore-scaduto`, con stato 410;
+- `cifratura-richiesta` (415), `decifratura-fallita` (400), `idempotenza-conflitto` (422 o 409),
+  `troppe-richieste` (429, con `Retry-After`);
 - `operazione-non-valida`;
 - `non-configurata`, con stato 503.

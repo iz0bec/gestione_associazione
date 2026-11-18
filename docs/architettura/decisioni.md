@@ -546,6 +546,20 @@ stessa rete interna (caso reale: lo stesso Proxmox) e parlarsi senza passare dal
 - Notifiche come outbox: righe `NotificaApi` create nella stessa transazione del cambiamento e
   consegnate dal pianificatore.
 
+**Dettagli fissati con la F3.**
+
+- JWE scritto qui (`apps/api/jwe.py`) per la sola combinazione ammessa, senza dipendenze nuove.
+  È verificato con i vettori di RFC 7518 App. C, RFC 8037 A.6 e RFC 3394 §4.6; ogni altro
+  algoritmo e i parametri non previsti (`zip`) sono rifiutati.
+- L'obbligo di cifratura si controlla sul tipo del corpo prima di qualunque lettura, compresa
+  quella per l'idempotenza.
+- Idempotenza: impronta SHA-256 di metodo, percorso e contenuto **decifrato** (un JWE cambia a ogni
+  cifratura). La scrittura e la chiave salvata stanno nella stessa transazione; si salvano solo
+  le risposte `2xx`.
+- Messaggi del modulo contatti come `.eml` in una casella interna (`CasellaPosta.interna`, esclusa
+  dal manager predefinito), con lo stesso percorso della posta vera (`posta.salva_messaggio`).
+- La verifica della tessera restituisce solo validità, motivo, anno e sezione, mai il nome.
+
 **Perimetro deciso il 18/11/2026** (sostituisce l'elenco delle fasi del §10).
 
 | Fra | Direzione | Cosa |

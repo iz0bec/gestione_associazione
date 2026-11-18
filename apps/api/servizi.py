@@ -23,6 +23,7 @@ from .models import (
     AMBITI,
     AMBITI_DATI_PERSONALI,
     ChiamataApi,
+    ChiaveIdempotenza,
     ClienteApi,
     InvitoAbbinamento,
     NonceVisto,
@@ -31,6 +32,7 @@ from .models import (
 VALIDITA_INVITO = timedelta(hours=24)
 CONSERVAZIONE_NONCE = timedelta(minutes=10)
 CONSERVAZIONE_CHIAMATE = timedelta(days=90)
+CONSERVAZIONE_IDEMPOTENZA = timedelta(days=30)
 
 
 class OperazioneNonValida(Exception):
@@ -270,6 +272,9 @@ def pulizia():
         ).delete()[0],
         "chiavi": chiavi.scarta_scadute(),
         "cambiamenti": feed.conserva(),
+        "idempotenza": ChiaveIdempotenza.objects.filter(
+            creata_il__lt=adesso - CONSERVAZIONE_IDEMPOTENZA
+        ).delete()[0],
         "sospese": sum(
             sospendi_se_scaduta(c)
             for c in ClienteApi.objects.filter(
