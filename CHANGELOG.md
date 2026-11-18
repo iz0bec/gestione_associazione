@@ -5,6 +5,29 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.37] - 2026-11-18
+
+Certificati HTTPS con rinnovo automatico e CA interna su Proxmox in un solo comando.
+
+### Aggiunto
+- **`installa.sh --tls-step`**: certificato dalla propria step-ca con un **token monouso** (creato da chi
+  amministra la CA, valido pochi minuti) e **rinnovo automatico** con `step ca renew`, che si autentica con
+  il certificato in corso: sul server non resta nessuna password. Funziona anche con un proxy sulla
+  stessa macchina. Timer `gestione-associazione-tls-rinnovo` due volte al giorno, rinnovo dopo i due
+  terzi della validità, riavvio automatico del servizio.
+- **`installa.sh --tls-acme`**: certificato da una CA ACME (step-ca, Let's Encrypt…) con certbot e
+  rinnovo con `certbot.timer`; controlla che la porta 80 sia libera.
+- Radice della CA privata con `--tls-ca FILE` oppure `--tls-ca-impronta` (scaricata dalla CA e accettata
+  solo se l'impronta coincide), installata nell'archivio del sistema. Scegliendo un modo nuovo i rinnovi
+  del precedente si spengono. Logica dell'HTTPS in `scripts/tls.sh`.
+- **`scripts/proxmox/crea-ca.sh`**: container LXC con step-ca pronta (repository Smallstep, durata dei
+  certificati, nomi ammessi limitati al dominio interno e alle reti indicate, provisioner ACME, servizio
+  systemd, comando `token-certificato` per l'installatore del gestionale).
+
+### Corretto
+- Guida *HTTPS anche in rete interna*: l'unità systemd di esempio di step-ca non partiva
+  (`ProtectSystem=full` rendeva di sola lettura il database in `/etc/step-ca/db`).
+
 ## [1.0.36] - 2026-11-18
 
 HTTPS servito direttamente dall'applicazione e guida all'HTTPS in rete interna.

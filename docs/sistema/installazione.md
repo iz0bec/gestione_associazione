@@ -72,7 +72,9 @@ cd /root/gestione-associazione-src && git checkout v0.0.1-rc.1
 | `--host NOMI` | nomi aggiuntivi per `ALLOWED_HOSTS`, es. `gestione.example.it` |
 | `--db NOME` | nome del database (predefinito `gestione_associazione`) |
 | `--admin`, `--email` | amministratore creato alla prima installazione |
-| `--tls-cert FILE` `--tls-key FILE` | **HTTPS servito direttamente** con un certificato (es. dalla propria step-ca o con MyCert) |
+| `--tls-step URL` `--tls-step-token T` | **HTTPS** con un certificato della propria step-ca e **rinnovo automatico** (token monouso, nessuna password sul server); con `--tls-ca-impronta` o `--tls-ca` |
+| `--tls-acme URL` | **HTTPS** da una CA ACME con certbot e rinnovo automatico (porta 80 libera; nomi in `--tls-nomi`) |
+| `--tls-cert FILE` `--tls-key FILE` | **HTTPS** con un certificato fatto altrove (es. con MyCert) |
 | `--tls-autofirmato` | HTTPS con un certificato autofirmato per nome e IP del server (825 giorni); `--tls-nomi` aggiunge nomi o IP |
 | `--senza-tls` | torna all'HTTP (solo dietro un proxy HTTPS) |
 | `-y` | nessuna domanda |
@@ -114,6 +116,9 @@ bash crea-lxc.sh --versione v0.0.1-rc.1 --ip 192.168.0.40/24 --gw 192.168.0.1 --
 | `--porta` | 8000 | porta web |
 | `--tls-autofirmato` | - | HTTPS con certificato autofirmato (consigliato; poi sostituibile con uno della propria CA) |
 
+Per una **CA interna** sullo stesso Proxmox c'è `scripts/proxmox/crea-ca.sh` (step-ca in un container
+dedicato): vedi [HTTPS anche in rete interna](https-rete-interna.md).
+
 Alla fine lo script stampa l'indirizzo, la password di root del container e le credenziali
 dell'amministratore dell'applicazione. Il container si avvia con l'host (`onboot`).
 Il template Debian scaricato è quello dell'architettura dell'host (amd64 o arm64).
@@ -127,7 +132,7 @@ a ogni `--aggiorna`; non compare con `pct enter`, che non apre una shell di logi
 Aggiornamento, con backup automatico prima:
 
 ```bash
-bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.36
+bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.37
 ```
 
 Per i backup conviene anche il backup del container di Proxmox (snapshot o vzdump), in aggiunta ai
@@ -210,7 +215,7 @@ git pull && docker compose up -d --build
 Senza Docker, dalla copia del repository usata per l'installazione:
 
 ```bash
-cd /root/gestione-associazione-src && git fetch --tags && git checkout v1.0.36
+cd /root/gestione-associazione-src && git fetch --tags && git checkout v1.0.37
 ./scripts/installa.sh -y      # backup automatico, migrazioni, riavvio dei servizi
 ```
 

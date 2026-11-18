@@ -177,6 +177,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 - ✅ Ricerca globale (persone, soci, protocolli, riunioni, delibere, beni, appuntamenti, comunicazioni).
 - ✅ **HTTPS dall'installatore** (1.0.36): certificato della propria CA o autofirmato, riavvio al rinnovo;
   guida *HTTPS anche in rete interna* (step-ca, MyCert, OpenSSL).
+- ✅ **Certificati con rinnovo automatico** (1.0.37): `installa.sh --tls-step` (step-ca, token monouso) e
+  `--tls-acme` (certbot); CA interna su Proxmox con `crea-ca.sh`.
 - **API di interoperabilità v1** (ADR-030, contratto in `docs/api/openapi.yaml`, *bozza*): un unico
   contratto pubblico per le installazioni pari (federazione ↔ sezioni) e per adattatori esterni non
   inclusi nel progetto (es. WordPress). Firma RFC 9421 di ogni messaggio, dati personali cifrati per il

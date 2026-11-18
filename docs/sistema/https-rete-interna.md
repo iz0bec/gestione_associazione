@@ -23,7 +23,7 @@ Questa guida mostra come ottenerlo senza servizi esterni, in due modi:
 |---|---|---|
 | Cosa si ottiene | una propria autorità di certificazione che rilascia certificati per tutti i servizi interni | un certificato per un solo servizio |
 | Browser | nessun avviso, dopo aver installato **una volta** il certificato radice sui dispositivi | avviso finché il certificato non è installato su ogni dispositivo |
-| Rinnovo | automatico (ACME) o con un comando | a mano, alla scadenza |
+| Rinnovo | automatico (`installa.sh --tls-step` o `--tls-acme`) | a mano, alla scadenza |
 | Collegamenti fra installazioni ([ADR-030](../architettura/decisioni.md)) | modalità `ca_interna` | modalità `impronta` |
 | Adatta a | più servizi o più installazioni (es. un Proxmox con vari container) | prove, una sola installazione, collegamenti macchina-macchina |
 
@@ -52,6 +52,21 @@ un dominio proprio (preferibile) oppure `.lan` o `home.arpa`.
 [step-ca](https://smallstep.com/docs/step-ca/) è un'autorità di certificazione open source (licenza
 Apache 2.0) di Smallstep. Va su una macchina sempre accesa: un piccolo container LXC basta
 (1 CPU, 256 MB di RAM, 2 GB di disco).
+
+> **Su Proxmox in un solo comando.** `scripts/proxmox/crea-ca.sh` (sull'host Proxmox, come root) fa
+> tutti i passi da A.1 a A.5: container Debian, step-ca dal repository Smallstep, inizializzazione,
+> durata dei certificati, nomi ammessi limitati al dominio interno, provisioner ACME, servizio systemd
+> e il comando `token-certificato` per l'installatore del gestionale.
+>
+> ```bash
+> bash crea-ca.sh --dominio associazione.lan --ip 192.168.0.40/24 --gw 192.168.0.1
+> ```
+>
+> Alla fine stampa l'indirizzo della CA, l'**impronta della radice** e il comando da usare sul server
+> del gestionale. Opzioni: `--reti` (reti di cui firmare gli IP, predefinita quella di `--ip`),
+> `--nome-ca`, `--nomi-ca`, `--durata`, `--durata-max`, più quelle del container (`--id`, `--storage`,
+> …, come `crea-lxc.sh`). Restano da fare a mano il nome nel DNS locale (A.0) e la radice sui
+> dispositivi (A.6). I passi seguenti spiegano cosa fa, o come farlo su una macchina qualsiasi.
 
 ### A.1 Container e installazione
 
@@ -147,6 +162,7 @@ ExecStart=/usr/bin/step-ca /etc/step-ca/config/ca.json --password-file /etc/step
 Restart=on-failure
 NoNewPrivileges=true
 ProtectSystem=full
+ReadWritePaths=/etc/step-ca/db
 ProtectHome=true
 PrivateTmp=true
 
@@ -277,22 +293,66 @@ creazione `-newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -keyout gestionale
 ## HTTPS servito direttamente dal gestionale
 
 Senza un proxy (o per cifrare anche il tratto proxy → gestionale) l'installatore configura Gunicorn
-in HTTPS:
+in HTTPS. Quattro modi, uno a scelta:
+
+| Modo | Rinnovo | Quando |
+|---|---|---|
+| `--tls-step URL --tls-step-token T` | **automatico** (`step ca renew`) | CA step-ca: funziona anche con un proxy sulla stessa macchina |
+| `--tls-acme URL` | **automatico** (certbot) | CA con ACME (step-ca, Let's Encrypt…), porta 80 libera |
+| `--tls-cert F --tls-key F` | a mano (si ricopiano i file) | certificato fatto altrove (MyCert, OpenSSL…) |
+| `--tls-autofirmato` | a mano (si riesegue) | senza CA; verifica per impronta |
+
+**step-ca con token monouso (consigliato).** Chi amministra la CA crea un token, valido pochi minuti e
+usabile una volta, con i nomi del certificato; sul server lo si passa all'installatore insieme
+all'impronta della radice:
 
 ```bash
-# certificato della propria CA (step-ca, MyCert, ...): file PEM con la catena e chiave senza password
+# sulla CA creata con crea-ca.sh
+token-certificato gestionale.associazione.lan 192.168.0.34
+# oppure da qualsiasi macchina con step collegata alla CA (es. quella dove si usa MyCert)
+step ca token gestionale.associazione.lan --san gestionale.associazione.lan --san 192.168.0.34
+
+# sul server del gestionale, entro pochi minuti
+./scripts/installa.sh -y --tls-step https://ca.associazione.lan \
+  --tls-ca-impronta <impronta della radice> --tls-step-token <token>
+```
+
+L'installatore aggiunge step-cli (repository Smallstep), scarica la radice dalla CA e la accetta solo
+se l'impronta coincide (in alternativa `--tls-ca root_ca.crt`), la installa nell'archivio del sistema,
+ottiene il certificato e attiva `gestione-associazione-tls-rinnovo.timer`: due volte al giorno
+controlla il certificato e, passati i due terzi della validità, lo rinnova con `step ca renew`, che si
+autentica **con il certificato in corso**. Sul server non resta nessuna password né il token. Se il
+server resta spento oltre la scadenza (e la CA non ammette il rinnovo dei certificati scaduti) basta un
+nuovo token.
+
+**ACME con certbot.** La CA verifica i nomi collegandosi a **questo server sulla porta 80**: la porta
+deve essere libera (con Nginx Proxy Manager o un altro proxy sulla stessa macchina usare `--tls-step`)
+e i nomi devono essere risolti dalla CA. Gli indirizzi IP non sono ammessi.
+
+```bash
+./scripts/installa.sh -y --tls-acme https://ca.associazione.lan/acme/acme/directory \
+  --tls-ca-impronta <impronta> --tls-nomi gestionale.associazione.lan
+```
+
+Il rinnovo lo fa `certbot.timer` del sistema; un hook copia il certificato nuovo al suo posto.
+
+**Da file o autofirmato:**
+
+```bash
+# certificato della propria CA (es. MyCert): file PEM con la catena e chiave senza password
 ./scripts/installa.sh -y --tls-cert gestionale.crt --tls-key gestionale.key
 # oppure autofirmato, per nome e IP del server (più eventuali altri nomi)
 ./scripts/installa.sh -y --tls-autofirmato --tls-nomi gestionale.associazione.lan
 ```
 
 - I file vanno in `/etc/gestione-associazione/tls/` (chiave leggibile solo dal servizio); da quel
-  momento la porta del gestionale risponde **solo in HTTPS**. Gli aggiornamenti mantengono la scelta.
+  momento la porta del gestionale risponde **solo in HTTPS**. Gli aggiornamenti mantengono la scelta;
+  scegliendo un modo nuovo, i rinnovi del precedente si spengono.
 - L'installatore controlla che la chiave corrisponda al certificato e che non sia scaduto; alla fine
-  stampa emittente, scadenza e **impronta SPKI** (per i collegamenti fra installazioni).
-- **Rinnovo**: sovrascrivere prima `key.pem` e poi `cert.pem` (es. con `scp` da MyCert, o con
-  `step ca renew` sul server): il servizio si riavvia da solo (`gestione-associazione-tls.path`).
-  L'autofirmato si rinnova rieseguendo `--tls-autofirmato`, che riusa la chiave: l'impronta non cambia.
+  stampa modo, emittente, scadenza e **impronta SPKI** (per i collegamenti fra installazioni).
+- **Rinnovo a mano** (da file o autofirmato): sovrascrivere prima `key.pem` e poi `cert.pem` (es. con
+  `scp` da MyCert): il servizio si riavvia da solo (`gestione-associazione-tls.path`). L'autofirmato si
+  rinnova rieseguendo `--tls-autofirmato`, che riusa la chiave: l'impronta non cambia.
 - In una nuova installazione il `.env` nasce con `HTTPS=true`; in un'installazione esistente
   l'installatore ricorda di impostarlo.
 - Se davanti c'è comunque un proxy (es. NPM), nel *Proxy Host* scegliere lo schema `https` verso il
