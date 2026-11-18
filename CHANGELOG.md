@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.39] - 2026-11-18
+
+Ciclo delle tessere fra federazione e sezioni, dalla richiesta alla distribuzione.
+
 ### Aggiunto
 - **Campagna delle tessere con le sezioni** (*Soci → Tessere fisiche*), il ciclo completo dalla
   richiesta alla distribuzione, utilizzabile anche senza collegamenti fra installazioni:
