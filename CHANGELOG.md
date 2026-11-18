@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.38] - 2026-11-18
+
+API di interoperabilità (ADR-030), fasi F1-F3: collegamenti firmati fra installazioni e con sistemi esterni.
+
 API di interoperabilità, fase F1: identità, abbinamento e firma di ogni messaggio (ADR-030, approvata).
 
 ### Aggiunto
