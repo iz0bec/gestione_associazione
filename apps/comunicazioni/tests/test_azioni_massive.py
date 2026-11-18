@@ -93,3 +93,23 @@ def test_seleziona_tutte_trova_le_caselle_collegate_al_modulo():
     script = (Path(settings.BASE_DIR) / "static/js/app.js").read_text()
     blocco = script[script.index("data-seleziona-tutte") : script.index("data-copia")]
     assert "document.querySelectorAll" in blocco and "c.form === modulo" in blocco
+
+
+@pytest.mark.django_db(transaction=True)
+def test_servizi_fuori_da_una_transazione(crea_utente):
+    """Come in produzione (ATOMIC_REQUESTS spento): i servizi aprono da soli la transazione che
+    serve a select_for_update. I test normali girano già dentro una transazione e non lo vedono."""
+    from django.contrib.auth.models import Group
+
+    from apps.accounts.ruoli import configura_ruoli
+
+    if not Group.objects.exists():
+        configura_ruoli()
+    utente = crea_utente("fuori", ruoli=["Amministratore di sistema"])
+    a, b, c = (_bozza(utente, n) for n in range(3))
+    servizi.modifica_bozza(a, utente, oggetto="Nuovo", corpo="Testo")
+    servizi.annulla(b, utente)
+    servizi.elimina_bozza(c, utente)
+    assert Invio.objects.get(pk=a.pk).oggetto == "Nuovo"
+    assert Invio.objects.get(pk=b.pk).stato == "annullato"
+    assert not Invio.objects.filter(pk=c.pk).exists()

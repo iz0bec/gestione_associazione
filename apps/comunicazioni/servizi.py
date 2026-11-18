@@ -387,7 +387,6 @@ def conferma(invio, utente):
     return invio
 
 
-@transaction.atomic
 def _campi_bozza(invio):
     return {
         "oggetto": invio.oggetto,
@@ -398,6 +397,7 @@ def _campi_bozza(invio):
     }
 
 
+@transaction.atomic
 def modifica_bozza(invio, utente, *, oggetto, corpo, testo_breve="", programmato_il=None,
                    protocolla=False, togli=(), aggiungi=()):  # fmt: skip
     """Modifica una bozza prima della conferma: testi, programmazione, protocollazione e
@@ -446,6 +446,7 @@ def modifica_bozza(invio, utente, *, oggetto, corpo, testo_breve="", programmato
     return invio
 
 
+@transaction.atomic
 def elimina_bozza(invio, utente):
     """Cancella una bozza mai confermata, con i suoi allegati (resta la traccia nel registro)."""
     invio = Invio.objects.select_for_update().get(pk=invio.pk)
@@ -480,6 +481,7 @@ def azione_massiva(azione, invii, utente):
     return riusciti, rifiutati
 
 
+@transaction.atomic
 def annulla(invio, utente):
     invio = Invio.objects.select_for_update().get(pk=invio.pk)
     if invio.stato not in (Invio.Stato.BOZZA, Invio.Stato.IN_CODA):

@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.44] - 2026-11-18
+
+### Corretto
+- **Errore 500** con *Annulla* e *Modifica* di una comunicazione, e con l'eliminazione delle bozze
+  (dalla 1.0.41): le operazioni avevano perso la transazione che serve a bloccare l'invio durante
+  la modifica. Un test ora le esegue fuori da una transazione, come in produzione.
+
 ## [1.0.43] - 2026-11-18
 
 ### Aggiunto
