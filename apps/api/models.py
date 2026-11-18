@@ -28,6 +28,7 @@ AMBITI = {
     "documenti:lettura": "Documenti pubblici: lettura",
     "organigramma:lettura": "Organigramma pubblico: lettura",
     "tessere:verifica": "Verifica di una tessera",
+    "tessere:scambio": "Ciclo delle tessere: richieste, consegne, ricevute (federazione e sezioni)",
 }
 AMBITI_DATI_PERSONALI = {"soci:lettura"}
 
@@ -94,8 +95,21 @@ class ClienteApi(models.Model):
         INVITO_NOSTRO = "invito_nostro", "Ha usato un nostro invito"
         INVITO_LORO = "invito_loro", "Abbiamo usato un suo invito"
 
+    class Ruolo(models.TextChoices):
+        PARI = "pari", "Installazione pari o integrazione"
+        FEDERAZIONE = "federazione", "È la nostra federazione"
+        SEZIONE = "sezione", "È una nostra sezione"
+
     nome = models.CharField(max_length=150)
     tipo = models.CharField(max_length=20, choices=Tipo.choices)
+    ruolo = models.CharField(
+        max_length=12, choices=Ruolo.choices, default=Ruolo.PARI,
+        help_text="Per il ciclo delle tessere e lo scambio dei soci fra federazione e sezioni.",
+    )  # fmt: skip
+    sezione = models.ForeignKey(
+        "soci.Sezione", null=True, blank=True, on_delete=models.PROTECT, related_name="+",
+        help_text="Se è una nostra sezione: quale, nel nostro elenco delle sezioni.",
+    )  # fmt: skip
     stato = models.CharField(max_length=10, choices=Stato.choices, default=Stato.IN_PROVA)
     origine = models.CharField(max_length=15, choices=Origine.choices)
     istanza = models.UUIDField("UUID della controparte", null=True, blank=True)
@@ -314,3 +328,73 @@ class ChiaveIdempotenza(models.Model):
 
     def __str__(self):
         return self.chiave
+
+
+class CursoreFlusso(models.Model):
+    """Fin dove abbiamo letto un flusso di una controparte (progressivo e impronta, per la
+    verifica della catena alla lettura successiva)."""
+
+    cliente = models.ForeignKey(ClienteApi, on_delete=models.CASCADE, related_name="cursori")
+    flusso = models.CharField(max_length=80)
+    progressivo = models.PositiveBigIntegerField(default=0)
+    impronta = models.CharField(max_length=64, blank=True)
+    letto_il = models.DateTimeField(null=True, blank=True)
+    ultimo_errore = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "cursore di un flusso"
+        verbose_name_plural = "cursori dei flussi"
+        constraints = [
+            models.UniqueConstraint(fields=["cliente", "flusso"], name="api_cursore_unico")
+        ]
+
+    def __str__(self):
+        return f"{self.cliente} {self.flusso}:{self.progressivo}"
+
+
+class DocumentoRicevuto(models.Model):
+    """Documento ricevuto da una controparte (ADR-030, F4): resta in coda finché chi riceve non
+    lo conferma (o lo scarta). Le conferme tecniche si applicano da sole."""
+
+    class Tipo(models.TextChoices):
+        RICHIESTA = "richiesta", "Richiesta di tessere"
+        CONSEGNA = "consegna", "Consegna di tessere"
+        RICEVUTA = "ricevuta", "Ricevuta di un versamento"
+        PRESA = "presa", "Presa in carico di una consegna"
+
+    class Stato(models.TextChoices):
+        DA_ESAMINARE = "da_esaminare", "Da esaminare"
+        APPLICATO = "applicato", "Confermato"
+        SCARTATO = "scartato", "Scartato"
+
+    cliente = models.ForeignKey(ClienteApi, on_delete=models.PROTECT, related_name="documenti")
+    tipo = models.CharField(max_length=10, choices=Tipo.choices)
+    uuid_origine = models.UUIDField("identificativo presso la controparte")
+    versione = models.PositiveIntegerField(default=1)
+    dati = models.JSONField(default=dict)
+    pdf = models.FileField(upload_to="api/arrivi/", blank=True, max_length=255)
+    stato = models.CharField(max_length=12, choices=Stato.choices, default=Stato.DA_ESAMINARE,
+                             db_index=True)  # fmt: skip
+    ricevuto_il = models.DateTimeField(auto_now_add=True)
+    aggiornato_il = models.DateTimeField(auto_now=True)
+    gestito_il = models.DateTimeField(null=True, blank=True)
+    gestito_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    motivo = models.CharField(max_length=255, blank=True)
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "documento ricevuto"
+        verbose_name_plural = "documenti ricevuti"
+        ordering = ["-ricevuto_il"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cliente", "tipo", "uuid_origine"], name="api_documento_unico"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} da {self.cliente}"

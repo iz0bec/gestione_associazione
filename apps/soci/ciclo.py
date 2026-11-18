@@ -50,12 +50,13 @@ def prezzo_sezioni(anno):
 # --- richieste ------------------------------------------------------------------------------
 
 
-def registra_richiesta(utente, *, anno, sezione, quantita, data=None, protocollo=None, note=""):
+def registra_richiesta(utente, *, anno, sezione, quantita, data=None, protocollo=None, note="",
+                       **origine):  # fmt: skip
     if quantita < 1:
         raise OperazioneNonValida("Indicare almeno una tessera.")
     richiesta = RichiestaTessere(
         anno=anno, sezione=sezione, quantita=quantita, protocollo=protocollo, note=note,
-        creato_da=utente, modificato_da=utente,
+        creato_da=utente, modificato_da=utente, **origine,
     )  # fmt: skip
     if data:
         richiesta.data = data

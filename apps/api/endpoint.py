@@ -219,17 +219,49 @@ def _flusso(request, nome):
     return ambito, visibili
 
 
+def _flusso_tessere(request):
+    """Il flusso «tessere» è quello della sezione visibile alla controparte che chiama."""
+    from . import tessere
+
+    if tessere.AMBITO not in request.cliente_api.ambiti:
+        raise Problema("ambito-mancante", 403, f"Ambito non concesso: {tessere.AMBITO}.")
+    reale = tessere.flusso_per(request.cliente_api)
+    if reale is None:
+        dettaglio = "La controparte non è collegata come federazione o come sezione."
+        raise Problema("operazione-non-valida", 403, dettaglio)
+    return reale
+
+
 @endpoint(metodi=("GET",))
 def cambiamenti(request):
     nome = request.GET.get("flusso", "")
-    _flusso(request, nome)
+    if nome == "tessere":
+        reale = _flusso_tessere(request)
+    else:
+        _flusso(request, nome)
+        reale = nome
     dopo = _intero(request, "dopo", 0)
     limite = _intero(request, "limite", LIMITE_PREDEFINITO, 1, LIMITE_MASSIMO)
     try:
-        voci, ultimo = feed.pagina(nome, dopo, limite)
+        voci, ultimo = feed.pagina(reale, dopo, limite)
     except feed.CatenaInterrotta as e:
         raise Problema("cursore-scaduto", 410, str(e)) from e
     return JsonResponse({"flusso": nome, "cambiamenti": voci, "ultimo": ultimo})
+
+
+@endpoint(metodi=("GET",), ambito="tessere:scambio")
+def documento_tessere(request, risorsa, uuid_risorsa):
+    """Consegna, ricevuta, richiesta o presa in carico della sezione visibile alla controparte,
+    con il PDF (base64) da protocollare."""
+    from . import tessere
+
+    _flusso_tessere(request)
+    dati = tessere.documento(request.cliente_api, risorsa, uuid_risorsa)
+    if dati is None:
+        raise Problema("operazione-non-valida", 404, "Documento inesistente o non visibile.")
+    risposta = JsonResponse(dati)
+    risposta["ETag"] = f'"{dati["versione"]}"'
+    return risposta
 
 
 @endpoint(metodi=("GET",))

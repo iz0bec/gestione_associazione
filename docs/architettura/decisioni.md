@@ -584,6 +584,32 @@ Fasi: **F3** cifratura JWE, `Idempotency-Key`, limiti di frequenza, tutto il per
 (primo collaudo in produzione fra 192.168.0.34 e la sezione di Avigliano) → **F4** federazione ↔
 sezione → **F5** sezione ↔ sezione e kit per chi integra.
 
+**F4, decisioni del 18/11/2026.**
+
+- **Ordine**: A ciclo delle tessere via API → B cariche e numeri del tesseramento → C soci e
+  tessere → D eventi provinciali con le adesioni delle sezioni.
+- **Applicazione** dei dati ricevuti: arrivano in una coda di **documenti in arrivo** con
+  anteprima, e chi riceve li conferma, come nell'importazione. Fanno eccezione le sole conferme
+  tecniche, come la presa in carico di una consegna già inviata, che si registrano da sole.
+- **Dati del socio** verso la federazione: quelli del libro soci (anagrafica, residenza, contatti,
+  tipologia, ammissione, stato, cessazione, tessere).
+- **Trasporto**: ognuno **legge** dall'altro ciò che gli è destinato (lettura periodica dei flussi
+  con verifica della catena, cursore salvato). Una sezione non raggiungibile (dietro NAT) usa la
+  **spinta** (`POST /consegne`).
+- **Ruolo della controparte**: ogni collegamento indica se l'altra parte è la *federazione*, una
+  *sezione* (sulla federazione, legata alla sezione del proprio elenco) o un'installazione pari.
+  I flussi del ciclo delle tessere si chiamano `tessere`, e chi risponde li risolve per la
+  controparte che chiama: alla sezione X arrivano solo le consegne e le ricevute della sezione X.
+
+**Blocco A (ciclo delle tessere).** Documenti scambiati, senza dati personali:
+
+| Documento | Da → a | Alla conferma |
+|---|---|---|
+| Richiesta di tessere | sezione → federazione | diventa una richiesta della campagna, protocollata in entrata |
+| Consegna con i numeri | federazione → sezione | la sezione carica il lotto (presa in carico), protocollata in entrata |
+| Ricevuta di un versamento | federazione → sezione | protocollata in entrata, con la proposta di registrare l'uscita in prima nota |
+| Presa in carico | sezione → federazione | registrata da sola sulla consegna |
+
 **Conseguenze.** Lo scambio Excel resta come riserva. Le integrazioni con WordPress e simili non si
 sviluppano qui. Ogni modello esposto riceve `uuid` e `versione`. Nuovi permessi in `ruoli.py` e pagine
 in `docs/operativo/` e `docs/sistema/` (abbinamento, rete interna, `ALLOWED_HOSTS`).

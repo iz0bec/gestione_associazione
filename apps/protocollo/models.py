@@ -68,6 +68,7 @@ class Protocollo(ModelloBase):
         RACCOMANDATA = "raccomandata", "Raccomandata"
         MANO = "mano", "Consegna a mano"
         MESSAGGISTICA = "messaggistica", "Messaggistica"
+        API = "api", "Collegamento telematico (API)"
         ALTRO = "altro", "Altro"
 
     anno = models.PositiveIntegerField(editable=False)

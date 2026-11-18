@@ -10,7 +10,7 @@
 openapi: 3.1.0
 info:
   title: Gestione Associazione - API di interoperabilità
-  version: 1.0.0-f3
+  version: 1.0.0-f4a
   license:
     name: CC0 1.0 Universal
     identifier: CC0-1.0
@@ -548,6 +548,41 @@ paths:
                   uuid: { type: string, format: uuid }
                   stato: { const: in_attesa }
         "422": { $ref: "#/components/responses/Problema" }
+
+  /ciclo-tessere/{risorsa}/{uuid}:
+    get:
+      tags: [cambiamenti]
+      operationId: documentoCicloTessere
+      summary: Documento del ciclo delle tessere fra federazione e sezione (con il PDF)
+      description: |
+        Ambito `tessere:scambio` e collegamento con ruolo (federazione o sezione). Il flusso
+        `tessere` di `/cambiamenti` contiene le voci di questi documenti per la sola sezione della
+        controparte: la federazione espone `consegna` e `ricevuta`, la sezione `richiesta` e
+        `presa` (presa in carico di una consegna).
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - name: risorsa
+          in: path
+          required: true
+          schema: { enum: [consegna, ricevuta, richiesta, presa] }
+        - $ref: "#/components/parameters/Uuid"
+      responses:
+        "200":
+          description: Documento; `pdf` è il documento in PDF codificato in base64.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [uuid, versione]
+                properties:
+                  uuid: { type: string, format: uuid }
+                  versione: { type: integer }
+                  mittente: { type: string }
+                  pdf: { type: string, contentEncoding: base64 }
+        "403": { $ref: "#/components/responses/Problema" }
+        "404": { $ref: "#/components/responses/Problema" }
 
   /contatti:
     post:

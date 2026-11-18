@@ -19,6 +19,7 @@ from django.db.models import Q
 from django.urls import reverse
 
 from apps.anagrafica.models import Soggetto
+from apps.api.risorse import RisorsaApi
 from apps.core.models import ModelloBase
 
 SEQ_PRIMA_NOTA = "prima_nota"  # annuale, per esercizio
@@ -286,7 +287,7 @@ METODI = [
 ]
 
 
-class Incasso(ModelloBase):
+class Incasso(RisorsaApi, ModelloBase):
     """Incasso diverso dalle quote (donazione, contributo, partecipazione...): ricevuta numerata
     nella stessa numerazione delle quote e registrazione in prima nota."""
 
@@ -296,6 +297,8 @@ class Incasso(ModelloBase):
         PARTECIPAZIONE = "partecipazione", "Quota di partecipazione (eventi, gite, pranzi)"
         TESSERE = "tessere", "Tessere fornite a una sezione"
         ALTRO = "altro", "Altro"
+
+    RISORSA = "ricevuta"
 
     VOCI = {"donazione": "E.A.4", "contributo": "E.A.6", "partecipazione": "E.A.3",
             "tessere": "E.A.1", "altro": "E.A.10"}  # fmt: skip
@@ -334,6 +337,12 @@ class Incasso(ModelloBase):
         verbose_name_plural = "incassi"
         ordering = ["-data", "-ricevuta_numero"]
         permissions = [("registra_incasso", "Può registrare incassi ed emettere ricevute")]
+
+    def flusso_api(self):
+        # solo le ricevute delle tessere fornite a una sezione vanno alla sezione
+        if self.tipo == self.Tipo.TESSERE and self.sezione_id:
+            return f"tessere:{self.sezione.codice}"
+        return None
 
     def __str__(self):
         return f"Ricevuta {self.codice_ricevuta} - {self.nominativo}"

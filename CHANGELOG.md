@@ -5,6 +5,30 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.47] - 2026-11-18
+
+API di interoperabilità, fase F4 blocco A: il ciclo delle tessere passa da solo fra federazione e
+sezione.
+
+### Aggiunto
+- **Ruolo del collegamento** (*Collegamenti API → Modifica*): «È la nostra federazione», oppure
+  «È una nostra sezione» con la sezione del proprio elenco. Nuovo ambito «Ciclo delle tessere».
+- **Scambio dei documenti del ciclo**:
+  - richieste di tessere dalla sezione alla federazione;
+  - consegne con i numeri e ricevute dei versamenti dalla federazione alla sezione, ognuna con il
+    PDF;
+  - prese in carico dalla sezione alla federazione.
+
+  Ognuno vede solo i documenti della propria sezione. La lettura avviene ogni 15 minuti
+  (`sincronizza_collegamenti`) o con *Sincronizza ora*, con la verifica della catena.
+- **Documenti in arrivo** nella campagna delle tessere, con PDF, conferma e scarto motivato:
+  - la richiesta si registra nella campagna;
+  - la consegna carica il lotto della sezione;
+  - la ricevuta si archivia;
+  - con la conferma si può protocollare in entrata, con il nuovo mezzo «Collegamento telematico
+    (API)» e il PDF allegato;
+  - la presa in carico si registra da sola sulla consegna della federazione.
+
 ## [1.0.46] - 2026-11-18
 
 ### Aggiunto

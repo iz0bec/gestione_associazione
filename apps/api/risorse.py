@@ -57,11 +57,18 @@ class RisorsaApi(models.Model):
         with transaction.atomic():
             self.registra_cambiamento("modificato")
 
+    def flusso_api(self):
+        """Flusso del cambiamento: FLUSSO, oppure calcolato dall'oggetto (es. la sezione di una
+        consegna). None: la versione avanza ma l'oggetto non è esposto (niente feed)."""
+        return self.FLUSSO or None
+
     def registra_cambiamento(self, azione):
         from . import feed
 
         modello = type(self)
         modello.objects.filter(pk=self.pk).update(versione=F("versione") + 1)
         self.versione = modello.objects.filter(pk=self.pk).values_list("versione", flat=True).get()
-        tipo = f"{self.RISORSA}.{azione}"
-        feed.registra(self.FLUSSO, tipo, self.uuid, self.RISORSA, self.versione)
+        if flusso := self.flusso_api():
+            feed.registra(
+                flusso, f"{self.RISORSA}.{azione}", self.uuid, self.RISORSA, self.versione
+            )

@@ -47,6 +47,8 @@ IMPLEMENTATI = {
     "scaricaDocumento": ("get", "/documenti/{id}/file", "/api/v1/documenti/1/file"),
     "organigramma": ("get", "/organigramma", "/api/v1/organigramma"),
     "verificaTessera": ("get", "/tessere/{codice}", "/api/v1/tessere/abc"),
+    "documentoCicloTessere": ("get", "/ciclo-tessere/{risorsa}/{uuid}",
+                              "/api/v1/ciclo-tessere/consegna/7c1e2a9e-5d0b-4c71-9a43-0d2f7f6f3b11"),
 }  # fmt: skip
 
 

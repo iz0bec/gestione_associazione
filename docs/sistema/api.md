@@ -51,6 +51,7 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/api/v1/documenti`, `/api/v1/documenti/{id}/file` | firma + `documenti:lettura` | documenti pubblici |
 | `/api/v1/organigramma` | firma + `organigramma:lettura` | cariche in corso (ruolo e nome) |
 | `/api/v1/tessere/{codice}` | firma + `tessere:verifica` | validità, anno e sezione di una tessera (nient'altro) |
+| `/api/v1/cambiamenti?flusso=tessere`, `/api/v1/ciclo-tessere/{risorsa}/{uuid}` | firma + `tessere:scambio` + ruolo | ciclo delle tessere fra federazione e sezione: consegne, ricevute, richieste, prese in carico (con il PDF) |
 
 Le risposte, comprese quelle pubbliche e gli errori, sono **firmate** con la chiave dell'istanza.
 
@@ -135,6 +136,18 @@ cambiano i posti liberi.
 I cambiamenti hanno un progressivo senza buchi per flusso (sequenza `feed_<flusso>`) e una catena
 di impronte, quindi chi legge si accorge di voci mancanti o alterate. Si conservano 400 giorni:
 un cursore più vecchio riceve `410` e serve una nuova lettura completa.
+
+## Federazione e sezioni (ciclo delle tessere)
+
+Ogni collegamento ha un **ruolo**: *federazione*, oppure *sezione* legata a una sezione del proprio
+elenco. Il flusso `tessere` si risolve per chi chiama: la sezione X legge solo i documenti della
+sezione X. La federazione espone consegne e ricevute, la sezione le proprie richieste e le prese in
+carico.
+
+Il lavoro `sincronizza_collegamenti` (ogni 15 minuti) legge il flusso dell'altra parte dal
+cursore salvato, verifica la catena, scarica i documenti e li mette nella coda dei **documenti in
+arrivo**, che si confermano dalla campagna delle tessere. Se una voce manca o è alterata, la
+lettura si ferma e l'errore resta visibile nella scheda della controparte.
 
 ## Rotazione delle chiavi
 

@@ -17,6 +17,8 @@
       <div class="card-body">
         <dl class="row mb-0 small">
           <dt class="col-5">Tipo</dt><dd class="col-7">{{ c.get_tipo_display }}</dd>
+          <dt class="col-5">Ruolo</dt><dd class="col-7">{{ c.get_ruolo_display }}{% if c.sezione %}: <strong>{{ c.sezione }}</strong>{% endif %}</dd>
+          {% for cur in c.cursori.all %}<dt class="col-5">Lettura «{{ cur.flusso }}»</dt><dd class="col-7">fino al n. {{ cur.progressivo }}, il {{ cur.letto_il|date:"d/m/Y H:i"|default:"mai" }}{% if cur.ultimo_errore %} · <span class="text-danger">{{ cur.ultimo_errore }}</span>{% endif %}</dd>{% endfor %}
           <dt class="col-5">Abbinamento</dt><dd class="col-7">{{ c.get_origine_display }}{% if c.abbinata_il %}, il {{ c.abbinata_il|date:"d/m/Y H:i" }}{% else %} · <span class="text-warning">non ancora completato</span>{% endif %}</dd>
           {% if c.nome_dichiarato %}<dt class="col-5">Nome dichiarato</dt><dd class="col-7">{{ c.nome_dichiarato }}</dd>{% endif %}
           {% if c.istanza %}<dt class="col-5">Identità (UUID)</dt><dd class="col-7"><code>{{ c.istanza }}</code></dd>{% endif %}

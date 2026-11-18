@@ -117,6 +117,18 @@ urlpatterns = [
         name="richiesta_rispondi",
     ),
     path(
+        "tessere/arrivi/<int:pk>/conferma/",
+        viste_ciclo.ArrivoConfermaView.as_view(),
+        name="arrivo_conferma",
+    ),
+    path(
+        "tessere/arrivi/<int:pk>/scarta/",
+        viste_ciclo.ArrivoScartaView.as_view(),
+        name="arrivo_scarta",
+    ),
+    path("tessere/arrivi/<int:pk>/pdf/", viste_ciclo.ArrivoPdfView.as_view(), name="arrivo_pdf"),
+    path("tessere/sincronizza/", viste_ciclo.SincronizzaView.as_view(), name="sincronizza"),
+    path(
         "tessere/importa-consegna/",
         viste_ciclo.ImportaConsegnaView.as_view(),
         name="importa_consegna",

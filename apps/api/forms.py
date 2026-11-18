@@ -168,7 +168,8 @@ class ControparteForm(StileMixin, _IndirizziMixin, forms.ModelForm):
 
     class Meta:
         model = ClienteApi
-        fields = ["nome", "ambiti", "ip_ammessi", "scade_il", "indirizzo_pubblico",
+        fields = ["nome", "ruolo", "sezione", "ambiti", "ip_ammessi", "scade_il",
+                  "indirizzo_pubblico",
                   "indirizzo_interno", "rete_interna", "verifica_tls", "ca_pem", "tls_spki",
                   "http_in_chiaro", "indirizzo_notifiche", "notifiche_flussi", "note"]  # fmt: skip
         widgets = {
@@ -180,6 +181,7 @@ class ControparteForm(StileMixin, _IndirizziMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["ruolo"].required = False
         self.initial["tls_spki"] = "\n".join(self.instance.tls_spki or [])
         self.initial["dati_personali"] = bool(
             set(self.instance.ambiti or []) & servizi.AMBITI_DATI_PERSONALI
@@ -201,6 +203,21 @@ class ControparteForm(StileMixin, _IndirizziMixin, forms.ModelForm):
             except ErroreTrasporto as e:
                 raise forms.ValidationError(str(e)) from e
         return url
+
+    def clean_ruolo(self):
+        return self.cleaned_data.get("ruolo") or ClienteApi.Ruolo.PARI
+
+    def clean_sezione(self):
+        sezione = self.cleaned_data.get("sezione")
+        if self.cleaned_data.get("ruolo") == ClienteApi.Ruolo.SEZIONE:
+            if sezione is None:
+                raise forms.ValidationError("Indicare quale delle nostre sezioni è.")
+            altre = ClienteApi.objects.filter(sezione=sezione).exclude(
+                stato=ClienteApi.Stato.REVOCATA).exclude(pk=self.instance.pk)  # fmt: skip
+            if altre.exists():
+                raise forms.ValidationError(f"La sezione è già collegata a «{altre.first()}».")
+            return sezione
+        return None
 
     def clean_ip_ammessi(self):
         righe = _righe(self.cleaned_data.get("ip_ammessi"))

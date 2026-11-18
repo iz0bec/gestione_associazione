@@ -315,8 +315,10 @@ class QuotaListino(models.Model):
         return f"{self.listino.anno} {self.tipologia}: {self.importo}"
 
 
-class LottoTessere(ModelloBase):
+class LottoTessere(RisorsaApi, ModelloBase):
     """Carico di tessere fisiche ricevute dalla sede centrale, con numerazione prestampata."""
+
+    RISORSA = "presa"
 
     anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
     sezione = models.ForeignKey(
@@ -336,6 +338,10 @@ class LottoTessere(ModelloBase):
         default=0, help_text="Cifre del numero stampato (zeri iniziali), 0 = come scritto."
     )
     data_acquisizione = models.DateField("data di acquisizione", default=date.today)
+    consegna_uuid = models.UUIDField(
+        null=True, blank=True, editable=False,
+        help_text="Consegna della federazione da cui viene il lotto (presa in carico via API).",
+    )  # fmt: skip
     fornitore = models.CharField(max_length=100, default="Sede centrale")
     riferimento = models.CharField(
         max_length=200,
@@ -357,6 +363,10 @@ class LottoTessere(ModelloBase):
         verbose_name_plural = "lotti di tessere"
         ordering = ["-anno", "data_acquisizione", "numero_da"]
         permissions = [("gestisci_tessere_fisiche", "Può caricare e gestire le tessere fisiche")]
+
+    def flusso_api(self):
+        # esposto solo il lotto caricato da una consegna: vale come presa in carico
+        return f"tessere:{self.sezione.codice}" if self.consegna_uuid else None
 
     def __str__(self):
         return f"{self.anno}: {self.formatta(self.numero_da)} – {self.formatta(self.numero_a)}"
@@ -650,8 +660,10 @@ class DomandaIscrizione(models.Model):
 # --- ciclo delle tessere fra federazione e sezioni (docs/analisi/ciclo-tessere.md) -----------
 
 
-class RichiestaTessere(ModelloBase):
+class RichiestaTessere(RisorsaApi, ModelloBase):
     """Fabbisogno di tessere di una sezione per un anno (anche più richieste nell'anno)."""
+
+    RISORSA = "richiesta"
 
     anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
     sezione = models.ForeignKey(Sezione, on_delete=models.PROTECT, related_name="richieste_tessere")
@@ -661,6 +673,11 @@ class RichiestaTessere(ModelloBase):
         "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     note = models.CharField(max_length=255, blank=True)
+    uuid_origine = models.UUIDField(null=True, blank=True, editable=False)
+    cliente_api = models.ForeignKey(
+        "api.ClienteApi", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        editable=False, verbose_name="ricevuta da",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "richiesta di tessere"
@@ -670,6 +687,10 @@ class RichiestaTessere(ModelloBase):
 
     def __str__(self):
         return f"{self.sezione}: {self.quantita} tessere {self.anno}"
+
+    def flusso_api(self):
+        # le richieste ricevute dalla sezione non si rimandano indietro
+        return None if self.uuid_origine else f"tessere:{self.sezione.codice}"
 
 
 class BloccoTessere(ModelloBase):
@@ -703,7 +724,7 @@ class BloccoTessere(ModelloBase):
         return self.numero_a - self.numero_da + 1
 
 
-class ConsegnaTessere(ModelloBase):
+class ConsegnaTessere(RisorsaApi, ModelloBase):
     """Documento di consegna di un intervallo del magazzino a una sezione: crea il lotto della
     sezione. Numerato per anno (sequenza consegna_tessere)."""
 
@@ -711,6 +732,8 @@ class ConsegnaTessere(ModelloBase):
         RITIRO = "ritiro", "Ritiro presso la sede"
         MANO = "mano", "Consegna a mano"
         SPEDIZIONE = "spedizione", "Spedizione"
+
+    RISORSA = "consegna"
 
     anno = models.PositiveIntegerField("anno di tesseramento", db_index=True)
     numero = models.PositiveIntegerField(editable=False)
@@ -747,6 +770,9 @@ class ConsegnaTessere(ModelloBase):
 
     def __str__(self):
         return f"Consegna {self.anno}/{self.numero} a {self.sezione}"
+
+    def flusso_api(self):
+        return f"tessere:{self.sezione.codice}"
 
     @property
     def quantita(self):

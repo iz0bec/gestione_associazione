@@ -26,6 +26,33 @@
 {% if senza_email %}<div class="alert alert-warning"><i class="ti ti-mail-off me-1"></i><strong>Sezioni senza email istituzionale</strong>: {% for s in senza_email %}{% if perms.soci.change_sezione %}<a href="{% url 'soci:sezione_modifica' s.pk %}">{{ s.nome }}</a>{% else %}{{ s.nome }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}. Gli avvisi del tesseramento vanno all'email della sezione (e in copia al presidente): completatela in <a href="{% url 'soci:sezioni' %}">Sistema → Sezioni</a>.</div>{% endif %}
 {% if not listino %}<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>Il <a href="{% url 'soci:listino' %}?anno={{ anno }}">listino {{ anno }}</a> non è ancora fissato: senza, avvisi e consegne non hanno l'importo per tessera.</div>
 {% else %}<div class="alert alert-info small"><i class="ti ti-receipt me-1"></i>Importo per tessera alle sezioni: <strong>€ {{ listino.prezzo_sezioni|floatformat:"2g" }}</strong> (costo nazionale € {{ listino.costo_acquisto|floatformat:"2g" }} + quota federale € {{ listino.quota_federale|floatformat:"2g" }}){% if listino.delibera %} · {{ listino.delibera }}{% else %} · <span class="text-warning">delibera non indicata</span>{% endif %}{% if listino.scadenza_richieste %} · richieste entro il {{ listino.scadenza_richieste|date:"d/m/Y" }}{% endif %} · <a href="{% url 'soci:listino' %}?anno={{ anno }}">modifica il listino</a></div>{% endif %}
+{% if collegamenti or in_arrivo %}
+<div class="card mb-3{% if in_arrivo %} border-primary{% endif %}">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>Documenti in arrivo dai collegamenti{% if in_arrivo %} <span class="badge bg-primary-lt ms-1">{{ in_arrivo|length }}</span>{% endif %}</h3>
+    <div class="card-actions"><form method="post" action="{% url 'soci:sincronizza' %}">{% csrf_token %}<input type="hidden" name="anno" value="{{ anno }}"><button class="btn btn-sm" type="submit"><i class="ti ti-refresh me-1"></i>Sincronizza ora</button></form></div></div>
+  {% if in_arrivo %}
+  <div class="list-group list-group-flush">{% for d in in_arrivo %}<div class="list-group-item small">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="flex-fill"><span class="badge bg-blue-lt me-1">{{ d.get_tipo_display }}</span> da <strong>{{ d.cliente }}</strong> ·
+        {% if d.tipo == "richiesta" %}{{ d.dati.quantita }} tessere {{ d.dati.anno }}{% if d.dati.note %} · {{ d.dati.note }}{% endif %}
+        {% elif d.tipo == "consegna" %}n. {{ d.dati.anno }}/{{ d.dati.numero }} · {% if d.dati.serie %}serie {{ d.dati.serie }} {% endif %}{{ d.dati.numero_da }}–{{ d.dati.numero_a }} ({{ d.dati.quantita }}) · € {{ d.dati.importo }} · {{ d.dati.modalita_descrizione }}
+        {% elif d.tipo == "ricevuta" %}ricevuta n. {{ d.dati.ricevuta }} del {{ d.dati.data }} · € {{ d.dati.importo }}{% if d.dati.stornata %} · <span class="text-danger">stornata</span>{% endif %}{% endif %}
+        {% if d.motivo %}<span class="text-warning"> · {{ d.motivo }}</span>{% endif %}</span>
+      {% if d.pdf %}<a class="btn btn-sm" href="{% url 'soci:arrivo_pdf' d.pk %}" title="Documento in PDF"><i class="ti ti-file-type-pdf"></i></a>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+      <form method="post" action="{% url 'soci:arrivo_conferma' d.pk %}" class="d-flex flex-wrap align-items-center gap-2">{% csrf_token %}<input type="hidden" name="anno" value="{{ anno }}">
+        {% if d.tipo == "consegna" and sezioni_attive|length > 1 %}<select class="form-select form-select-sm w-auto" name="sezione" aria-label="Sezione">{% for s in sezioni_attive %}<option value="{{ s.pk }}">{{ s }}</option>{% endfor %}</select>{% endif %}
+        <label class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" name="protocolla" value="1" checked><span class="form-check-label">protocolla in entrata</span></label>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="ti ti-check me-1"></i>{% if d.tipo == "consegna" %}Prendi in carico{% elif d.tipo == "richiesta" %}Registra la richiesta{% else %}Conferma{% endif %}</button>
+      </form>
+      <form method="post" action="{% url 'soci:arrivo_scarta' d.pk %}" class="d-flex gap-1" data-conferma="Scartare il documento?">{% csrf_token %}<input type="hidden" name="anno" value="{{ anno }}"><input class="form-control form-control-sm" name="motivo" placeholder="motivo dello scarto" aria-label="Motivo dello scarto" required><button class="btn btn-sm btn-outline-danger" type="submit">Scarta</button></form>
+    </div>
+  </div>{% endfor %}</div>
+  {% else %}<div class="card-body small text-secondary">Nessun documento da esaminare.</div>{% endif %}
+  <div class="card-footer small text-secondary">{% for c in collegamenti %}{{ c.nome }} ({{ c.get_ruolo_display|lower }}){% with cur=c.cursori.all|first %}{% if cur %}: letto il {{ cur.letto_il|date:"d/m/Y H:i"|default:"mai" }}{% if cur.ultimo_errore %} · <span class="text-danger">{{ cur.ultimo_errore|truncatechars:90 }}</span>{% endif %}{% else %}: mai letto{% endif %}{% endwith %}{% if not forloop.last %} · {% endif %}{% empty %}Nessun collegamento attivo con la federazione o con le sezioni.{% endfor %} I documenti si leggono da soli ogni 15 minuti.</div>
+</div>
+{% endif %}
 <div class="card mb-3">
   <div class="card-header"><h3 class="card-title"><i class="ti ti-scale me-1"></i>Quadratura per sezione</h3></div>
   {% if quadratura %}

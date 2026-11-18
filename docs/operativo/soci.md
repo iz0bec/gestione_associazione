@@ -139,6 +139,21 @@ La **quadratura** mostra per ogni sezione richieste, consegnate, dovuto, versato
 cosa seguire: consegnate senza pagamento, da versare, versato in più, da consegnare, presa in
 carico da confermare.
 
+**Con il collegamento API fra federazione e sezione** (*Collegamenti API*, ruolo e ambito «Ciclo
+delle tessere») i documenti viaggiano da soli. Nella campagna, il riquadro **Documenti in
+arrivo** mostra quelli da confermare, con il PDF:
+
+- sulla **federazione**: le **richieste** delle sezioni. *Registra la richiesta* le aggiunge alla
+  campagna e, con «protocolla in entrata», le protocolla con il loro PDF;
+- sulla **sezione**: le **consegne**. *Prendi in carico* carica le tessere con i numeri, l'importo e
+  il riferimento, protocolla il documento e avvisa da solo la federazione, che segna la presa in
+  carico. Arrivano anche le **ricevute** dei versamenti: *Conferma* le protocolla, e poi si
+  registra l'uscita in tesoreria;
+- un documento sbagliato si **scarta**, indicando il motivo.
+
+*Sincronizza ora* legge subito; altrimenti la lettura avviene ogni 15 minuti. Senza collegamento
+il ciclo continua come sotto, con email, PEC e file.
+
 **Nella sezione**, se ha la propria installazione:
 
 - con *Importa consegna* carica il file dei numeri ricevuto, con anteprima: le tessere entrano nel

@@ -18,6 +18,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import FormView, TemplateView
 
+from apps.api.models import ClienteApi, DocumentoRicevuto
 from apps.core.models import Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
@@ -44,7 +45,8 @@ def anno_campagna():
 
 def _anno(request, kwargs):
     try:
-        return int(kwargs.get("anno") or request.GET.get("anno") or anno_campagna())
+        scelto = kwargs.get("anno") or request.GET.get("anno") or request.POST.get("anno")
+        return int(scelto or anno_campagna())
     except ValueError:
         return anno_campagna()
 
@@ -75,6 +77,14 @@ class CampagnaView(PermessoMixin, TemplateView):
             da_ordinare=ciclo.da_ordinare(anno),
             senza_richiesta=ciclo.sezioni_senza_richiesta(anno),
             senza_email=Sezione.objects.filter(attiva=True, email=""),
+            in_arrivo=DocumentoRicevuto.objects.filter(
+                stato=DocumentoRicevuto.Stato.DA_ESAMINARE
+            ).select_related("cliente"),
+            collegamenti=ClienteApi.objects.filter(
+                stato=ClienteApi.Stato.ATTIVA,
+                ruolo__in=[ClienteApi.Ruolo.FEDERAZIONE, ClienteApi.Ruolo.SEZIONE],
+            ).prefetch_related("cursori"),
+            sezioni_attive=Sezione.objects.filter(attiva=True),
         )
         return ctx
 
@@ -367,3 +377,80 @@ class ImportaConsegnaView(PermessoMixin, View):
             "form": form, "righe": righe, "temporaneo": temporanei.salva_temporaneo(contenuto),
             "sezione": form.cleaned_data["sezione"],
         })  # fmt: skip
+
+
+# --- documenti in arrivo dai collegamenti (ADR-030, F4) ------------------------------------
+
+
+class ArrivoConfermaView(PermessoMixin, View):
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        from apps.api import arrivi
+
+        documento = get_object_or_404(DocumentoRicevuto, pk=pk)
+        sezione = Sezione.objects.filter(pk=request.POST.get("sezione") or 0).first()
+        try:
+            protocolla = request.POST.get("protocolla") == "1"
+            arrivi.conferma(documento, request.user, protocolla=protocolla, sezione=sezione)
+        except arrivi.OperazioneNonValida as e:
+            messages.error(request, f"{documento}: {e}")
+        else:
+            testo = f"{documento} confermato"
+            if documento.protocollo_id:
+                documento.refresh_from_db()
+                testo += f", protocollo {documento.protocollo.segnatura}"
+            messages.success(request, testo + ".")
+        return _alla_campagna(_anno(request, {}))
+
+
+class ArrivoScartaView(PermessoMixin, View):
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        from apps.api import arrivi
+
+        documento = get_object_or_404(DocumentoRicevuto, pk=pk)
+        try:
+            arrivi.scarta(documento, request.user, request.POST.get("motivo", ""))
+        except arrivi.OperazioneNonValida as e:
+            messages.error(request, f"{documento}: {e}")
+        else:
+            messages.success(request, f"{documento} scartato.")
+        return _alla_campagna(_anno(request, {}))
+
+
+class ArrivoPdfView(PermessoMixin, View):
+    permission_required = PERMESSO
+
+    def get(self, request, pk):
+        from django.http import FileResponse, Http404
+
+        documento = get_object_or_404(DocumentoRicevuto, pk=pk)
+        if not documento.pdf:
+            raise Http404("Documento senza PDF.")
+        nome = f"{documento.tipo}-{documento.uuid_origine}.pdf"
+        risposta = FileResponse(documento.pdf.open("rb"), content_type="application/pdf",
+                                filename=nome)  # fmt: skip
+        risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        return risposta
+
+
+class SincronizzaView(PermessoMixin, View):
+    """Legge subito i flussi della federazione o delle sezioni collegate."""
+
+    permission_required = PERMESSO
+
+    def post(self, request):
+        from apps.collegamenti import sincronizza
+
+        esiti = sincronizza.sincronizza_tutti()
+        if not esiti:
+            messages.info(request, "Nessun collegamento con la federazione o con le sezioni.")
+        for nome, ricevuti in esiti.items():
+            cursore = ClienteApi.objects.get(nome=nome).cursori.filter(flusso="tessere").first()
+            if cursore and cursore.ultimo_errore:
+                messages.warning(request, f"{nome}: {cursore.ultimo_errore}")
+            else:
+                messages.success(request, f"{nome}: {ricevuti} documenti ricevuti o aggiornati.")
+        return _alla_campagna(_anno(request, {}))

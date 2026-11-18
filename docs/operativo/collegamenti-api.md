@@ -96,6 +96,23 @@ impronta. Poi confrontatela anche voi e attivate, come sopra. Ognuna delle due p
 - **Ultime chiamate ricevute**: data, richiesta, esito e IP; gli errori hanno un codice, ad esempio
   `firma-scaduta` se l'orologio di una delle due macchine è fuori di oltre 5 minuti.
 
+## Federazione e sezioni: il ruolo del collegamento
+
+Nella scheda della controparte (*Modifica*) si indica il **ruolo**:
+
+- sull'installazione della **federazione**, per ogni sezione collegata: «È una nostra sezione», con
+  **quale sezione** del proprio elenco è (una sola per collegamento);
+- sull'installazione di una **sezione**: «È la nostra federazione».
+
+A entrambe le parti va concesso l'ambito **«Ciclo delle tessere»**. Da quel momento, ogni 15 minuti
+(o con *Sincronizza ora* nella campagna):
+
+- richieste di tessere, consegne con i numeri, ricevute dei versamenti e prese in carico passano
+  da sole fra le due installazioni;
+- ogni documento arriva nella *Campagna delle tessere*, riquadro **Documenti in arrivo**, e si
+  conferma da lì (vedi il manuale dei soci). Le prese in carico si registrano da sole;
+- ognuno vede solo i documenti della propria sezione.
+
 ## Cosa arriva dalle integrazioni
 
 - **Adesioni**: compaiono nell'evento come le altre, con origine «Integrazione (API)». Valgono le

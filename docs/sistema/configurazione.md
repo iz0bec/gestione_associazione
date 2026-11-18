@@ -61,6 +61,7 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 | `manage.py pulizia_api` | ogni minuto | API: cancella i nonce oltre 10 minuti, il registro delle chiamate oltre 90 giorni e i cambiamenti del feed oltre 400 giorni, toglie le chiavi private uscite dalla rotazione e le chiavi di idempotenza oltre 30 giorni, sospende le controparti scadute |
 | `manage.py invia_notifiche_api` | ogni minuto | API: consegna gli avvisi dei cambiamenti alle controparti, con ripetizioni fino a 24 ore |
 | `manage.py aggiorna_collegamenti` | ogni notte | API: rilegge chiavi e impronte TLS delle installazioni collegate dalla loro `/.well-known` firmata |
+| `manage.py sincronizza_collegamenti` | ogni 15 minuti | API: legge i flussi della federazione o delle sezioni collegate e mette i documenti del ciclo delle tessere nella coda dei documenti in arrivo |
 | `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo, li sposta nella cartella `PROCESSATA` della casella e aggancia le ricevute PEC ai protocolli spediti |
 | `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
 | `manage.py conservazione_dati` | ogni notte | con l'anonimizzazione automatica attiva, anonimizza le persone oltre il termine di conservazione (`--elenco`: solo il conteggio) |
