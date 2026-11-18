@@ -273,6 +273,51 @@ class AnnullaInvioView(_AzioneInvioView):
         messages.success(request, "Invio annullato.")
 
 
+class ModificaBozzaView(PermessoMixin, FormView):
+    permission_required = "comunicazioni.add_invio"
+    template_name = "comunicazioni/invio_modifica.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.invio = get_object_or_404(Invio, pk=kwargs["pk"])
+        if self.invio.stato != Invio.Stato.BOZZA:
+            messages.warning(request, "Si modificano solo le bozze.")
+            return redirect(self.invio)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_class(self):
+        from .forms import ModificaBozzaForm
+
+        return ModificaBozzaForm
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "invio": self.invio}
+
+    def get_initial(self):
+        i = self.invio
+        return {"oggetto": i.oggetto, "corpo": i.corpo, "testo_breve": i.testo_breve,
+                "programmato_il": i.programmato_il, "protocolla": i.protocolla}  # fmt: skip
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(invio=self.invio, **kwargs)
+
+    def form_valid(self, form):
+        d = form.cleaned_data
+        try:
+            servizi.modifica_bozza(
+                self.invio, self.request.user, oggetto=d["oggetto"], corpo=d["corpo"],
+                testo_breve=d.get("testo_breve", self.invio.testo_breve),
+                programmato_il=d["programmato_il"], protocolla=d["protocolla"],
+                togli=d["togli"], aggiungi=d["indirizzi"],
+            )  # fmt: skip
+        except OperazioneNonValida as e:
+            form.add_error(None, " ".join(e.messages))
+            return self.form_invalid(form)
+        messages.success(
+            self.request, "Bozza aggiornata: controlla l'anteprima prima di confermare."
+        )
+        return redirect(self.invio)
+
+
 class AzioneMassivaView(PermessoMixin, View):
     """Conferma, annullamento o eliminazione di più invii selezionati nell'elenco."""
 

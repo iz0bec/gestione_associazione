@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.42] - 2026-11-18
+
+### Aggiunto
+- **Modifica delle bozze** (*Comunicazioni → comunicazione in bozza → Modifica*): oggetto, testo,
+  testo breve, data di invio, protocollazione, destinatari da togliere e indirizzi da aggiungere,
+  con il controllo dei segnaposto e la traccia nel registro attività.
+
+### Corretto
+- **«Seleziona tutte»** nell'elenco delle comunicazioni non selezionava nulla: le caselle sono
+  collegate al modulo con l'attributo `form` e lo script le cercava solo dentro il modulo.
+
 ## [1.0.41] - 2026-11-18
 
 ### Aggiunto

@@ -388,6 +388,64 @@ def conferma(invio, utente):
 
 
 @transaction.atomic
+def _campi_bozza(invio):
+    return {
+        "oggetto": invio.oggetto,
+        "corpo": invio.corpo,
+        "testo_breve": invio.testo_breve,
+        "programmato_il": str(invio.programmato_il or ""),
+        "protocolla": invio.protocolla,
+    }
+
+
+def modifica_bozza(invio, utente, *, oggetto, corpo, testo_breve="", programmato_il=None,
+                   protocolla=False, togli=(), aggiungi=()):  # fmt: skip
+    """Modifica una bozza prima della conferma: testi, programmazione, protocollazione e
+    destinatari (togli: destinatari da rimuovere; aggiungi: [(nome, email)] liberi)."""
+    invio = Invio.objects.select_for_update().get(pk=invio.pk)
+    if invio.stato != Invio.Stato.BOZZA:
+        raise OperazioneNonValida("Si modificano solo le bozze.")
+    if not oggetto.strip() or not corpo.strip():
+        raise OperazioneNonValida("Oggetto e testo sono obbligatori.")
+    if sconosciuti := segnaposto_sconosciuti(oggetto + corpo + (testo_breve or "")):
+        raise OperazioneNonValida(f"Segnaposto sconosciuti: {', '.join(sconosciuti)}.")
+    if protocolla and not invio.protocolla:
+        from apps.protocollo.servizi import puo_protocollare
+
+        if not puo_protocollare(utente):
+            raise OperazioneNonValida("Non hai il permesso di protocollare.")
+    prima = _campi_bozza(invio)
+    invio.oggetto = oggetto.strip()
+    invio.corpo = corpo
+    invio.testo_breve = (testo_breve or "").strip()[:320]
+    invio.programmato_il = programmato_il
+    invio.protocolla = protocolla
+    invio.modificato_da = utente
+    invio.save()
+    tolti = list(
+        invio.destinatari.filter(pk__in=[d.pk for d in togli]).values_list("nome", flat=True)
+    )
+    invio.destinatari.filter(pk__in=[d.pk for d in togli]).delete()
+    gia = {e.lower() for e in invio.destinatari.values_list("email", flat=True) if e}
+    pec = invio.servizio is not None and invio.servizio.pec
+    nuovi = []
+    for nome, indirizzo in aggiungi:
+        if indirizzo.lower() in gia:
+            continue
+        from apps.protocollo.spedizioni import sembra_pec
+
+        canale = Destinatario.Canale.PEC if pec and sembra_pec(indirizzo) else "email"
+        nuovi.append(Destinatario(invio=invio, nome=nome[:200], email=indirizzo, canale=canale))
+        gia.add(indirizzo.lower())
+    Destinatario.objects.bulk_create(nuovi)
+    dopo = _campi_bozza(invio)
+    campi = {k: {"prima": prima[k], "dopo": v} for k, v in dopo.items() if prima[k] != v}
+    if campi or tolti or nuovi:
+        registra(Azione.MODIFICA, invio, utente=utente, campi=campi, destinatari_tolti=tolti,
+                 destinatari_aggiunti=[d.email for d in nuovi])  # fmt: skip
+    return invio
+
+
 def elimina_bozza(invio, utente):
     """Cancella una bozza mai confermata, con i suoi allegati (resta la traccia nel registro)."""
     invio = Invio.objects.select_for_update().get(pk=invio.pk)

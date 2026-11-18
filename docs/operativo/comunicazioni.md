@@ -52,6 +52,11 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
    riceverà il primo destinatario e l'elenco dei destinatari con gli **esclusi** e il motivo.
 8. **Conferma e invia**. I primi messaggi partono subito, gli altri a gruppi nei minuti successivi.
 
+Finché è una **bozza**, una comunicazione si corregge con **Modifica**: oggetto, testo, testo breve,
+data di invio e protocollazione. Si possono anche togliere destinatari e aggiungere altri indirizzi.
+Vale anche per le bozze preparate dagli altri moduli, come gli avvisi del tesseramento. Dopo la
+conferma non si modifica più: si annulla e se ne prepara un'altra.
+
 Lo stato di ogni destinatario (in attesa, inviato, errore, escluso) resta nel registro. Se il server di
 posta non risponde, il programma ritenta tre volte; poi si può usare **Ritenta gli errori**.
 

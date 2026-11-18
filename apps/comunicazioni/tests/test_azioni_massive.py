@@ -61,3 +61,35 @@ def test_senza_permesso(client_ruolo):
     bozza = _bozza(client.utente, 1)
     r = client.post("/comunicazioni/azione-massiva/", {"azione": "elimina", "invii": [bozza.pk]})
     assert r.status_code == 403 and Invio.objects.filter(pk=bozza.pk).exists()
+
+
+def test_modifica_della_bozza(segreteria):
+    bozza = _bozza(segreteria.utente, 1)
+    destinatario = bozza.destinatari.get()
+    r = segreteria.post(f"/comunicazioni/{bozza.pk}/modifica/", {
+        "oggetto": "Avviso corretto", "corpo": "Gentile {{ nome_completo }}, testo nuovo",
+        "togli": [destinatario.pk], "indirizzi": "Nuova sezione <nuova@example.org>",
+    })  # fmt: skip
+    assert r.status_code == 302
+    bozza.refresh_from_db()
+    assert bozza.oggetto == "Avviso corretto" and "testo nuovo" in bozza.corpo
+    assert list(bozza.destinatari.values_list("email", flat=True)) == ["nuova@example.org"]
+    assert EventoAudit.objects.filter(azione="modifica", oggetto_id=str(bozza.pk)).exists()
+    r = segreteria.post(f"/comunicazioni/{bozza.pk}/modifica/",
+                        {"oggetto": "X", "corpo": "{{ sconosciuto }}"})  # fmt: skip
+    assert "Segnaposto sconosciuti" in r.content.decode()
+    servizi.conferma(bozza, segreteria.utente)
+    r = segreteria.get(f"/comunicazioni/{bozza.pk}/modifica/")
+    assert r.status_code == 302  # confermata: non si modifica più
+
+
+def test_seleziona_tutte_trova_le_caselle_collegate_al_modulo():
+    """Le caselle dell'elenco stanno fuori dal <form> (attributo form=): lo script le deve
+    cercare in tutta la pagina, non solo dentro il modulo."""
+    from pathlib import Path
+
+    from django.conf import settings
+
+    script = (Path(settings.BASE_DIR) / "static/js/app.js").read_text()
+    blocco = script[script.index("data-seleziona-tutte") : script.index("data-copia")]
+    assert "document.querySelectorAll" in blocco and "c.form === modulo" in blocco

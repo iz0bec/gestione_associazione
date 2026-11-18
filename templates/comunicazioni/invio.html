@@ -5,6 +5,7 @@
 {% block titolo_pagina %}{{ invio.titolo }} {% include "comunicazioni/_stato_invio.html" with i=invio %}{% endblock %}
 {% block azioni %}
 <div class="btn-list">
+  {% if invio.stato == "bozza" and perms.comunicazioni.add_invio %}<a class="btn" href="{% url 'comunicazioni:modifica' invio.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
   {% if perms.comunicazioni.conferma_invio %}
     {% if invio.stato == "bozza" or invio.stato == "in_coda" %}<form method="post" action="{% url 'comunicazioni:annulla' invio.pk %}" data-conferma="Annullare l'invio?">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-x me-1"></i>Annulla</button></form>{% endif %}
     {% if invio.stato == "con_errori" %}<form method="post" action="{% url 'comunicazioni:ritenta' invio.pk %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-refresh me-1"></i>Ritenta gli errori</button></form>{% endif %}

@@ -218,9 +218,10 @@
   document.addEventListener("change", function (ev) {
     var nome = ev.target.getAttribute && ev.target.getAttribute("data-seleziona-tutte");
     if (!nome) return;
-    var modulo = ev.target.form || document;
-    modulo.querySelectorAll('input[type="checkbox"][name="' + nome + '"]').forEach(function (c) {
-      c.checked = ev.target.checked;
+    // anche le caselle fuori dal <form> ma collegate con l'attributo form="…"
+    var modulo = ev.target.form;
+    document.querySelectorAll('input[type="checkbox"][name="' + nome + '"]').forEach(function (c) {
+      if (!modulo || c.form === modulo) c.checked = ev.target.checked;
     });
   });
   // Campi da copiare (es. collegamento al calendario): <input data-copia> si seleziona al clic

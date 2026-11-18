@@ -312,3 +312,46 @@ class PromemoriaRinnovoForm(StileMixin, forms.ModelForm):
         return ", ".join(
             f"{g:02d}/{m:02d}" for g, m in sorted(prova.date_scelte(), key=lambda d: (d[1], d[0]))
         )
+
+
+class ModificaBozzaForm(StileMixin, forms.Form):
+    """Modifica di una bozza: testi, programmazione, protocollazione e destinatari."""
+
+    oggetto = forms.CharField(max_length=200)
+    corpo = forms.CharField(label="Testo", widget=forms.Textarea(attrs={"rows": 12}),
+                            help_text=AIUTO_SEGNAPOSTO)  # fmt: skip
+    testo_breve = forms.CharField(
+        label="Testo breve (SMS e WhatsApp)", required=False, max_length=300,
+        widget=forms.Textarea(attrs={"rows": 2, "maxlength": 300}),
+    )  # fmt: skip
+    programmato_il = forms.DateTimeField(
+        label="Invia non prima di", required=False, widget=CampoDataOra,
+        help_text="Vuoto = subito.",
+    )  # fmt: skip
+    protocolla = forms.BooleanField(label="Protocolla in uscita al termine dell'invio",
+                                    required=False)  # fmt: skip
+    togli = forms.ModelMultipleChoiceField(
+        label="Togli destinatari", queryset=None, required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )  # fmt: skip
+    indirizzi = forms.CharField(
+        label="Aggiungi indirizzi", required=False, widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Uno per riga: «Nome &lt;email&gt;» o solo l'email.",
+    )  # fmt: skip
+
+    def __init__(self, *args, invio, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["togli"].queryset = invio.destinatari.order_by("nome")
+        self.fields["togli"].label_from_instance = lambda d: (
+            f"{d.nome} ({d.email})" if d.email else d.nome
+        )
+        if not (invio.sms or invio.whatsapp):
+            del self.fields["testo_breve"]
+
+    def clean_indirizzi(self):
+        from .servizi import leggi_indirizzi
+
+        validi, errati = leggi_indirizzi(self.cleaned_data.get("indirizzi"))
+        if errati:
+            raise forms.ValidationError(f"Indirizzi non validi: {', '.join(errati)}")
+        return validi
