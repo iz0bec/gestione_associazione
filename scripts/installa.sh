@@ -40,6 +40,9 @@ TLS_STEP_TOKEN=""
 TLS_CA=""
 TLS_CA_IMPRONTA=""
 DIR_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ISTANZA=""     # più installazioni sullo stesso host (es. una per sezione): --istanza potenza
+WORKER=3
+DB_SCELTO=""
 
 uso() {
   cat <<EOF
@@ -49,6 +52,10 @@ Uso: $0 [opzioni]
                       negli aggiornamenti resta quello in uso)
   --host NOMI         nomi o IP aggiuntivi per ALLOWED_HOSTS, separati da virgola
   --db NOME           nome del database (predefinito ${DB_NOME})
+  --istanza NOME      una di più installazioni sullo stesso host (lettere minuscole, cifre, «-»):
+                      servizio gestione-NOME, codice in /opt/sezione-NOME, dati in
+                      /var/lib/sezione-NOME, utente e database sezione_NOME
+  --worker N          processi del servizio web (predefinito 3)
   --admin UTENTE      amministratore creato alla prima installazione (predefinito ${ADMIN})
   --email EMAIL       email dell'amministratore
   --sorgente DIR      cartella del codice (predefinita: quella dello script)
@@ -78,7 +85,9 @@ while [[ $# -gt 0 ]]; do
     --porta) PORTA="$2"; shift 2 ;;
     --indirizzo) INDIRIZZO="$2"; shift 2 ;;
     --host) HOST_EXTRA="$2"; shift 2 ;;
-    --db) DB_NOME="$2"; shift 2 ;;
+    --db) DB_SCELTO="$2"; shift 2 ;;
+    --istanza) ISTANZA="$2"; shift 2 ;;
+    --worker) WORKER="$2"; shift 2 ;;
     --admin) ADMIN="$2"; shift 2 ;;
     --email) ADMIN_EMAIL="$2"; shift 2 ;;
     --sorgente) SORGENTE="$(cd "$2" && pwd)"; shift 2 ;;
@@ -97,6 +106,19 @@ while [[ $# -gt 0 ]]; do
     *) echo "Opzione sconosciuta: $1"; uso; exit 1 ;;
   esac
 done
+
+if [[ -n "$ISTANZA" ]]; then
+  [[ "$ISTANZA" =~ ^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$ ]] || { echo "Istanza non valida: ${ISTANZA}"; exit 1; }
+  NOME="gestione-${ISTANZA}"
+  DIR_APP="/opt/sezione-${ISTANZA}"
+  DIR_DATI="/var/lib/sezione-${ISTANZA}"
+  DIR_TLS="/etc/sezione-${ISTANZA}/tls"
+  UTENTE="sezione_${ISTANZA//-/_}"
+  DB_NOME="sezione_${ISTANZA//-/_}"
+fi
+[[ -n "$DB_SCELTO" ]] && DB_NOME="$DB_SCELTO"
+[[ "$WORKER" =~ ^[1-9][0-9]?$ ]] || { echo "Numero di worker non valido."; exit 1; }
+DESCRIZIONE="Gestione Associazione${ISTANZA:+ (${ISTANZA})}"
 
 passo() { echo -e "\n\033[1;34m==> $*\033[0m"; }
 errore() { echo -e "\033[1;31mERRORE: $*\033[0m" >&2; exit 1; }
@@ -239,14 +261,14 @@ if [[ "$(gestisci shell -c 'from django.contrib.auth import get_user_model as g;
     "${DIR_APP}/.venv/bin/python" "${DIR_APP}/manage.py" createsuperuser --noinput \
     --username "$ADMIN" --email "${ADMIN_EMAIL:-${ADMIN}@localhost}" >/dev/null
   umask 077
-  printf 'Gestione Associazione\nutente: %s\npassword: %s\n' "$ADMIN" "$PASSWORD_ADMIN" > "/root/${NOME}-credenziali.txt"
+  printf '%s\nutente: %s\npassword: %s\n' "$DESCRIZIONE" "$ADMIN" "$PASSWORD_ADMIN" > "/root/${NOME}-credenziali.txt"
   umask 022
 fi
 
 passo "Servizi systemd"
 cat > "/etc/systemd/system/${NOME}.service" <<EOF
 [Unit]
-Description=Gestione Associazione
+Description=${DESCRIZIONE}
 After=network-online.target postgresql.service
 Wants=network-online.target postgresql.service
 
@@ -254,7 +276,7 @@ Wants=network-online.target postgresql.service
 User=${UTENTE}
 Group=${UTENTE}
 WorkingDirectory=${DIR_APP}
-ExecStart=${DIR_APP}/.venv/bin/gunicorn config.wsgi --bind ${INDIRIZZO}:${PORTA} --workers 3 --timeout 300 --access-logfile -${OPZ_TLS}
+ExecStart=${DIR_APP}/.venv/bin/gunicorn config.wsgi --bind ${INDIRIZZO}:${PORTA} --workers ${WORKER} --timeout 300 --access-logfile -${OPZ_TLS}
 Restart=on-failure
 NoNewPrivileges=true
 PrivateTmp=true
@@ -266,7 +288,7 @@ WantedBy=multi-user.target
 EOF
 cat > "/etc/systemd/system/${NOME}-pianificatore.service" <<EOF
 [Unit]
-Description=Gestione Associazione - lavori periodici (email, posta, registri, backup notturno)
+Description=${DESCRIZIONE} - lavori periodici (email, posta, registri, backup notturno)
 After=${NOME}.service
 
 [Service]
@@ -287,7 +309,7 @@ EOF
 # certificato rinnovato (sovrascritto in ${DIR_TLS}) => riavvio del servizio web
 cat > "/etc/systemd/system/${NOME}-tls.path" <<EOF
 [Unit]
-Description=Gestione Associazione - sorveglia il certificato HTTPS
+Description=${DESCRIZIONE} - sorveglia il certificato HTTPS
 
 [Path]
 PathChanged=${DIR_TLS}/cert.pem
@@ -298,7 +320,7 @@ WantedBy=multi-user.target
 EOF
 cat > "/etc/systemd/system/${NOME}-tls.service" <<EOF
 [Unit]
-Description=Gestione Associazione - riavvio dopo il rinnovo del certificato HTTPS
+Description=${DESCRIZIONE} - riavvio dopo il rinnovo del certificato HTTPS
 
 [Service]
 Type=oneshot
@@ -320,7 +342,7 @@ done
 [[ "${OK:-0}" == 1 ]] || errore "il servizio non risponde: journalctl -u ${NOME}"
 
 VERSIONE="$(grep -m1 '^APP_VERSIONE' "${DIR_APP}/config/settings.py" | cut -d'"' -f2)"
-echo -e "\n\033[1;32mGestione Associazione ${VERSIONE} attiva su ${PROTO}://$(hostname -I | awk '{print $1}'):${PORTA}/\033[0m"
+echo -e "\n\033[1;32m${DESCRIZIONE} ${VERSIONE} attiva su ${PROTO}://$(hostname -I | awk '{print $1}'):${PORTA}/\033[0m"
 tls_riepilogo
 if [[ -n "$PASSWORD_ADMIN" ]]; then
   echo "Primo accesso: utente ${ADMIN}, password ${PASSWORD_ADMIN}"

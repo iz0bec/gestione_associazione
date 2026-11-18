@@ -138,6 +138,41 @@ bash crea-lxc.sh --aggiorna --id 120 --versione v1.0.37
 Per i backup conviene anche il backup del container di Proxmox (snapshot o vzdump), in aggiunta ai
 backup dell'applicazione.
 
+## Più sezioni sullo stesso host
+
+Una federazione può ospitare su un solo server le sezioni che non hanno un'installazione
+propria: ogni sezione ha il suo servizio, la sua porta, le sue cartelle e il suo database,
+tutti sullo **stesso PostgreSQL**. Sono installazioni del tutto separate: altri utenti, altri dati,
+altri backup, e si collegano fra loro e con la federazione con le API come qualsiasi altra.
+
+`installa.sh --istanza NOME` installa una di queste istanze:
+
+| | Istanza `potenza` |
+|---|---|
+| Servizi | `gestione-potenza`, `gestione-potenza-pianificatore` |
+| Codice e configurazione | `/opt/sezione-potenza` (`.env`) |
+| Dati e backup | `/var/lib/sezione-potenza` |
+| Utente di sistema e del database | `sezione_potenza` |
+| Database | `sezione_potenza` |
+| Certificato HTTPS | `/etc/sezione-potenza/tls` |
+
+`scripts/proxmox/sezioni.sh` le gestisce insieme. L'elenco è in `/etc/gestione-sezioni.conf`,
+una riga per istanza con il nome e la porta:
+
+```bash
+cd /root/gestione-associazione-src
+# nuova sezione (2 worker; le opzioni HTTPS sono quelle di installa.sh)
+bash scripts/proxmox/sezioni.sh aggiungi potenza 8083 --tls-autofirmato
+bash scripts/proxmox/sezioni.sh stato          # servizi, versioni e ultimo backup
+bash scripts/proxmox/sezioni.sh motd           # messaggio di benvenuto con tutte le sezioni
+# aggiornamento di tutte (o solo di quelle indicate) alla versione scaricata
+git fetch --tags && git checkout vX.Y.Z && bash scripts/proxmox/sezioni.sh aggiorna
+```
+
+Prima di ogni aggiornamento si fa un backup per istanza; se una non riesce, le altre proseguono e
+in fondo compare l'elenco di quelle non aggiornate. Con 2 worker, ogni sezione occupa circa
+400 MB di RAM fra servizio web e pianificatore: 8 GB bastano per una decina di sezioni.
+
 ## Configurazione manuale dei servizi
 
 Per installazioni particolari, i servizi creati dallo script sono:

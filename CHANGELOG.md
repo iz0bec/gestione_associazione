@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.52] - 2026-11-18
+
+### Aggiunto
+- **Più sezioni sullo stesso host**:
+  - `installa.sh --istanza NOME` installa una sezione con servizio, porta, cartelle, utente e
+    database propri, sullo stesso PostgreSQL (`--worker N` per i processi web);
+  - `scripts/proxmox/sezioni.sh` le gestisce insieme (`aggiungi`, `aggiorna`, `stato`, `motd`);
+  - il messaggio di benvenuto riepiloga tutte le sezioni, con servizi, versione e backup.
+
 ## [1.0.51] - 2026-11-18
 
 ### Aggiunto
