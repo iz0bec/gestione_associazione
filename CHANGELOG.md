@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.65] - 2026-11-19
+
 ### Aggiunto
 - **Rubrica dai collegamenti API**: collegando una federazione o una sezione (attivazione o ruolo
   impostato) si crea o aggiorna il suo **ente in anagrafica** con denominazione, codice fiscale,
