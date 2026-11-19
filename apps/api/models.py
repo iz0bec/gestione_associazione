@@ -158,6 +158,11 @@ class ClienteApi(models.Model):
         "flussi notificati", default=list, blank=True,
         help_text="Flussi di cui avvisare la controparte a ogni cambiamento.",
     )  # fmt: skip
+    soggetto = models.ForeignKey(
+        "anagrafica.Soggetto", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="controparti_api", editable=False,
+        help_text="Voce di rubrica con i contatti della controparte (federazione o sezione).",
+    )  # fmt: skip
     note = models.TextField(blank=True)
     creata_il = models.DateTimeField(auto_now_add=True)
     abbinata_il = models.DateTimeField(null=True, blank=True)

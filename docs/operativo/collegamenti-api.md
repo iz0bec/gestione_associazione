@@ -109,6 +109,17 @@ opposti. Un'installazione con più sezioni è la federazione e non accetta «È 
 Se i ruoli risultano invertiti, la *Verifica soci* si ferma con «Ruoli incoerenti» e indica la
 scheda da correggere; nessun dato viene letto.
 
+**Voce di rubrica.** Quando il collegamento è attivo e ha il ruolo di federazione o di sezione
+(all'attivazione o quando si imposta il ruolo), il programma legge dalla controparte i suoi contatti
+istituzionali (denominazione, codice fiscale, indirizzo postale, telefono, email e PEC, come li ha in
+*Sistema → Organizzazione*) e crea o aggiorna l'**ente** corrispondente in *Anagrafica*. Un ente già
+presente è riconosciuto per codice fiscale, PEC o denominazione e non viene duplicato; i valori non
+validi sono scartati e un codice fiscale già presente non si sostituisce. Sulla federazione si
+completano anche email, comune e provincia della sezione, se mancano. La scheda della controparte
+mostra la voce (**In rubrica**) e il pulsante **Aggiorna la voce di rubrica** per rileggerla. Se la
+controparte non risponde o ha una versione precedente, il collegamento funziona lo stesso: la voce si
+può inserire a mano in anagrafica.
+
 A entrambe le parti va concesso l'ambito **«Ciclo delle tessere»**. Da quel momento, ogni 15 minuti
 (o con *Sincronizza ora* nella campagna):
 

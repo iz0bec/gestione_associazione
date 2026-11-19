@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Rubrica dai collegamenti API**: collegando una federazione o una sezione (attivazione o ruolo
+  impostato) si crea o aggiorna il suo **ente in anagrafica** con denominazione, codice fiscale,
+  indirizzo postale, telefono, email e PEC letti dalla controparte (nuovo `/api/v1/ente`). Senza
+  duplicati, mai valori non validi; pulsante *Aggiorna la voce di rubrica* nella scheda.
+
 ### Modificato
 - **Soci → Importa e verifica**: nuovo menu dell'elenco dei soci con *Importa da file*, la
   **Verifica soci via API** con ogni installazione collegata (federazione o sezione) e la

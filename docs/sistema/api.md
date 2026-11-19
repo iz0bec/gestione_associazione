@@ -40,6 +40,7 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/.well-known/gestione-associazione/jwks.json` | nessuna | chiavi pubbliche (JWKS) |
 | `/api/v1/abbinamenti` | invito monouso + firma | abbinamento |
 | `/api/v1/prova` | firma | diagnosi del collegamento |
+| `/api/v1/ente` | firma (controparte attiva) | contatti istituzionali dell'organizzazione, per la rubrica |
 | `/api/v1/chiavi` (PUT) | firma | la controparte presenta chiavi nuove |
 | `/api/v1/cambiamenti?flusso=…&dopo=…` | firma + ambito del flusso | feed dei cambiamenti (`eventi`, `sezioni`) |
 | `/api/v1/riepiloghi/{flusso}` | firma + ambito | numero e impronta delle risorse, per la riconciliazione |

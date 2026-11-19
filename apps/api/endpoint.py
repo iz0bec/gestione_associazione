@@ -524,6 +524,12 @@ def documento_file(request, pk):
     return risposta
 
 
+@endpoint(metodi=("GET",))
+def ente(request):
+    """Contatti istituzionali dell'organizzazione, per la rubrica della controparte."""
+    return JsonResponse(rappresentazioni.ente())
+
+
 @endpoint(metodi=("GET",), ambito="organigramma:lettura")
 def organigramma(request):
     return JsonResponse(rappresentazioni.organigramma(), safe=False)

@@ -28,6 +28,7 @@
           <dt class="col-5">IP ammessi</dt><dd class="col-7">{{ c.ip_ammessi|linebreaksbr|default:"nessun limite" }}</dd>
           <dt class="col-5">Scadenza</dt><dd class="col-7">{{ c.scade_il|date:"d/m/Y"|default:"nessuna" }}</dd>
           {% if c.attivata_il %}<dt class="col-5">Attivata</dt><dd class="col-7">{{ c.attivata_il|date:"d/m/Y H:i" }}{% if c.attivata_da %} da {{ c.attivata_da }}{% endif %}</dd>{% endif %}
+          {% if c.soggetto %}<dt class="col-5">In rubrica</dt><dd class="col-7"><a href="{% url 'anagrafica:dettaglio' c.soggetto.pk %}">{{ c.soggetto }}</a>{% if c.soggetto.pec %} · {{ c.soggetto.pec }}{% elif c.soggetto.email %} · {{ c.soggetto.email }}{% endif %}</dd>{% endif %}
           {% if c.note %}<dt class="col-5">Note</dt><dd class="col-7">{{ c.note|linebreaksbr }}</dd>{% endif %}
         </dl>
       </div>
@@ -107,6 +108,7 @@
       <div class="card-body d-flex flex-wrap gap-2">
         {% if c.abbinata and c.indirizzo_interno or c.abbinata and c.indirizzo_pubblico %}<form method="post" action="{% url 'api:azione' c.pk 'prova' %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-plug-connected me-1"></i>Prova il collegamento</button></form>
         {% if c.tipo == 'installazione' %}<form method="post" action="{% url 'api:azione' c.pk 'aggiorna' %}">{% csrf_token %}<button class="btn" type="submit" title="Rilegge chiavi e impronte TLS dalla sua /.well-known firmata"><i class="ti ti-refresh me-1"></i>Aggiorna chiavi e impronte</button></form>{% endif %}{% endif %}
+        {% if c.stato == 'attiva' and c.tipo == 'installazione' and c.ruolo != 'pari' and c.abbinata %}<form method="post" action="{% url 'api:azione' c.pk 'rubrica' %}">{% csrf_token %}<button class="btn" type="submit" title="Legge dalla controparte email, PEC, telefono e indirizzo e aggiorna la sua voce in anagrafica"><i class="ti ti-address-book me-1"></i>{% if c.soggetto %}Aggiorna{% else %}Crea{% endif %} la voce di rubrica</button></form>{% endif %}
         {% if not c.abbinata %}<form method="post" action="{% url 'api:azione' c.pk 'invito' %}" data-conferma="Creare un nuovo codice? Quello precedente smette di valere.">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-send me-1"></i>Nuovo codice d'invito</button></form>{% endif %}
         {% if c.stato == 'attiva' %}<form method="post" action="{% url 'api:azione' c.pk 'sospendi' %}" data-conferma="Sospendere la controparte? Le sue chiamate saranno rifiutate finché non la riattivate.">{% csrf_token %}<button class="btn btn-warning" type="submit"><i class="ti ti-player-pause me-1"></i>Sospendi</button></form>{% endif %}
         {% if c.stato == 'sospesa' %}<form method="post" action="{% url 'api:azione' c.pk 'riattiva' %}">{% csrf_token %}<button class="btn btn-success" type="submit"><i class="ti ti-player-play me-1"></i>Riattiva</button></form>{% endif %}

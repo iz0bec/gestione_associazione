@@ -139,6 +139,20 @@ class ControparteView(PermessoMixin, DetailView):
         return ctx
 
 
+def _rubrica(request, cliente):
+    """Federazione o sezione appena collegata: la sua voce di rubrica (un errore non blocca)."""
+    from apps.collegamenti import rubrica
+
+    soggetto, creato, errore = rubrica.aggiorna_se_possibile(cliente, request.user)
+    if soggetto:
+        esito = "creata" if creato else "aggiornata"
+        messages.info(
+            request, f"Voce di rubrica «{soggetto}» {esito} con i contatti della controparte."
+        )
+    elif errore:
+        messages.warning(request, f"Voce di rubrica non aggiornata: {errore}")
+
+
 class ControparteModificaView(PermessoMixin, UpdateView):
     permission_required = "api.gestisci_controparti"
     template_name = "api/modifica.html"
@@ -155,6 +169,8 @@ class ControparteModificaView(PermessoMixin, UpdateView):
         if dettagli.get("campi"):
             registra(Azione.MODIFICA, self.object, **dettagli)
         messages.success(self.request, "Controparte aggiornata.")
+        if "ruolo" in form.changed_data or not self.object.soggetto_id:
+            _rubrica(self.request, self.object)
         return risposta
 
     def get_success_url(self):
@@ -164,7 +180,7 @@ class ControparteModificaView(PermessoMixin, UpdateView):
 class ControparteAzioneView(PermessoMixin, View):
     permission_required = "api.gestisci_controparti"
     AZIONI = {"attiva", "sospendi", "riattiva", "revoca", "prova", "invito", "aggiorna",
-              "riprova_notifiche"}  # fmt: skip
+              "riprova_notifiche", "rubrica"}  # fmt: skip
 
     def post(self, request, pk, azione):
         cliente = get_object_or_404(ClienteApi, pk=pk)
@@ -175,6 +191,7 @@ class ControparteAzioneView(PermessoMixin, View):
                 confermata = request.POST.get("impronta_confermata") == "1"
                 servizi.attiva(cliente, request.user, impronta_confermata=confermata)
                 messages.success(request, f"{cliente} attivata.")
+                _rubrica(request, cliente)
             elif azione == "sospendi":
                 servizi.sospendi(cliente, request.user, request.POST.get("motivo", "")[:200])
                 messages.success(request, f"{cliente} sospesa.")
@@ -196,6 +213,16 @@ class ControparteAzioneView(PermessoMixin, View):
 
                 cambiate, esito = client.aggiorna_identita(cliente)
                 (messages.success if cambiate else messages.info)(request, esito)
+            elif azione == "rubrica":
+                from apps.collegamenti import rubrica
+
+                try:
+                    soggetto, creato = rubrica.aggiorna(cliente, request.user)
+                except rubrica.OperazioneNonValida as e:
+                    messages.error(request, str(e))
+                else:
+                    messages.success(request, f"Voce di rubrica «{soggetto}» "
+                                     f"{'creata' if creato else 'aggiornata'}.")  # fmt: skip
             elif azione == "prova":
                 from apps.collegamenti import client
 

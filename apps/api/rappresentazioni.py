@@ -132,3 +132,13 @@ def organigramma() -> list:
                 "componenti": componenti,
             })  # fmt: skip
     return risultato
+
+
+def ente() -> dict:
+    """Dati di contatto istituzionali dell'organizzazione (mai dati di persone)."""
+    from apps.core.models import Organizzazione
+
+    org = Organizzazione.corrente()
+    campi = ("denominazione", "codice_fiscale", "partita_iva", "indirizzo", "cap", "comune",
+             "provincia", "telefono", "email", "pec", "sito_web")  # fmt: skip
+    return {c: getattr(org, c) or "" for c in campi}

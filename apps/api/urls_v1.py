@@ -16,6 +16,7 @@ app_name = "api_v1"
 urlpatterns = [
     path("abbinamenti", endpoint.abbinamenti, name="abbinamenti"),
     path("prova", endpoint.prova, name="prova"),
+    path("ente", endpoint.ente, name="ente"),
     path("chiavi", endpoint.chiavi_controparte, name="chiavi"),
     path("cambiamenti", endpoint.cambiamenti, name="cambiamenti"),
     path("riepiloghi/<str:flusso>", endpoint.riepilogo, name="riepilogo"),
