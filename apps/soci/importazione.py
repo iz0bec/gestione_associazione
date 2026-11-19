@@ -257,19 +257,36 @@ def _nome_proprio(testo, luogo=False):
     return " ".join(parole)
 
 
-def _telefoni(*valori):
-    """Separa fissi e cellulari (in Italia i cellulari iniziano per 3)."""
-    fissi, cellulari = [], []
+def cifre_telefono(numero):
+    """Cifre di un numero senza prefisso italiano (+39 / 0039): serve a confrontarli."""
+    cifre = re.sub(r"\D", "", numero)
+    if numero.strip().startswith("+39"):
+        return cifre[2:]
+    return cifre[4:] if cifre.startswith("0039") else cifre
+
+
+def numeri_telefono(*valori):
+    """Numeri distinti (testo originale, cifre) dei valori: niente doppioni né pezzi troncati
+    (un frammento corto che è l'inizio di un altro numero, residuo di un campo tagliato)."""
+    trovati = []
     for v in valori:
         for numero in re.split(r"[,;/]| e ", _testo(v)):
             numero = numero.strip()
-            cifre = re.sub(r"\D", "", numero)
-            if len(cifre) < 6:
-                continue
-            # prefisso internazionale italiano: «+39 0971…» è un fisso, «+39 333…» un cellulare
-            if numero.startswith("+39") or cifre.startswith("0039"):
-                cifre = cifre[2:] if numero.startswith("+39") else cifre[4:]
-            (cellulari if cifre.startswith("3") else fissi).append(numero)
+            cifre = cifre_telefono(numero)
+            if len(cifre) >= 6 and all(c != cifre for _, c in trovati):
+                trovati.append((numero, cifre))
+
+    def troncato(c):
+        return len(c) < 9 and any(a != c and a.startswith(c) for _, a in trovati)
+
+    return [(n, c) for n, c in trovati if not troncato(c)]
+
+
+def _telefoni(*valori):
+    """Separa fissi e cellulari (in Italia i cellulari iniziano per 3), senza doppioni."""
+    fissi, cellulari = [], []
+    for numero, cifre in numeri_telefono(*valori):
+        (cellulari if cifre.startswith("3") else fissi).append(numero)
     return ", ".join(fissi)[:30], ", ".join(cellulari)[:30]
 
 
@@ -542,7 +559,12 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
         registra(Azione.CREAZIONE, soggetto, utente=utente, origine=opzioni.fonte)
         stato = "nuovo"
     else:
-        completati = [c for c in CAMPI_ANAGRAFICI if d.get(c) and not getattr(soggetto, c)]
+        noti = {c for _, c in numeri_telefono(soggetto.telefono, soggetto.cellulare)}
+        completati = [
+            c for c in CAMPI_ANAGRAFICI if d.get(c) and not getattr(soggetto, c)
+            and not (c in ("telefono", "cellulare")
+                     and all(n in noti for _, n in numeri_telefono(d[c])))
+        ]  # fmt: skip
         if d["codice_fiscale"] and not soggetto.codice_fiscale:
             completati.append("codice_fiscale")
         for c in completati:
@@ -677,6 +699,9 @@ def _diverso(soggetto, campo, d):
     nuovo, attuale = d.get(campo), getattr(soggetto, campo)
     if not nuovo or not attuale:
         return False
+    if campo in ("telefono", "cellulare"):  # diverso solo se porta numeri che qui non ci sono
+        qui = {c for _, c in numeri_telefono(soggetto.telefono, soggetto.cellulare)}
+        return any(c not in qui for _, c in numeri_telefono(nuovo))
     if isinstance(nuovo, date) or isinstance(attuale, date):
         return nuovo != attuale
     return normalizza(attuale) != normalizza(nuovo)

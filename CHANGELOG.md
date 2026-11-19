@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.59] - 2026-11-19
+
+### Corretto
+- **Telefono e cellulare negli scambi fra installazioni** (verifica soci e file Excel): lo stesso
+  numero presente in entrambi i campi veniva sommato («X, X»), raddoppiava a ogni scambio e il
+  campo finiva troncato. Ora i numeri si confrontano per cifre (spazi, trattini e +39 non contano),
+  i doppioni e i pezzi troncati si scartano, e un numero già presente qui (in telefono o
+  cellulare) non è più una differenza.
+- Migrazione di pulizia: dalle schede si tolgono i numeri ripetuti e i frammenti troncati; le
+  schede senza doppioni restano come sono.
+
 ## [1.0.58] - 2026-11-19
 
 ### Corretto

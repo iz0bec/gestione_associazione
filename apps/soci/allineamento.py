@@ -139,7 +139,15 @@ def _mostra(valore):
 def _modifiche_anagrafica(socio, d):
     p = socio.soggetto
     modifiche = []
+    noti = {c for _, c in imp.numeri_telefono(p.telefono, p.cellulare)}
     for c in imp.CAMPI_ANAGRAFICI:
+        if (
+            c in ("telefono", "cellulare")
+            and not getattr(p, c)
+            and d.get(c)
+            and all(n in noti for _, n in imp.numeri_telefono(d[c]))
+        ):
+            continue  # numero già presente qui nell'altro campo
         if d.get(c) and (not getattr(p, c) or imp._diverso(p, c, d)):
             modifiche.append([ETICHETTE[c], _mostra(getattr(p, c)), _mostra(d[c])])
     if d.get("matricola") and d["matricola"] != socio.matricola:
