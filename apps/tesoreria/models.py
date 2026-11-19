@@ -226,6 +226,15 @@ class Movimento(ModelloBase):
     giustificativo = models.FileField(upload_to=percorso_giustificativo, max_length=255, blank=True)
     giustificativo_nome = models.CharField(max_length=255, blank=True)
     impronta = models.CharField(max_length=64, blank=True)
+    anno_tessere = models.PositiveIntegerField(
+        "tessere dell'anno", null=True, blank=True,
+        help_text="Pagamento delle tessere di quest'anno al livello superiore (sede nazionale o "
+        "federazione): conta nella quadratura della campagna.",
+    )  # fmt: skip
+    ordine_tessere = models.ForeignKey(
+        "soci.OrdineTessere", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="pagamenti", verbose_name="ordine di tessere",
+    )  # fmt: skip
     tessera = models.OneToOneField(
         "soci.Tessera", null=True, blank=True, on_delete=models.PROTECT, related_name="movimento"
     )

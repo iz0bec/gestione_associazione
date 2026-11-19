@@ -385,6 +385,10 @@ class DocumentoRicevuto(models.Model):
     protocollo = models.ForeignKey(
         "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
+    movimento = models.ForeignKey(
+        "tesoreria.Movimento", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        help_text="Per una ricevuta: l'uscita registrata in prima nota.",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "documento ricevuto"

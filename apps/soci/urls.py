@@ -108,6 +108,19 @@ urlpatterns = [
     ),
     path("tessere/ordini/<int:pk>/pdf/", viste_ciclo.OrdinePdfView.as_view(), name="ordine_pdf"),
     path(
+        "tessere/ordini/<int:pk>/email/", viste_ciclo.OrdineEmailView.as_view(), name="ordine_email"
+    ),
+    path(
+        "tessere/richieste/<int:pk>/preparazione/",
+        viste_ciclo.RichiestaPreparazioneView.as_view(),
+        name="richiesta_preparazione",
+    ),
+    path(
+        "tessere/campagna/<int:anno>/pagamento/",
+        viste_ciclo.PagamentoTessereView.as_view(),
+        name="pagamento_tessere",
+    ),
+    path(
         "tessere/richieste/<int:pk>/pdf/",
         viste_ciclo.RichiestaPdfView.as_view(),
         name="richiesta_pdf",

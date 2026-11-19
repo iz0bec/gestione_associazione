@@ -802,3 +802,25 @@ class ImportaConsegnaForm(StileMixin, forms.Form):
     )  # fmt: skip
     sezione = forms.ModelChoiceField(queryset=Sezione.objects.filter(attiva=True), required=False,
                                      help_text="Vuoto: la sezione principale.")  # fmt: skip
+
+
+class PagamentoTessereForm(StileMixin, forms.Form):
+    """Uscita per le tessere pagate al livello superiore (acconto o saldo)."""
+
+    data = forms.DateField(widget=CampoData, initial=date.today)
+    importo = forms.DecimalField(min_value=Decimal("0.01"), max_digits=10, decimal_places=2)
+    conto = forms.ModelChoiceField(queryset=None, help_text="Da dove esce il denaro.")
+    riferimento = forms.CharField(
+        max_length=100, required=False,
+        help_text="Es. numero del bonifico o della ricevuta del livello superiore.",
+    )  # fmt: skip
+    giustificativo = forms.FileField(
+        required=False, help_text="Ricevuta o contabile (se arrivata da un collegamento, "
+        "si allega da sola).",
+    )  # fmt: skip
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from apps.tesoreria.models import Conto
+
+        self.fields["conto"].queryset = Conto.objects.filter(attivo=True)

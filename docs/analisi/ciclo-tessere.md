@@ -163,6 +163,17 @@ Regole:
 - **Ricevute del nazionale**: arrivano per **PEC** (dalla posta da protocollare) **o su carta**
   (scansione protocollata a mano). In entrambi i casi si legano al pagamento della federazione.
 
+## Decisioni del 19/11/2026 (flusso dal rinnovo)
+
+- Le tessere da chiedere nascono dal **rinnovo annuale**: si scelgono i soci che rinnovano e si
+  chiede **per differenza** (rinnovati senza tessera − disponibili − già chieste in arrivo).
+- Le richieste **non partono da sole**: si accumulano in una richiesta in preparazione in più
+  sessioni e si inviano quando sono pronte, sul canale previsto (sezione → federazione via API o
+  email; federazione → nazionale via email).
+- Al nazionale **non si paga per forza insieme all'ordine**: i pagamenti sono uscite separate
+  (acconti e saldi) sulla voce «Acquisto delle tessere».
+- **Sospeso** = non ancora pagato: è il saldo aperto della quadratura, non uno stato a parte.
+
 ## Punti aperti (superati)
 
 1. ~~Pagamento misto~~ deciso: intero preferibile, in sospeso ammesso.

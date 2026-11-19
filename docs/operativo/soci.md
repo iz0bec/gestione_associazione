@@ -134,8 +134,10 @@ spediscono per email e PEC dal protocollo.
 
    Lo stesso modulo non si registra due volte.
 4. **Ordine alla sede nazionale**: somma le richieste non ancora ordinate, con il dettaglio per
-   sezione. Il PDF si protocolla e si spedisce. Le richieste arrivate dopo finiscono nell'ordine
-   successivo.
+   sezione. Il pulsante della busta lo prepara in **bozza email** alla sede nazionale (indirizzo
+   in *Sistema → Organizzazione*, modello «Ordine di tessere alla sede nazionale»), con il PDF
+   allegato e protocollabile: si controlla e si spedisce da *Comunicazioni*. Le richieste arrivate
+   dopo finiscono nell'ordine successivo.
 5. **Arrivo dal nazionale**: i blocchi di numeri entrano nel **magazzino**. Le tessere del magazzino
    non si possono attribuire ai soci finché non vengono consegnate a una sezione.
 6. **Consegna** a una sezione:
@@ -153,6 +155,10 @@ spediscono per email e PEC dal protocollo.
    l'intero importo, ma il saldo può restare in sospeso.
 8. **Presa in carico**: quando la sezione restituisce il documento firmato, si segna *presa in
    carico*.
+9. **Pagamenti al nazionale** (*Pagamenti delle tessere*, o il pulsante della moneta su un
+   ordine): ogni versamento, acconto o saldo, è un'**uscita** in prima nota sulla voce
+   **U.A.1.2 «Acquisto delle tessere»**, legata all'ordine. Non serve pagare insieme all'ordine: il
+   riquadro mostra dovuto (tessere ordinate × costo nazionale), pagato e **da pagare**.
 
 La **quadratura** mostra per ogni sezione richieste, consegnate, dovuto, versato e saldo. Segnala
 cosa seguire: consegnate senza pagamento, da versare, versato in più, da consegnare, presa in
@@ -173,12 +179,31 @@ arrivo** mostra quelli da confermare, con il PDF:
 *Sincronizza ora* legge subito; altrimenti la lettura avviene ogni 15 minuti. Senza collegamento
 il ciclo continua come sotto, con email, PEC e file.
 
+**Dal rinnovo alla richiesta.** Le tessere da chiedere nascono dal **rinnovo annuale**: per ogni
+sezione si calcola la differenza, cioè soci rinnovati ancora senza tessera, meno tessere
+disponibili, meno quelle già chieste e non ancora arrivate. Il risultato va nella **richiesta in
+preparazione** dell'anno:
+
+- si aggiorna a ogni sessione di rinnovo, così le richieste si accumulano;
+- **non parte mai da sola**: nella campagna, riquadro *Richieste in preparazione*, si corregge la
+  quantità (o *Ricalcola*), si aggiungono le note e poi si **invia** sul canale previsto;
+- sezione collegata via API: va alla federazione tramite il collegamento;
+- sezione senza collegamento: diventa la bozza email alla federazione con il modulo allegato;
+- nella federazione, per una sua sezione: entra nel fabbisogno dell'anno, pronto per l'ordine.
+
+Le richieste in preparazione non contano nella quadratura né negli ordini finché non si inviano.
+
 **Nella sezione**, se ha la propria installazione:
 
 - con *Importa consegna* carica il file dei numeri ricevuto, con anteprima: le tessere entrano nel
   magazzino della sezione con l'importo e il riferimento alla consegna;
 - protocolla il documento di consegna e la ricevuta della federazione;
-- registra in tesoreria l'uscita del versamento, con la ricevuta come giustificativo;
+- registra l'**uscita** del versamento alla federazione: la ricevuta arrivata dal collegamento
+  compare in *Ricevute da registrare in prima nota* con **Registra l'uscita** (importo e data già
+  compilati, la ricevuta diventa il giustificativo). Senza collegamento si usa *Registra un
+  pagamento* nel riquadro *Pagamenti delle tessere*. La voce è **U.A.1.2 «Acquisto delle
+  tessere»**; il riquadro mostra dovuto (tessere ricevute × costo per tessera), pagato e da
+  pagare, cioè il saldo in sospeso;
 - registra la propria **richiesta di tessere** nella campagna. Con il pulsante della busta prepara
   in bozza la **risposta alla federazione**: il modello «Richiesta di tessere alla federazione»,
   con il PDF della richiesta in allegato e protocollabile. Va all'email della federazione indicata

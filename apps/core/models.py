@@ -131,6 +131,11 @@ class Organizzazione(models.Model):
         help_text="Chi è ammesso socio accetta le regole sulla privacy: per i soci attivi e "
         "sospesi ogni consenso vale come prestato, salvo un diniego o una revoca registrati.",
     )
+    nazionale_email = models.EmailField(
+        "email della sede nazionale",
+        blank=True,
+        help_text="Per gli ordini di tessere della federazione (bozza email con il PDF).",
+    )
     archivio_centrale = models.CharField(
         "archivio centrale dei soci",
         max_length=150,

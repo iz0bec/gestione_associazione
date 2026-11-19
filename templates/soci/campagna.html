@@ -53,6 +53,37 @@
   <div class="card-footer small text-secondary">{% for c in collegamenti %}{{ c.nome }} ({{ c.get_ruolo_display|lower }}){% with cur=c.cursori.all|first %}{% if cur %}: letto il {{ cur.letto_il|date:"d/m/Y H:i"|default:"mai" }}{% if cur.ultimo_errore %} · <span class="text-danger">{{ cur.ultimo_errore|truncatechars:90 }}</span>{% endif %}{% else %}: mai letto{% endif %}{% endwith %}{% if not forloop.last %} · {% endif %}{% empty %}Nessun collegamento attivo con la federazione o con le sezioni.{% endfor %} I documenti si leggono da soli ogni 15 minuti.</div>
 </div>
 {% endif %}
+{% if in_preparazione %}
+<div class="card mb-3 border-warning">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-file-plus me-1"></i>Richieste in preparazione</h3></div>
+  <div class="list-group list-group-flush">{% for r, f in in_preparazione %}<div class="list-group-item small">
+    <form method="post" action="{% url 'soci:richiesta_preparazione' r.pk %}" class="d-flex flex-wrap align-items-center gap-2">{% csrf_token %}
+      <strong>{{ r.sezione }}</strong>
+      <input class="form-control form-control-sm w-auto" type="number" name="quantita" min="1" value="{{ r.quantita }}" aria-label="Tessere da richiedere"> tessere
+      <input class="form-control form-control-sm w-auto flex-fill" name="note" value="{{ r.note }}" maxlength="255" placeholder="note" aria-label="Note">
+      <button class="btn btn-sm" type="submit" name="azione" value="salva">Salva</button>
+      <button class="btn btn-sm" type="submit" name="azione" value="ricalcola" title="Riporta la quantità al fabbisogno calcolato">Ricalcola</button>
+      <button class="btn btn-sm btn-primary" type="submit" name="azione" value="invia"><i class="ti ti-send me-1"></i>{% if canale == "api" %}Invia alla federazione (collegamento){% elif canale == "email" %}Prepara l'email alla federazione{% else %}Registra nel fabbisogno{% endif %}</button>
+    </form>
+    <div class="text-secondary mt-1">Calcolo: rinnovati senza tessera {{ f.senza_numero }} − disponibili {{ f.disponibili }} − già chieste in arrivo {{ f.in_attesa }} = {{ f.proposta }}. Si aggiorna a ogni rinnovo; parte solo quando si invia.</div>
+  </div>{% endfor %}</div>
+</div>
+{% endif %}
+{% if ricevute_da_registrare and perms.tesoreria.add_movimento %}
+<div class="card mb-3 border-warning">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-receipt me-1"></i>Ricevute da registrare in prima nota</h3></div>
+  <div class="list-group list-group-flush">{% for d in ricevute_da_registrare %}<div class="list-group-item small d-flex align-items-center gap-2">
+    <span class="flex-fill">Ricevuta n. {{ d.dati.ricevuta }} del {{ d.dati.data }} da <strong>{{ d.cliente }}</strong> · € {{ d.dati.importo }}</span>
+    <a class="btn btn-sm btn-primary" href="{% url 'soci:pagamento_tessere' anno %}?ricevuta={{ d.pk }}"><i class="ti ti-cash me-1"></i>Registra l'uscita</a>
+  </div>{% endfor %}</div>
+</div>
+{% endif %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-cash me-1"></i>Pagamenti delle tessere a {{ superiore.destinatario }}</h3>
+    {% if perms.tesoreria.add_movimento %}<div class="card-actions"><a class="btn btn-sm btn-primary" href="{% url 'soci:pagamento_tessere' anno %}"><i class="ti ti-plus me-1"></i>Registra un pagamento</a></div>{% endif %}</div>
+  <div class="card-body small">{{ superiore.quantita }} {{ superiore.descrizione }} · dovuto <strong>€ {{ superiore.dovuto|floatformat:"2g" }}</strong> · pagato € {{ superiore.pagato|floatformat:"2g" }} · <span class="{% if superiore.da_pagare > 0 %}text-danger{% else %}text-green{% endif %}">da pagare € {{ superiore.da_pagare|floatformat:"2g" }}</span></div>
+  {% if superiore.pagamenti %}<div class="list-group list-group-flush">{% for m in superiore.pagamenti %}<div class="list-group-item small">{{ m.data|date:"d/m/Y" }} · € {{ m.importo|floatformat:"2g" }} · {{ m.conto }} · {{ m.descrizione }}{% if m.documento %} · {{ m.documento }}{% endif %} · <a href="{% url 'tesoreria:movimento' m.pk %}">prima nota n. {{ m.numero }}</a></div>{% endfor %}</div>{% endif %}
+</div>
 <div class="card mb-3">
   <div class="card-header"><h3 class="card-title"><i class="ti ti-scale me-1"></i>Quadratura per sezione</h3></div>
   {% if quadratura %}
@@ -78,7 +109,7 @@
     </div>
     <div class="card mt-3">
       <div class="card-header"><h3 class="card-title">Ordini alla sede nazionale</h3><div class="card-actions">{% if da_ordinare %}<a class="btn btn-sm btn-primary" href="{% url 'soci:ordine_tessere' anno %}"><i class="ti ti-plus me-1"></i>Nuovo ordine</a>{% endif %}</div></div>
-      <div class="list-group list-group-flush">{% for o in ordini %}<div class="list-group-item small d-flex align-items-center gap-2"><span class="flex-fill">n. {{ o.anno }}/{{ o.numero }} del {{ o.data|date:"d/m/Y" }} · {{ o.quantita }} tessere</span><a class="btn btn-sm" href="{% url 'soci:ordine_pdf' o.pk %}"><i class="ti ti-file-type-pdf me-1"></i>PDF</a></div>{% empty %}<div class="list-group-item small text-secondary">Nessun ordine.</div>{% endfor %}</div>
+      <div class="list-group list-group-flush">{% for o in ordini %}<div class="list-group-item small d-flex align-items-center gap-2"><span class="flex-fill">n. {{ o.anno }}/{{ o.numero }} del {{ o.data|date:"d/m/Y" }} · {{ o.quantita }} tessere</span><a class="btn btn-sm" href="{% url 'soci:ordine_pdf' o.pk %}"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>{% if perms.comunicazioni.add_invio %}<form method="post" action="{% url 'soci:ordine_email' o.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Prepara l'email alla sede nazionale con il PDF (non parte da sola)"><i class="ti ti-mail-forward"></i></button></form>{% endif %}{% if perms.tesoreria.add_movimento %}<a class="btn btn-sm" href="{% url 'soci:pagamento_tessere' anno %}?ordine={{ o.pk }}" title="Registra un pagamento (acconto o saldo) di questo ordine"><i class="ti ti-cash"></i></a>{% endif %}</div>{% empty %}<div class="list-group-item small text-secondary">Nessun ordine.</div>{% endfor %}</div>
       {% if da_ordinare %}<div class="card-footer small">Da ordinare: {% for r in da_ordinare %}{{ r.nome }} {{ r.quantita }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
     </div>
   </div>

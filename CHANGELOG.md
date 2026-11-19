@@ -5,6 +5,21 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.63] - 2026-11-19
+
+### Aggiunto
+- **Dal rinnovo alla richiesta di tessere**: ogni sessione di rinnovo aggiorna la **richiesta in
+  preparazione** dell'anno, per differenza: rinnovati senza tessera, meno disponibili, meno già
+  chieste in arrivo. Non parte mai da sola: nella campagna si corregge e si invia sul canale
+  previsto (collegamento API, bozza email alla federazione, fabbisogno della federazione per una
+  sua sezione). Finché è in preparazione non conta nella quadratura né negli ordini.
+- **Ordine alla sede nazionale per email**: bozza con il PDF allegato (modello «Ordine di tessere
+  alla sede nazionale», email della sede nazionale in *Sistema → Organizzazione*).
+- **Pagamenti delle tessere al livello superiore**: uscite in prima nota sulla voce U.A.1.2,
+  rinominata «Acquisto delle tessere (sede nazionale o federazione)», anche in più versamenti e
+  separate dall'ordine, con dovuto, pagato e da pagare. Nella sezione la ricevuta arrivata dal
+  collegamento propone l'uscita già compilata, con la ricevuta come giustificativo.
+
 ## [1.0.62] - 2026-11-19
 
 ### Aggiunto

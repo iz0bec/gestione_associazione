@@ -17,6 +17,7 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Sum
+from django.utils import timezone
 
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
@@ -28,6 +29,7 @@ from .models import (
     BloccoTessere,
     ConsegnaTessere,
     ListinoTessere,
+    LottoTessere,
     OrdineTessere,
     RichiestaTessere,
     Sezione,
@@ -51,12 +53,13 @@ def prezzo_sezioni(anno):
 
 
 def registra_richiesta(utente, *, anno, sezione, quantita, data=None, protocollo=None, note="",
-                       **origine):  # fmt: skip
+                       in_preparazione=False, **origine):  # fmt: skip
     if quantita < 1:
         raise OperazioneNonValida("Indicare almeno una tessera.")
     richiesta = RichiestaTessere(
         anno=anno, sezione=sezione, quantita=quantita, protocollo=protocollo, note=note,
-        creato_da=utente, modificato_da=utente, **origine,
+        creato_da=utente, modificato_da=utente,
+        inviata_il=None if in_preparazione else timezone.now(), **origine,
     )  # fmt: skip
     if data:
         richiesta.data = data
@@ -232,7 +235,7 @@ def da_ordinare(anno):
     ordine supplementare)."""
     richiesto = {
         r["sezione"]: r["totale"]
-        for r in RichiestaTessere.objects.filter(anno=anno)
+        for r in RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False)
         .values("sezione")
         .annotate(totale=Sum("quantita"))
     }
@@ -309,7 +312,9 @@ def quadratura(anno):
     def riga(sezione):
         return righe.setdefault(sezione.pk, RigaQuadratura(sezione))
 
-    for r in RichiestaTessere.objects.filter(anno=anno).select_related("sezione"):
+    for r in RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False).select_related(
+        "sezione"
+    ):
         riga(r.sezione).richieste += r.quantita
     for c in ConsegnaTessere.objects.filter(anno=anno).select_related("sezione"):
         voce = riga(c.sezione)
@@ -414,7 +419,9 @@ def destinatari(sezione):
 
 
 def sezioni_senza_richiesta(anno):
-    con = RichiestaTessere.objects.filter(anno=anno).values_list("sezione_id", flat=True)
+    con = RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False).values_list(
+        "sezione_id", flat=True
+    )
     return Sezione.objects.filter(attiva=True).exclude(pk__in=con)
 
 
@@ -610,3 +617,247 @@ def tessere_anno_precedente(anno, sezione):
     if rilasciate:
         return rilasciate
     return sum(c.quantita for c in ConsegnaTessere.objects.filter(anno=anno - 1, sezione=sezione))
+
+
+# --- richiesta in preparazione (dal rinnovo) ---------------------------------------------------
+
+
+def fabbisogno(anno, sezione):
+    """Quante tessere chiedere al livello superiore, per differenza: soci rinnovati ancora senza
+    tessera fisica, meno le tessere disponibili in carico, meno quelle già chieste e non ancora
+    arrivate."""
+    from .models import CartaTessera, Tessera
+    from .servizi import FORNITORE_REGISTRO
+
+    senza_numero = (
+        Tessera.objects.valide()
+        .filter(anno=anno, socio__sezione=sezione, carta__isnull=True)
+        .count()
+    )
+    disponibili = (
+        CartaTessera.objects.disponibili().filter(anno=anno, lotto__sezione=sezione).count()
+    )
+    chieste = sum(RichiestaTessere.objects.filter(
+        anno=anno, sezione=sezione, inviata_il__isnull=False, uuid_origine__isnull=True
+    ).values_list("quantita", flat=True))  # fmt: skip
+    arrivate = sum(
+        lotto.quantita
+        for lotto in LottoTessere.objects.filter(anno=anno, sezione=sezione).exclude(
+            fornitore=FORNITORE_REGISTRO
+        )
+    )
+    in_attesa = max(chieste - arrivate, 0)
+    return {
+        "senza_numero": senza_numero, "disponibili": disponibili, "in_attesa": in_attesa,
+        "proposta": max(senza_numero - disponibili - in_attesa, 0),
+    }  # fmt: skip
+
+
+def in_preparazione(anno, sezione):
+    return RichiestaTessere.objects.filter(
+        anno=anno, sezione=sezione, inviata_il__isnull=True, uuid_origine__isnull=True
+    ).first()
+
+
+@transaction.atomic
+def aggiorna_in_preparazione(utente, anno, sezione):
+    """Porta la richiesta in preparazione dell'anno al fabbisogno calcolato (la crea, o la
+    toglie se non serve più). Non parte mai da sola. Restituisce (richiesta o None, calcolo)."""
+    calcolo = fabbisogno(anno, sezione)
+    bozza = in_preparazione(anno, sezione)
+    if not calcolo["proposta"]:
+        if bozza:
+            registra(Azione.ELIMINAZIONE, bozza, utente=utente,
+                     descrizione=f"Richiesta in preparazione tolta: {bozza}")  # fmt: skip
+            bozza.delete()
+        return None, calcolo
+    if bozza is None:
+        bozza = registra_richiesta(utente, anno=anno, sezione=sezione,
+                                   quantita=calcolo["proposta"], in_preparazione=True)  # fmt: skip
+    elif bozza.quantita != calcolo["proposta"]:
+        bozza.quantita, bozza.modificato_da = calcolo["proposta"], utente
+        bozza.save()
+        registra(Azione.MODIFICA, bozza, utente=utente, quantita=bozza.quantita)
+    return bozza, calcolo
+
+
+def modifica_in_preparazione(utente, richiesta, *, quantita, note=""):
+    if not richiesta.in_preparazione:
+        raise OperazioneNonValida("La richiesta è già stata inviata: non si modifica.")
+    if quantita < 1:
+        raise OperazioneNonValida("Indicare almeno una tessera.")
+    richiesta.quantita, richiesta.note, richiesta.modificato_da = quantita, note, utente
+    richiesta.save()
+    registra(Azione.MODIFICA, richiesta, utente=utente, quantita=quantita)
+    return richiesta
+
+
+def canale_richiesta():
+    """Come parte una richiesta della sezione: «api» (federazione collegata), «email», oppure
+    «registro» nella federazione (richiesta di una sua sezione: entra nel fabbisogno)."""
+    from apps.api.models import ClienteApi
+
+    from .sezioni import multisezione
+
+    if multisezione():
+        return "registro"
+    collegata = ClienteApi.objects.filter(
+        stato=ClienteApi.Stato.ATTIVA, ruolo=ClienteApi.Ruolo.FEDERAZIONE,
+        ambiti__contains=["tessere:scambio"],
+    ).exists()  # fmt: skip
+    return "api" if collegata else "email"
+
+
+@transaction.atomic
+def invia_richiesta(utente, richiesta):
+    """Invia la richiesta in preparazione sul canale previsto. Restituisce (canale, invio
+    email in bozza o None)."""
+    richiesta = RichiestaTessere.objects.select_for_update().get(pk=richiesta.pk)
+    if not richiesta.in_preparazione:
+        raise OperazioneNonValida("La richiesta è già stata inviata.")
+    canale = canale_richiesta()
+    invio = None
+    if canale == "email":
+        invio = prepara_risposta(utente, richiesta)  # bozza da controllare e spedire
+    richiesta.inviata_il, richiesta.data, richiesta.modificato_da = (
+        timezone.now(), timezone.localdate(), utente)  # fmt: skip
+    richiesta.save()  # via API: da qui la federazione la legge nel flusso «tessere»
+    registra(Azione.MODIFICA, richiesta, utente=utente, inviata=canale,
+             descrizione=f"Richiesta di tessere inviata ({canale}): {richiesta}")  # fmt: skip
+    return canale, invio
+
+
+# --- ordine al nazionale per email -------------------------------------------------------------
+
+
+def pdf_ordine(ordine) -> bytes:
+    from apps.core.pdf import genera_pdf
+
+    voce = listino(ordine.anno)
+    totale = (voce.costo_acquisto * ordine.quantita) if voce else None
+    return genera_pdf("soci/pdf/ordine_tessere.html", {
+        "organizzazione": Organizzazione.corrente(), "ordine": ordine, "listino": voce,
+        "totale": totale,
+    })  # fmt: skip
+
+
+def prepara_ordine_email(utente, ordine, *, servizio=None, protocolla=True):
+    """L'ordine alla sede nazionale in bozza email, con il PDF allegato (da controllare e
+    spedire: non parte da solo)."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.comunicazioni.models import Finalita, Modello
+
+    org = Organizzazione.corrente()
+    if not org.nazionale_email:
+        raise OperazioneNonValida(
+            "Manca l'email della sede nazionale: indicarla in Sistema → Organizzazione."
+        )
+    modello = Modello.objects.filter(uso="ordine_tess", attivo=True).order_by("pk").first()
+    if modello is None:
+        raise OperazioneNonValida("Manca il modello «Ordine di tessere alla sede nazionale».")
+    contesto = {
+        "anno": ordine.anno, "numero": f"{ordine.anno}/{ordine.numero}",
+        "data": f"{ordine.data:%d/%m/%Y}", "quantita": ordine.quantita,
+        "federazione": org.federazione or org.denominazione, "note_ordine": ordine.note,
+        "organizzazione": org.denominazione,
+    }  # fmt: skip
+    try:
+        return comunicazioni.crea_invio(
+            utente, oggetto=modello.oggetto, corpo=modello.corpo,
+            finalita=Finalita.ISTITUZIONALE, indirizzi=[("Sede nazionale", org.nazionale_email)],
+            modello=modello, protocolla=protocolla, origine="tessere_ordine",
+            origine_id=ordine.pk, contesto=contesto, servizio=servizio,
+            allegati=[(f"ordine-tessere-{ordine.anno}-{ordine.numero}.pdf", pdf_ordine(ordine))],
+        )  # fmt: skip
+    except comunicazioni.OperazioneNonValida as e:
+        raise OperazioneNonValida(" ".join(e.messages)) from None
+
+
+# --- pagamenti delle tessere al livello superiore --------------------------------------------
+
+VOCE_TESSERE = "U.A.1.2"  # sottovoce «Acquisto delle tessere» del piano dei conti
+
+
+def voce_tessere():
+    from apps.tesoreria.models import Voce
+
+    return Voce.objects.filter(codice=VOCE_TESSERE, attiva=True).first()
+
+
+def destinatario_pagamenti():
+    from .sezioni import multisezione
+
+    if multisezione():
+        return "Sede nazionale"
+    org = Organizzazione.corrente()
+    return f"Federazione {org.federazione}".strip() if org.federazione else "Federazione"
+
+
+@transaction.atomic
+def registra_pagamento(utente, *, anno, data, importo, conto, riferimento="", ordine=None,
+                       documento=None, giustificativo=None):  # fmt: skip
+    """Uscita in prima nota per le tessere dell'anno pagate al livello superiore (acconto o
+    saldo; il resto rimane da pagare). Da un ordine (federazione) o da una ricevuta arrivata
+    (sezione), che diventa il giustificativo."""
+    from apps.tesoreria import servizi as tesoreria
+    from apps.tesoreria.models import Movimento
+
+    voce = voce_tessere()
+    if voce is None:
+        raise OperazioneNonValida(
+            f"Manca la voce {VOCE_TESSERE} «Acquisto delle tessere» nel piano dei conti."
+        )
+    if importo is None or importo <= 0:
+        raise OperazioneNonValida("Indicare un importo maggiore di zero.")
+    if documento is not None and documento.movimento_id:
+        raise OperazioneNonValida("Per questa ricevuta l'uscita è già registrata.")
+    cosa = f"ordine n. {ordine.anno}/{ordine.numero}" if ordine else (
+        f"ricevuta n. {documento.dati.get('ricevuta')}" if documento else "pagamento")  # fmt: skip
+    dati = {
+        "data": data, "tipo": Movimento.Tipo.USCITA, "conto": conto, "importo": importo,
+        "voce": voce, "descrizione": f"Tessere {anno}: {cosa}"[:255],
+        "controparte_testo": destinatario_pagamenti()[:200], "documento": riferimento[:100],
+        "anno_tessere": anno, "ordine_tessere": ordine,
+    }  # fmt: skip
+    if giustificativo is None and documento is not None and documento.pdf:
+        from django.core.files.base import ContentFile
+
+        with documento.pdf.open("rb") as f:
+            giustificativo = ContentFile(f.read(), name=f"ricevuta-{documento.uuid_origine}.pdf")
+    try:
+        movimento = tesoreria.registra_movimento(dati, utente, giustificativo=giustificativo)
+    except tesoreria.OperazioneNonValida as e:
+        raise OperazioneNonValida(" ".join(e.messages)) from None
+    if documento is not None:
+        documento.movimento = movimento
+        documento.save(update_fields=["movimento"])
+    return movimento
+
+
+def quadratura_superiore(anno):
+    """Debito verso il livello superiore per le tessere dell'anno: dovuto, pagato, da pagare.
+    Federazione: tessere ordinate al nazionale × costo nazionale; sezione: tessere ricevute
+    dalla federazione × costo per tessera dei lotti."""
+    from apps.tesoreria.models import Movimento
+
+    from .servizi import FORNITORE_REGISTRO
+    from .sezioni import multisezione
+
+    pagamenti = Movimento.objects.filter(anno_tessere=anno, tipo=Movimento.Tipo.USCITA,
+                                         annullato=False).order_by("data", "numero")  # fmt: skip
+    pagato = sum((m.importo for m in pagamenti), Decimal("0"))
+    if multisezione():
+        quantita = sum(OrdineTessere.objects.filter(anno=anno).values_list("quantita", flat=True))
+        voce = listino(anno)
+        dovuto = (voce.costo_acquisto * quantita) if voce else Decimal("0")
+        descrizione = "tessere ordinate alla sede nazionale"
+    else:
+        lotti = list(LottoTessere.objects.filter(anno=anno).exclude(fornitore=FORNITORE_REGISTRO))
+        quantita = sum(lotto.quantita for lotto in lotti)
+        dovuto = sum((lotto.quantita * lotto.costo_unitario for lotto in lotti), Decimal("0"))
+        descrizione = "tessere ricevute dalla federazione"
+    return {
+        "destinatario": destinatario_pagamenti(), "descrizione": descrizione,
+        "quantita": quantita, "dovuto": dovuto, "pagato": pagato, "da_pagare": dovuto - pagato,
+        "pagamenti": list(pagamenti.select_related("conto", "ordine_tessere")),
+    }  # fmt: skip

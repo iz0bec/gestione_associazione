@@ -519,6 +519,13 @@ class RinnovoView(PermessoMixin, FormView):
         ).order_by("numero")
         ctx["disponibili"] = _carte(self.request).disponibili().filter(anno=anno).count()
         ctx["listino"] = servizi.listino(anno)
+        from . import ciclo
+
+        righe = [(s, ciclo.in_preparazione(anno, s), ciclo.fabbisogno(anno, s))
+                 for s in sezioni.sezioni_di(self.request.user)]  # fmt: skip
+        # con più sezioni solo quelle con qualcosa da chiedere
+        ctx["preparazione"] = [r for r in righe if len(righe) == 1 or r[1] or r[2]["proposta"]]
+        ctx["gestisce_ciclo"] = self.request.user.has_perm("soci.gestisci_ciclo_tessere")
         return ctx
 
     def form_valid(self, form):
@@ -546,6 +553,15 @@ class RinnovoView(PermessoMixin, FormView):
         )
         for socio, errore in errori:
             messages.warning(self.request, f"{socio}: {errore}")
+        # le tessere da chiedere si accumulano nella richiesta in preparazione (non parte da sola)
+        from . import ciclo
+
+        for sezione in {t.socio.sezione for t in rilasciate}:
+            bozza, _ = ciclo.aggiorna_in_preparazione(self.request.user, anno, sezione)
+            if bozza:
+                messages.info(self.request, f"{sezione}: richiesta di tessere {anno} in "
+                              f"preparazione portata a {bozza.quantita} (si invia dalla "
+                              "campagna delle tessere, quando è pronta).")  # fmt: skip
         return redirect(f"{reverse('soci:tessere')}?anno={anno}")
 
     def get(self, request, *args, **kwargs):

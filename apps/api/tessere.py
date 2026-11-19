@@ -128,7 +128,8 @@ def documento(cliente, risorsa, uuid_risorsa):
         return ricevuta(i) if i else None
     if risorsa == "richiesta":
         r = RichiestaTessere.objects.filter(uuid=uuid_risorsa, sezione=sezione,
-                                            uuid_origine__isnull=True).first()  # fmt: skip
+                                            uuid_origine__isnull=True,
+                                            inviata_il__isnull=False).first()  # fmt: skip
         return richiesta(r) if r else None
     if risorsa == "presa":
         lotto = LottoTessere.objects.filter(uuid=uuid_risorsa, sezione=sezione,

@@ -678,6 +678,10 @@ class RichiestaTessere(RisorsaApi, ModelloBase):
         "api.ClienteApi", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
         editable=False, verbose_name="ricevuta da",
     )  # fmt: skip
+    inviata_il = models.DateTimeField(
+        "inviata il", null=True, blank=True, editable=False,
+        help_text="Vuoto: richiesta in preparazione (si accumula, non parte da sola).",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "richiesta di tessere"
@@ -688,9 +692,16 @@ class RichiestaTessere(RisorsaApi, ModelloBase):
     def __str__(self):
         return f"{self.sezione}: {self.quantita} tessere {self.anno}"
 
+    @property
+    def in_preparazione(self):
+        return self.inviata_il is None
+
     def flusso_api(self):
-        # le richieste ricevute dalla sezione non si rimandano indietro
-        return None if self.uuid_origine else f"tessere:{self.sezione.codice}"
+        # le richieste ricevute dalla sezione non si rimandano indietro; quelle in preparazione
+        # non partono finché non si inviano
+        if self.uuid_origine or self.inviata_il is None:
+            return None
+        return f"tessere:{self.sezione.codice}"
 
 
 class BloccoTessere(ModelloBase):

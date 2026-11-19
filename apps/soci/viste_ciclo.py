@@ -9,6 +9,7 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+import contextlib
 from datetime import date
 
 from django.contrib import messages
@@ -31,6 +32,7 @@ from .forms import (
     ImportaConsegnaForm,
     ImportaModuloForm,
     OrdineTessereForm,
+    PagamentoTessereForm,
     RichiestaTessereForm,
 )
 from .models import ConsegnaTessere, OrdineTessere, RichiestaTessere, Sezione
@@ -86,7 +88,22 @@ class CampagnaView(PermessoMixin, TemplateView):
                 ruolo__in=[ClienteApi.Ruolo.FEDERAZIONE, ClienteApi.Ruolo.SEZIONE],
             ).prefetch_related("cursori"),
             sezioni_attive=Sezione.objects.filter(attiva=True),
+            canale=ciclo.canale_richiesta(),
+            superiore=ciclo.quadratura_superiore(anno),
+            ricevute_da_registrare=DocumentoRicevuto.objects.filter(
+                tipo=DocumentoRicevuto.Tipo.RICEVUTA,
+                stato=DocumentoRicevuto.Stato.APPLICATO,
+                movimento__isnull=True,
+                dati__anno=anno,
+            ).select_related("cliente"),
+            in_preparazione=[
+                (r, ciclo.fabbisogno(anno, r.sezione))
+                for r in RichiestaTessere.objects.filter(
+                    anno=anno, inviata_il__isnull=True, uuid_origine__isnull=True
+                ).select_related("sezione")
+            ],
         )
+        ctx["richieste"] = ctx["richieste"].filter(inviata_il__isnull=False)
         return ctx
 
 
@@ -575,3 +592,122 @@ class ModuloRichiestaView(PermessoMixin, View):
         )
         risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
         return risposta
+
+
+class RichiestaPreparazioneView(PermessoMixin, View):
+    """Richiesta in preparazione: salva quantità e note, ricalcola dal fabbisogno, invia."""
+
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        richiesta = get_object_or_404(
+            RichiestaTessere.objects.select_related("sezione"), pk=pk, inviata_il__isnull=True,
+            uuid_origine__isnull=True,
+        )  # fmt: skip
+        azione = request.POST.get("azione")
+        try:
+            if azione == "ricalcola":
+                bozza, calcolo = ciclo.aggiorna_in_preparazione(request.user, richiesta.anno,
+                                                                richiesta.sezione)  # fmt: skip
+                testo = (f"Richiesta in preparazione: {bozza.quantita} tessere." if bozza
+                         else "Non servono altre tessere: richiesta tolta.")  # fmt: skip
+                messages.success(request, testo)
+            elif azione in ("salva", "invia"):
+                try:
+                    quantita = int(request.POST.get("quantita", ""))
+                except ValueError:
+                    raise OperazioneNonValida("Quantità non valida.") from None
+                ciclo.modifica_in_preparazione(request.user, richiesta, quantita=quantita,
+                                               note=request.POST.get("note", "")[:255])  # fmt: skip
+                if azione == "invia":
+                    canale, invio = ciclo.invia_richiesta(request.user, richiesta)
+                    if invio is not None:
+                        messages.success(request, "Richiesta preparata in bozza email con il "
+                                         "modulo allegato: controllala e confermala per "
+                                         "spedirla.")  # fmt: skip
+                        return redirect(invio)
+                    messages.success(request, {
+                        "api": "Richiesta inviata alla federazione tramite il collegamento.",
+                        "registro": "Richiesta registrata nel fabbisogno dell'anno.",
+                    }[canale])  # fmt: skip
+                else:
+                    messages.success(request, "Richiesta in preparazione aggiornata.")
+        except OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+        return _alla_campagna(richiesta.anno)
+
+
+class OrdineEmailView(PermessoMixin, View):
+    """Ordine alla sede nazionale in bozza email con il PDF (non parte da solo)."""
+
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        ordine = get_object_or_404(OrdineTessere, pk=pk)
+        try:
+            invio = ciclo.prepara_ordine_email(request.user, ordine)
+        except OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return _alla_campagna(ordine.anno)
+        messages.success(request, "Ordine preparato in bozza email con il PDF allegato: "
+                         "controllalo e confermalo per spedirlo.")  # fmt: skip
+        return redirect(invio)
+
+
+class PagamentoTessereView(_ModuloCiclo):
+    """Uscita per le tessere al livello superiore: da un ordine, da una ricevuta arrivata o
+    libera (acconto o saldo)."""
+
+    permission_required = (PERMESSO, "tesoreria.add_movimento")
+    form_class = PagamentoTessereForm
+    titolo = "Pagamento delle tessere"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.ordine = self.documento = None
+        if pk := request.GET.get("ordine") or request.POST.get("ordine"):
+            self.ordine = get_object_or_404(OrdineTessere, pk=pk)
+        if pk := request.GET.get("ricevuta") or request.POST.get("ricevuta"):
+            self.documento = get_object_or_404(
+                DocumentoRicevuto, pk=pk, tipo=DocumentoRicevuto.Tipo.RICEVUTA
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def aiuto(self):
+        q = ciclo.quadratura_superiore(self.anno)
+        testo = (f"Uscita in prima nota sulla voce «Acquisto delle tessere» verso "
+                 f"{q['destinatario']}: dovuto € {q['dovuto']:.2f} ({q['quantita']} "
+                 f"{q['descrizione']}), pagato € {q['pagato']:.2f}, da pagare "
+                 f"€ {q['da_pagare']:.2f}. Si può pagare in più volte: ogni versamento è "
+                 "un'uscita.")  # fmt: skip
+        if self.ordine:
+            testo += f" Ordine n. {self.ordine.anno}/{self.ordine.numero}."
+        if self.documento:
+            testo += " La ricevuta arrivata diventa il giustificativo."
+        return testo
+
+    def get_initial(self):
+        iniziali = super().get_initial()
+        if self.documento:
+            from decimal import Decimal, InvalidOperation
+
+            with contextlib.suppress(InvalidOperation, TypeError):
+                iniziali["importo"] = Decimal(self.documento.dati.get("importo"))
+            iniziali["riferimento"] = f"Ricevuta n. {self.documento.dati.get('ricevuta', '')}"
+            if d := self.documento.dati.get("data"):
+                iniziali["data"] = d
+        return iniziali
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["nascosti"] = {"ordine": getattr(self.ordine, "pk", ""),
+                           "ricevuta": getattr(self.documento, "pk", "")}  # fmt: skip
+        return ctx
+
+    def esegui(self, d):
+        m = ciclo.registra_pagamento(
+            self.request.user, anno=self.anno, data=d["data"], importo=d["importo"],
+            conto=d["conto"], riferimento=d["riferimento"], ordine=self.ordine,
+            documento=self.documento, giustificativo=d.get("giustificativo"),
+        )  # fmt: skip
+        return f"Pagamento registrato in prima nota: n. {m.numero}, € {m.importo:.2f}."
