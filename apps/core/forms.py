@@ -37,7 +37,11 @@ CAMPI_ENTE = [
     "denominazione", "denominazione_breve", "codice_fiscale", "partita_iva", "iscrizione_runts",
     "indirizzo", "cap", "comune", "provincia", "telefono", "email", "pec", "sito_web",
     "federazione", "federazione_email", "nazionale_email", "archivio_centrale",
+    "codice_amministrazione", "codice_aoo",
 ]  # fmt: skip
+# dati dell'ente che la configurazione guidata non chiede (solo in Sistema → Organizzazione)
+CAMPI_NON_GUIDATI = {"federazione_email", "nazionale_email", "archivio_centrale",
+                     "codice_amministrazione", "codice_aoo"}  # fmt: skip
 CAMPI_MODULO = [
     "modulo_intestazione", "modulo_articoli_statuto", "modulo_dichiarazione", "modulo_piede",
 ]  # fmt: skip
@@ -81,7 +85,8 @@ class EnteForm(OrganizzazioneForm):
     """Solo i dati dell'ente (primo passo della configurazione iniziale)."""
 
     class Meta(OrganizzazioneForm.Meta):
-        fields = CAMPI_ENTE
+        # solo i campi mostrati nel passo: un campo del modulo assente dalla pagina si svuota
+        fields = [c for c in CAMPI_ENTE if c not in CAMPI_NON_GUIDATI]
 
 
 class ServiziPostaForm(StileMixin, forms.ModelForm):

@@ -167,3 +167,19 @@ class TestOperazioniFraModuli:
         tessera = soci.rilascia_tessera(socio, 2026, client.utente)
         r = client.post(f"/comunicazioni/da/tessera/{tessera.pk}/")
         assert r.status_code == 403
+
+
+def test_i_moduli_dell_organizzazione_mostrano_tutti_i_campi():
+    """Un campo del modulo che manca dalla pagina si svuota (o si spegne) a ogni salvataggio."""
+    from pathlib import Path
+
+    from django.conf import settings
+
+    from apps.core.forms import EnteForm, OrganizzazioneCompletaForm
+
+    for form, nome in (
+        (OrganizzazioneCompletaForm, "organizzazione"),
+        (EnteForm, "configurazione"),
+    ):
+        testo = (Path(settings.BASE_DIR) / "templates" / "core" / f"{nome}.html").read_text()
+        assert not [c for c in form.base_fields if f"form.{c}" not in testo], nome
