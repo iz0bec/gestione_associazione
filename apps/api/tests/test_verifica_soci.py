@@ -303,3 +303,41 @@ class TestRuoliIncoerenti:
                                                        "verifica_tls": "pubblica"})  # fmt: skip
         form.is_valid()
         assert "più sezioni" in str(form.errors.get("ruolo"))
+
+
+class TestSenzaCodiceFiscale:
+    """Soci senza codice fiscale né data di nascita (caso reale di Ruoti): non si duplicano."""
+
+    def _righe(self):
+        return [_remota("Gigante", "Michele", tessere=[{"anno": ANNO, "codice": "29145"}]),
+                _remota("Salinardi", "Ernesto")]  # fmt: skip
+
+    def test_seconda_verifica_li_riconosce(self, admin, monkeypatch):
+        _, federazione = _controparte("federazione")
+        monkeypatch.setattr(verifica_soci, "scarica", lambda c: self._righe())
+        v = verifica_soci.verifica(federazione, admin)
+        verifica_soci.applica(v, [0, 1], admin)
+        assert Socio.objects.count() == 2
+        v = verifica_soci.verifica(federazione, admin)
+        assert v.proposta["conteggi"]["nuovo"] == 0, v.proposta["voci"]
+
+    def test_verifica_vecchia_non_duplica(self, admin, monkeypatch):
+        _, federazione = _controparte("federazione")
+        monkeypatch.setattr(verifica_soci, "scarica", lambda c: self._righe())
+        prima = verifica_soci.verifica(federazione, admin)
+        seconda = verifica_soci.verifica(federazione, admin)
+        verifica_soci.applica(prima, [0, 1], admin)
+        seconda = verifica_soci.applica(seconda, [0, 1], admin)
+        assert {e["esito"] for e in seconda.esiti} == {"errore"}
+        assert Socio.objects.count() == 2
+
+    def test_omonimi_esclusi(self, admin, monkeypatch):
+        sezione = Sezione.predefinita()
+        _socio(admin, sezione, "Nardiello", "Angelo")
+        _socio(admin, sezione, "Nardiello", "Angelo")
+        _, federazione = _controparte("federazione")
+        monkeypatch.setattr(verifica_soci, "scarica",
+                            lambda c: [_remota("Nardiello", "Angelo")])  # fmt: skip
+        v = verifica_soci.verifica(federazione, admin)
+        voce = v.proposta["voci"][0]
+        assert voce["stato"] == "escluso" and "stesso nome" in voce["motivo"]

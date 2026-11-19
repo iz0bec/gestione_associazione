@@ -130,6 +130,9 @@ li confronta con i propri; **nulla cambia finché non si conferma**:
 - per i soci **presenti** si mostrano le **modifiche campo per campo** (valore qui → valore della
   controparte) e si sceglie a chi applicarle. Se il dato qui è stato modificato **dopo** quello
   della controparte, la voce resta non spuntata e porta l'avviso «il dato qui è più recente»;
+- i soci si riconoscono dal codice fiscale (o matricola, o nome con data di nascita); se mancano,
+  nella stessa sezione dal numero di tessera o dal nome e cognome se unico. Gli **omonimi** non
+  distinguibili si escludono con il motivo: vanno sistemati a mano, per non creare doppi;
 - i soci **allineati** non compaiono; gli **esclusi** (es. socio di un'altra sezione) riportano il
   motivo; i soci **presenti solo qui** sono elencati per informazione.
 

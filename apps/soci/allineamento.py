@@ -93,6 +93,38 @@ def _pulita(remota):
     return imp._pulisci(dati)
 
 
+class Omonimi(Exception):
+    pass
+
+
+def trova(d, sezione, tessere_remote=()):
+    """Persona già presente: codice fiscale, matricola o nome con data di nascita (come
+    l'importazione); senza questi dati, nella sezione, per numero di tessera o per nome e
+    cognome se unico. Omonimi non distinguibili: eccezione (meglio fermarsi che duplicare)."""
+    if soggetto := imp._trova_soggetto(d):
+        return soggetto
+    if d["codice_fiscale"]:
+        return None  # codice fiscale noto e assente qui: è davvero un altro
+    nella_sezione = Socio.objects.filter(sezione=sezione).select_related("soggetto")
+    codici = {str(t["codice"]) for t in tessere_remote if t.get("codice")}
+    if codici:
+        per_tessera = list(
+            nella_sezione.filter(
+                tessere__carta__codice__in=codici, tessere__annullata=False
+            ).distinct()[:2]
+        )
+        if len(per_tessera) == 1:
+            return per_tessera[0].soggetto
+    omonimi = list(nella_sezione.filter(soggetto__cognome__iexact=d["cognome"],
+                                        soggetto__nome__iexact=d["nome"])[:2])  # fmt: skip
+    if len(omonimi) == 1 and not (d["data_nascita"] and omonimi[0].soggetto.data_nascita):
+        return omonimi[0].soggetto
+    if len(omonimi) > 1:
+        raise Omonimi("più soci con lo stesso nome qui, senza codice fiscale né data di nascita "
+                      "per distinguerli: verificare a mano")  # fmt: skip
+    return None
+
+
 def _momento(testo):
     try:
         return datetime.fromisoformat(testo) if testo else None
@@ -156,8 +188,18 @@ def confronta(righe_remote, sezione, *, da_sezione):
         nome = f"{d['cognome']} {d['nome']}".strip() or "(senza nome)"
         voce = {"indice": i, "nome": nome, "codice_fiscale": d["codice_fiscale"],
                 "modifiche": [], "motivo": "", "piu_recente": ""}  # fmt: skip
-        soggetto = imp._trova_soggetto(d) if d["cognome"] else None
+        try:
+            soggetto = trova(d, sezione, remota.get("tessere") or []) if d["cognome"] else None
+        except Omonimi as e:
+            voce.update(stato="escluso", motivo=str(e))
+            voci.append(voce)
+            continue
         socio = getattr(soggetto, "socio", None) if soggetto else None
+        if socio is not None and socio.pk in trovati:
+            motivo = f"stesso socio di un'altra riga (n. {socio.numero}): verificare a mano"
+            voce.update(stato="escluso", motivo=motivo)
+            voci.append(voce)
+            continue
         if not d["cognome"]:
             voce.update(stato="escluso", motivo="cognome mancante")
         elif socio is None:
@@ -225,13 +267,19 @@ def _sospendi_se_serve(socio, d, utente):
 def _applica_voce(remota, voce, sezione, opzioni, utente, *, da_sezione):
     d = _pulita(remota)
     tessere_remote = remota.get("tessere") or []
+    try:
+        soggetto = trova(d, sezione, tessere_remote)
+    except Omonimi as e:
+        raise imp._Errore(str(e)) from None
     if voce["stato"] == "nuovo":
+        if soggetto is not None and getattr(soggetto, "socio", None) is not None:
+            raise imp._Errore("è già socio qui (forse da una verifica precedente): rifare la "
+                              "verifica")  # fmt: skip
         # popolamento: tutto quello che la controparte sa del socio, storia delle tessere compresa
-        _, note, socio = imp._riga(d, sezione, opzioni, utente)
+        _, note, socio = imp._riga(d, sezione, opzioni, utente, soggetto=soggetto)
         note += _applica_tessere(socio, tessere_remote, opzioni, utente)
         return note + _sospendi_se_serve(socio, d, utente)
-    soggetto = imp._trova_soggetto(d)
-    socio = getattr(soggetto, "socio", None)
+    socio = getattr(soggetto, "socio", None) if soggetto else None
     if socio is None or socio.sezione_id != sezione.pk:
         raise imp._Errore("socio non più presente in questa sezione")
     if not da_sezione:  # dalla federazione solo le anagrafiche: niente stato, cessazioni, rinnovi

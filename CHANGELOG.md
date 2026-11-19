@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.58] - 2026-11-19
+
+### Corretto
+- **Verifica soci, soci doppi**: i soci senza codice fiscale né data di nascita non venivano
+  riconosciuti alla verifica successiva e si proponevano (e creavano) di nuovo. Ora si
+  riconoscono nella sezione per numero di tessera o per nome e cognome se unico; gli omonimi non
+  distinguibili si escludono con il motivo, e prima di creare un socio si ricontrolla che non
+  esista già (anche applicando una verifica vecchia).
+
 ## [1.0.57] - 2026-11-19
 
 ### Corretto
