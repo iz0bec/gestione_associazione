@@ -65,9 +65,15 @@
       </div>
     </div>
     {% endif %}
-    {% if c.ruolo and c.stato == 'attiva' and perms.soci.importa_soci %}
+    {% if c.stato == 'attiva' and c.tipo == 'installazione' and perms.soci.importa_soci %}
     <div class="card">
       <div class="card-header"><h3 class="card-title"><i class="ti ti-users me-1"></i>Soci{% if c.sezione %} di {{ c.sezione }}{% endif %}</h3></div>
+      {% if c.ruolo != 'federazione' and c.ruolo != 'sezione' or c.ruolo == 'sezione' and not c.sezione %}
+      <div class="card-body small">
+        <p class="mb-2">Per la <strong>Verifica soci</strong> la controparte deve avere il ruolo giusto{% if c.ruolo %} (ora: «{{ c.get_ruolo_display }}»){% endif %}: in <em>Modifica</em> scegliere <strong>«È la nostra federazione»</strong> se questa è la sezione, oppure <strong>«È una nostra sezione»</strong> e la sezione del proprio elenco se questa è la federazione. Lo stesso va fatto nell'altra installazione.</p>
+        {% if perms.api.gestisci_controparti %}<a class="btn" href="{% url 'api:modifica' c.pk %}"><i class="ti ti-pencil me-1"></i>Imposta il ruolo</a>{% endif %}
+      </div>
+      {% else %}
       <div class="card-body small">
         <p class="mb-2">{% if c.ruolo == 'sezione' %}Confronta i soci di questa sezione con quelli che la sezione ha nel suo gestionale: anagrafiche, stato e rinnovi.{% else %}Confronta i soci della sezione con quelli che la federazione ha nel suo gestionale: dalla federazione arrivano le anagrafiche.{% endif %}
           I soci che mancano qui si creano; per quelli presenti si mostrano le modifiche da fare e si sceglie quali applicare.</p>
@@ -75,6 +81,7 @@
         {% if verifiche_soci %}<div class="mt-3"><strong>Verifiche recenti</strong>
           <ul class="mb-0">{% for v in verifiche_soci %}<li><a href="{% url 'api:verifica_soci' v.pk %}">{{ v.creata_il|date:"d/m/Y H:i" }}</a>{% if v.creata_da %} · {{ v.creata_da }}{% endif %} · {% if v.applicata_il %}applicata{% else %}<span class="text-warning">da decidere</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
       </div>
+      {% endif %}
     </div>
     {% endif %}
     {% if c.impronta %}

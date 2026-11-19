@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.56] - 2026-11-19
+
+### Corretto
+- **Verifica soci**: il pulsante compariva anche per le controparti «pari» (senza ruolo di
+  federazione o sezione) e portava a un errore. Ora la scheda spiega quale ruolo impostare, con
+  il collegamento a *Modifica*.
+
 ## [1.0.55] - 2026-11-19
 
 ### Aggiunto

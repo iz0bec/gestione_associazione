@@ -258,3 +258,14 @@ class TestViste:
         _, sezione = _controparte("sezione", avigliano)
         r = tesoriere.post(reverse("api:verifica_soci_nuova", args=[sezione.pk]))
         assert r.status_code == 403
+
+
+def test_controparte_pari_mostra_cosa_impostare(client_ruolo, avigliano):
+    admin = client_ruolo("Amministratore di sistema")
+    _, pari = _controparte("pari")
+    pagina = admin.get(reverse("api:controparte", args=[pari.pk])).content.decode()
+    assert "Imposta il ruolo" in pagina and "Installazione pari" in pagina
+    assert reverse("api:verifica_soci_nuova", args=[pari.pk]) not in pagina
+    _, senza_sezione = _controparte("sezione")
+    pagina = admin.get(reverse("api:controparte", args=[senza_sezione.pk])).content.decode()
+    assert "Imposta il ruolo" in pagina
