@@ -33,6 +33,7 @@ from .forms import (
     ImportaModuloForm,
     OrdineTessereForm,
     PagamentoTessereForm,
+    RichiestaModificaForm,
     RichiestaTessereForm,
 )
 from .models import ConsegnaTessere, OrdineTessere, RichiestaTessere, Sezione
@@ -103,7 +104,9 @@ class CampagnaView(PermessoMixin, TemplateView):
                 ).select_related("sezione")
             ],
         )
-        ctx["richieste"] = ctx["richieste"].filter(inviata_il__isnull=False)
+        ctx["richieste"] = list(ctx["richieste"].filter(inviata_il__isnull=False))
+        for r in ctx["richieste"]:
+            r.correggibile = ciclo.motivo_non_modificabile(r) is None
         return ctx
 
 
@@ -143,6 +146,60 @@ class RichiestaNuovaView(_ModuloCiclo):
             data=d["data"], note=d["note"],
         )  # fmt: skip
         return f"Richiesta registrata: {r}."
+
+
+class RichiestaModificaView(_ModuloCiclo):
+    """Correzione di una richiesta registrata a mano (quantità, data, note)."""
+
+    form_class = RichiestaModificaForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.richiesta = get_object_or_404(RichiestaTessere.objects.select_related("sezione"),
+                                           pk=kwargs["pk"])  # fmt: skip
+        kwargs["anno"] = self.richiesta.anno
+        if motivo := ciclo.motivo_non_modificabile(self.richiesta):
+            messages.error(request, motivo)
+            return _alla_campagna(self.richiesta.anno)
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def titolo(self):
+        return f"Correggi la richiesta di tessere: {self.richiesta.sezione}"
+
+    @property
+    def aiuto(self):
+        testo = ("La correzione cambia il fabbisogno dell'anno e la quadratura. Per un doppione "
+                 "(es. la stessa richiesta arrivata anche via API) annullate la richiesta dalla "
+                 "campagna.")  # fmt: skip
+        if OrdineTessere.objects.filter(anno=self.richiesta.anno).exists():
+            testo += (" Gli ordini già fatti alla sede nazionale non cambiano: una quantità in più "
+                      "finisce nel prossimo ordine.")  # fmt: skip
+        return testo
+
+    def get_initial(self):
+        r = self.richiesta
+        return {"quantita": r.quantita, "data": r.data, "note": r.note}
+
+    def esegui(self, d):
+        r = ciclo.modifica_richiesta(self.request.user, self.richiesta, quantita=d["quantita"],
+                                     data=d["data"], note=d["note"])  # fmt: skip
+        return f"Richiesta corretta: {r}."
+
+
+class RichiestaAnnullaView(PermessoMixin, View):
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        richiesta = get_object_or_404(RichiestaTessere.objects.select_related("sezione"), pk=pk)
+        try:
+            descrizione = ciclo.annulla_richiesta(
+                request.user, richiesta, motivo=request.POST.get("motivo", "")
+            )
+        except OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+        else:
+            messages.success(request, f"Richiesta annullata: {descrizione}.")
+        return _alla_campagna(richiesta.anno)
 
 
 class BloccoNuovoView(_ModuloCiclo):

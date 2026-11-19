@@ -297,3 +297,41 @@ def test_avviso_protocollato_con_i_valori_e_non_i_segnaposto(admin, sezione, set
     with allegato.file.open("rb") as f:
         testo = f.read().decode()
     assert "{{" not in testo and "Sezione di Avigliano" in testo and "5,00" in testo
+
+
+def test_richiesta_registrata_a_mano_si_corregge_e_si_annulla(admin, sezione):
+    from apps.core.models import EventoAudit
+    from apps.soci.models import RichiestaTessere
+
+    richiesta = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=20)
+    pagina = admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
+    assert f"/soci/tessere/richieste/{richiesta.pk}/annulla/" in pagina
+    r = admin.post(f"/soci/tessere/richieste/{richiesta.pk}/modifica/",
+                   {"quantita": 25, "data": date.today(), "note": "integrazione"})  # fmt: skip
+    assert r.status_code == 302
+    richiesta.refresh_from_db()
+    assert (richiesta.quantita, richiesta.note) == (25, "integrazione")
+    assert ciclo.da_ordinare(ANNO)[0]["quantita"] == 25
+    r = admin.post(f"/soci/tessere/richieste/{richiesta.pk}/annulla/", {"motivo": "doppione"})
+    assert r.status_code == 302
+    assert not RichiestaTessere.objects.exists()
+    assert ciclo.da_ordinare(ANNO) == []
+    assert EventoAudit.objects.filter(dettagli__motivo="doppione").exists()
+
+
+def test_richiesta_arrivata_via_api_non_si_corregge(admin, sezione):
+    from apps.api.models import ClienteApi
+    from apps.soci.models import RichiestaTessere
+    from apps.soci.servizi import OperazioneNonValida
+
+    cliente = ClienteApi.objects.create(nome="Matera", tipo="installazione",
+                                        origine="invito_nostro", ruolo="sezione", sezione=sezione)  # fmt: skip
+    api = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=20,
+                                   cliente_api=cliente)  # fmt: skip
+    pagina = admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
+    assert f"/soci/tessere/richieste/{api.pk}/annulla/" not in pagina
+    r = admin.post(f"/soci/tessere/richieste/{api.pk}/annulla/")
+    assert r.status_code == 302 and RichiestaTessere.objects.filter(pk=api.pk).exists()
+    assert admin.get(f"/soci/tessere/richieste/{api.pk}/modifica/").status_code == 302
+    with pytest.raises(OperazioneNonValida):
+        ciclo.modifica_richiesta(admin.utente, api, quantita=5)

@@ -133,6 +133,12 @@ spediscono per email e PEC dal protocollo.
    dati e lo stesso codice di controllo di quello allegato agli avvisi.
 
    Lo stesso modulo non si registra due volte.
+
+   Una richiesta registrata qui (a mano o dal modulo) si **corregge** con la matita (quantità, data,
+   note) o si **annulla** con la ✕, ad esempio se è un doppione di quella arrivata via API: esce dal
+   fabbisogno, dall'ordine da fare e dalla quadratura, e resta nel registro delle attività. Le
+   richieste con l'etichetta **API** sono documenti della sezione e non si toccano: in caso di
+   doppione si annulla quella registrata a mano. Gli ordini già fatti non cambiano.
 4. **Ordine alla sede nazionale**: somma le richieste non ancora ordinate, con il dettaglio per
    sezione. Il pulsante della busta lo prepara in **bozza email** alla sede nazionale (indirizzo
    in *Sistema → Organizzazione*, modello «Ordine di tessere alla sede nazionale»), con il PDF

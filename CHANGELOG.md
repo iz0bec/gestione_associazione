@@ -5,6 +5,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Campagna delle tessere**: le richieste registrate a mano o dal modulo Excel si **correggono**
+  (quantità, data, note) e si **annullano** (es. doppione della richiesta arrivata via API), con
+  l'evento nel registro delle attività. Quelle arrivate via API sono segnate e restano intoccabili.
+
 ## [1.0.66] - 2026-11-19
 
 ### Aggiunto

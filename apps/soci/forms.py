@@ -669,6 +669,12 @@ class RichiestaTessereForm(StileMixin, forms.Form):
     note = forms.CharField(max_length=255, required=False)
 
 
+class RichiestaModificaForm(StileMixin, forms.Form):
+    quantita = forms.IntegerField(label="Tessere richieste", min_value=1)
+    data = forms.DateField(widget=CampoData)
+    note = forms.CharField(max_length=255, required=False)
+
+
 class BloccoTessereForm(StileMixin, forms.Form):
     serie = forms.CharField(
         max_length=10, required=False,

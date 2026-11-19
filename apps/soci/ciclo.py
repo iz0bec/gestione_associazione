@@ -69,6 +69,57 @@ def registra_richiesta(utente, *, anno, sezione, quantita, data=None, protocollo
     return richiesta
 
 
+def motivo_non_modificabile(richiesta):
+    """Perché una richiesta inviata non si può correggere o annullare (None: si può). Si
+    correggono quelle registrate qui (a mano o dal modulo Excel); quelle arrivate via API sono
+    documenti della sezione, quelle spedite via API alla federazione sono già sue."""
+    if richiesta.in_preparazione:
+        return "La richiesta è in preparazione: si modifica dal riquadro della preparazione."
+    if richiesta.cliente_api_id:
+        return ("La richiesta è arrivata dalla sezione tramite il collegamento: la corregge "
+                "la sezione.")  # fmt: skip
+    if not richiesta.uuid_origine and canale_richiesta() == "api":
+        return ("La richiesta è già stata inviata alla federazione tramite il collegamento: "
+                "chiedere alla federazione di correggerla.")  # fmt: skip
+    return None
+
+
+def _controlla_modificabile(richiesta):
+    if motivo := motivo_non_modificabile(richiesta):
+        raise OperazioneNonValida(motivo)
+
+
+@transaction.atomic
+def modifica_richiesta(utente, richiesta, *, quantita, data=None, note=""):
+    """Correzione di una richiesta registrata a mano (quantità, data, note)."""
+    richiesta = RichiestaTessere.objects.select_for_update().get(pk=richiesta.pk)
+    _controlla_modificabile(richiesta)
+    if quantita < 1:
+        raise OperazioneNonValida("Indicare almeno una tessera.")
+    prima = richiesta.quantita
+    richiesta.quantita, richiesta.note, richiesta.modificato_da = quantita, note, utente
+    if data:
+        richiesta.data = data
+    richiesta.save()
+    registra(Azione.MODIFICA, richiesta, utente=utente, quantita=quantita, quantita_prima=prima,
+             descrizione=f"Richiesta di tessere corretta: {richiesta}")  # fmt: skip
+    return richiesta
+
+
+@transaction.atomic
+def annulla_richiesta(utente, richiesta, *, motivo=""):
+    """Annulla una richiesta registrata a mano (es. doppione di quella arrivata via API): esce
+    dal fabbisogno, dall'ordine da fare e dalla quadratura. Resta nel registro delle attività."""
+    richiesta = RichiestaTessere.objects.select_for_update().get(pk=richiesta.pk)
+    _controlla_modificabile(richiesta)
+    registra(Azione.ELIMINAZIONE, richiesta, utente=utente, quantita=richiesta.quantita,
+             anno=richiesta.anno, sezione=richiesta.sezione.codice, motivo=motivo[:255],
+             descrizione=f"Richiesta di tessere annullata: {richiesta}")  # fmt: skip
+    descrizione = str(richiesta)
+    richiesta.delete()
+    return descrizione
+
+
 # --- magazzino ------------------------------------------------------------------------------
 
 

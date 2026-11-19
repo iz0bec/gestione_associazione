@@ -121,6 +121,16 @@ urlpatterns = [
         name="pagamento_tessere",
     ),
     path(
+        "tessere/richieste/<int:pk>/modifica/",
+        viste_ciclo.RichiestaModificaView.as_view(),
+        name="richiesta_modifica",
+    ),
+    path(
+        "tessere/richieste/<int:pk>/annulla/",
+        viste_ciclo.RichiestaAnnullaView.as_view(),
+        name="richiesta_annulla",
+    ),
+    path(
         "tessere/richieste/<int:pk>/pdf/",
         viste_ciclo.RichiestaPdfView.as_view(),
         name="richiesta_pdf",
