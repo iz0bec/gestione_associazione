@@ -97,7 +97,7 @@ class CampagnaView(PermessoMixin, TemplateView):
                 dati__anno=anno,
             ).select_related("cliente"),
             in_preparazione=[
-                (r, ciclo.fabbisogno(anno, r.sezione))
+                (r, ciclo.fabbisogno(anno, r.sezione), ciclo.email_in_corso(r))
                 for r in RichiestaTessere.objects.filter(
                     anno=anno, inviata_il__isnull=True, uuid_origine__isnull=True
                 ).select_related("sezione")
@@ -622,9 +622,10 @@ class RichiestaPreparazioneView(PermessoMixin, View):
                 if azione == "invia":
                     canale, invio = ciclo.invia_richiesta(request.user, richiesta)
                     if invio is not None:
-                        messages.success(request, "Richiesta preparata in bozza email con il "
-                                         "modulo allegato: controllala e confermala per "
-                                         "spedirla.")  # fmt: skip
+                        messages.success(request, "Email della richiesta preparata in bozza "
+                                         "con il modulo allegato: controllala e confermala. La "
+                                         "richiesta risulta inviata quando l'email "
+                                         "parte.")  # fmt: skip
                         return redirect(invio)
                     messages.success(request, {
                         "api": "Richiesta inviata alla federazione tramite il collegamento.",

@@ -546,7 +546,7 @@ def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None,
         invio = comunicazioni.crea_invio(
             utente, oggetto=modello.oggetto, corpo=modello.corpo,
             finalita=Finalita.ISTITUZIONALE, indirizzi=[(nome_federazione, org.federazione_email)],
-            modello=modello, protocolla=protocolla, origine="tessere_richiesta",
+            modello=modello, protocolla=protocolla, origine=ORIGINE_RICHIESTA,
             origine_id=richiesta.pk, contesto=contesto, servizio=servizio,
             allegati=[(f"richiesta-tessere-{richiesta.anno}.pdf", pdf)],
         )  # fmt: skip
@@ -653,6 +653,35 @@ def fabbisogno(anno, sezione):
     }  # fmt: skip
 
 
+ORIGINE_RICHIESTA = "tessere_richiesta"  # origine degli invii email della richiesta
+
+
+def email_in_corso(richiesta):
+    """L'email della richiesta ancora da spedire (in bozza o in coda), o None."""
+    from apps.comunicazioni.models import Invio
+
+    return Invio.objects.filter(
+        origine=ORIGINE_RICHIESTA, origine_id=richiesta.pk,
+        stato__in=[Invio.Stato.BOZZA, Invio.Stato.IN_CODA],
+    ).order_by("-creato_il").first()  # fmt: skip
+
+
+def richiesta_spedita(invio):
+    """Chiamata dalle comunicazioni a invio concluso: la richiesta in preparazione diventa
+    inviata, con la data e il protocollo dell'email."""
+    richiesta = RichiestaTessere.objects.filter(pk=invio.origine_id,
+                                                inviata_il__isnull=True).first()  # fmt: skip
+    if richiesta is None:
+        return
+    richiesta.inviata_il = invio.completato_il or timezone.now()
+    richiesta.data = timezone.localdate(richiesta.inviata_il)
+    if invio.protocollo_id:
+        richiesta.protocollo = invio.protocollo
+    richiesta.save()
+    registra(Azione.MODIFICA, richiesta, utente=None, inviata="email",
+             descrizione=f"Richiesta di tessere spedita per email: {richiesta}")  # fmt: skip
+
+
 def in_preparazione(anno, sezione):
     return RichiestaTessere.objects.filter(
         anno=anno, sezione=sezione, inviata_il__isnull=True, uuid_origine__isnull=True
@@ -665,6 +694,8 @@ def aggiorna_in_preparazione(utente, anno, sezione):
     toglie se non serve più). Non parte mai da sola. Restituisce (richiesta o None, calcolo)."""
     calcolo = fabbisogno(anno, sezione)
     bozza = in_preparazione(anno, sezione)
+    if bozza is not None and email_in_corso(bozza):
+        return bozza, calcolo  # l'email è già scritta con questa quantità: non si cambia
     if not calcolo["proposta"]:
         if bozza:
             registra(Azione.ELIMINAZIONE, bozza, utente=utente,
@@ -684,6 +715,9 @@ def aggiorna_in_preparazione(utente, anno, sezione):
 def modifica_in_preparazione(utente, richiesta, *, quantita, note=""):
     if not richiesta.in_preparazione:
         raise OperazioneNonValida("La richiesta è già stata inviata: non si modifica.")
+    if email_in_corso(richiesta):
+        raise OperazioneNonValida("L'email della richiesta è in bozza: per cambiarla annullare "
+                                  "l'email da Comunicazioni.")  # fmt: skip
     if quantita < 1:
         raise OperazioneNonValida("Indicare almeno una tessera.")
     richiesta.quantita, richiesta.note, richiesta.modificato_da = quantita, note, utente
@@ -716,15 +750,20 @@ def invia_richiesta(utente, richiesta):
     if not richiesta.in_preparazione:
         raise OperazioneNonValida("La richiesta è già stata inviata.")
     canale = canale_richiesta()
-    invio = None
     if canale == "email":
-        invio = prepara_risposta(utente, richiesta)  # bozza da controllare e spedire
+        # resta in preparazione finché l'email non parte davvero (richiesta_spedita)
+        if email_in_corso(richiesta):
+            raise OperazioneNonValida("L'email della richiesta è già in bozza in Comunicazioni.")
+        invio = prepara_risposta(utente, richiesta)
+        descrizione = f"Email della richiesta di tessere preparata: {richiesta}"
+        registra(Azione.MODIFICA, richiesta, utente=utente, descrizione=descrizione)
+        return canale, invio
     richiesta.inviata_il, richiesta.data, richiesta.modificato_da = (
         timezone.now(), timezone.localdate(), utente)  # fmt: skip
     richiesta.save()  # via API: da qui la federazione la legge nel flusso «tessere»
     registra(Azione.MODIFICA, richiesta, utente=utente, inviata=canale,
              descrizione=f"Richiesta di tessere inviata ({canale}): {richiesta}")  # fmt: skip
-    return canale, invio
+    return canale, None
 
 
 # --- ordine al nazionale per email -------------------------------------------------------------

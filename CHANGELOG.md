@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.64] - 2026-11-19
+
+### Modificato
+- **Richiesta di tessere per email**: resta in bozza finché l'email non è davvero spedita da
+  *Comunicazioni*; solo allora risulta inviata, con data e protocollo dell'email. Con l'email in
+  bozza quantità e note sono bloccate (anche dai rinnovi); annullando l'email la richiesta torna
+  modificabile. La campagna mostra «Email in bozza» con il collegamento.
+
 ## [1.0.63] - 2026-11-19
 
 ### Aggiunto

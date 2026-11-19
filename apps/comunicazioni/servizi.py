@@ -707,6 +707,10 @@ def _concludi_se_finito(invio):
             invio.save(update_fields=["protocollo"])
         except Exception:  # noqa: BLE001 - l'invio è fatto, la protocollazione si può rifare
             log.exception("Protocollazione dell'invio %s non riuscita", invio.pk)
+    if invio.stato == Invio.Stato.INVIATO and invio.origine == "tessere_richiesta":
+        from apps.soci import ciclo  # la richiesta di tessere risulta inviata solo ora
+
+        ciclo.richiesta_spedita(invio)
     registra(
         Azione.MODIFICA,
         invio,

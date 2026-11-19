@@ -188,7 +188,10 @@ preparazione** dell'anno:
 - **non parte mai da sola**: nella campagna, riquadro *Richieste in preparazione*, si corregge la
   quantità (o *Ricalcola*), si aggiungono le note e poi si **invia** sul canale previsto;
 - sezione collegata via API: va alla federazione tramite il collegamento;
-- sezione senza collegamento: diventa la bozza email alla federazione con il modulo allegato;
+- sezione senza collegamento: diventa la bozza email alla federazione con il modulo allegato. La
+  richiesta resta **in bozza** finché l'email non parte da *Comunicazioni*: solo allora risulta
+  inviata, con la data e il protocollo dell'email. Con l'email in bozza la quantità è bloccata;
+  annullando l'email la richiesta torna modificabile;
 - nella federazione, per una sua sezione: entra nel fabbisogno dell'anno, pronto per l'ordine.
 
 Le richieste in preparazione non contano nella quadratura né negli ordini finché non si inviano.

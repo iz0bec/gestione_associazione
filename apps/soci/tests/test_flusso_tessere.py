@@ -14,10 +14,12 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from django.core import mail
 from django.urls import reverse
 
 from apps.anagrafica.models import Soggetto
 from apps.api.models import Cambiamento, ClienteApi
+from apps.comunicazioni import servizi as comunicazioni
 from apps.core.cifratura import nuova_chiave
 from apps.core.models import Organizzazione
 from apps.soci import ciclo, servizi
@@ -104,8 +106,24 @@ class TestRichiestaInPreparazione:
         bozza, _ = ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)
         canale, invio = ciclo.invia_richiesta(capo, bozza)
         assert canale == "email" and invio.stato == "bozza" and invio.allegati.count() == 1
-        with pytest.raises(servizi.OperazioneNonValida):
+        bozza.refresh_from_db()
+        assert bozza.in_preparazione  # in bozza finché l'email non parte
+        with pytest.raises(servizi.OperazioneNonValida, match="già in bozza"):
             ciclo.invia_richiesta(capo, bozza)
+        with pytest.raises(servizi.OperazioneNonValida, match="annullare"):
+            ciclo.modifica_in_preparazione(capo, bozza, quantita=9)
+        servizi.rilascia_tessera(_soci(capo, 1)[0], ANNO, capo)
+        assert ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)[0].quantita == 2  # bloccata
+        comunicazioni.annulla(invio, capo)
+        ciclo.modifica_in_preparazione(capo, bozza, quantita=3)  # di nuovo modificabile
+        _, invio = ciclo.invia_richiesta(capo, bozza)
+        comunicazioni.conferma(invio, capo)
+        comunicazioni.elabora_coda(invio=invio)
+        invio.refresh_from_db()
+        bozza.refresh_from_db()
+        assert invio.stato == "inviato" and not bozza.in_preparazione
+        assert bozza.protocollo_id == invio.protocollo_id
+        assert len(mail.outbox) == 1 and ciclo.da_ordinare(ANNO)[0]["quantita"] == 3
 
     def test_nella_federazione_entra_nel_fabbisogno(self, capo):
         nord = Sezione.objects.create(codice="N1", nome="Nord")
