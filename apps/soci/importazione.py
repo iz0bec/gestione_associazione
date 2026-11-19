@@ -704,6 +704,8 @@ def _diverso(soggetto, campo, d):
         return any(c not in qui for _, c in numeri_telefono(nuovo))
     if isinstance(nuovo, date) or isinstance(attuale, date):
         return nuovo != attuale
+    if campo == "luogo_nascita":  # «San Severo» e «San Severo (FG)» sono lo stesso luogo
+        return comune_normale(attuale) != comune_normale(nuovo)
     return normalizza(attuale) != normalizza(nuovo)
 
 

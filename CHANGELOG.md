@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.61] - 2026-11-19
+
+### Corretto
+- **Verifica soci e importazione, luogo di nascita**: «San Severo (FG)» e «San Severo» risultavano
+  diversi. Al popolamento la provincia si aggiunge dal codice fiscale, l'altra installazione
+  può non averla: ora la provincia tra parentesi non conta nel confronto.
+
 ## [1.0.60] - 2026-11-19
 
 ### Aggiunto

@@ -64,3 +64,13 @@ def test_migrazione_ripulisce_solo_i_doppioni():
     assert (doppio.telefono, doppio.cellulare) == ("", "3282713339")
     assert (incrociato.telefono, incrociato.cellulare) == ("", "333 1234567")
     assert pulito.telefono == "0971 123456 / 3331112222"  # nulla da togliere: invariato
+
+
+@pytest.mark.parametrize(("qui", "file", "diverso"), [
+    ("San Severo (FG)", "San Severo", False),
+    ("San Severo", "SAN SEVERO (FG)", False),
+    ("Ruoti (PZ)", "Potenza", True),
+])  # fmt: skip
+def test_luogo_di_nascita_senza_provincia(qui, file, diverso):
+    p = Soggetto(cognome="Bulso", luogo_nascita=qui)
+    assert importazione._diverso(p, "luogo_nascita", {"luogo_nascita": file}) is diverso
