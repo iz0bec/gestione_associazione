@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.54] - 2026-11-19
+
+### Corretto
+- **Token del bot Telegram con testo in più**: incollando insieme al token altro testo di BotFather
+  (es. «… Keep your token secure») si otteneva un errore 500; ora il formato `numero:chiave` si
+  controlla prima di contattare Telegram e si mostra un messaggio. Ogni errore di connessione verso
+  Telegram diventa un messaggio, mai un errore del server.
+
 ## [1.0.53] - 2026-11-18
 
 ### Aggiunto

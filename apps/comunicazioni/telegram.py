@@ -9,8 +9,10 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+import http.client
 import json
 import logging
+import re
 import secrets
 import urllib.error
 import urllib.request
@@ -29,6 +31,8 @@ API = "https://api.telegram.org/bot{token}/{metodo}"
 TIMEOUT = 20
 LUNGHEZZA_MASSIMA = 4000  # Telegram accetta 4096 caratteri per messaggio
 MAX_TENTATIVI = 3
+# Formato dei token di BotFather: «<id numerico>:<chiave>», senza spazi né altro testo
+FORMATO_TOKEN = re.compile(r"\d+:[A-Za-z0-9_-]+")
 
 
 class ErroreTelegram(Exception):
@@ -65,7 +69,7 @@ def _chiama(token, metodo, dati=None, documento=None):
             esito = json.loads(e.read().decode())
         except ValueError:
             raise ErroreTelegram(f"errore HTTP {e.code}") from e
-    except (urllib.error.URLError, OSError, ValueError) as e:
+    except (urllib.error.URLError, http.client.HTTPException, OSError, ValueError) as e:
         raise ErroreTelegram(f"Telegram non raggiungibile: {e}") from e
     if not esito.get("ok"):
         raise ErroreTelegram(esito.get("description") or "risposta non valida")
@@ -77,6 +81,9 @@ def _chiama(token, metodo, dati=None, documento=None):
 
 def verifica(token):
     """Nome del bot (getMe): controlla il token senza mandare messaggi."""
+    if not FORMATO_TOKEN.fullmatch(token or ""):
+        raise ErroreTelegram("il token deve essere solo «numero:chiave» come lo dà BotFather, "
+                             "senza spazi né altro testo")  # fmt: skip
     risultato = _chiama(token, "getMe")
     if not risultato.get("is_bot") or not risultato.get("username"):
         raise ErroreTelegram("il token non è di un bot")

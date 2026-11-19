@@ -235,6 +235,11 @@ class TestTelegram:
                        follow=True)  # fmt: skip
         assert "Bot @ancr_bot collegato" in r.content.decode()
         assert CanaleTelegram.corrente().token() == "999:nuovo"
+        # testo in più incollato da BotFather: rifiutato con un messaggio, non un errore 500
+        r = admin.post("/sistema/posta/telegram/", {"azione": "token", "token": "999:altro Keep"},
+                       follow=True)  # fmt: skip
+        assert r.status_code == 200 and "Token non accettato" in r.content.decode()
+        assert CanaleTelegram.corrente().token() == "999:nuovo"
         socio = persone["socio"]
         pagina = admin.get(socio.get_absolute_url()).content.decode()
         assert "Telegram non collegato" in pagina
@@ -263,3 +268,11 @@ class TestTelegram:
 def test_testo_lungo_diviso():
     pezzi = telegram._pezzi(("riga di prova\n" * 600).strip())
     assert len(pezzi) > 1 and all(len(p) <= telegram.LUNGHEZZA_MASSIMA for p in pezzi)
+
+
+def test_url_non_valido_diventa_errore_telegram():
+    # gli errori di http.client (es. caratteri di controllo nell'URL) non devono dare un 500
+    with pytest.raises(telegram.ErroreTelegram):
+        telegram._chiama("123:abc\n", "getMe")
+    with pytest.raises(telegram.ErroreTelegram, match="numero:chiave"):
+        telegram.verifica("123:abc Keep")
