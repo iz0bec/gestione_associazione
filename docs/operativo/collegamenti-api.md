@@ -122,7 +122,8 @@ A entrambe le parti va concesso l'ambito **«Ciclo delle tessere»**. Da quel mo
 
 Con il ruolo indicato e l'ambito **«Soci e tessere: lettura»** concesso **da entrambe le parti**, la
 scheda della controparte mostra il riquadro **Soci** con il pulsante **Verifica soci** (serve il
-permesso di importare i soci). Il gestionale legge i soci che la controparte ha per quella sezione e
+permesso di importare i soci). Lo stesso pulsante è nel menu **Importa e verifica** dell'elenco dei soci
+e nella pagina *Sistema → Importa soci*. Il gestionale legge i soci che la controparte ha per quella sezione e
 li confronta con i propri; **nulla cambia finché non si conferma**:
 
 - i soci che **mancano** qui sono proposti **da creare** (popolamento): arrivano con anagrafica,

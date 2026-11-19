@@ -34,6 +34,7 @@ PAGINE_PER_SEZIONE = {
     "anagrafica": "anagrafica",
     "soci": "soci",
     "soci:sezioni": "sistema#sezioni",
+    "anagrafica:codici_fiscali": "anagrafica#codice-fiscale-assistito",
     "soci:campagna": "soci#campagna-delle-tessere-con-le-sezioni",
     "soci:campagna_corrente": "soci#campagna-delle-tessere-con-le-sezioni",
     "soci:importa_consegna": "soci#campagna-delle-tessere-con-le-sezioni",

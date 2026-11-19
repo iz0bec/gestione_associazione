@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
-  Descrizione: Importazione dei soci dal registro nazionale: caricamento, anteprima, esito
+  Descrizione: Importazione dei soci dal registro nazionale (caricamento, anteprima, esito) e Verifica soci via API
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
 {% endcomment %}
 {% block titolo %}Importa soci{% endblock %}
@@ -103,8 +103,9 @@
     </form>
   </div>
   <div class="col-lg-5">
+    {% include "soci/_verifica_api.html" %}
     <div class="card"><div class="card-body">
-      <h3 class="card-title">Come funziona</h3>
+      <h3 class="card-title">Come funziona (importazione da file)</h3>
       <ol class="small mb-0">
         <li>Scaricare dal registro nazionale l'elenco dei soci in Excel.</li>
         <li>Caricarlo qui e premere <em>Anteprima</em>: si vede cosa succederà, riga per riga, senza modificare nulla.</li>

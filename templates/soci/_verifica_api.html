@@ -1,0 +1,24 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Riquadro della Verifica soci via API con le controparti collegate (pagina Importa soci)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>Verifica soci via API</h3></div>
+  <div class="card-body small">
+    {% if controparti_verifica %}
+    <p class="mb-2">Al posto del file, legge i soci dall'installazione collegata e li confronta con i propri: chi manca si crea, per chi c'è si mostrano le modifiche. Nulla cambia finché non si conferma.</p>
+    <div class="d-flex flex-column gap-2">
+      {% for c, sezione in controparti_verifica %}
+      <form method="post" action="{% url 'api:verifica_soci_nuova' c.pk %}">{% csrf_token %}<input type="hidden" name="torna" value="{{ request.get_full_path }}">
+        <button class="btn btn-primary w-100" type="submit"><i class="ti ti-user-check me-1"></i>Verifica soci con {{ c.nome }}{% if c.ruolo == 'sezione' %} ({{ sezione }}){% endif %}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="mb-0 text-secondary">Nessuna installazione collegata via API con il ruolo di federazione o di sezione{% if perms.api.view_clienteapi %}: si configura in <a href="{% url 'api:elenco' %}">Sistema → Collegamenti API</a>{% endif %}.</p>
+    {% endif %}
+    {% if verifiche_recenti %}<div class="mt-3"><strong>Verifiche recenti</strong>
+      <ul class="mb-0">{% for v in verifiche_recenti %}<li><a href="{% url 'api:verifica_soci' v.pk %}">{{ v.creata_il|date:"d/m/Y H:i" }}</a> · {{ v.cliente }}{% if v.creata_da %} · {{ v.creata_da }}{% endif %} · {% if v.applicata_il %}applicata{% else %}<span class="text-warning">da decidere</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+  </div>
+</div>

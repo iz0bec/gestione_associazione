@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato
+- **Soci → Importa e verifica**: nuovo menu dell'elenco dei soci con *Importa da file*, la
+  **Verifica soci via API** con ogni installazione collegata (federazione o sezione) e la
+  **Verifica codici fiscali**, spostata qui dall'anagrafica.
+- **Sistema → Importa soci**: riquadro *Verifica soci via API* con le controparti collegate e le
+  verifiche recenti, accanto all'importazione da file.
+
 ## [1.0.64] - 2026-11-19
 
 ### Modificato

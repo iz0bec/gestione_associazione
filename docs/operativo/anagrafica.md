@@ -56,7 +56,7 @@ la ricerca (es. `rossi avigliano`). Accanto si filtra per tipo, categoria e stat
   blocca mai il salvataggio per il nome: segnala soltanto.
 - Nella **scheda** di una persona, sotto il codice fiscale, compare un avviso se il codice non è valido
   o non corrisponde ai dati (e, per i soci, se manca), con il codice ricavato dai dati.
-- **Codici fiscali** (pulsante nell'elenco dell'anagrafica): le persone con il codice **non valido**,
+- **Verifica codici fiscali** (*Soci → Importa e verifica*): le persone con il codice **non valido**,
   **non corrispondente** ai dati o **mancante** (solo per i soci, perché per un contatto della rubrica
   è normale), con il codice calcolato. **Applica** lo sostituisce, dopo conferma; se i dati non
   bastano per il calcolo, **Completa i dati** apre la scheda. Ogni correzione è nel registro attività

@@ -5,7 +5,7 @@
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
 {% endcomment %}
 {% block titolo %}Codici fiscali{% endblock %}
-{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'anagrafica:elenco' %}">Anagrafica</a></div>{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Libro soci</a></div>{% endblock %}
 {% block titolo_pagina %}Codici fiscali da sistemare{% endblock %}
 {% block azioni %}<a class="btn" href="{% url 'anagrafica:stampa_codici_fiscali' %}?stato={{ stato|default:'tutti' }}"><i class="ti ti-printer me-1"></i>Stampa PDF</a>{% endblock %}
 {% block contenuto %}

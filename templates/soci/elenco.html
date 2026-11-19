@@ -15,6 +15,25 @@
     </div>
   </div>
   {% endif %}
+  {% if perms.soci.importa_soci or perms.anagrafica.view_soggetto %}
+  <div class="dropdown">
+    <button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"><i class="ti ti-file-import me-1"></i>Importa e verifica</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% if perms.soci.importa_soci %}
+      <a class="dropdown-item" href="{% url 'soci:importa' %}" title="Elenco Excel del registro nazionale o di un'altra installazione"><i class="ti ti-file-spreadsheet me-2"></i>Importa da file</a>
+      {% for c, sezione in controparti_verifica %}
+      <form method="post" action="{% url 'api:verifica_soci_nuova' c.pk %}">{% csrf_token %}<input type="hidden" name="torna" value="{{ request.get_full_path }}">
+        <button class="dropdown-item" type="submit" title="Confronta via API i soci con quelli dell'installazione collegata: nulla cambia finché non si conferma"><i class="ti ti-user-check me-2"></i>Verifica soci con {{ c.nome }}{% if c.ruolo == 'sezione' %} ({{ sezione }}){% endif %}</button>
+      </form>
+      {% endfor %}
+      {% endif %}
+      {% if perms.anagrafica.view_soggetto %}
+      {% if perms.soci.importa_soci %}<div class="dropdown-divider"></div>{% endif %}
+      <a class="dropdown-item" href="{% url 'anagrafica:codici_fiscali' %}" title="Codici mancanti, non validi o non corrispondenti ai dati"><i class="ti ti-id me-2"></i>Verifica codici fiscali</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
   {% if promemoria_da_fare %}<a class="btn btn-warning" href="{% url 'soci:promemoria_archivio' %}" title="Nuovi soci e rettifiche da riportare nell'archivio centrale"><i class="ti ti-bell me-1"></i>Da riportare all'archivio <span class="badge bg-white text-warning ms-1">{{ promemoria_da_fare }}</span></a>{% endif %}
   {% if perms.soci.add_socio %}<a class="btn btn-primary" href="{% url 'soci:nuovo' %}"><i class="ti ti-user-plus me-1"></i>Nuovo socio</a>{% endif %}
 </div>

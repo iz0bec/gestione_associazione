@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView, UpdateView
 
@@ -236,6 +237,9 @@ class VerificaSociNuovaView(PermessoMixin, View):
             verifica = verifica_soci.verifica(cliente, request.user)
         except verifica_soci.OperazioneNonValida as e:
             messages.error(request, str(e))
+            torna = request.POST.get("torna", "")
+            if url_has_allowed_host_and_scheme(torna, allowed_hosts={request.get_host()}):
+                return redirect(torna)
             return redirect("api:controparte", pk=pk)
         return redirect("api:verifica_soci", pk=verifica.pk)
 

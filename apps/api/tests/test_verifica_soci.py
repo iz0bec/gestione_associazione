@@ -341,3 +341,33 @@ class TestSenzaCodiceFiscale:
         v = verifica_soci.verifica(federazione, admin)
         voce = v.proposta["voci"][0]
         assert voce["stato"] == "escluso" and "stesso nome" in voce["motivo"]
+
+
+class TestVerificaDallaPaginaSoci:
+    def test_pulsanti_nell_elenco_e_in_importa_soci(self, client_ruolo, avigliano):
+        admin = client_ruolo("Amministratore di sistema")
+        _, sezione = _controparte("sezione", avigliano)
+        _controparte("pari")  # senza ruolo: non compare
+        azione = reverse("api:verifica_soci_nuova", args=[sezione.pk])
+        elenco = admin.get(reverse("soci:elenco")).content.decode()
+        assert azione in elenco and reverse("anagrafica:codici_fiscali") in elenco
+        importa = admin.get(reverse("soci:importa")).content.decode()
+        assert azione in importa and elenco.count("verifica-soci/") == 1
+
+    def test_errore_torna_alla_pagina_di_partenza(self, client_ruolo, avigliano):
+        admin = client_ruolo("Amministratore di sistema")
+        _, sezione = _controparte("sezione", avigliano)
+        r = admin.post(reverse("api:verifica_soci_nuova", args=[sezione.pk]),
+                       {"torna": reverse("soci:elenco")})  # fmt: skip
+        assert r.status_code == 302 and r.url == reverse("soci:elenco")
+        r = admin.post(reverse("api:verifica_soci_nuova", args=[sezione.pk]),
+                       {"torna": "https://esempio.invalid/"})  # fmt: skip
+        assert r.url == reverse("api:controparte", args=[sezione.pk])
+
+    def test_utente_limitato_vede_solo_la_sua_sezione(self, crea_utente, avigliano):
+        altra = Sezione.objects.create(codice="003", nome="Altra")
+        _controparte("sezione", avigliano)
+        _controparte("sezione", altra)
+        utente = crea_utente("limitato", ruoli=["Amministratore di sistema"])
+        utente.sezioni.add(avigliano)
+        assert [s for _, s in verifica_soci.controparti(utente)] == [avigliano]

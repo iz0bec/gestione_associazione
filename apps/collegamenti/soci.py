@@ -54,6 +54,23 @@ def scarica(cliente):
     return righe
 
 
+def controparti(utente):
+    """Controparti con cui l'utente può avviare la Verifica soci: (controparte, sezione)."""
+    from apps.soci import sezioni
+
+    consentite = sezioni.id_sezioni(utente)
+    risultato = []
+    qs = ClienteApi.objects.filter(
+        stato=ClienteApi.Stato.ATTIVA, tipo=ClienteApi.Tipo.INSTALLAZIONE
+    )
+    for c in qs.select_related("sezione").order_by("nome"):
+        if not c.abbinata or (sezione := tessere.sezione_per(c)) is None:
+            continue
+        if consentite is None or sezione.pk in consentite:
+            risultato.append((c, sezione))
+    return risultato
+
+
 def verifica(cliente: ClienteApi, utente):
     """Nuova verifica: legge i soci dalla controparte e prepara la proposta (nulla si modifica)."""
     if cliente.stato != ClienteApi.Stato.ATTIVA or not cliente.abbinata:

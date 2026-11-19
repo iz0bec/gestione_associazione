@@ -120,6 +120,10 @@ class ElencoView(PermessoMixin, FilterView):
             from . import promemoria
 
             ctx["promemoria_da_fare"] = promemoria.da_fare(self.request.user).count()
+        if not self.request.htmx and self.request.user.has_perm("soci.importa_soci"):
+            from apps.collegamenti import soci as verifica_soci
+
+            ctx["controparti_verifica"] = verifica_soci.controparti(self.request.user)
         return ctx
 
 
@@ -1327,6 +1331,13 @@ class ImportaView(PermessoMixin, FormView):
                 ctx["nome_file"] = lavoro["nome_file"]
                 ctx["colonne"] = lavoro["colonne"]
                 ctx["ignorate"] = lavoro["ignorate"]
+        from apps.api.models import VerificaSoci
+        from apps.collegamenti import soci as verifica_soci
+
+        ctx["controparti_verifica"] = verifica_soci.controparti(self.request.user)
+        ctx["verifiche_recenti"] = sezioni.filtra(
+            VerificaSoci.objects.select_related("cliente", "creata_da"), self.request.user
+        )[:5]
         return ctx
 
     def form_valid(self, form):

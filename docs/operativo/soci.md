@@ -470,7 +470,8 @@ esente, NO = da versare) e **data del pagamento**. All'importazione:
 
 Così ogni installazione può aggiornare l'altra: chi registra una modifica la esporta, l'altra la
 importa con le stesse opzioni. Se le due installazioni sono collegate via API, al posto del file si
-usa la **Verifica soci** della scheda della controparte (vedi *Collegamenti API*).
+usa la **Verifica soci** (*Soci → Importa e verifica*, oppure *Sistema → Importa soci* o la scheda della
+controparte; vedi *Collegamenti API*).
 
 ### Da riportare all'archivio centrale
 

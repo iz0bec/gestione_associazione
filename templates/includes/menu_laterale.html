@@ -28,12 +28,12 @@
         </li>
         {% endif %}
         {% if perms.anagrafica.view_soggetto %}
-        <li class="nav-item{% if nome == 'anagrafica' %} active{% endif %}">
+        <li class="nav-item{% if nome == 'anagrafica' and 'codici_fiscali' not in request.resolver_match.url_name %} active{% endif %}">
           <a class="nav-link" href="{% url 'anagrafica:elenco' %}"><span class="nav-link-icon"><i class="ti ti-address-book"></i></span><span class="nav-link-title">Anagrafica</span></a>
         </li>
         {% endif %}
         {% if perms.soci.view_socio %}
-        <li class="nav-item{% if nome == 'soci' and not chiave in TESSERAMENTO and not chiave in CICLO and 'domand' not in request.resolver_match.url_name and 'sezion' not in request.resolver_match.url_name and 'importa' not in request.resolver_match.url_name %} active{% endif %}">
+        <li class="nav-item{% if nome == 'anagrafica' and 'codici_fiscali' in request.resolver_match.url_name or nome == 'soci' and not chiave in TESSERAMENTO and not chiave in CICLO and 'domand' not in request.resolver_match.url_name and 'sezion' not in request.resolver_match.url_name and 'importa' not in request.resolver_match.url_name %} active{% endif %}">
           <a class="nav-link" href="{% url 'soci:elenco' %}"><span class="nav-link-icon"><i class="ti ti-users-group"></i></span><span class="nav-link-title">Soci</span></a>
         </li>
         {% endif %}
