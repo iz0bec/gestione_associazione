@@ -25,6 +25,7 @@ from apps.core import invio
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
 
+from . import segnatura
 from .models import DestinatarioSpedizione, Protocollo, Spedizione
 from .servizi import OperazioneNonValida, aggiungi_allegato
 
@@ -223,6 +224,15 @@ def prepara_spedizione(
         )
         for c, nome, indirizzo in righe
     )
+    if allegati:  # la segnatura AgID richiede il documento principale
+        try:
+            spedizione.segnatura = segnatura.genera(
+                protocollo, allegati=allegati, destinatari=righe
+            ).decode()
+        except segnatura.OperazioneNonValida as e:
+            log.warning("Segnatura non prodotta per il protocollo %s: %s", protocollo, e)
+        else:
+            spedizione.save(update_fields=["segnatura"])
     registra(
         Azione.MODIFICA,
         protocollo,
@@ -270,6 +280,8 @@ def messaggio(spedizione, destinatario, org=None):
     for a in spedizione.allegati.all():
         with a.file.open("rb") as f:
             email.attach(a.nome, f.read(), a.tipo)
+    if spedizione.segnatura:  # Allegato 6 AgID, appendice C: parte del messaggio di posta
+        email.attach(segnatura.NOME_FILE, spedizione.segnatura.encode(), segnatura.TIPO)
     return email, message_id
 
 

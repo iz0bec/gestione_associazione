@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Segnatura di protocollo AgID: codici dell'identificatore e sigillo con cui si firma
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Segnatura e sigillo{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'protocollo:elenco' %}">Protocollo</a></div>{% endblock %}
+{% block titolo_pagina %}Segnatura di protocollo e sigillo{% endblock %}
+{% block contenuto %}
+{% if not cifratura %}<div class="alert alert-danger">Manca la chiave di cifratura (<code>CHIAVE_CIFRATURA</code>): senza, la segnatura non si firma e non si produce.</div>{% endif %}
+<div class="row row-cards">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-id me-1"></i>Identificatore della segnatura</h3></div>
+      <div class="card-body">
+        <dl class="row mb-2 small">
+          <dt class="col-5">Codice amministrazione</dt><dd class="col-7">{% if organizzazione.codice_amministrazione %}<code>{{ organizzazione.codice_amministrazione }}</code> (IPA){% elif organizzazione.codice_fiscale %}<code>{{ organizzazione.codice_fiscale }}</code> <span class="text-secondary">(codice fiscale: nessun codice IPA)</span>{% else %}<span class="text-danger">da indicare</span>{% endif %}</dd>
+          <dt class="col-5">Codice AOO</dt><dd class="col-7"><code>{{ organizzazione.codice_aoo_segnatura }}</code>{% if not organizzazione.codice_aoo %} <span class="text-secondary">(nessun codice IPA)</span>{% endif %}</dd>
+          <dt class="col-5">Codice registro</dt><dd class="col-7"><code>{{ codice_registro }}</code></dd>
+          <dt class="col-5">Numero</dt><dd class="col-7">7 cifre (es. <code>0000012</code>), con data e ora di registrazione</dd>
+        </dl>
+        <a class="btn btn-sm" href="{% url 'core:organizzazione' %}"><i class="ti ti-pencil me-1"></i>Modifica in Organizzazione</a>
+      </div>
+      <div class="card-body border-top small text-secondary">
+        Ogni spedizione per email o PEC di un protocollo con documenti porta con sé <strong>Segnatura.xml</strong> (Linee guida AgID, Allegato 6, schema 3.0.0): identificatore, oggetto, classifica, mittente, destinatari e l'<strong>impronta SHA-256</strong> di ogni documento, firmata XAdES baseline B. Dalla scheda del protocollo si scaricano la segnatura e la <strong>copia PDF con il timbro</strong>; l'originale protocollato non si modifica mai.
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-certificate me-1"></i>Sigillo in uso</h3>
+        {% if sigillo %}<div class="card-actions">{% if sigillo.qualificato %}<span class="badge bg-green-lt">qualificato</span>{% else %}<span class="badge bg-yellow-lt">non qualificato</span>{% endif %}</div>{% endif %}</div>
+      <div class="card-body small">
+        {% if sigillo %}
+        <dl class="row mb-0">
+          <dt class="col-4">Titolare</dt><dd class="col-8">{{ sigillo.titolare }}</dd>
+          <dt class="col-4">Emesso da</dt><dd class="col-8">{% if sigillo.generato %}questa installazione (autoemesso){% else %}{{ sigillo.emittente }}{% endif %}</dd>
+          <dt class="col-4">Valido</dt><dd class="col-8">dal {{ sigillo.valido_dal|date:"d/m/Y" }} al {{ sigillo.valido_al|date:"d/m/Y" }}</dd>
+          <dt class="col-4">Caricato</dt><dd class="col-8">{{ sigillo.caricato_il|date:"d/m/Y H:i" }}{% if sigillo.caricato_da %} da {{ sigillo.caricato_da }}{% endif %}</dd>
+        </dl>
+        {% else %}
+        <p class="mb-0">Nessun sigillo: alla prima segnatura l'installazione genera un proprio certificato (non qualificato).</p>
+        {% endif %}
+        {% if not sigillo.qualificato %}<p class="text-secondary mt-2 mb-0">Le Linee guida chiedono alle pubbliche amministrazioni un <strong>sigillo elettronico qualificato</strong> (eIDAS): si acquista da un prestatore qualificato a nome dell'ente e si carica qui. Senza, la segnatura è firmata con un certificato non qualificato: garantisce l'integrità ma non ha il valore legale del sigillo qualificato.</p>{% endif %}
+      </div>
+      <form method="post" class="card-footer" data-conferma="Generare un nuovo certificato dell'installazione? Sostituisce quello in uso per le prossime segnature.">{% csrf_token %}<input type="hidden" name="azione" value="genera">
+        <button class="btn btn-sm" type="submit"{% if not cifratura %} disabled{% endif %}><i class="ti ti-refresh me-1"></i>Genera un nuovo certificato dell'installazione</button>
+      </form>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="card mt-3" novalidate>{% csrf_token %}
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-upload me-1"></i>Carica un sigillo</h3></div>
+      <div class="card-body">
+        {{ form.file.as_field_group }}
+        {{ form.password.as_field_group }}
+        {{ form.qualificato.as_field_group }}
+        <p class="small text-secondary mb-0">La chiave privata si conserva cifrata; la password del file non si salva. Le segnature già prodotte restano valide: ognuna contiene il proprio certificato.</p>
+      </div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"{% if not cifratura %} disabled{% endif %}><i class="ti ti-upload me-1"></i>Carica</button></div>
+    </form>
+    {% if precedenti|length > 1 %}
+    <div class="card mt-3">
+      <div class="card-header"><h3 class="card-title">Sigilli usati</h3></div>
+      <div class="list-group list-group-flush small">{% for s in precedenti %}<div class="list-group-item">{{ s.titolare }} · {% if s.generato %}autoemesso{% else %}{{ s.emittente|truncatechars:60 }}{% endif %} · fino al {{ s.valido_al|date:"d/m/Y" }}{% if s.qualificato %} · qualificato{% endif %}</div>{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

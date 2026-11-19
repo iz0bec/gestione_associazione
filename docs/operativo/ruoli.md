@@ -76,6 +76,9 @@ In un'associazione piccola la stessa persona può avere entrambi i ruoli.
 | Addetto protocollo | consulta | sì | - | - | sì | consulta titolario e modelli | consulta |
 | Tesoriere, Consigliere | consulta | - | - | - | - | consulta titolario e modelli | consulta |
 
+La pagina **Segnatura e sigillo** (caricare o generare il sigillo della segnatura) è dell'Amministratore
+di sistema; segnatura XML e copia con il timbro le scarica chi consulta il protocollo.
+
 Le versioni adottate del **manuale di gestione** sono consultabili da tutti i ruoli, compresi presidente di
 sezione e revisore; la bozza solo da chi accede al protocollo.
 | Revisore | consulta | - | - | - | sì | consulta il titolario |

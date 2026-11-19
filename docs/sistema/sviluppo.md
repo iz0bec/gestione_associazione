@@ -36,6 +36,15 @@ uv run python manage.py makemigrations --check --dry-run
 uv run pytest                                # test (richiede PostgreSQL)
 ```
 
+La conformità della segnatura di protocollo allo schema AgID si prova indicando lo schema, che non è
+nel repository perché pubblicato senza licenza
+([AgID/protocollo-comunicazione-aoo](https://github.com/AgID/protocollo-comunicazione-aoo), con la
+cartella `import_schemas`):
+
+```bash
+SEGNATURA_XSD=/percorso/segnatura_protocollo.xsd uv run pytest apps/protocollo/tests/test_segnatura.py
+```
+
 ## Struttura
 
 ```

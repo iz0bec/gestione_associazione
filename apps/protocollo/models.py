@@ -459,6 +459,10 @@ class Spedizione(ModelloBase):
     oggetto = models.CharField(max_length=600)
     testo = models.TextField()
     allegati = models.ManyToManyField(Allegato, blank=True, related_name="spedizioni")
+    segnatura = models.TextField(
+        "segnatura XML", blank=True, editable=False,
+        help_text="Segnatura di protocollo AgID (Segnatura.xml) firmata, spedita con il messaggio.",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "spedizione"
@@ -676,3 +680,35 @@ class VersioneManuale(models.Model):
 
     def __str__(self):
         return f"Manuale di gestione documentale, versione {self.versione}"
+
+
+class SigilloSegnatura(models.Model):
+    """Certificato e chiave con cui si firma (XAdES-B) la segnatura di protocollo. Si usa
+    l'ultimo caricato; quelli precedenti restano per memoria (la segnatura contiene il suo)."""
+
+    certificato = models.TextField("certificato (PEM)")
+    catena = models.TextField("catena dei certificati (PEM)", blank=True)
+    chiave_cifrata = models.TextField(editable=False)
+    titolare = models.CharField(max_length=300)
+    emittente = models.CharField(max_length=300)
+    valido_dal = models.DateTimeField()
+    valido_al = models.DateTimeField()
+    qualificato = models.BooleanField(
+        "sigillo elettronico qualificato", default=False,
+        help_text="Dichiarato da chi lo carica: rilasciato da un prestatore qualificato (eIDAS).",
+    )  # fmt: skip
+    generato = models.BooleanField(
+        default=False, help_text="Certificato generato dall'installazione (non qualificato)."
+    )
+    caricato_il = models.DateTimeField(auto_now_add=True)
+    caricato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "sigillo della segnatura"
+        verbose_name_plural = "sigilli della segnatura"
+        ordering = ["-caricato_il", "-id"]
+
+    def __str__(self):
+        return f"{self.titolare} (fino al {timezone.localtime(self.valido_al):%d/%m/%Y})"

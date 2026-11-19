@@ -42,6 +42,7 @@ PAGINE_PER_SEZIONE = {
     "soci:sezione_modifica": "sistema#sezioni",
     "protocollo": "protocollo",
     "protocollo:manuale": "protocollo#manuale-di-gestione",
+    "protocollo:sigillo": "protocollo#segnatura-di-protocollo",
     "organi": "organi",
     "organi:firme": "firme-e-timbri",
     "comunicazioni": "comunicazioni",

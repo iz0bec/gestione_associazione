@@ -37,7 +37,7 @@ from apps.core.models import EventoAudit, Organizzazione
 from apps.core.pdf import risposta_pdf
 from apps.core.views import PermessoMixin
 
-from . import buste, servizi, spedizioni
+from . import buste, segnatura, servizi, spedizioni
 from .filtri import ProtocolloFilter
 from .forms import (
     AllegatiForm,
@@ -47,6 +47,7 @@ from .forms import (
     ModificaForm,
     ProtocollaMessaggioForm,
     ProtocolloForm,
+    SigilloForm,
     SpedizioneForm,
 )
 from .models import (
@@ -58,6 +59,7 @@ from .models import (
     ModelloProtocollo,
     Protocollo,
     RegistroGiornaliero,
+    SigilloSegnatura,
     Spedizione,
 )
 from .servizi import OperazioneNonValida
@@ -1009,3 +1011,109 @@ class PubblicazioneManualeView(PermessoMixin, View):
         else:
             messages.success(request, f"Versione {v.versione} pubblicata fra i documenti pubblici.")
         return redirect("protocollo:manuale")
+
+
+# --- segnatura di protocollo (AgID, Allegato 6) --------------------------------------------
+
+
+class SegnaturaXmlView(PermessoMixin, _ProtocolloVisibileMixin, View):
+    """Segnatura.xml firmata del protocollo, con tutti i suoi documenti."""
+
+    permission_required = "protocollo.view_protocollo"
+
+    def get(self, request, pk):
+        p = self.protocollo(pk)
+        try:
+            dati = segnatura.genera(p)
+        except segnatura.OperazioneNonValida as e:
+            messages.error(request, str(e))
+            return redirect(p)
+        registra(Azione.CONSULTAZIONE, p, descrizione=f"Segnatura XML del protocollo {p.segnatura}")
+        return _scarica_dati(dati, segnatura.nome_file(p), segnatura.TIPO)
+
+
+class SegnaturaSpedizioneView(PermessoMixin, View):
+    """La segnatura spedita con un messaggio, così come è partita."""
+
+    permission_required = "protocollo.view_protocollo"
+
+    def get(self, request, pk):
+        s = get_object_or_404(
+            Spedizione.objects.select_related("protocollo").exclude(segnatura=""),
+            pk=pk, protocollo__in=Protocollo.objects.visibili_a(request.user),
+        )  # fmt: skip
+        nome = segnatura.nome_file(s.protocollo)
+        return _scarica_dati(s.segnatura.encode(), nome, segnatura.TIPO)
+
+
+class CopiaConTimbroView(PermessoMixin, View):
+    """Copia PDF del documento con il timbro della segnatura (l'originale resta com'è)."""
+
+    permission_required = "protocollo.view_protocollo"
+
+    def get(self, request, pk):
+        a = get_object_or_404(
+            Allegato.objects.select_related("protocollo", "protocollo__classificazione"),
+            pk=pk, protocollo__in=Protocollo.objects.visibili_a(request.user),
+        )  # fmt: skip
+        try:
+            dati = segnatura.copia_con_timbro(a)
+        except segnatura.OperazioneNonValida as e:
+            messages.error(request, f"{a.nome}: {e}")
+            return redirect(a.protocollo)
+        descrizione = f"Copia con segnatura di «{a.nome}»"
+        registra(Azione.CONSULTAZIONE, a.protocollo, descrizione=descrizione)
+        base = a.nome[:-4] if a.nome.lower().endswith(".pdf") else a.nome
+        nome = f"{base}_segnatura_{a.protocollo.segnatura}.pdf"
+        in_linea = request.GET.get("vedi") == "1"
+        return _scarica_dati(dati, nome, "application/pdf", in_linea=in_linea)
+
+
+class SigilloView(PermessoMixin, FormView):
+    """Codici della segnatura e sigillo con cui la si firma (carica, genera)."""
+
+    permission_required = "core.gestisci_organizzazione"
+    template_name = "protocollo/sigillo.html"
+    form_class = SigilloForm
+    success_url = reverse_lazy("protocollo:sigillo")
+
+    def get_context_data(self, **kwargs):
+        from apps.core.cifratura import cifratura_disponibile
+
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(
+            organizzazione=Organizzazione.corrente(),
+            sigillo=segnatura.sigillo_attivo(crea=False),
+            precedenti=SigilloSegnatura.objects.all()[:10],
+            codice_registro=segnatura.CODICE_REGISTRO,
+            cifratura=cifratura_disponibile(),
+        )
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("azione") == "genera":
+            segnatura.genera_sigillo(request.user)
+            messages.success(request, "Generato un nuovo certificato dell'installazione.")
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        d = form.cleaned_data
+        try:
+            s = segnatura.carica_sigillo(
+                d["file"].read(), d["password"], qualificato=d["qualificato"],
+                utente=self.request.user,
+            )  # fmt: skip
+        except segnatura.OperazioneNonValida as e:
+            form.add_error("file", str(e))
+            return self.form_invalid(form)
+        messages.success(self.request, f"Sigillo caricato: {s.titolare}.")
+        return super().form_valid(form)
+
+
+def _scarica_dati(dati, nome, tipo, *, in_linea=False):
+    risposta = FileResponse(io.BytesIO(dati), as_attachment=not in_linea, filename=nome,
+                            content_type=tipo)  # fmt: skip
+    risposta["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    risposta["X-Content-Type-Options"] = "nosniff"
+    return risposta

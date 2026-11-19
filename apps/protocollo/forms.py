@@ -368,3 +368,28 @@ class ManualeGestioneForm(StileMixin, forms.ModelForm):
             self.fields[campo].queryset = persone
             self.fields[campo].empty_label = "— da indicare —"
         self.fields["responsabile"].help_text = "Persone con un account o una carica in corso."
+
+
+class SigilloForm(StileMixin, forms.Form):
+    """Caricamento del sigillo della segnatura (file PKCS#12 con chiave e certificato)."""
+
+    file = forms.FileField(
+        label="File del sigillo (.p12 / .pfx)",
+        widget=forms.ClearableFileInput(attrs={"accept": ".p12,.pfx,application/x-pkcs12"}),
+    )
+    password = forms.CharField(
+        label="Password del file", required=False, strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "off"}),
+    )  # fmt: skip
+    qualificato = forms.BooleanField(
+        label="È un sigillo elettronico qualificato",
+        required=False,
+        help_text="Rilasciato a nome dell'ente da un prestatore di servizi fiduciari qualificato "
+        "(elenco eIDAS). Lo dichiara chi lo carica: compare nel manuale di gestione.",
+    )
+
+    def clean_file(self):
+        f = self.cleaned_data["file"]
+        if f.size > 100 * 1024:
+            raise forms.ValidationError("File troppo grande per un sigillo (al massimo 100 kB).")
+        return f

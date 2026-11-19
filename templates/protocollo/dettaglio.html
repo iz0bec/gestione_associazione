@@ -8,6 +8,7 @@
 {% block azioni %}
 <div class="btn-list">
   <a class="btn" href="{% url 'protocollo:ricevuta' protocollo.pk %}" target="_blank" data-stampa rel="noopener"><i class="ti ti-printer me-1"></i>Ricevuta</a>
+  {% if protocollo.allegati.all and not protocollo.annullato %}<a class="btn" href="{% url 'protocollo:segnatura_xml' protocollo.pk %}" title="Segnatura di protocollo AgID (Allegato 6) con le impronte dei documenti, firmata XAdES"><i class="ti ti-file-certificate me-1"></i>Segnatura XML</a>{% endif %}
   {% if spedizione is not None %}
   <div class="dropdown">
     <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"><i class="ti ti-mail me-1"></i>Buste ed etichette{% if su_carta %} ({{ su_carta }} senza email){% endif %}</button>
@@ -64,7 +65,8 @@
             <a href="{% url 'protocollo:allegato' a.pk %}">{{ a.nome }}</a>{% if a.principale %} <span class="badge bg-blue-lt">principale</span>{% endif %}
             <div class="small text-secondary">{{ a.dimensione|filesizeformat }} · {{ a.caricato_il|date:"d/m/Y H:i" }} · <span title="Impronta SHA-256: {{ a.impronta }}">SHA-256 {{ a.impronta|slice:":12" }}…</span></div>
           </div>
-          {% if a.tipo == "application/pdf" %}<a class="btn btn-sm" href="{% url 'protocollo:allegato' a.pk %}?vedi=1" target="_blank" rel="noopener">Apri</a>{% endif %}
+          {% if a.tipo == "application/pdf" %}<div class="btn-list flex-nowrap"><a class="btn btn-sm" href="{% url 'protocollo:allegato' a.pk %}?vedi=1" target="_blank" rel="noopener">Apri</a>
+          {% if not protocollo.annullato %}<a class="btn btn-sm" href="{% url 'protocollo:copia_timbro' a.pk %}?vedi=1" target="_blank" rel="noopener" title="Copia con il timbro della segnatura in alto a destra: l'originale non cambia"><i class="ti ti-stamp me-1"></i>Con segnatura</a>{% endif %}</div>{% endif %}
         </div>
         {% empty %}<div class="list-group-item text-secondary">Nessun documento allegato.</div>{% endfor %}
       </div>
@@ -85,7 +87,7 @@
           <div class="d-flex align-items-center mb-1">
             <div class="flex-fill">
               <span class="badge {% if s.canale == 'pec' %}bg-blue-lt{% else %}bg-secondary-lt{% endif %}">{{ s.get_canale_display }}</span>
-              <span class="small text-secondary">{{ s.creato_il|date:"d/m/Y H:i" }} · da {{ s.mittente }} · {{ s.creato_da|default:"sistema" }}{% if s.allegati.all %} · {{ s.allegati.all|length }} document{{ s.allegati.all|length|pluralize:"o,i" }}{% endif %}</span>
+              <span class="small text-secondary">{{ s.creato_il|date:"d/m/Y H:i" }} · da {{ s.mittente }} · {{ s.creato_da|default:"sistema" }}{% if s.allegati.all %} · {{ s.allegati.all|length }} document{{ s.allegati.all|length|pluralize:"o,i" }}{% endif %}{% if s.segnatura %} · <a href="{% url 'protocollo:segnatura_spedizione' s.pk %}">Segnatura.xml</a>{% endif %}</span>
             </div>
             {% if puo_spedire and s.con_errori %}
             <form method="post" action="{% url 'protocollo:riprova_spedizione' s.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit" title="Rimette in coda i destinatari in errore di invio"><i class="ti ti-reload me-1"></i>Riprova</button></form>{% endif %}

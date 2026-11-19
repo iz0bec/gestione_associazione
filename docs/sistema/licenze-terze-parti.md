@@ -43,7 +43,10 @@ soggette alle proprie licenze, tutte compatibili con l'uso e la ridistribuzione.
 | et-xmlfile (usata da openpyxl) | 2.0.0 | MIT |
 | defusedxml | 0.7.1 | PSF-2.0 |
 | Markdown (help in linea) | 3.11.3 | BSD-3-Clause |
-| pypdf (testo e campi dei PDF ricevuti) | 7.0.0 | BSD-3-Clause |
+| pypdf (testo e campi dei PDF ricevuti, timbro della segnatura) | 7.0.0 | BSD-3-Clause |
+| signxml (firma XAdES della segnatura di protocollo) | 5.3.0 | Apache-2.0 |
+| lxml (usata da signxml) | 6.1.3 | BSD-3-Clause |
+| certifi (usata da signxml) | 2026.10.23 | MPL-2.0 (usata come libreria, non modificata) |
 
 Versioni esatte di tutte le dipendenze (anche indirette) in `uv.lock`.
 

@@ -1,0 +1,24 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Timbro della segnatura di protocollo, sovrapposto alla prima pagina della copia PDF
+               (pagina trasparente della stessa misura: non estende pdf/base.html, che ha margini e piede)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Segnatura</title>
+<style>
+  @page { size: {{ larghezza|stringformat:".2f" }}pt {{ altezza|stringformat:".2f" }}pt; margin: 0; }
+  html, body { margin: 0; background: transparent; }
+  .timbro { position: absolute; top: 7mm; right: 7mm; max-width: 82mm; padding: 1.6mm 2.4mm;
+    border: .9pt solid #1b2a5e; border-radius: 1.5mm; background: rgba(255, 255, 255, .92);
+    font-family: "DejaVu Sans", "Helvetica", sans-serif; font-size: 6.6pt; line-height: 1.3; color: #1b2a5e; }
+  .timbro .ente { font-weight: bold; font-size: 7pt; }
+  .timbro .numero { font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="timbro">{% for r in righe %}<div class="{% if forloop.first %}ente{% elif forloop.counter == 3 %}numero{% endif %}">{{ r }}</div>{% endfor %}</div>
+</body>
+</html>

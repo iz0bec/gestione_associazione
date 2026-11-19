@@ -114,6 +114,17 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Testo riportato nei moduli e nelle comunicazioni.",
     )
+    # segnatura di protocollo (AgID, Linee guida, Allegato 6): Identificatore
+    codice_amministrazione = models.CharField(
+        "codice amministrazione (IPA)", max_length=40, blank=True,
+        validators=[RegexValidator(r"^[A-Za-z0-9_.\-]+$", "Solo lettere, cifre, _ . -")],
+        help_text="Codice IPA, se l'ente è iscritto all'Indice PA; vuoto: il codice fiscale.",
+    )  # fmt: skip
+    codice_aoo = models.CharField(
+        "codice AOO (IPA)", max_length=40, blank=True,
+        validators=[RegexValidator(r"^[A-Za-z0-9_.\-]+$", "Solo lettere, cifre, _ . -")],
+        help_text="Codice univoco dell'Area Organizzativa Omogenea nell'IPA; vuoto: «AOO».",
+    )  # fmt: skip
     # modulo di richiesta di adesione (Allegato A) e consenso al trattamento dei dati
     federazione = models.CharField(
         max_length=100,
@@ -257,6 +268,15 @@ class Organizzazione(models.Model):
     @property
     def nome_breve(self):
         return self.denominazione_breve or self.denominazione
+
+    @property
+    def codice_amministrazione_segnatura(self):
+        """Codice dell'amministrazione nella segnatura: IPA, altrimenti codice fiscale."""
+        return self.codice_amministrazione or self.codice_fiscale or ""
+
+    @property
+    def codice_aoo_segnatura(self):
+        return self.codice_aoo or "AOO"
 
     @property
     def righe_intestazione_modulo(self):

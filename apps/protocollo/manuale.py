@@ -18,6 +18,7 @@ from django.utils import timezone
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione, ServizioInvio
 
+from . import segnatura
 from .models import (
     CasellaPosta,
     Classificazione,
@@ -118,6 +119,14 @@ def contesto(manuale=None, *, bozza=True, versione=None, giorno=None, pubblico=F
             "mensili": settings.BACKUP_MENSILI,
         },
         "integrazioni": testo_html(manuale.integrazioni, {}) if manuale.integrazioni else "",
+        "segnatura": {
+            "codice_amministrazione": org.codice_amministrazione_segnatura,
+            "ipa": bool(org.codice_amministrazione),
+            "codice_aoo": org.codice_aoo_segnatura,
+            "aoo_ipa": bool(org.codice_aoo),
+            "registro": segnatura.CODICE_REGISTRO,
+            "sigillo": segnatura.sigillo_attivo(crea=False),
+        },
     }
 
 

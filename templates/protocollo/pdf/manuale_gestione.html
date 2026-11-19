@@ -161,6 +161,24 @@ un messaggio per destinatario con il numero e la data di protocollo nell'oggetto
 registrazione e le ricevute PEC di accettazione e di consegna ne diventano documenti.{% endif %} I documenti interni
 rilevanti (tra organi, atti di nomina, adozione di regolamenti) si registrano con direzione «interno».</p>
 
+<h3>6.1 Segnatura di protocollo</h3>
+<p>La segnatura di protocollo segue le Linee guida AgID sul documento informatico (Allegato 6, schema 3.0.0). Il sistema
+produce il file <strong>Segnatura.xml</strong> con l'identificatore della registrazione (codice amministrazione
+<strong>{{ segnatura.codice_amministrazione|default:"[da indicare]" }}</strong>{% if not segnatura.ipa %}, il codice fiscale
+dell'ente perché non è iscritto all'Indice PA{% endif %}; codice AOO <strong>{{ segnatura.codice_aoo }}</strong>{% if not segnatura.aoo_ipa %},
+non iscritto all'Indice PA{% endif %}; registro <strong>{{ segnatura.registro }}</strong>; numero a sette cifre; data e ora),
+oggetto, classificazione, mittente, destinatari e l'impronta SHA-256 del documento principale e di ogni allegato. La
+segnatura accompagna ogni spedizione per email o PEC e si conserva con la spedizione; il documento protocollato non si
+modifica, perché fa fede la sua impronta. Per la stampa e per chi non legge la segnatura XML il sistema produce una
+<strong>copia con il timbro</strong> della segnatura (denominazione, codici, numero, data e ora) in alto a destra della prima pagina.</p>
+<p>La segnatura è firmata con il profilo XAdES baseline B (ETSI EN 319 132-1) {% if segnatura.sigillo %}con il certificato
+«{{ segnatura.sigillo.titolare }}»{% if segnatura.sigillo.generato %}, emesso dall'installazione stessa{% else %} rilasciato da
+{{ segnatura.sigillo.emittente }}{% endif %}, valido fino al {{ segnatura.sigillo.valido_al|date:"d/m/Y" }}{% else %}con un
+certificato emesso dall'installazione alla prima segnatura{% endif %}. {% if segnatura.sigillo.qualificato %}È un
+<strong>sigillo elettronico qualificato</strong> (Regolamento UE 910/2014, sezione 5).{% else %}Non è un sigillo
+elettronico qualificato: garantisce l'integrità della segnatura e dei documenti che vi sono indicati, ma non ha il valore
+legale che le Linee guida richiedono alle pubbliche amministrazioni.{% endif %}</p>
+
 <h2>7. Classificazione e fascicolazione</h2>
 <p>I documenti si classificano secondo il <strong>titolario</strong> dell'ente, riportato {% if pubblico %}in allegato{% else %}nell'allegato B{% endif %}; il titolario si
 aggiorna con lo stesso atto che aggiorna il manuale. I documenti di una stessa pratica si collegano tra loro con il campo
@@ -194,7 +212,8 @@ modificabile, data e ora di registrazione assegnate dal sistema, immodificabilit
 motivato e tracciato, impronta dei documenti, registro giornaliero con impronta, riservatezza, tracciamento delle
 operazioni e accessi personali. Non realizza invece, e l'ente ne tiene conto nei rapporti con le pubbliche amministrazioni:</p>
 <ul>
-  <li>la segnatura di protocollo in formato XML e l'interoperabilità automatica tra sistemi di protocollo di AOO diverse;</li>
+  <li>lo scambio automatico tra sistemi di protocollo di AOO diverse in cooperazione applicativa e la gestione dei
+  messaggi di conferma, eccezione e annullamento (la segnatura XML si produce e si spedisce, capitolo 6.1){% if not segnatura.sigillo.qualificato %}, e il sigillo elettronico qualificato della segnatura{% endif %};</li>
   <li>l'invio automatico del registro giornaliero al sistema di conservazione: va trasmesso dall'ente come indicato al capitolo 9;</li>
   <li>la conservazione digitale, la firma digitale e la marca temporale dei documenti, che si apportano con strumenti esterni.</li>
 </ul>

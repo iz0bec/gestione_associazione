@@ -36,6 +36,16 @@ urlpatterns = [
         name="riprova_spedizione",
     ),
     path("allegati/<int:pk>/", views.ScaricaAllegatoView.as_view(), name="allegato"),
+    path(
+        "allegati/<int:pk>/segnatura.pdf", views.CopiaConTimbroView.as_view(), name="copia_timbro"
+    ),
+    path("<int:pk>/segnatura.xml", views.SegnaturaXmlView.as_view(), name="segnatura_xml"),
+    path(
+        "spedizioni/<int:pk>/segnatura.xml",
+        views.SegnaturaSpedizioneView.as_view(),
+        name="segnatura_spedizione",
+    ),
+    path("segnatura/", views.SigilloView.as_view(), name="sigillo"),
     path("registri/", views.RegistriView.as_view(), name="registri"),
     path("registri/<int:pk>/", views.ScaricaRegistroView.as_view(), name="registro"),
     path("posta/", views.PostaView.as_view(), name="posta"),

@@ -43,7 +43,11 @@ def test_composto_dalla_configurazione(crea_utente):
     assert "BOZZA" in html and "[da indicare]" in html
     assert "Anna Neri" in html and "ente@pec.example.org" in html
     assert "Organizzazione e statuto" in html  # titolario di base
-    assert "Addetto protocollo" in html and "segnatura di protocollo in formato XML" in html
+    assert (
+        "Addetto protocollo" in html
+        and "Segnatura.xml" in html
+        and "non è un sigillo" in html.lower()
+    )
     ruoli = {r["nome"]: r for r in manuale.contesto()["ruoli"]}
     assert ruoli["Addetto protocollo"]["valori"][1] and not ruoli["Addetto protocollo"]["valori"][3]
 

@@ -141,6 +141,46 @@ avvenuta-consegna - indirizzo.eml`, con la firma del gestore). Non compaiono fra
 protocollare. Per questo la PEC che spedisce deve essere configurata anche come **casella**
 (*Sistema → Servizi di posta*) e **usata dal protocollo** (*Protocollo → Caselle*).
 
+## Segnatura di protocollo
+
+La segnatura segue le **Linee guida AgID sul documento informatico, Allegato 6** (schema 3.0.0).
+Il documento protocollato **non si modifica mai**: fa fede la sua impronta. La segnatura è un file a
+parte, **Segnatura.xml**, che contiene:
+
+- l'**identificatore**: codice dell'amministrazione, codice AOO, registro `PROTOCOLLO`, numero a
+  sette cifre (`0000012`), data e ora di registrazione;
+- oggetto, classificazione (titolario), eventuale indicazione di riservato;
+- mittente e destinatari;
+- l'**impronta SHA-256** del documento principale e di ogni allegato;
+- la **firma** XAdES baseline B con il sigillo dell'ente.
+
+Dove si trova:
+
+- ogni **spedizione per email o PEC** con documenti allega `Segnatura.xml` (come prevede
+  l'appendice C per la posta elettronica) e la conserva: la si riscarica dall'elenco delle spedizioni;
+- **Segnatura XML** nella scheda del protocollo la produce con tutti i documenti del momento;
+- **Con segnatura**, accanto a ogni PDF, apre una **copia con il timbro** in alto a destra della
+  prima pagina (denominazione, codici, numero, data e ora, direzione, classifica): serve per la
+  stampa e per chi non legge l'XML. L'originale resta identico.
+
+**Codici.** Un'associazione di norma non è iscritta all'Indice PA (IPA): lasciando vuoti i campi
+*Codice amministrazione* e *Codice AOO* in *Sistema → Organizzazione* si usano il **codice fiscale**
+dell'ente e `AOO`. Se l'ente è iscritto all'IPA si indicano i suoi codici (per l'AOO il codice
+univoco di sette caratteri che inizia con A). Senza codice fiscale né codice IPA la segnatura non si
+produce: il programma non inventa valori.
+
+**Sigillo** (*Protocollo → Altro → Segnatura e sigillo*, per l'amministratore). Le Linee guida
+chiedono alle pubbliche amministrazioni un **sigillo elettronico qualificato**, che si acquista da un
+prestatore qualificato a nome dell'ente: si carica qui il file `.p12`/`.pfx` con la sua password,
+spuntando *È un sigillo elettronico qualificato*. Finché non se ne carica uno, l'installazione genera
+un **proprio certificato** (non qualificato, dieci anni): la segnatura resta verificabile e
+garantisce l'integrità dei documenti, ma non ha il valore legale del sigillo qualificato. La chiave
+si conserva cifrata; ogni segnatura contiene il proprio certificato, quindi quelle già prodotte restano
+valide anche cambiando sigillo. Il manuale di gestione riporta codici e sigillo in uso.
+
+Non sono gestiti lo scambio automatico in cooperazione applicativa fra protocolli di AOO diverse e i
+messaggi di conferma, eccezione e annullamento dell'Allegato 6.
+
 ## Cercare
 
 Il registro si filtra mentre si scrive: numero (`42` o `2026-42`), parole dell'oggetto o del testo, mittente,

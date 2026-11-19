@@ -5,6 +5,27 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.66] - 2026-11-19
+
+### Aggiunto
+- **Segnatura di protocollo AgID** (Linee guida, Allegato 6, schema 3.0.0): `Segnatura.xml` con
+  identificatore (codice amministrazione, AOO, registro, numero a 7 cifre, data e ora), oggetto,
+  classifica, corrispondenti e impronte SHA-256 dei documenti, firmata **XAdES baseline B**. Parte
+  con ogni spedizione per email o PEC e si scarica dalla scheda del protocollo. L'originale non si
+  modifica: **copia PDF con il timbro** della segnatura per la stampa.
+- **Segnatura e sigillo** (*Protocollo → Altro*): si carica il sigillo dell'ente (`.p12`, anche
+  qualificato) oppure si usa il certificato generato dall'installazione; codici IPA facoltativi in
+  *Sistema → Organizzazione* (altrimenti codice fiscale e «AOO»). Il manuale di gestione li riporta.
+
+### Corretto
+- **Rubrica dai collegamenti API**: sezioni con lo stesso codice fiscale (quello della sede
+  nazionale) finivano tutte nella stessa voce, riscritta a ogni aggiornamento. Ora c'è una voce per
+  controparte: il codice fiscale non identifica più l'ente e una voce condivisa per errore si divide
+  al primo aggiornamento.
+- **Sistema → Organizzazione**: salvare la pagina spegneva i *consensi impliciti dei soci* e svuotava
+  le email della federazione e della sede nazionale e l'archivio centrale, che non erano mostrati;
+  ora sono nella pagina. La configurazione guidata non li tocca più.
+
 ## [1.0.65] - 2026-11-19
 
 ### Aggiunto
