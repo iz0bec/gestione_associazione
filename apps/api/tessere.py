@@ -25,8 +25,13 @@ def sezione_per(cliente: ClienteApi):
     """La sezione del ciclo che la controparte può vedere, o None."""
     if cliente.ruolo == ClienteApi.Ruolo.SEZIONE and cliente.sezione_id:
         return cliente.sezione  # siamo la federazione: la sua sezione nel nostro elenco
-    if cliente.ruolo == ClienteApi.Ruolo.FEDERAZIONE:
+    if (
+        cliente.ruolo == ClienteApi.Ruolo.FEDERAZIONE
+        and not Sezione.objects.filter(attiva=True)[1:2].exists()
+    ):
         return Sezione.predefinita()  # siamo la sezione: la nostra
+    # con più sezioni siamo la federazione: una controparte indicata come «nostra federazione»
+    # è un errore di configurazione e non deve vedere i dati della sezione principale
     return None
 
 

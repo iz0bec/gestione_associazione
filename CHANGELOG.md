@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.57] - 2026-11-19
+
+### Corretto
+- **Ruoli invertiti fra federazione e sezione**: con le due schede impostate al contrario, la
+  verifica di una sezione mostrava i soci della sezione principale della federazione. Ora:
+  - un'installazione con più sezioni non risponde come sezione a chi ha indicato come «nostra
+    federazione», né accetta quel ruolo nella scheda;
+  - chi legge i soci controlla come lo vede l'altra parte e, se i ruoli non sono opposti, si
+    ferma con «Ruoli incoerenti» senza leggere nulla;
+  - la scheda spiega il ruolo: «che cosa è l'altra installazione per noi».
+
 ## [1.0.56] - 2026-11-19
 
 ### Corretto

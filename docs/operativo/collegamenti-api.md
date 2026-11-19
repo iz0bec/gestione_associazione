@@ -104,6 +104,11 @@ Nella scheda della controparte (*Modifica*) si indica il **ruolo**:
   **quale sezione** del proprio elenco è (una sola per collegamento);
 - sull'installazione di una **sezione**: «È la nostra federazione».
 
+Il ruolo dice che cosa è **l'altra** installazione per noi, quindi le due schede hanno ruoli
+opposti. Un'installazione con più sezioni è la federazione e non accetta «È la nostra federazione».
+Se i ruoli risultano invertiti, la *Verifica soci* si ferma con «Ruoli incoerenti» e indica la
+scheda da correggere; nessun dato viene letto.
+
 A entrambe le parti va concesso l'ambito **«Ciclo delle tessere»**. Da quel momento, ogni 15 minuti
 (o con *Sincronizza ora* nella campagna):
 

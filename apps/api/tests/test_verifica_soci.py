@@ -177,6 +177,7 @@ class TestDallaFederazione:
 
     def test_allineati_e_altra_sezione(self, admin, monkeypatch, avigliano):
         sezione = Sezione.predefinita()
+        Sezione.objects.filter(pk=avigliano.pk).update(attiva=False)  # siamo una sezione sola
         socio = _socio(admin, sezione, "Rossi", "Mario", CF_ROSSI)
         _socio(admin, avigliano, "Bianchi", "Laura", CF_BIANCHI)
         _, federazione = _controparte("federazione")
@@ -269,3 +270,36 @@ def test_controparte_pari_mostra_cosa_impostare(client_ruolo, avigliano):
     _, senza_sezione = _controparte("sezione")
     pagina = admin.get(reverse("api:controparte", args=[senza_sezione.pk])).content.decode()
     assert "Imposta il ruolo" in pagina
+
+
+class TestRuoliIncoerenti:
+    def test_con_piu_sezioni_non_si_risponde_come_sezione(self, client, avigliano):
+        ctp, _ = _controparte("federazione")  # errore: noi abbiamo più sezioni
+        assert ctp.chiama(client, "GET", "/api/v1/soci").status_code == 403
+
+    @pytest.mark.parametrize(
+        ("nostro", "suo"),
+        [("federazione", "federazione"), ("sezione", "sezione"), ("sezione", None)],
+    )
+    def test_chi_legge_si_accorge_dell_inversione(self, monkeypatch, admin, avigliano, nostro,
+                                                  suo):  # fmt: skip
+        from apps.collegamenti import client as cl
+
+        if nostro == "federazione":
+            Sezione.objects.filter(pk=avigliano.pk).update(attiva=False)
+        _, cliente = _controparte(nostro, avigliano if nostro == "sezione" else None)
+        risposta = type("R", (), {"stato": 200})()
+        monkeypatch.setattr(cl, "chiama", lambda *a, **k: (risposta, None, []))
+        monkeypatch.setattr(cl, "json_risposta",
+                            lambda r: {"tu": {"ruolo": suo} if suo else {}, "soci": []})  # fmt: skip
+        with pytest.raises(verifica_soci.OperazioneNonValida, match="Ruoli incoerenti"):
+            verifica_soci.verifica(cliente, admin)
+
+    def test_modulo_rifiuta_federazione_con_piu_sezioni(self, avigliano):
+        from apps.api.forms import ControparteForm
+
+        _, cliente = _controparte("pari")
+        form = ControparteForm(instance=cliente, data={"nome": "X", "ruolo": "federazione",
+                                                       "verifica_tls": "pubblica"})  # fmt: skip
+        form.is_valid()
+        assert "più sezioni" in str(form.errors.get("ruolo"))

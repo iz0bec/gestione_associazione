@@ -36,6 +36,16 @@ def scarica(cliente):
         dati = client.json_risposta(risposta)
     except (client.ErroreCollegamento, ErroreTrasporto) as e:
         raise OperazioneNonValida(f"Controparte non raggiungibile: {e}") from e
+    atteso = "sezione" if cliente.ruolo == ClienteApi.Ruolo.FEDERAZIONE else "federazione"
+    visto = ((dati.get("tu") or {}).get("ruolo") if isinstance(dati, dict) else None) or "?"
+    if visto != atteso:
+        noi = "una sua sezione" if atteso == "sezione" else "la sua federazione"
+        raise OperazioneNonValida(
+            f"Ruoli incoerenti: qui «{cliente}» è indicata come "
+            f"«{cliente.get_ruolo_display()}», quindi l'altra installazione dovrebbe vederci come "
+            f"{noi}, ma ci ha indicati con il ruolo «{visto}». Correggere il ruolo nella scheda "
+            "sbagliata (su una delle due installazioni) e ripetere."
+        )
     righe = dati.get("soci") if isinstance(dati, dict) else None
     if not isinstance(righe, list) or not all(isinstance(r, dict) for r in righe):
         raise OperazioneNonValida("Risposta della controparte non valida.")

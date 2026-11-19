@@ -182,6 +182,11 @@ class ControparteForm(StileMixin, _IndirizziMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["ruolo"].required = False
+        self.fields["ruolo"].help_text = (
+            "Che cosa è l'altra installazione per noi. Sulla federazione, per ogni sezione "
+            "collegata: «È una nostra sezione» (e quale). Sull'installazione di una sezione, per "
+            "la federazione: «È la nostra federazione»."
+        )
         self.initial["tls_spki"] = "\n".join(self.instance.tls_spki or [])
         self.initial["dati_personali"] = bool(
             set(self.instance.ambiti or []) & servizi.AMBITI_DATI_PERSONALI
@@ -205,7 +210,15 @@ class ControparteForm(StileMixin, _IndirizziMixin, forms.ModelForm):
         return url
 
     def clean_ruolo(self):
-        return self.cleaned_data.get("ruolo") or ClienteApi.Ruolo.PARI
+        from apps.soci.sezioni import multisezione
+
+        ruolo = self.cleaned_data.get("ruolo") or ClienteApi.Ruolo.PARI
+        if ruolo == ClienteApi.Ruolo.FEDERAZIONE and multisezione():
+            raise forms.ValidationError(
+                "Questa installazione ha più sezioni, quindi è la federazione: per una sezione "
+                "collegata scegliere «È una nostra sezione» e indicare quale."
+            )
+        return ruolo
 
     def clean_sezione(self):
         sezione = self.cleaned_data.get("sezione")

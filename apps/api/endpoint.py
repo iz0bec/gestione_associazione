@@ -277,6 +277,8 @@ def soci(request):
         dettaglio = "La controparte non è collegata come federazione o come sezione."
         raise Problema("operazione-non-valida", 403, dettaglio)
     dati = {"sezione": {"codice": sezione.codice, "nome": sezione.nome},
+            # come vediamo chi chiama: serve a lui per accorgersi di ruoli invertiti
+            "tu": {"ruolo": request.cliente_api.ruolo},
             "soci": allineamento.elenco(sezione)}  # fmt: skip
     return risposta_cifrata(request, dati)
 
