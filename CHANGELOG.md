@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.62] - 2026-11-19
+
+### Aggiunto
+- **Registrazione in blocco dei consensi impliciti** (`manage.py consensi_impliciti --esegui`):
+  per i soci attivi e sospesi, ogni finalità senza registrazioni diventa un consenso prestato con
+  la data di ammissione e la modalità «implicito: ammissione a socio». Dinieghi e revoche restano;
+  rieseguibile; senza `--esegui` solo il conteggio.
+
 ## [1.0.61] - 2026-11-19
 
 ### Corretto

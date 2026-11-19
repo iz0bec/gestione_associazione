@@ -102,6 +102,12 @@ persone che non sono socie servono i consensi registrati. Il modulo di adesione 
 solo i consensi espressi. L'opzione è in *Sistema → Organizzazione* (**Consensi impliciti per i
 soci**, attiva per default).
 
+Per **registrarli** davvero nelle schede (restano anche se l'opzione si spegne) l'amministratore
+esegue `manage.py consensi_impliciti --esegui`: per ogni socio attivo o sospeso e ogni finalità
+senza registrazioni si registra il consenso prestato, con la data di ammissione e la modalità
+«implicito: ammissione a socio». Dinieghi e revoche non si toccano; senza `--esegui` mostra solo
+quanti ne registrerebbe.
+
 ## Archiviare
 
 Chi non è più in rapporto con l'associazione si **archivia** (pulsante *Archivia* nella scheda):

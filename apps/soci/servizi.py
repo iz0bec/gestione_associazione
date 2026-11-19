@@ -1084,3 +1084,45 @@ def esporta_scambio(queryset, anno, utente):
     registra(Azione.ESPORTAZIONE, utente=utente, descrizione=f"Soci per scambio ({n} righe)",
              righe=n, anno=anno)  # fmt: skip
     return buffer.getvalue()
+
+
+# --- consensi impliciti --------------------------------------------------------------------------
+
+MODALITA_IMPLICITO = "implicito: ammissione a socio (regole sulla privacy)"
+
+
+def registra_consensi_impliciti(utente=None, *, esegui=True):
+    """Registra come prestati, per i soci attivi e sospesi, i consensi di ogni finalità senza
+    alcuna registrazione (data = ammissione). Mai sopra un diniego o una revoca; rieseguibile.
+    Restituisce {finalità: quanti}. Senza `esegui` conta soltanto."""
+    from apps.anagrafica.models import Consenso
+    from apps.core.models import Organizzazione
+
+    if not Organizzazione.corrente().consensi_impliciti_soci:
+        raise OperazioneNonValida(
+            "I consensi impliciti per i soci sono disattivati (Sistema → Organizzazione)."
+        )
+    soci = list(Socio.objects.exclude(stato=Socio.Stato.CESSATO).values_list(
+        "soggetto_id", "data_ammissione"))  # fmt: skip
+    registrati = set(Consenso.objects.filter(soggetto_id__in=[s for s, _ in soci])
+                     .values_list("soggetto_id", "finalita"))  # fmt: skip
+    nuovi = [
+        Consenso(
+            soggetto_id=soggetto,
+            finalita=finalita,
+            prestato=True,
+            data=ammissione,
+            modalita=MODALITA_IMPLICITO,
+        )  # fmt: skip
+        for soggetto, ammissione in soci
+        for finalita in Consenso.Finalita.values
+        if (soggetto, finalita) not in registrati
+    ]
+    conteggi = {f: sum(1 for c in nuovi if c.finalita == f) for f in Consenso.Finalita.values}
+    if esegui and nuovi:
+        with transaction.atomic():
+            Consenso.objects.bulk_create(nuovi)
+            descrizione = f"Consensi impliciti dei soci registrati: {len(nuovi)}"
+            registra(Azione.CREAZIONE, utente=utente, totale=len(nuovi), descrizione=descrizione,
+                     **conteggi)  # fmt: skip
+    return conteggi

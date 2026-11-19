@@ -63,6 +63,7 @@ Solo con Docker (`compose.yaml`): `DB_PASSWORD` (obbligatoria), `APP_PORT` (defa
 | `manage.py aggiorna_collegamenti` | ogni notte | API: rilegge chiavi e impronte TLS delle installazioni collegate dalla loro `/.well-known` firmata |
 | `manage.py sincronizza_collegamenti` | ogni 15 minuti | API: legge i flussi della federazione o delle sezioni collegate e mette i documenti del ciclo delle tessere nella coda dei documenti in arrivo |
 | `manage.py scarica_posta` | ogni 15 minuti | scarica i nuovi messaggi dalle caselle del protocollo, li sposta nella cartella `PROCESSATA` della casella e aggancia le ricevute PEC ai protocolli spediti |
+| `manage.py consensi_impliciti --esegui` | a richiesta | registra i consensi impliciti dei soci attivi e sospesi (finalità senza registrazioni; mai sopra un diniego). Senza `--esegui` solo il conteggio |
 | `manage.py promemoria_archivio` | ogni notte | email a chi gestisce i soci con i nuovi soci e le rettifiche da riportare nell'archivio centrale non collegato (solo le novità dall'ultimo invio) |
 | `manage.py registro_giornaliero` | ogni notte | genera e conserva il PDF del registro di protocollo dei giorni conclusi |
 | `manage.py conservazione_dati` | ogni notte | con l'anonimizzazione automatica attiva, anonimizza le persone oltre il termine di conservazione (`--elenco`: solo il conteggio) |

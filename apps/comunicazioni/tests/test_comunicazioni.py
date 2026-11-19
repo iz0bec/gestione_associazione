@@ -129,6 +129,24 @@ class TestDestinatari:
         Organizzazione.objects.update(consensi_impliciti_soci=False)
         assert servizi.consensi_prestati(tutti, "comunicazioni") == set()
 
+    def test_registrazione_in_blocco_dei_consensi_impliciti(self, utente):
+        ordinario = TipologiaSocio.objects.get(nome="Ordinario")
+        socio = persona("Socio")
+        soci.ammetti_socio(socio, ordinario, utente, data_ammissione=date(2020, 5, 1))
+        diniego = persona("Diniego")
+        soci.ammetti_socio(diniego, ordinario, utente)
+        Consenso.objects.create(soggetto=diniego, finalita="immagini", prestato=False)
+        persona("Esterno")
+        n = len(Consenso.Finalita.values)
+        assert sum(soci.registra_consensi_impliciti(esegui=False).values()) == 2 * n - 1
+        assert not Consenso.objects.filter(soggetto=socio).exists()  # solo il conteggio
+        conteggi = soci.registra_consensi_impliciti(utente)
+        assert conteggi["immagini"] == 1 and sum(conteggi.values()) == 2 * n - 1
+        c = Consenso.objects.get(soggetto=socio, finalita="auguri")
+        assert c.prestato and c.data == date(2020, 5, 1) and "implicito" in c.modalita
+        assert not Consenso.objects.get(soggetto=diniego, finalita="immagini").prestato
+        assert sum(soci.registra_consensi_impliciti(utente).values()) == 0  # rieseguibile
+
     def test_istituzionale_senza_consenso(self, utente):
         invio = servizi.crea_invio(
             utente, oggetto="Convocazione", corpo="x", finalita=Finalita.ISTITUZIONALE,
