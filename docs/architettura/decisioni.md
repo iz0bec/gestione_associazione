@@ -593,6 +593,9 @@ sezione → **F5** sezione ↔ sezione e kit per chi integra.
   tecniche, come la presa in carico di una consegna già inviata, che si registrano da sole.
 - **Dati del socio** verso la federazione: quelli del libro soci (anagrafica, residenza, contatti,
   tipologia, ammissione, stato, cessazione, tessere).
+- **Chi aggiorna cosa** (19/11/2026): la **sezione** aggiorna via API i soci (anagrafiche) e i
+  **rinnovi** (tessere e quote dell'anno); la **federazione** aggiorna i soci (anagrafiche), ma i
+  rinnovi non li registra: li **riceve** dalle sezioni e li **supervisiona**.
 - **Trasporto**: ognuno **legge** dall'altro ciò che gli è destinato (lettura periodica dei flussi
   con verifica della catena, cursore salvato). Una sezione non raggiungibile (dietro NAT) usa la
   **spinta** (`POST /consegne`).

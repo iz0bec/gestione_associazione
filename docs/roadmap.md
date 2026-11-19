@@ -206,6 +206,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     - *Conferma*: il primo caricamento con anteprima e conferma.
     - *Da decidere*: gli aggiornamenti successivi entrano da soli o vanno in «documenti in arrivo»
       da confermare?
+    - *Chi aggiorna cosa* (deciso il 19/11/2026):
+      - la **sezione** via API aggiorna i soci (anagrafiche) e i **rinnovi** (tessere e quote dell'anno);
+      - la **federazione** aggiorna i soci (anagrafiche), ma i rinnovi non li registra: li **riceve**
+        dalle sezioni e li **supervisiona** (controllo, eventuali rilievi).
     - *Ordine*: prima federazione → sezione; il ritorno sezione → federazione in un secondo passo.
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
