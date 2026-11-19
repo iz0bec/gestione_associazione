@@ -159,10 +159,13 @@ in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 
 ### Collegamenti API
 
-| Ruolo | Consulta controparti | Inviti, abbinamento, attivazione, sospensione, revoca, rotazione delle chiavi |
-|---|---|---|
-| Amministratore di sistema | sì | sì |
-| Tutti gli altri | - | - |
+| Ruolo | Consulta controparti | Inviti, abbinamento, attivazione, sospensione, revoca, rotazione delle chiavi | Verifica soci |
+|---|---|---|---|
+| Amministratore di sistema | sì | sì | sì |
+| Tutti gli altri | - | - | - |
+
+La *Verifica soci* richiede il permesso di importare i soci e di consultare le controparti; chi è
+limitato a una sezione la esegue solo per quella.
 
 ### Chat interna
 

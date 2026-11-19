@@ -707,14 +707,18 @@ def soci_da_rinnovare(anno, sezioni=None):
     return _per_sezioni(qs, sezioni).select_related("soggetto", "tipologia", "sezione")
 
 
-def rinnovo_massivo(anno, utente, *, attribuisci=False, sezioni=None):
-    """Crea il tesseramento dell'anno (da pagare) per tutti i soci attivi che non l'hanno;
-    con `attribuisci` assegna anche le tessere fisiche disponibili, in ordine di numero socio.
+def rinnovo_massivo(anno, utente, *, attribuisci=False, sezioni=None, soci=None):
+    """Crea il tesseramento dell'anno (da pagare) per tutti i soci attivi che non l'hanno, o
+    solo per quelli scelti (`soci`: id; chi non è scelto non intende rinnovare); con
+    `attribuisci` assegna anche le tessere fisiche disponibili, in ordine di numero socio.
 
     Una transazione per socio: un errore su un socio non blocca gli altri.
     """
     rilasciate, errori = [], []
-    for socio in soci_da_rinnovare(anno, sezioni).order_by("numero"):
+    candidati = soci_da_rinnovare(anno, sezioni)
+    if soci is not None:
+        candidati = candidati.filter(pk__in=soci)
+    for socio in candidati.order_by("numero"):
         try:
             rilasciate.append(
                 rilascia_tessera(socio, anno, utente, carta="prossima" if attribuisci else None)

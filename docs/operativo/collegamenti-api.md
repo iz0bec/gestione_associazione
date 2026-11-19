@@ -113,6 +113,35 @@ A entrambe le parti va concesso l'ambito **«Ciclo delle tessere»**. Da quel mo
   conferma da lì (vedi il manuale dei soci). Le prese in carico si registrano da sole;
 - ognuno vede solo i documenti della propria sezione.
 
+## Verifica dei soci fra federazione e sezione
+
+Con il ruolo indicato e l'ambito **«Soci e tessere: lettura»** concesso **da entrambe le parti**, la
+scheda della controparte mostra il riquadro **Soci** con il pulsante **Verifica soci** (serve il
+permesso di importare i soci). Il gestionale legge i soci che la controparte ha per quella sezione e
+li confronta con i propri; **nulla cambia finché non si conferma**:
+
+- i soci che **mancano** qui sono proposti **da creare** (popolamento): arrivano con anagrafica,
+  tipologia, ammissione, stato e tessere recenti, come nell'importazione da file;
+- per i soci **presenti** si mostrano le **modifiche campo per campo** (valore qui → valore della
+  controparte) e si sceglie a chi applicarle. Se il dato qui è stato modificato **dopo** quello
+  della controparte, la voce resta non spuntata e porta l'avviso «il dato qui è più recente»;
+- i soci **allineati** non compaiono; gli **esclusi** (es. socio di un'altra sezione) riportano il
+  motivo; i soci **presenti solo qui** sono elencati per informazione.
+
+Chi aggiorna cosa:
+
+- dalla **federazione** alla sezione arrivano le **anagrafiche** (residenza, contatti, dati di
+  nascita, matricola); stato, cessazioni e rinnovi restano della sezione;
+- dalla **sezione** alla federazione arrivano anche **stato, cessazioni e rinnovi** (tessera
+  dell'anno e quota versata, registrata come incassata altrove, senza ricevuta né prima nota): la
+  federazione li riceve e li verifica prima di applicarli;
+- nome, cognome e codice fiscale non cambiano mai; un socio cessato non si riattiva; un campo
+  vuoto della controparte non cancella il dato qui; una tessera con numero diverso si segnala e
+  si corregge a mano.
+
+La pagina della verifica resta consultabile con gli esiti. I dati ricevuti si cancellano appena la
+verifica è applicata (o dopo 30 giorni se non lo è).
+
 ## Cosa arriva dalle integrazioni
 
 - **Adesioni**: compaiono nell'evento come le altre, con origine «Integrazione (API)». Valgono le

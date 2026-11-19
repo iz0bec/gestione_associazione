@@ -22,7 +22,7 @@ from apps.core.views import PermessoMixin
 from . import chiavi, feed, rappresentazioni, servizi
 from .endpoint import impronte_tls
 from .forms import ControparteForm, InvitoForm, UsaInvitoForm
-from .models import AMBITI, ClienteApi
+from .models import AMBITI, ClienteApi, VerificaSoci
 
 
 def _indirizzo_istanza(request):
@@ -130,6 +130,7 @@ class ControparteView(PermessoMixin, DetailView):
             notifiche_in_coda=self.object.notifiche.filter(stato="in_coda").count(),
             adesioni_ricevute=self.object.adesioni.count(),
             domande_ricevute=self.object.domande.count(),
+            verifiche_soci=self.object.verifiche_soci.select_related("creata_da")[:5],
             notifiche_fallite=self.object.notifiche.filter(stato="fallita")
             .select_related("cambiamento")
             .order_by("-prossimo_tentativo")[:10],
@@ -215,3 +216,66 @@ class RuotaChiaviView(PermessoMixin, _ConCifratura, View):
             f"{chiavi.SOVRAPPOSIZIONE_GIORNI} giorni.",
         )
         return redirect("api:elenco")
+
+
+class VerificaSociNuovaView(PermessoMixin, View):
+    """Legge i soci della sezione presso la controparte e prepara la verifica."""
+
+    permission_required = "soci.importa_soci"
+
+    def post(self, request, pk):
+        from apps.collegamenti import soci as verifica_soci
+        from apps.soci import sezioni
+
+        from . import tessere
+
+        cliente = get_object_or_404(ClienteApi, pk=pk)
+        if sezione := tessere.sezione_per(cliente):
+            sezioni.controlla(request.user, sezione.pk)
+        try:
+            verifica = verifica_soci.verifica(cliente, request.user)
+        except verifica_soci.OperazioneNonValida as e:
+            messages.error(request, str(e))
+            return redirect("api:controparte", pk=pk)
+        return redirect("api:verifica_soci", pk=verifica.pk)
+
+
+class VerificaSociView(PermessoMixin, DetailView):
+    """Proposta della verifica (soci da creare, modifiche campo per campo) e sua applicazione."""
+
+    permission_required = "soci.importa_soci"
+    template_name = "api/verifica_soci.html"
+    context_object_name = "verifica"
+
+    def get_queryset(self):
+        from apps.soci import sezioni
+
+        qs = VerificaSoci.objects.select_related("cliente", "sezione", "creata_da", "applicata_da")
+        return sezioni.filtra(qs, self.request.user)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        v = self.object
+        ctx["voci"] = [x for x in v.proposta.get("voci", []) if x["stato"] != "invariato"]
+        ctx["proposte"] = [x for x in ctx["voci"] if x["stato"] in ("nuovo", "differenze")]
+        return ctx
+
+    def post(self, request, pk):
+        from apps.collegamenti import soci as verifica_soci
+
+        verifica = get_object_or_404(self.get_queryset(), pk=pk)
+        scelti = [int(x) for x in request.POST.getlist("scelti") if x.isdigit()]
+        if not scelti:
+            messages.warning(request, "Nessun socio scelto: nulla è stato modificato.")
+            return redirect("api:verifica_soci", pk=pk)
+        try:
+            verifica = verifica_soci.applica(verifica, scelti, request.user)
+        except verifica_soci.OperazioneNonValida as e:
+            messages.error(request, str(e))
+        else:
+            errori = sum(1 for e in verifica.esiti if e["esito"] == "errore")
+            fatti = len(verifica.esiti) - errori
+            testo = f"Soci creati o aggiornati: {fatti}"
+            testo += f"; errori: {errori}." if errori else "."
+            (messages.warning if errori else messages.success)(request, testo)
+        return redirect("api:verifica_soci", pk=pk)

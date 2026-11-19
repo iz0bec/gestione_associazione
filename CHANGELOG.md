@@ -5,6 +5,31 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.55] - 2026-11-19
+
+### Aggiunto
+- **Verifica soci fra federazione e sezione via API** (F4), nei due sensi: nella scheda della
+  controparte *Verifica soci* legge i soci della sezione presso l'altra installazione:
+  - i soci che mancano si **popolano** (anagrafica, ammissione, stato, tessere recenti);
+  - per quelli presenti mostra le **modifiche campo per campo** e si sceglie a chi applicarle,
+    con l'avviso quando il dato locale è più recente;
+  - dalla federazione arrivano le anagrafiche; dalla sezione anche stato, cessazioni e rinnovi
+    (quote come incassate altrove);
+  - nuovo indirizzo `/api/v1/soci` (ambito `soci:lettura`, sempre cifrato, ognuno vede solo la
+    propria sezione).
+
+- **Promemoria per l'archivio centrale**: quando la federazione (per una sezione) o il registro
+  nazionale (per la federazione) non sono collegati via API, ogni nuovo socio e ogni rettifica
+  dell'anagrafica diventa un promemoria da riportare a mano: pulsante *Da riportare all'archivio*
+  nei Soci, pagina da spuntare, riepilogo email ogni notte (`promemoria_archivio`). Nome
+  dell'archivio in *Sistema → Organizzazione*.
+
+### Modificato
+- **Rinnovo annuale**: dopo *Mostra i soci da rinnovare* si scelgono i soci da rinnovare (per
+  default tutti); chi non intende rinnovare resta senza tessera dell'anno.
+- Importazione dei soci: la fonte dei dati (delibera di ammissione, nota della quota, registro
+  attività) indica da dove arrivano, non sempre «registro soci nazionale».
+
 ## [1.0.54] - 2026-11-19
 
 ### Corretto

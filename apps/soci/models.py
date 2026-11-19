@@ -806,3 +806,36 @@ class OrdineTessere(ModelloBase):
 
     def __str__(self):
         return f"Ordine {self.anno}/{self.numero} ({self.quantita} tessere)"
+
+
+class PromemoriaArchivio(models.Model):
+    """Nuovo socio o rettifica dell'anagrafica da riportare a mano nell'archivio centrale
+    (federazione o registro nazionale) quando non è collegato via API. Le rettifiche successive
+    dello stesso socio si aggiungono al promemoria ancora da fare."""
+
+    class Tipo(models.TextChoices):
+        NUOVO = "nuovo", "Nuovo socio"
+        RETTIFICA = "rettifica", "Rettifica dell'anagrafica"
+
+    socio = models.ForeignKey(Socio, on_delete=models.CASCADE, related_name="promemoria_archivio")
+    tipo = models.CharField(max_length=10, choices=Tipo.choices)
+    archivio = models.CharField(max_length=150)
+    modifiche = models.JSONField(default=list, blank=True)  # [campo, prima, dopo]
+    creato_il = models.DateTimeField(auto_now_add=True)
+    aggiornato_il = models.DateTimeField(auto_now=True)
+    creato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    segnalato_il = models.DateTimeField(null=True, blank=True, editable=False)
+    fatto_il = models.DateTimeField(null=True, blank=True, db_index=True)
+    fatto_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "promemoria per l'archivio centrale"
+        verbose_name_plural = "promemoria per l'archivio centrale"
+        ordering = ["-creato_il"]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()}: {self.socio} ({self.archivio})"

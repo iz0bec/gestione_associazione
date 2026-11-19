@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Verifica dei soci con la controparte: soci da creare, modifiche campo per campo
+               da scegliere e applicare, esiti
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Verifica soci{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'api:controparte' verifica.cliente.pk %}">{{ verifica.cliente }}</a></div>{% endblock %}
+{% block titolo_pagina %}Verifica soci · {{ verifica.sezione }}{% endblock %}
+{% block contenuto %}
+{% with c=verifica.proposta.conteggi %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="small text-secondary mb-2">Letta il {{ verifica.creata_il|date:"d/m/Y H:i" }}{% if verifica.creata_da %} da {{ verifica.creata_da }}{% endif %} · {% if verifica.da_sezione %}dalla sezione arrivano anagrafiche, stato, cessazioni e rinnovi{% else %}dalla federazione arrivano le anagrafiche (stato e rinnovi restano della sezione){% endif %}.</div>
+    <span class="badge bg-green-lt me-1">da creare: {{ c.nuovo }}</span>
+    <span class="badge bg-yellow-lt me-1">con modifiche: {{ c.differenze }}</span>
+    <span class="badge bg-secondary-lt me-1">allineati: {{ c.invariato }}</span>
+    {% if c.escluso %}<span class="badge bg-red-lt me-1">esclusi: {{ c.escluso }}</span>{% endif %}
+    {% if verifica.proposta.solo_qui %}<span class="badge bg-blue-lt">solo qui: {{ verifica.proposta.solo_qui|length }}</span>{% endif %}
+  </div>
+</div>
+{% endwith %}
+
+{% if verifica.applicata_il %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title">Esito</h3><div class="card-actions small text-secondary">applicata il {{ verifica.applicata_il|date:"d/m/Y H:i" }}{% if verifica.applicata_da %} da {{ verifica.applicata_da }}{% endif %}</div></div>
+  {% if verifica.esiti %}
+  <div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr><th>Socio</th><th>Esito</th><th>Note</th></tr></thead>
+    <tbody>{% for e in verifica.esiti %}<tr><td>{{ e.nome }}</td><td><span class="badge {% if e.esito == 'errore' %}bg-red-lt{% elif e.esito == 'creato' %}bg-green-lt{% else %}bg-yellow-lt{% endif %}">{{ e.esito }}</span></td><td class="small">{{ e.note|join:"; " }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="card-body text-secondary">Nessuna modifica applicata.</div>{% endif %}
+</div>
+{% endif %}
+
+{% if voci %}
+<form method="post" data-conferma="Applicare le modifiche ai soci scelti?">{% csrf_token %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title">{% if verifica.applicata_il %}Proposta{% else %}Cosa fare{% endif %}</h3>
+    {% if not verifica.applicata_il and proposte %}<div class="card-actions"><label class="form-check mb-0"><input class="form-check-input" type="checkbox" data-seleziona-tutte="scelti"><span class="form-check-label">tutti</span></label></div>{% endif %}
+  </div>
+  <div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr><th class="w-1"></th><th>Socio</th><th>Proposta</th><th>Modifiche (qui → controparte)</th></tr></thead>
+    <tbody>{% for v in voci %}<tr>
+      <td>{% if v.stato == 'nuovo' or v.stato == 'differenze' %}<input class="form-check-input" type="checkbox" name="scelti" value="{{ v.indice }}" aria-label="Applica a {{ v.nome }}"{% if v.stato == 'nuovo' or v.piu_recente != 'qui' %} checked{% endif %}{% if verifica.applicata_il %} disabled{% endif %}>{% endif %}</td>
+      <td>{{ v.nome }}{% if v.codice_fiscale %}<div class="small text-secondary">{{ v.codice_fiscale }}</div>{% endif %}</td>
+      <td>{% if v.stato == 'nuovo' %}<span class="badge bg-green-lt">da creare</span>{% elif v.stato == 'differenze' %}<span class="badge bg-yellow-lt">da aggiornare</span>{% if v.piu_recente == 'qui' %}<div class="small text-warning mt-1">il dato qui è più recente</div>{% elif v.piu_recente == 'controparte' %}<div class="small text-secondary mt-1">la controparte è più recente</div>{% endif %}{% else %}<span class="badge bg-red-lt">escluso</span>{% endif %}{% if v.motivo %}<div class="small text-secondary">{{ v.motivo }}</div>{% endif %}</td>
+      <td class="small">{% for m in v.modifiche %}<div><strong>{{ m.0 }}</strong>: {{ m.1 }} → {{ m.2 }}</div>{% empty %}{% if v.stato == 'nuovo' %}iscrizione al libro soci con i dati ricevuti{% endif %}{% endfor %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% if not verifica.applicata_il and proposte %}
+  <div class="card-footer d-flex gap-2 align-items-center">
+    <button class="btn btn-primary" type="submit"><i class="ti ti-check me-1"></i>Applica ai soci scelti</button>
+    <span class="small text-secondary">Le voci non scelte restano come sono. Nome, cognome e codice fiscale non cambiano mai; un socio cessato non si riattiva.</span>
+  </div>
+  {% endif %}
+</div>
+</form>
+{% elif not verifica.applicata_il %}
+<div class="alert alert-success">I soci delle due parti sono allineati: niente da fare.</div>
+{% endif %}
+
+{% if verifica.proposta.solo_qui %}
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Soci presenti solo qui</h3></div>
+  <div class="card-body small">Non risultano alla controparte; nessuna modifica automatica (la controparte li riceverà con la sua verifica).
+    <ul class="mb-0 mt-2">{% for s in verifica.proposta.solo_qui %}<li>n. {{ s.numero }} · {{ s.nome }} ({{ s.stato|lower }})</li>{% endfor %}</ul>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

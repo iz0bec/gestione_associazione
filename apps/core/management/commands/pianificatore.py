@@ -84,6 +84,7 @@ class Command(BaseCommand):
                 self._esegui("registro_giornaliero")
                 self._esegui("conservazione_dati")  # una volta al giorno, insieme al registro
                 self._esegui("aggiorna_collegamenti")
+                self._esegui("promemoria_archivio")
                 ultimo_registro = adesso.date()
             if (
                 settings.BACKUP_AUTOMATICO

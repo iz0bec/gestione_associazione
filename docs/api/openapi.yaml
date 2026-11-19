@@ -584,6 +584,27 @@ paths:
         "403": { $ref: "#/components/responses/Problema" }
         "404": { $ref: "#/components/responses/Problema" }
 
+  /soci:
+    get:
+      tags: [cambiamenti]
+      operationId: sociDellaSezione
+      summary: Soci della sezione della controparte, per la verifica fra federazione e sezione
+      description: |
+        Ambito `soci:lettura` e collegamento con ruolo (federazione o sezione). Risposta sempre
+        cifrata (JWE). La federazione restituisce i soci della sezione legata alla controparte,
+        la sezione i propri; cessati compresi, con le tessere dell'anno in corso e del precedente
+        (e degli anni successivi già aperti). Chi riceve confronta e sceglie cosa applicare: dalla
+        federazione valgono le anagrafiche, dalla sezione anche stato, cessazioni e rinnovi.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+      responses:
+        "200":
+          description: Sezione e soci (contenuto del JWE).
+          content:
+            application/jose:
+              schema: { $ref: "#/components/schemas/Jwe" }
+        "403": { $ref: "#/components/responses/Problema" }
+
   /contatti:
     post:
       tags: [contatti]

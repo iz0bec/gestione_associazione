@@ -27,6 +27,7 @@ from .models import (
     ClienteApi,
     InvitoAbbinamento,
     NonceVisto,
+    VerificaSoci,
 )
 
 VALIDITA_INVITO = timedelta(hours=24)
@@ -274,6 +275,10 @@ def pulizia():
         "cambiamenti": feed.conserva(),
         "idempotenza": ChiaveIdempotenza.objects.filter(
             creata_il__lt=adesso - CONSERVAZIONE_IDEMPOTENZA
+        ).delete()[0],
+        # verifiche dei soci mai applicate: i dati ricevuti non si tengono oltre 30 giorni
+        "verifiche_soci": VerificaSoci.objects.filter(
+            applicata_il__isnull=True, creata_il__lt=adesso - timedelta(days=30)
         ).delete()[0],
         "sospese": sum(
             sospendi_se_scaduta(c)

@@ -192,20 +192,11 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   (trasferimento del socio, eventi condivisi, verifica tessera) e kit per chi integra.
   ✅ Già fatto della F4: ruolo federazione/sezione e ciclo delle tessere (richieste, consegne,
   ricevute, prese in carico).
-  - **Prossimo passo (F4, in programma dal 19/11/2026): popolare la base soci di una sezione via API
-    dalla federazione**, al posto del file Excel. L'ambito `soci:lettura` è dichiarato ma ancora
-    senza indirizzi.
-    - *Federazione*: indirizzo `/soci` e flusso `soci` nel feed, con l'ambito `soci:lettura`.
-      Risposte sempre cifrate e risolte per chi chiama: ogni sezione vede solo i propri soci,
-      cessati compresi.
-    - *Sezione*: la prima volta una lettura completa, poi i cambiamenti dal cursore
-      (`sincronizza_collegamenti`).
-    - *Regole*: stessi servizi e stesse regole dell'importazione Excel (iscrizione, tessere col
-      loro numero, quote incassate altrove senza ricevuta né prima nota, cessazioni con la causa).
-      Nome, cognome e codice fiscale non cambiano mai e un socio cessato non viene riattivato.
-    - *Conferma*: il primo caricamento con anteprima e conferma.
-    - *Da decidere*: gli aggiornamenti successivi entrano da soli o vanno in «documenti in arrivo»
-      da confermare?
+  - ✅ **Verifica soci fra federazione e sezione** (1.0.55), nei due sensi, al posto del file Excel:
+    `/soci` cifrato con l'ambito `soci:lettura`, ogni sezione vede solo i propri soci (cessati
+    compresi). *Verifica soci* nella scheda della controparte: chi manca si **popola**, per chi c'è
+    si mostrano le **modifiche campo per campo** e si sceglie cosa applicare (con l'indicazione di
+    quale dato è più recente). Stesse regole dell'importazione Excel.
     - *Chi aggiorna cosa* (deciso il 19/11/2026):
       - la **sezione** via API aggiorna i soci (anagrafiche) e i **rinnovi** (tessere e quote dell'anno);
       - la **federazione** aggiorna i soci (anagrafiche), ma i rinnovi non li registra: li **riceve**
@@ -214,7 +205,10 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
       - se federazione e sezione modificano lo stesso socio vale l'**ordine di tempo** (le modifiche
         si applicano nell'ordine in cui sono state fatte) e l'incongruenza si **notifica per email**
         a entrambe le parti.
-    - *Ordine*: prima federazione → sezione; il ritorno sezione → federazione in un secondo passo.
+  - **Prossimo passo (F4)**: allineamento **automatico** dopo la prima verifica (lettura periodica
+    con `sincronizza_collegamenti`), con l'ordine di tempo, l'avviso email delle incongruenze e la
+    notifica alla federazione di ogni rinnovo ricevuto; spinta (`POST /consegne`) per le sezioni
+    dietro NAT.
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.

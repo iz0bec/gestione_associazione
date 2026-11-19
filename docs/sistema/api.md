@@ -51,6 +51,7 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/api/v1/documenti`, `/api/v1/documenti/{id}/file` | firma + `documenti:lettura` | documenti pubblici |
 | `/api/v1/organigramma` | firma + `organigramma:lettura` | cariche in corso (ruolo e nome) |
 | `/api/v1/tessere/{codice}` | firma + `tessere:verifica` | validità, anno e sezione di una tessera (nient'altro) |
+| `/api/v1/soci` | firma + `soci:lettura` + ruolo | soci della sezione della controparte (cifrati), per la *Verifica soci* |
 | `/api/v1/cambiamenti?flusso=tessere`, `/api/v1/ciclo-tessere/{risorsa}/{uuid}` | firma + `tessere:scambio` + ruolo | ciclo delle tessere fra federazione e sezione: consegne, ricevute, richieste, prese in carico (con il PDF) |
 
 Le risposte, comprese quelle pubbliche e gli errori, sono **firmate** con la chiave dell'istanza.

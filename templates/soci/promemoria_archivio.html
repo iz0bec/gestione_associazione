@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Promemoria per l'archivio centrale: nuovi soci e rettifiche delle anagrafiche da
+               riportare a mano (federazione o registro nazionale non collegati via API)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Archivio centrale{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:elenco' %}">Soci</a></div>{% endblock %}
+{% block titolo_pagina %}Da riportare all'archivio centrale{% endblock %}
+{% block azioni %}<div class="btn-list">{% if fatti %}<a class="btn" href="{% url 'soci:promemoria_archivio' %}">Da fare</a>{% else %}<a class="btn" href="?fatti=1">Già riportati</a>{% endif %}</div>{% endblock %}
+{% block contenuto %}
+<div class="alert {% if collegato %}alert-info{% else %}alert-warning{% endif %}">
+  {% if collegato %}La federazione è collegata via API e legge i soci con la <em>Verifica soci</em>: non nascono nuovi promemoria. Restano quelli precedenti al collegamento.
+  {% else %}Archivio centrale: <strong>{{ archivio }}</strong> (si cambia in <em>Sistema → Organizzazione</em>). Ogni nuovo socio e ogni rettifica dell'anagrafica di un socio va riportata anche lì: una volta fatto, spuntarla qui. Le rettifiche successive dello stesso socio si aggiungono allo stesso promemoria.{% endif %}
+</div>
+<form method="post">{% csrf_token %}
+<div class="card">
+  <div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr>{% if not fatti %}<th class="w-1"><input class="form-check-input" type="checkbox" data-seleziona-tutte="scelti" aria-label="Tutti"></th>{% endif %}<th>Socio</th><th>Cosa</th><th>Dati da riportare</th><th>{% if fatti %}Riportato{% else %}Dal{% endif %}</th></tr></thead>
+    <tbody>{% for p in promemoria %}<tr>
+      {% if not fatti %}<td><input class="form-check-input" type="checkbox" name="scelti" value="{{ p.pk }}" aria-label="Riportato: {{ p.socio }}"></td>{% endif %}
+      <td><a href="{% url 'soci:dettaglio' p.socio.pk %}">{{ p.socio.soggetto.nome_completo }}</a><div class="small text-secondary">n. {{ p.socio.numero }}{% if p.socio.matricola %} · matricola {{ p.socio.matricola }}{% endif %} · {{ p.socio.sezione }}</div></td>
+      <td><span class="badge {% if p.tipo == 'nuovo' %}bg-green-lt{% else %}bg-yellow-lt{% endif %}">{{ p.get_tipo_display }}</span><div class="small text-secondary">→ {{ p.archivio }}</div></td>
+      <td class="small">{% for m in p.modifiche %}<div><strong>{{ m.0 }}</strong>: {% if m.1 %}{{ m.1 }} → {% endif %}{{ m.2 }}</div>{% endfor %}</td>
+      <td class="small text-nowrap">{% if fatti %}{{ p.fatto_il|date:"d/m/Y H:i" }}{% if p.fatto_da %}<div class="text-secondary">{{ p.fatto_da }}</div>{% endif %}{% else %}{{ p.creato_il|date:"d/m/Y" }}{% if p.aggiornato_il|date:"Ymd" != p.creato_il|date:"Ymd" %}<div class="text-secondary">agg. {{ p.aggiornato_il|date:"d/m/Y" }}</div>{% endif %}{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="5" class="text-center text-secondary py-4">{% if fatti %}Nessun promemoria riportato.{% else %}Niente da riportare.{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if not fatti and promemoria %}<div class="card-footer"><button class="btn btn-primary" type="submit"><i class="ti ti-check me-1"></i>Segna come riportati</button></div>{% endif %}
+</div>
+</form>
+{% include "includes/paginazione.html" %}
+{% endblock %}

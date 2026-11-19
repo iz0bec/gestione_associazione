@@ -243,9 +243,11 @@ limitate a 20 l'ora per indirizzo; il codice nel QR è casuale e non si ricava d
 
 ![L'incasso delle quote in blocco](immagini/incasso-quote.jpg)
 
-**Tesseramento → Rinnovo annuale**: scelto l'anno, mostra i soci attivi non ancora rinnovati e
-le tessere fisiche disponibili; alla conferma crea il tesseramento per tutti (quota da pagare della
-loro tipologia) e, se richiesto, attribuisce le tessere. Gli incassi si registrano poi man mano.
+**Tesseramento → Rinnovo annuale**: scelto l'anno, *Mostra i soci da rinnovare* elenca i soci
+attivi non ancora rinnovati, **tutti spuntati**, e le tessere fisiche disponibili. Si toglie la spunta
+a chi **non intende rinnovare**; alla conferma si crea il tesseramento solo per i soci scelti (quota
+da pagare della loro tipologia) e, se richiesto, si attribuiscono le tessere. Chi non è stato scelto
+resta senza tessera dell'anno e si può rinnovare in seguito. Gli incassi si registrano poi man mano.
 
 La pagina **Tesseramento** riassume per l'anno scelto: tessere rilasciate e pagate, totale
 incassato e da incassare, soci non in regola e soci ancora senza tessera.
@@ -439,7 +441,28 @@ esente, NO = da versare) e **data del pagamento**. All'importazione:
   **cessato** non viene riattivato dal file.
 
 Così ogni installazione può aggiornare l'altra: chi registra una modifica la esporta, l'altra la
-importa con le stesse opzioni.
+importa con le stesse opzioni. Se le due installazioni sono collegate via API, al posto del file si
+usa la **Verifica soci** della scheda della controparte (vedi *Collegamenti API*).
+
+### Da riportare all'archivio centrale
+
+Quando l'**archivio centrale** non è collegato via API - la federazione per una sezione senza
+collegamento, il **registro soci nazionale** per la federazione - ogni **nuovo socio** e ogni
+**rettifica dell'anagrafica** di un socio (nome, codice fiscale, nascita, residenza, contatti) diventa
+un **promemoria**: va riportata a mano anche lì.
+
+- In *Soci* compare il pulsante **Da riportare all'archivio** con il numero dei promemoria aperti;
+  la pagina elenca socio, cosa riportare (valore precedente → nuovo) e archivio. Riportati i dati,
+  si spuntano e **Segna come riportati** (restano visibili in *Già riportati*).
+- Le rettifiche successive dello stesso socio si aggiungono al promemoria ancora aperto, con il
+  valore finale.
+- Ogni notte chi gestisce i soci riceve per email il riepilogo delle novità (ognuno per le proprie
+  sezioni).
+- Non nascono promemoria per i dati che arrivano proprio dall'archivio centrale: importazione dal
+  registro nazionale o da file, *Verifica soci* con la federazione. Sulla federazione, invece, i
+  dati ricevuti dalle sezioni generano il promemoria per il registro nazionale.
+- Il nome dell'archivio si indica in *Sistema → Organizzazione*, **Archivio centrale dei soci**;
+  vuoto: la federazione se c'è una sola sezione, altrimenti il registro soci nazionale.
 
 ## Tipologie
 

@@ -1,4 +1,10 @@
 {% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo annuale delle tessere: soci attivi senza tessera dell'anno, scelta di chi
+               rinnova (per default tutti) e rilascio con le tessere fisiche disponibili
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
 {% block titolo %}Rinnovo annuale{% endblock %}
 {% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'soci:tessere' %}?anno={{ anno }}">Tesseramento</a></div>{% endblock %}
 {% block titolo_pagina %}Rinnovo delle tessere {{ anno }}{% endblock %}
@@ -11,13 +17,13 @@
         <button class="btn w-100" type="submit">Mostra i soci da rinnovare</button>
       </form>
       <div class="card-body border-top">
-        <p>Saranno rinnovati <strong>{{ da_rinnovare|length }}</strong> soci per il {{ anno }}, con la quota «da pagare» della tipologia di ciascuno. Gli incassi si registrano poi uno per uno.</p>
-        <p>Tessere fisiche {{ anno }} disponibili: <strong>{{ disponibili }}</strong>{% if disponibili < da_rinnovare|length %} <span class="text-orange">(non bastano per tutti: gli altri resteranno «da attribuire»)</span>{% endif %}.</p>
+        <p>Soci attivi senza tessera {{ anno }}: <strong>{{ da_rinnovare|length }}</strong>. Si rinnovano <strong>solo quelli scelti</strong> nell'elenco (per default tutti): togliere la spunta a chi non intende rinnovare. La quota è «da pagare» secondo la tipologia di ciascuno; gli incassi si registrano poi.</p>
+        <p>Tessere fisiche {{ anno }} disponibili: <strong>{{ disponibili }}</strong>{% if disponibili < da_rinnovare|length %} <span class="text-orange">(se non bastano, gli altri resteranno «da attribuire»)</span>{% endif %}.</p>
         {% if da_rinnovare %}
-        <form method="post" data-conferma="Rinnovare {{ da_rinnovare|length }} soci per il {{ anno }}?">{% csrf_token %}
+        <form method="post" id="rinnovo" data-conferma="Rinnovare per il {{ anno }} i soci scelti?">{% csrf_token %}
           <input type="hidden" name="anno" value="{{ anno }}"><input type="hidden" name="conferma" value="1">
           <label class="form-check mb-3"><input class="form-check-input" type="checkbox" name="attribuisci" checked><span class="form-check-label">Attribuisci subito le tessere disponibili, in ordine di numero socio</span></label>
-          <button class="btn btn-primary w-100" type="submit"><i class="ti ti-refresh me-1"></i>Rinnova {{ da_rinnovare|length }} soci</button>
+          <button class="btn btn-primary w-100" type="submit"><i class="ti ti-refresh me-1"></i>Rinnova i soci scelti</button>
         </form>
         {% endif %}
       </div>
@@ -28,9 +34,9 @@
       <div class="card-header"><h2 class="card-title">Soci attivi senza tessera {{ anno }}</h2></div>
       <div class="table-responsive">
         <table class="table table-vcenter card-table">
-          <thead><tr><th>N.</th><th>Socio</th><th>Tipologia</th><th class="text-end">Quota</th></tr></thead>
+          <thead><tr>{% if da_rinnovare %}<th class="w-1"><input class="form-check-input" type="checkbox" form="rinnovo" data-seleziona-tutte="soci" checked aria-label="Tutti"></th>{% endif %}<th>N.</th><th>Socio</th><th>Tipologia</th><th class="text-end">Quota</th></tr></thead>
           <tbody>
-          {% for s in da_rinnovare %}<tr><td class="text-secondary">{{ s.numero }}</td><td>{{ s.soggetto.nome_completo }}</td><td>{{ s.tipologia }}</td><td class="text-end">{{ s.tipologia.quota_annua }} €</td></tr>
+          {% for s in da_rinnovare %}<tr><td><input class="form-check-input" type="checkbox" form="rinnovo" name="soci" value="{{ s.pk }}" checked aria-label="Rinnova {{ s.soggetto.nome_completo }}"></td><td class="text-secondary">{{ s.numero }}</td><td>{{ s.soggetto.nome_completo }}</td><td>{{ s.tipologia }}</td><td class="text-end">{{ s.tipologia.quota_annua }} €</td></tr>
           {% empty %}<tr><td colspan="4" class="text-secondary py-4 text-center">Tutti i soci attivi hanno la tessera {{ anno }}.</td></tr>{% endfor %}
           </tbody>
         </table>

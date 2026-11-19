@@ -125,6 +125,14 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Indirizzo istituzionale della federazione: riceve le richieste di tessere.",
     )
+    archivio_centrale = models.CharField(
+        "archivio centrale dei soci",
+        max_length=150,
+        blank=True,
+        help_text="Dove riportare a mano nuovi soci e rettifiche delle anagrafiche quando non è "
+        "collegato via API, es. «Registro soci nazionale» o «Federazione Potenza Matera». "
+        "Vuoto: la federazione se c'è una sola sezione, altrimenti il registro nazionale.",
+    )
     modulo_intestazione = models.TextField(
         "intestazione del modulo di adesione",
         blank=True,

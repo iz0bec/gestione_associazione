@@ -15,6 +15,7 @@
     </div>
   </div>
   {% endif %}
+  {% if promemoria_da_fare %}<a class="btn btn-warning" href="{% url 'soci:promemoria_archivio' %}" title="Nuovi soci e rettifiche da riportare nell'archivio centrale"><i class="ti ti-bell me-1"></i>Da riportare all'archivio <span class="badge bg-white text-warning ms-1">{{ promemoria_da_fare }}</span></a>{% endif %}
   {% if perms.soci.add_socio %}<a class="btn btn-primary" href="{% url 'soci:nuovo' %}"><i class="ti ti-user-plus me-1"></i>Nuovo socio</a>{% endif %}
 </div>
 {% endblock %}

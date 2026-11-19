@@ -398,3 +398,34 @@ class DocumentoRicevuto(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} da {self.cliente}"
+
+
+class VerificaSoci(models.Model):
+    """Verifica dei soci con una controparte (ADR-030, F4): l'elenco ricevuto e la proposta
+    (soci da creare, modifiche campo per campo) restano qui finché chi verifica non sceglie cosa
+    applicare. Dopo l'applicazione l'elenco ricevuto si cancella (restano gli esiti)."""
+
+    cliente = models.ForeignKey(ClienteApi, on_delete=models.CASCADE, related_name="verifiche_soci")
+    sezione = models.ForeignKey("soci.Sezione", on_delete=models.PROTECT, related_name="+")
+    da_sezione = models.BooleanField(
+        default=False, help_text="La controparte è la sezione: manda anche stato e rinnovi."
+    )
+    creata_il = models.DateTimeField(auto_now_add=True)
+    creata_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    righe = models.JSONField(default=list, blank=True)
+    proposta = models.JSONField(default=dict, blank=True)
+    applicata_il = models.DateTimeField(null=True, blank=True)
+    applicata_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    esiti = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        verbose_name = "verifica dei soci"
+        verbose_name_plural = "verifiche dei soci"
+        ordering = ["-creata_il"]
+
+    def __str__(self):
+        return f"Verifica soci con {self.cliente} del {self.creata_il:%d/%m/%Y %H:%M}"

@@ -13,6 +13,7 @@ import csv
 import io
 import re
 import unicodedata
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
@@ -327,6 +328,8 @@ class Opzioni:
     valido: bool = False  # colonna «Valido» (socio validato = in regola): sì -> quota incassata,
     # no -> quota da incassare; vuota -> vale `quote_pagate`
     sezioni_consentite: set | None = None  # utente limitato a queste sezioni
+    fonte: str = "registro soci nazionale"  # da dove arrivano i dati (delibera, note, registro)
+    da_archivio_centrale: bool = True  # i dati arrivano dall'archivio centrale: nessun promemoria
 
 
 @dataclass
@@ -536,7 +539,7 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
             if d.get("cf_non_valido") else "",
             **{c: d[c] for c in CAMPI_ANAGRAFICI if d.get(c)},
         )  # fmt: skip
-        registra(Azione.CREAZIONE, soggetto, utente=utente, origine="registro nazionale")
+        registra(Azione.CREAZIONE, soggetto, utente=utente, origine=opzioni.fonte)
         stato = "nuovo"
     else:
         completati = [c for c in CAMPI_ANAGRAFICI if d.get(c) and not getattr(soggetto, c)]
@@ -573,7 +576,7 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
             ammissione = d["data_cessazione"]
         socio = servizi.ammetti_socio(
             soggetto, tipologia, utente, data_ammissione=ammissione,
-            delibera="Importato dal registro soci nazionale", sezione=sezione,
+            delibera=f"Importato dal {opzioni.fonte}", sezione=sezione,
             matricola=d.get("matricola", ""),
             note=f"Incarico nel registro nazionale: {d['incarico']}" if d.get("incarico") else "",
         )  # fmt: skip
@@ -620,9 +623,7 @@ def _riga(d, sezione, opzioni, utente, soggetto=None):
         if cambi:
             socio.modificato_da = utente
             socio.save()
-            registra(
-                Azione.MODIFICA, socio, utente=utente, campi=cambi, origine="registro nazionale"
-            )
+            registra(Azione.MODIFICA, socio, utente=utente, campi=cambi, origine=opzioni.fonte)
             stato = "aggiornato" if stato != "nuovo" else stato
             note.append("aggiornati: " + ", ".join(cambi))
 
@@ -699,10 +700,10 @@ def _causa(testo):
     return next((causa for chiave, causa in parole if chiave in t), c.ALTRO)
 
 
-def _incassa_esterno(tessera, utente, pagata_il=None):
+def _incassa_esterno(tessera, utente, pagata_il=None, fonte="Registro soci nazionale"):
     servizi.segna_incasso_esterno(
         tessera, utente, pagata_il=pagata_il or tessera.data_rilascio,
-        nota="Registro soci nazionale",
+        nota=fonte[:1].upper() + fonte[1:],
     )  # fmt: skip
 
 
@@ -713,7 +714,7 @@ def _tessera(socio, codice, anno, rilascio, opzioni, utente, *, pagata=None, pag
         if tessera.carta.codice != codice and str(tessera.carta.numero) != codice.lstrip("0"):
             return [f"tessera {anno}: locale {tessera.carta.codice}, nel registro {codice}"]
         if pagata and opzioni.valido and not tessera.pagata and tessera.importo > 0:
-            _incassa_esterno(tessera, utente, pagata_il)
+            _incassa_esterno(tessera, utente, pagata_il, opzioni.fonte)
             return [f"quota {anno} segnata incassata (validato nel registro)"]
         return []
     if socio.stato != Socio.Stato.ATTIVO:
@@ -728,7 +729,7 @@ def _tessera(socio, codice, anno, rilascio, opzioni, utente, *, pagata=None, pag
                 )
             tessera = servizi.attribuisci_carta(tessera, utente, codice)
             if pagata:
-                _incassa_esterno(tessera, utente, pagata_il)
+                _incassa_esterno(tessera, utente, pagata_il, opzioni.fonte)
     except ValidationError as e:
         return [f"tessera {anno} n. {codice} non attribuita: {' '.join(e.messages)}"]
     return [f"tessera {tessera.codice} attribuita per il {anno}"]
@@ -743,8 +744,11 @@ def _assenti(sezioni_file, trovati):
 def elabora(righe, opzioni, utente, *, esegui=False, avanzamento=None):
     """Importa le righe. Senza `esegui` tutto avviene in una transazione poi annullata:
     l'anteprima mostra esattamente ciò che accadrà, senza modificare nulla."""
+    from . import promemoria
+
     rapporto = Rapporto(eseguito=esegui)
-    with transaction.atomic():
+    sospesi = promemoria.sospesi() if opzioni.da_archivio_centrale else nullcontext()
+    with sospesi, transaction.atomic():
         cache = {}
         for n, grezza in enumerate(righe, start=1):
             if avanzamento:

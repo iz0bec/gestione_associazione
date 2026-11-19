@@ -264,6 +264,23 @@ def documento_tessere(request, risorsa, uuid_risorsa):
     return risposta
 
 
+@endpoint(metodi=("GET",), ambito="soci:lettura")
+def soci(request):
+    """Soci della sezione visibile alla controparte (la federazione vede quelli della sezione
+    legata, la sezione i propri), cessati compresi, con le tessere recenti. Sempre cifrato."""
+    from apps.soci import allineamento
+
+    from . import tessere
+
+    sezione = tessere.sezione_per(request.cliente_api)
+    if sezione is None:
+        dettaglio = "La controparte non è collegata come federazione o come sezione."
+        raise Problema("operazione-non-valida", 403, dettaglio)
+    dati = {"sezione": {"codice": sezione.codice, "nome": sezione.nome},
+            "soci": allineamento.elenco(sezione)}  # fmt: skip
+    return risposta_cifrata(request, dati)
+
+
 @endpoint(metodi=("GET",))
 def riepilogo(request, flusso):
     _, visibili = _flusso(request, flusso)

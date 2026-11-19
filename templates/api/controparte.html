@@ -65,6 +65,18 @@
       </div>
     </div>
     {% endif %}
+    {% if c.ruolo and c.stato == 'attiva' and perms.soci.importa_soci %}
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-users me-1"></i>Soci{% if c.sezione %} di {{ c.sezione }}{% endif %}</h3></div>
+      <div class="card-body small">
+        <p class="mb-2">{% if c.ruolo == 'sezione' %}Confronta i soci di questa sezione con quelli che la sezione ha nel suo gestionale: anagrafiche, stato e rinnovi.{% else %}Confronta i soci della sezione con quelli che la federazione ha nel suo gestionale: dalla federazione arrivano le anagrafiche.{% endif %}
+          I soci che mancano qui si creano; per quelli presenti si mostrano le modifiche da fare e si sceglie quali applicare.</p>
+        <form method="post" action="{% url 'api:verifica_soci_nuova' c.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-user-check me-1"></i>Verifica soci</button></form>
+        {% if verifiche_soci %}<div class="mt-3"><strong>Verifiche recenti</strong>
+          <ul class="mb-0">{% for v in verifiche_soci %}<li><a href="{% url 'api:verifica_soci' v.pk %}">{{ v.creata_il|date:"d/m/Y H:i" }}</a>{% if v.creata_da %} · {{ v.creata_da }}{% endif %} · {% if v.applicata_il %}applicata{% else %}<span class="text-warning">da decidere</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+      </div>
+    </div>
+    {% endif %}
     {% if c.impronta %}
     <div class="card{% if c.stato == 'in_prova' %} border-warning{% endif %}">
       <div class="card-header"><h3 class="card-title"><i class="ti ti-fingerprint me-1"></i>Impronta dell'abbinamento</h3></div>

@@ -14,3 +14,8 @@ class SociConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.soci"
     verbose_name = "Soci e tesseramento"
+
+    def ready(self):
+        from . import promemoria
+
+        promemoria.collega()

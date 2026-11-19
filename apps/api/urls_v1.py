@@ -29,6 +29,7 @@ urlpatterns = [
     path("documenti", endpoint.documenti, name="documenti"),
     path("documenti/<int:pk>/file", endpoint.documento_file, name="documento_file"),
     path("organigramma", endpoint.organigramma, name="organigramma"),
+    path("soci", endpoint.soci, name="soci"),
     path("tessere/<str:codice>", endpoint.verifica_tessera, name="verifica_tessera"),
     path(
         "ciclo-tessere/<str:risorsa>/<uuid:uuid_risorsa>",

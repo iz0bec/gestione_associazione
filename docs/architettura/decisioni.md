@@ -598,6 +598,11 @@ sezione → **F5** sezione ↔ sezione e kit per chi integra.
   rinnovi non li registra: li **riceve** dalle sezioni e li **supervisiona** (notifica di ogni
   modifica, verifica di cosa è avvenuto). Modifiche allo stesso socio da entrambe le parti: vale
   l'**ordine di tempo** e l'incongruenza si **notifica per email**.
+- **Verifica soci** (19/11/2026): un solo comando, nei due sensi. Si legge `/soci` (cifrato) e
+  si confronta: chi manca si **popola**, per chi c'è si mostra la modifica da effettuare campo per
+  campo e si chiede se applicarla; l'indicazione «più recente» viene dalle date di modifica delle
+  due parti. Riusa le regole dell'importazione Excel; i dati ricevuti si cancellano
+  all'applicazione (o dopo 30 giorni).
 - **Trasporto**: ognuno **legge** dall'altro ciò che gli è destinato (lettura periodica dei flussi
   con verifica della catena, cursore salvato). Una sezione non raggiungibile (dietro NAT) usa la
   **spinta** (`POST /consegne`).

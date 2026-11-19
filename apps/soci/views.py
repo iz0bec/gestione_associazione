@@ -116,6 +116,10 @@ class ElencoView(PermessoMixin, FilterView):
         per_socio = {t.socio_id: t for t in tessere}
         ctx["righe"] = [(s, per_socio.get(s.pk)) for s in soci]
         ctx["anno"] = anno
+        if not self.request.htmx and self.request.user.has_perm("soci.change_socio"):
+            from . import promemoria
+
+            ctx["promemoria_da_fare"] = promemoria.da_fare(self.request.user).count()
         return ctx
 
 
@@ -521,17 +525,24 @@ class RinnovoView(PermessoMixin, FormView):
         if self.request.method == "GET" or self.request.POST.get("conferma") != "1":
             return self.render_to_response(self.get_context_data(form=form))
         anno = form.cleaned_data["anno"]
+        scelti = [int(x) for x in self.request.POST.getlist("soci") if x.isdigit()]
+        if not scelti:
+            messages.warning(self.request, "Nessun socio scelto: nessun rinnovo.")
+            return redirect(f"{reverse('soci:rinnovo')}?anno={anno}")
         rilasciate, errori = servizi.rinnovo_massivo(
             anno,
             self.request.user,
             attribuisci=form.cleaned_data["attribuisci"],
             sezioni=sezioni.id_sezioni(self.request.user),
+            soci=scelti,
         )
         senza = sum(1 for t in rilasciate if not t.attribuita)
+        esclusi = servizi.soci_da_rinnovare(anno, sezioni.id_sezioni(self.request.user)).count()
         messages.success(
             self.request,
             f"Tesseramento {anno}: {len(rilasciate)} soci rinnovati"
-            + (f", {senza} ancora senza tessera fisica." if senza else "."),
+            + (f", {senza} ancora senza tessera fisica" if senza else "")
+            + (f"; {esclusi} non scelti restano senza tessera {anno}." if esclusi else "."),
         )
         for socio, errore in errori:
             messages.warning(self.request, f"{socio}: {errore}")
@@ -1428,3 +1439,45 @@ class CaricaModuloView(PermessoMixin, View):
         except OperazioneNonValida as e:
             _errore(request, e)
         return redirect(f"{socio.get_absolute_url()}#modulo-adesione")
+
+
+class PromemoriaArchivioView(PermessoMixin, ListView):
+    """Nuovi soci e rettifiche da riportare a mano nell'archivio centrale (federazione o
+    registro nazionale) non collegato via API; si spuntano quando sono stati riportati."""
+
+    permission_required = "soci.change_socio"
+    template_name = "soci/promemoria_archivio.html"
+    context_object_name = "promemoria"
+    paginate_by = 100
+
+    def get_queryset(self):
+        from . import promemoria
+        from .models import PromemoriaArchivio
+
+        if self.request.GET.get("fatti"):
+            qs = PromemoriaArchivio.objects.filter(fatto_il__isnull=False).select_related(
+                "socio__soggetto", "socio__sezione", "fatto_da"
+            )
+            return sezioni.filtra(qs, self.request.user, "socio__sezione").order_by("-fatto_il")
+        return promemoria.da_fare(self.request.user).order_by("creato_il")
+
+    def get_context_data(self, **kwargs):
+        from . import promemoria
+
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(fatti=bool(self.request.GET.get("fatti")),
+                   collegato=promemoria.archivio_collegato(),
+                   archivio=promemoria.nome_archivio())  # fmt: skip
+        return ctx
+
+    def post(self, request):
+        from . import promemoria
+
+        scelti = [int(x) for x in request.POST.getlist("scelti") if x.isdigit()]
+        n = promemoria.segna_fatti(promemoria.da_fare(request.user).filter(pk__in=scelti),
+                                   request.user)  # fmt: skip
+        if n:
+            messages.success(request, f"Segnati come riportati nell'archivio centrale: {n}.")
+        else:
+            messages.warning(request, "Nessun promemoria scelto.")
+        return redirect("soci:promemoria_archivio")

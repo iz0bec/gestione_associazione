@@ -252,6 +252,20 @@ class TestMorositaERinnovo:
         assert [t.socio for t in rilasciate] == [soci[1]] and errori == []
         assert servizi.soci_da_rinnovare(ANNO).count() == 0
 
+    def test_rinnovo_solo_dei_soci_scelti(self, client, persona, ordinario, admin_utente):
+        soci = [servizi.ammetti_socio(persona(f"S{i}"), ordinario, admin_utente) for i in range(3)]
+        client.force_login(admin_utente)
+        pagina = client.get(reverse("soci:rinnovo"), {"anno": ANNO}).content.decode()
+        assert pagina.count('name="soci"') == 3 and "Rinnova i soci scelti" in pagina
+        r = client.post(reverse("soci:rinnovo"), {"anno": ANNO, "conferma": "1",
+                                                 "soci": [soci[0].pk, soci[2].pk]}, follow=True)  # fmt: skip
+        testo = " ".join(str(m) for m in r.context["messages"])
+        assert "2 soci rinnovati" in testo and "1 non scelti restano senza tessera" in testo
+        assert list(servizi.soci_da_rinnovare(ANNO)) == [soci[1]]
+        r = client.post(reverse("soci:rinnovo"), {"anno": ANNO, "conferma": "1"}, follow=True)
+        assert "Nessun socio scelto" in r.content.decode()
+        assert list(servizi.soci_da_rinnovare(ANNO)) == [soci[1]]
+
 
 class TestDomande:
     def _domanda(self, **extra):
