@@ -79,13 +79,23 @@ def _pulisci(dati):
 
 
 def _trova(cliente, dati):
-    if cliente.soggetto_id and cliente.soggetto.anonimizzato_il is None:
-        return cliente.soggetto
-    enti = Soggetto.objects.filter(tipo=Soggetto.Tipo.ENTE, anonimizzato_il__isnull=True)
-    for campo in ("codice_fiscale", "pec"):
-        if dati.get(campo) and (s := enti.filter(**{f"{campo}__iexact": dati[campo]}).first()):
+    """Una voce per controparte. Il codice fiscale non identifica l'ente: le sezioni di
+    un'associazione nazionale possono avere tutte quello della sede nazionale. Una voce già
+    collegata a un'altra controparte non si riusa (se lo è per errore, la si divide)."""
+    stessa = {"denominazione__iexact": dati["denominazione"]}
+    s = cliente.soggetto if cliente.soggetto_id else None
+    if s is not None and s.anonimizzato_il is None:
+        condivisa = s.controparti_api.exclude(pk=cliente.pk).exists()
+        if not condivisa or Soggetto.objects.filter(pk=s.pk, **stessa).exists():
             return s
-    return enti.filter(denominazione__iexact=dati["denominazione"]).first()
+    enti = Soggetto.objects.filter(tipo=Soggetto.Tipo.ENTE, anonimizzato_il__isnull=True).exclude(
+        controparti_api__in=ClienteApi.objects.exclude(pk=cliente.pk)
+    )
+    if trovato := enti.filter(**stessa).first():
+        return trovato
+    if dati.get("pec") and (trovati := list(enti.filter(pec__iexact=dati["pec"])[:2])):
+        return trovati[0] if len(trovati) == 1 else None
+    return None
 
 
 def _completa_sezione(cliente, dati):

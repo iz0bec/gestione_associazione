@@ -130,3 +130,40 @@ def test_impostando_il_ruolo_si_crea_la_voce(risponde, client_ruolo):
     assert cliente.soggetto and cliente.soggetto.denominazione == CONTATTI["denominazione"]
     r = admin.post(reverse("api:azione", args=[cliente.pk, "rubrica"]), follow=True)
     assert "aggiornata" in r.content.decode()
+
+
+def test_sezioni_con_lo_stesso_codice_fiscale_hanno_voci_distinte(risponde):
+    """Le sezioni ANCR hanno tutte il codice fiscale nazionale: una voce per sezione."""
+    sezioni = []
+    for i, nome in enumerate(("Avigliano", "Potenza", "Matera"), start=2):
+        _, c = _controparte("sezione", Sezione.objects.create(codice=f"00{i}", nome=nome))
+        risponde({**CONTATTI, "denominazione": f"ANCR Sezione di {nome}",
+                  "pec": f"{nome.lower()}@pec.example.it"})  # fmt: skip
+        sezioni.append((c, rubrica.aggiorna(c)[0]))
+    assert len({s.pk for _, s in sezioni}) == 3
+    assert [s.denominazione for _, s in sezioni] == [
+        "ANCR Sezione di Avigliano",
+        "ANCR Sezione di Potenza",
+        "ANCR Sezione di Matera",
+    ]
+    # rieseguendo, ciascuna aggiorna la propria
+    c, voce = sezioni[1]
+    risponde({**CONTATTI, "denominazione": "ANCR Sezione di Potenza", "telefono": "0971 2"})
+    assert rubrica.aggiorna(c) == (voce, False)
+
+
+def test_voce_condivisa_per_errore_si_divide(risponde):
+    voce = Soggetto.objects.create(tipo="ente", denominazione="ANCR Sezione di Acerenza")
+    clienti = []
+    for i, nome in enumerate(("Acerenza", "Ruoti"), start=2):
+        _, c = _controparte("sezione", Sezione.objects.create(codice=f"00{i}", nome=nome))
+        c.soggetto = voce
+        c.save()
+        clienti.append(c)
+    risponde({**CONTATTI, "denominazione": "ANCR Sezione di Ruoti"})
+    nuova, creata = rubrica.aggiorna(clienti[1])
+    assert creata and nuova != voce
+    risponde({**CONTATTI, "denominazione": "ANCR Sezione di Acerenza"})
+    assert rubrica.aggiorna(clienti[0]) == (voce, False)
+    voce.refresh_from_db()
+    assert voce.denominazione == "ANCR Sezione di Acerenza"
