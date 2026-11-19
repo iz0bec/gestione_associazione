@@ -595,7 +595,9 @@ sezione → **F5** sezione ↔ sezione e kit per chi integra.
   tipologia, ammissione, stato, cessazione, tessere).
 - **Chi aggiorna cosa** (19/11/2026): la **sezione** aggiorna via API i soci (anagrafiche) e i
   **rinnovi** (tessere e quote dell'anno); la **federazione** aggiorna i soci (anagrafiche), ma i
-  rinnovi non li registra: li **riceve** dalle sezioni e li **supervisiona**.
+  rinnovi non li registra: li **riceve** dalle sezioni e li **supervisiona** (notifica di ogni
+  modifica, verifica di cosa è avvenuto). Modifiche allo stesso socio da entrambe le parti: vale
+  l'**ordine di tempo** e l'incongruenza si **notifica per email**.
 - **Trasporto**: ognuno **legge** dall'altro ciò che gli è destinato (lettura periodica dei flussi
   con verifica della catena, cursore salvato). Una sezione non raggiungibile (dietro NAT) usa la
   **spinta** (`POST /consegne`).

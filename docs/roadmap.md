@@ -209,7 +209,11 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     - *Chi aggiorna cosa* (deciso il 19/11/2026):
       - la **sezione** via API aggiorna i soci (anagrafiche) e i **rinnovi** (tessere e quote dell'anno);
       - la **federazione** aggiorna i soci (anagrafiche), ma i rinnovi non li registra: li **riceve**
-        dalle sezioni e li **supervisiona** (controllo, eventuali rilievi).
+        dalle sezioni e li **supervisiona**: riceve la notifica di ogni modifica e verifica cosa è
+        avvenuto;
+      - se federazione e sezione modificano lo stesso socio vale l'**ordine di tempo** (le modifiche
+        si applicano nell'ordine in cui sono state fatte) e l'incongruenza si **notifica per email**
+        a entrambe le parti.
     - *Ordine*: prima federazione → sezione; il ritorno sezione → federazione in un secondo passo.
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
