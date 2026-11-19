@@ -148,14 +148,38 @@ def contesto_generale():
 # --- consensi e destinatari ------------------------------------------------------------------
 
 
-def consensi_prestati(soggetti, finalita):
-    """Id dei soggetti il cui ultimo consenso registrato per la finalità è «prestato»."""
+def consensi_prestati(soggetti, finalita, *, impliciti=True):
+    """Id dei soggetti il cui ultimo consenso registrato per la finalità è «prestato». Con
+    `impliciti` (e l'opzione dell'organizzazione) anche i soci attivi e sospesi senza alcuna
+    registrazione per la finalità: l'ammissione comporta l'accettazione delle regole sulla
+    privacy, salvo diniego esplicito (un «negato o revocato» registrato vale sempre)."""
     ultimo = {}
     for c in Consenso.objects.filter(soggetto__in=soggetti, finalita=finalita).order_by(
         "data", "registrato_il"
     ):
         ultimo[c.soggetto_id] = c.prestato
-    return {pk for pk, prestato in ultimo.items() if prestato}
+    prestati = {pk for pk, prestato in ultimo.items() if prestato}
+    if impliciti:
+        prestati |= set(impliciti_per(soggetti, finalita)) - set(ultimo)
+    return prestati
+
+
+def impliciti_per(soggetti, finalita=None):
+    """Id dei soci (attivi o sospesi) per cui vale il consenso implicito: senza alcuna
+    registrazione per la finalità indicata (o, senza finalità, tutti i soci)."""
+    from apps.core.models import Organizzazione
+    from apps.soci.models import Socio
+
+    if not Organizzazione.corrente().consensi_impliciti_soci:
+        return set()
+    ids = [getattr(s, "pk", s) for s in soggetti]
+    soci = set(Socio.objects.filter(soggetto_id__in=ids).exclude(stato=Socio.Stato.CESSATO)
+               .values_list("soggetto_id", flat=True))  # fmt: skip
+    if finalita is None:
+        return soci
+    registrati = set(Consenso.objects.filter(soggetto_id__in=soci, finalita=finalita)
+                     .values_list("soggetto_id", flat=True))  # fmt: skip
+    return soci - registrati
 
 
 def motivo_esclusione(soggetto, finalita, con_consenso, indirizzo=None):

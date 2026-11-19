@@ -107,6 +107,28 @@ class TestDestinatari:
         assert stati["Morto Mario"] == ("escluso", "deceduto")
         assert stati["Ospite"] == ("in_attesa", "") and "Doppio" not in stati
 
+    def test_consenso_implicito_dei_soci_salvo_diniego(self, utente, client_ruolo):
+        ordinario = TipologiaSocio.objects.get(nome="Ordinario")
+        socio = persona("Socio")
+        soci.ammetti_socio(socio, ordinario, utente)
+        diniego = persona("Diniego")
+        soci.ammetti_socio(diniego, ordinario, utente)
+        Consenso.objects.create(soggetto=diniego, finalita="auguri", prestato=False)
+        cessato = persona("Cessato")
+        s = soci.ammetti_socio(cessato, ordinario, utente, data_ammissione=date(2020, 1, 1))
+        soci.cessa_socio(s, utente, data_cessazione=date(2024, 1, 1), causa="dimissioni")
+        esterno = persona("Esterno")
+        tutti = [socio, diniego, cessato, esterno]
+        assert servizi.consensi_prestati(tutti, "auguri") == {socio.pk}
+        assert servizi.consensi_prestati(tutti, "comunicazioni") == {socio.pk, diniego.pk}
+        assert servizi.consensi_prestati(tutti, "auguri", impliciti=False) == set()
+        # la scheda mostra i consensi impliciti; il diniego registrato resta
+        admin = client_ruolo("Amministratore di sistema")
+        pagina = admin.get(reverse("anagrafica:dettaglio", args=[diniego.pk])).content.decode()
+        assert "implicito: socio" in pagina and "negato/revocato" in pagina
+        Organizzazione.objects.update(consensi_impliciti_soci=False)
+        assert servizi.consensi_prestati(tutti, "comunicazioni") == set()
+
     def test_istituzionale_senza_consenso(self, utente):
         invio = servizi.crea_invio(
             utente, oggetto="Convocazione", corpo="x", finalita=Finalita.ISTITUZIONALE,

@@ -48,7 +48,8 @@ class OrganizzazioneForm(StileMixin, forms.ModelForm):
         from .models import Organizzazione
 
         model = Organizzazione
-        fields = [*CAMPI_ENTE, *CAMPI_MODULO, "informativa_privacy", "iscrizioni_online",
+        fields = [*CAMPI_ENTE, *CAMPI_MODULO, "informativa_privacy", "consensi_impliciti_soci",
+                  "iscrizioni_online",
                   "area_soci", "pagina_pubblica", "presentazione"]  # fmt: skip
         widgets = {
             "informativa_privacy": forms.Textarea(attrs={"rows": 10}),

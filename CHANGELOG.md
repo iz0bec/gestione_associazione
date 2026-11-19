@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.60] - 2026-11-19
+
+### Aggiunto
+- **Consensi impliciti per i soci**: l'ammissione comporta l'accettazione delle regole sulla
+  privacy, quindi per i soci attivi e sospesi ogni finalità senza registrazioni vale come consenso
+  prestato. Un diniego o una revoca registrati valgono sempre. La scheda anagrafica mostra i
+  consensi impliciti; il modulo di adesione stampato riporta solo quelli espressi. Opzione in
+  *Sistema → Organizzazione*, attiva per default.
+
 ## [1.0.59] - 2026-11-19
 
 ### Corretto

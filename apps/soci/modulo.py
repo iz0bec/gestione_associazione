@@ -54,7 +54,8 @@ def dati_socio(socio):
     p = socio.soggetto
 
     def prestato(finalita):
-        return p.pk in consensi_prestati([p], finalita)
+        # sul modulo da firmare solo i consensi espressi, mai quelli impliciti
+        return p.pk in consensi_prestati([p], finalita, impliciti=False)
 
     return {
         "nominativo": f"{p.cognome} {p.nome}".upper(),

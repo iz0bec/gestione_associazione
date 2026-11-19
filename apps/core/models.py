@@ -125,6 +125,12 @@ class Organizzazione(models.Model):
         blank=True,
         help_text="Indirizzo istituzionale della federazione: riceve le richieste di tessere.",
     )
+    consensi_impliciti_soci = models.BooleanField(
+        "consensi impliciti per i soci",
+        default=True,
+        help_text="Chi è ammesso socio accetta le regole sulla privacy: per i soci attivi e "
+        "sospesi ogni consenso vale come prestato, salvo un diniego o una revoca registrati.",
+    )
     archivio_centrale = models.CharField(
         "archivio centrale dei soci",
         max_length=150,

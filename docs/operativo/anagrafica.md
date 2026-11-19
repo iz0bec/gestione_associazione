@@ -94,6 +94,14 @@ stato **prestato** oppure **negato/revocato**, la data e la modalità (es. «mod
 Una revoca si registra aggiungendo un nuovo consenso con la casella *Prestato* non spuntata:
 lo storico resta visibile.
 
+**Soci: consenso implicito.** Chi è ammesso socio accetta le regole sulla privacy, quindi per i soci
+**attivi e sospesi** ogni finalità senza registrazioni vale come consenso prestato. La scheda la
+mostra come «implicito: socio, salvo diniego». Per escludere un socio da una finalità si registra un
+consenso **negato**: un diniego o una revoca registrati valgono sempre. Ai soci cessati e alle
+persone che non sono socie servono i consensi registrati. Il modulo di adesione stampato riporta
+solo i consensi espressi. L'opzione è in *Sistema → Organizzazione* (**Consensi impliciti per i
+soci**, attiva per default).
+
 ## Archiviare
 
 Chi non è più in rapporto con l'associazione si **archivia** (pulsante *Archivia* nella scheda):
