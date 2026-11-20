@@ -17,6 +17,13 @@ urlpatterns = [
     path("", views.CruscottoView.as_view(), name="cruscotto"),
     path("organizzazione/", views.OrganizzazioneView.as_view(), name="organizzazione"),
     path("organizzazione/aspetto/", views.AspettoView.as_view(), name="aspetto"),
+    path("organizzazione/aspetto/email/", views.AspettoEmailView.as_view(), name="aspetto_email"),
+    path(
+        "organizzazione/aspetto/email/anteprima/",
+        views.AnteprimaEmailView.as_view(),
+        name="anteprima_email",
+    ),
+    path("organizzazione/aspetto/email/prova/", views.ProvaEmailView.as_view(), name="prova_email"),
     path("organizzazione/logo-modulo/", views.LogoModuloView.as_view(), name="logo_modulo"),
     path("sistema/backup/", viste_backup.BackupView.as_view(), name="backup"),
     path("sistema/posta/", views.ServiziPostaView.as_view(), name="servizi_posta"),

@@ -58,6 +58,28 @@ privacy).
 
 Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante in alto.
 
+### Veste delle email
+
+Nella stessa pagina, **Veste delle email** sceglie l'aspetto di tutti i messaggi che partono dal
+gestionale (comunicazioni, auguri, accesso all'area personale, recupero della password, promemoria):
+
+- **titolo** e **sottotitolo** della testata (vuoto: la denominazione), es. «Associazione Nazionale
+  Combattenti e Reduci» e «Federazione Provinciale di Potenza e Matera»;
+- **logo nella testata**: viaggia dentro il messaggio, quindi si vede anche senza scaricare immagini;
+- **colori** della testata, d'accento (filetti, collegamenti, firma) e dello sfondo. Testata e accento
+  lasciati uguali al colore principale lo seguono quando cambia; un accento troppo chiaro viene
+  scurito nei collegamenti per restare leggibile;
+- **fascia in alto**: nessuna, tricolore o nel colore d'accento;
+- **carattere dei titoli**: con grazie (come una lettera) o senza;
+- **firma**: le righe sotto il nome; vuota, si usano indirizzo, telefono, email e sito
+  dell'organizzazione;
+- **informativa in calce**: poche righe in piccolo sotto il messaggio (titolare, come chiedere la
+  cancellazione, collegamento all'informativa completa). Gli indirizzi diventano collegamenti.
+
+A destra c'è l'**anteprima** di un messaggio di esempio; **Invia una prova a me** lo manda alla propria
+email per vederlo nel proprio programma di posta. Le **spedizioni del protocollo** hanno una veste
+sobria: senza fascia né informativa, con gli a capo del testo conservati.
+
 ## Backup
 
 **Sistema → Backup** (amministratore di sistema): backup di dati e file, creati ogni notte e su

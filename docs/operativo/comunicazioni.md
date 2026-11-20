@@ -43,6 +43,12 @@ arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 1. Facoltativo: **Parti da un modello** per avere oggetto e testo già pronti.
 2. **Oggetto** e **testo**: si possono usare i **segnaposto**, sostituiti per ogni destinatario.
    Esempio: `{{ saluto }} {{ nome }},` diventa «Caro Mario,» o «Cara Anna,».
+   Nell'email il testo si impagina da solo (vedi *Sistema → Aspetto → Veste delle email*):
+   - le righe spezzate, ad esempio di un testo incollato da un PDF, si ricompongono in un paragrafo;
+     si **va a capo** dopo una riga che finisce con `.` `!` `?` `:` (saluti, firma) e si **cambia
+     paragrafo** lasciando una riga vuota;
+   - gli indirizzi web ed email diventano **collegamenti**, anche se spezzati dopo una `/`;
+   - si possono usare `**grassetto**`, `*corsivo*` ed elenchi con `-` o `1.` (dopo una riga vuota).
 3. **Documenti** da allegare (es. un programma in PDF).
 4. **Destinatari**: una o più **liste**, persone ed enti cercati in anagrafica, altri indirizzi scritti a
    mano (uno per riga: `Mario Rossi <mario@example.org>`).

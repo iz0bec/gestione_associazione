@@ -14,16 +14,24 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import connection
 from django.http import HttpResponse
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.shortcuts import redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from . import invio
 from .audit import Azione, campi_modificati, registra
 from .cifratura import cifratura_disponibile
-from .forms import AspettoForm, OrganizzazioneCompletaForm, ServizioInvioForm, ServiziPostaForm
+from .forms import (
+    AspettoEmailForm,
+    AspettoForm,
+    OrganizzazioneCompletaForm,
+    ServizioInvioForm,
+    ServiziPostaForm,
+)
 from .models import EventoAudit, Organizzazione
 
 
@@ -706,6 +714,65 @@ class AspettoView(PermessoMixin, UpdateView):
             return self.form_invalid(form)
         messages.success(self.request, "Aspetto dell'interfaccia salvato.")
         return redirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.setdefault("form_email", AspettoEmailForm(instance=Organizzazione.corrente()))
+        return ctx
+
+
+class AspettoEmailView(PermessoMixin, View):
+    """Veste delle email: si salva dalla stessa pagina Aspetto, con un modulo a parte."""
+
+    permission_required = "core.gestisci_organizzazione"
+
+    def post(self, request):
+        from .aspetto import salva_aspetto_email
+
+        org = Organizzazione.corrente()
+        form = AspettoEmailForm(request.POST, instance=org)
+        if not form.is_valid():
+            vista = AspettoView(request=request, kwargs={}, object=org)
+            ctx = vista.get_context_data(form=AspettoForm(instance=org), form_email=form)
+            return render(request, "core/aspetto.html", ctx)
+        salva_aspetto_email(form, request.user)
+        messages.success(request, "Veste delle email salvata.")
+        return redirect(f"{reverse('core:aspetto')}#email")
+
+
+class AnteprimaEmailView(PermessoMixin, View):
+    """Il messaggio di esempio, mostrato in un riquadro della pagina Aspetto: la pagina ha una
+    CSP propria (solo stili in linea e il logo del sito, niente script) ed è isolata."""
+
+    permission_required = "core.gestisci_organizzazione"
+
+    @method_decorator(xframe_options_sameorigin)
+    def get(self, request):
+        from .aspetto import anteprima_email
+
+        risposta = HttpResponse(anteprima_email())
+        risposta["Content-Security-Policy"] = (
+            "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; "
+            "frame-ancestors 'self'; sandbox"
+        )
+        return risposta
+
+
+class ProvaEmailView(PermessoMixin, View):
+    permission_required = "core.gestisci_organizzazione"
+
+    def post(self, request):
+        from .aspetto import ProvaNonInviata, invia_prova
+
+        try:
+            indirizzo = invia_prova(request.user)
+        except ProvaNonInviata as e:
+            messages.error(request, str(e))
+        except OSError as e:
+            messages.error(request, f"Il server di posta non ha accettato il messaggio: {e}")
+        else:
+            messages.success(request, f"Messaggio di prova inviato a {indirizzo}.")
+        return redirect(f"{reverse('core:aspetto')}#email")
 
 
 class LogoModuloView(PermessoMixin, View):

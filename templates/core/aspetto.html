@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% comment %}
   Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
-  Descrizione: Personalizzazione dell'interfaccia: logo, colore principale, menu laterale
+  Descrizione: Personalizzazione dell'interfaccia (logo, colore principale, menu laterale) e
+               veste grafica delle email
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
 {% endcomment %}
 {% block titolo %}Aspetto{% endblock %}
@@ -26,6 +27,48 @@
         <li>Ogni utente può comunque passare dal tema chiaro a quello scuro con il pulsante in alto.</li>
       </ul>
     </div></div>
+  </div>
+</div>
+<h2 class="mt-4 mb-3" id="email">Veste delle email</h2>
+<div class="row row-cards">
+  <div class="col-lg-6">
+    <form method="post" action="{% url 'core:aspetto_email' %}" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">
+        {% for errore in form_email.non_field_errors %}<div class="alert alert-danger">{{ errore }}</div>{% endfor %}
+        <div class="row">
+          <div class="col-sm-6">{{ form_email.email_titolo.as_field_group }}</div>
+          <div class="col-sm-6">{{ form_email.email_sottotitolo.as_field_group }}</div>
+        </div>
+        {{ form_email.email_logo.as_field_group }}
+        <div class="row">
+          <div class="col-sm-4">{{ form_email.email_colore_testata.as_field_group }}</div>
+          <div class="col-sm-4">{{ form_email.email_colore_accento.as_field_group }}</div>
+          <div class="col-sm-4">{{ form_email.email_colore_sfondo.as_field_group }}</div>
+        </div>
+        <div class="row">
+          <div class="col-sm-6">{{ form_email.email_fascia.as_field_group }}</div>
+          <div class="col-sm-6">{{ form_email.email_carattere.as_field_group }}</div>
+        </div>
+        {{ form_email.email_firma.as_field_group }}
+        {{ form_email.email_informativa.as_field_group }}
+      </div>
+      <div class="card-footer text-end"><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Salva</button></div>
+    </form>
+    <div class="card mt-3"><div class="card-body small">
+      <h3 class="card-title">Dove si usa</h3>
+      <p>In tutte le email del gestionale: comunicazioni, auguri, accesso all'area personale, recupero della password, promemoria. Le spedizioni del protocollo hanno una veste sobria: senza fascia né informativa, con gli a capo del testo conservati.</p>
+      <p class="mb-0">Nel testo delle comunicazioni le righe spezzate (es. testo incollato da un PDF) si ricompongono in un paragrafo; si va a capo dopo una riga che finisce con <code>.</code> <code>!</code> <code>?</code> <code>:</code> e si cambia paragrafo con una riga vuota. Gli indirizzi web ed email diventano collegamenti; sono ammessi <code>**grassetto**</code>, <code>*corsivo*</code> ed elenchi con <code>-</code> o <code>1.</code> (preceduti da una riga vuota).</p>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Anteprima</h3>
+        <div class="card-actions">
+          <form method="post" action="{% url 'core:prova_email' %}">{% csrf_token %}<button type="submit" class="btn btn-sm"{% if not user.email %} disabled title="Il tuo utente non ha un indirizzo email"{% endif %}><i class="ti ti-send me-1"></i>Invia una prova a me</button></form>
+        </div>
+      </div>
+      <iframe class="anteprima-email" src="{% url 'core:anteprima_email' %}?v={{ organizzazione.versione_aspetto }}" sandbox title="Anteprima dell'email" loading="lazy"></iframe>
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -288,3 +288,55 @@ class AspettoForm(StileMixin, forms.ModelForm):
 
     def clean_colore_primario(self):
         return self.cleaned_data["colore_primario"].lower()
+
+
+class AspettoEmailForm(StileMixin, forms.ModelForm):
+    """Veste grafica delle email. I colori di testata e accento uguali al colore principale si
+    salvano vuoti: restano legati a quello e lo seguono quando cambia."""
+
+    COLORI_LEGATI = ("email_colore_testata", "email_colore_accento")
+
+    class Meta:
+        from .models import Organizzazione
+
+        model = Organizzazione
+        fields = [
+            "email_titolo", "email_sottotitolo", "email_logo", "email_fascia",
+            "email_colore_testata", "email_colore_accento", "email_colore_sfondo",
+            "email_carattere", "email_firma", "email_informativa",
+        ]  # fmt: skip
+        widgets = {
+            "email_colore_testata": forms.TextInput(
+                attrs={"type": "color", "class": "form-control-color"}
+            ),
+            "email_colore_accento": forms.TextInput(
+                attrs={"type": "color", "class": "form-control-color"}
+            ),
+            "email_colore_sfondo": forms.TextInput(
+                attrs={"type": "color", "class": "form-control-color"}
+            ),
+            "email_fascia": forms.RadioSelect,
+            "email_carattere": forms.RadioSelect,
+            "email_firma": forms.Textarea(attrs={"rows": 3}),
+            "email_informativa": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for nome in self.COLORI_LEGATI:
+            self.initial[nome] = self.initial.get(nome) or self.instance.colore_primario
+        org = self.instance
+        self.fields["email_titolo"].widget.attrs["placeholder"] = org.denominazione
+
+    def _colore(self, nome):
+        valore = (self.cleaned_data.get(nome) or "").lower()
+        return "" if valore == self.instance.colore_primario.lower() else valore
+
+    def clean_email_colore_testata(self):
+        return self._colore("email_colore_testata")
+
+    def clean_email_colore_accento(self):
+        return self._colore("email_colore_accento")
+
+    def clean_email_colore_sfondo(self):
+        return self.cleaned_data["email_colore_sfondo"].lower()

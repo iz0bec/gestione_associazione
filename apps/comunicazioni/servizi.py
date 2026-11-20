@@ -27,6 +27,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.anagrafica.models import Consenso, Soggetto
+from apps.core import veste_email
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
 
@@ -563,10 +564,6 @@ def messaggio(invio, destinatario, org=None):
     piede = render_to_string(
         "comunicazioni/email/piede.txt", {"organizzazione": org, "finalita": invio.finalita}
     )
-    html = render_to_string(
-        "comunicazioni/email/messaggio.html",
-        {"testo": testo, "organizzazione": org, "piede": piede},
-    )
     servizio = servizio_per(invio, destinatario)
     pec = servizio is not None and servizio.pec
     intestazioni = {"X-Gestione-Invio": str(invio.pk)}
@@ -590,11 +587,11 @@ def messaggio(invio, destinatario, org=None):
         reply_to=[org.email] if org.email and not pec else None,
         headers=intestazioni,
     )
-    email.attach_alternative(html, "text/html")
     for a in invio.allegati.all():
         with a.file.open("rb") as f:
             email.attach(a.nome, f.read(), a.tipo)
-    return email
+    # nell'HTML i dati dell'ente stanno nella firma: in calce solo il perché del messaggio
+    return veste_email.veste(email, org, testo=testo, avviso=piede.splitlines()[-1])
 
 
 def invio_attivo():

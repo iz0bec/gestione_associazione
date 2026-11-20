@@ -5,6 +5,20 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.68] - 2026-11-20
+
+### Aggiunto
+- **Veste delle email** (*Sistema → Aspetto*): testata con **logo incorporato** nel messaggio, titolo e
+  sottotitolo, colori di testata, accento e sfondo, fascia in alto (nessuna, tricolore, colore),
+  carattere dei titoli, firma con i dati dell'ente e **informativa breve** in calce. Anteprima nella
+  pagina e **email di prova** al proprio indirizzo. Vale per comunicazioni, auguri, area personale,
+  recupero password e promemoria; le spedizioni del protocollo hanno una veste sobria.
+
+### Modificato
+- **Testo delle email**: le righe spezzate (testo incollato da un PDF) si ricompongono in paragrafi,
+  con l'a capo conservato dopo `.` `!` `?` `:`; indirizzi web ed email diventano collegamenti (anche
+  quelli spezzati dopo una `/`); ammessi grassetto, corsivo ed elenchi (Markdown).
+
 ## [1.0.67] - 2026-11-19
 
 ### Aggiunto

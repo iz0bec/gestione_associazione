@@ -47,6 +47,17 @@ validatore_provincia = RegexValidator(r"^[A-Z]{2}$", "Sigla di due lettere maius
 validatore_colore = RegexValidator(r"^#[0-9a-fA-F]{6}$", "Colore nel formato #RRGGBB.")
 
 
+def testo_leggibile(colore):
+    """Bianco o scuro, quello leggibile sullo sfondo `colore` (#rrggbb, luminanza WCAG)."""
+    r, g, b = (int(colore[i : i + 2], 16) / 255 for i in (1, 3, 5))
+
+    def lineare(c):
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    luminanza = 0.2126 * lineare(r) + 0.7152 * lineare(g) + 0.0722 * lineare(b)
+    return "#ffffff" if luminanza < 0.4 else "#182433"
+
+
 def percorso_logo(istanza, nome):
     from .immagini import nome_casuale
 
@@ -98,6 +109,58 @@ class Organizzazione(models.Model):
     configurata = models.BooleanField(
         "configurazione iniziale completata", default=False, editable=False
     )
+    # veste grafica delle email (Sistema -> Aspetto; apps/core/veste_email.py)
+
+    class FasciaEmail(models.TextChoices):
+        NESSUNA = "nessuna", "Nessuna"
+        TRICOLORE = "tricolore", "Tricolore"
+        COLORE = "colore", "Nel colore d'accento"
+
+    class CarattereEmail(models.TextChoices):
+        GRAZIE = "grazie", "Con grazie (Georgia), come una lettera"
+        BASTONE = "bastone", "Senza grazie (Arial)"
+
+    email_fascia = models.CharField(
+        "fascia in alto", max_length=10, choices=FasciaEmail.choices, default=FasciaEmail.NESSUNA,
+        help_text="Sottile riga decorativa sopra la testata (mai nelle spedizioni del protocollo).",
+    )  # fmt: skip
+    email_colore_testata = models.CharField(
+        "colore della testata", max_length=7, blank=True, validators=[validatore_colore],
+        help_text="Lo sfondo della testata con logo e nome; vuoto = colore principale.",
+    )  # fmt: skip
+    email_colore_accento = models.CharField(
+        "colore d'accento", max_length=7, blank=True, validators=[validatore_colore],
+        help_text="Filetti, collegamenti e nome nella firma; vuoto = colore principale.",
+    )  # fmt: skip
+    email_colore_sfondo = models.CharField(
+        "colore dello sfondo", max_length=7, default="#f1ede6", validators=[validatore_colore],
+        help_text="Lo sfondo attorno al messaggio.",
+    )  # fmt: skip
+    email_carattere = models.CharField(
+        "carattere dei titoli", max_length=10, choices=CarattereEmail.choices,
+        default=CarattereEmail.GRAZIE,
+    )  # fmt: skip
+    email_logo = models.BooleanField(
+        "logo nella testata", default=True, help_text="Incorporato nel messaggio."
+    )
+    email_titolo = models.CharField(
+        "titolo della testata", max_length=150, blank=True,
+        help_text="Vuoto = denominazione. Es. «Associazione Nazionale Combattenti e Reduci».",
+    )  # fmt: skip
+    email_sottotitolo = models.CharField(
+        "sottotitolo della testata", max_length=150, blank=True,
+        help_text="Es. «Federazione Provinciale di Potenza e Matera».",
+    )  # fmt: skip
+    email_firma = models.TextField(
+        "firma", blank=True,
+        help_text="Righe in fondo al messaggio, sotto il nome; vuoto = indirizzo, email e sito "
+        "dell'organizzazione.",
+    )  # fmt: skip
+    email_informativa = models.TextField(
+        "informativa in calce", blank=True,
+        help_text="Testo breve in piccolo sotto il messaggio (titolare del trattamento, come "
+        "chiedere la cancellazione, collegamento all'informativa completa); vuoto = nessuno.",
+    )  # fmt: skip
     # firme e timbri nelle stampe quando manca l'immagine caricata (Organi sociali → Firme e timbri)
     firma_generica = models.BooleanField(
         "firma generica",
@@ -299,13 +362,7 @@ class Organizzazione(models.Model):
     @property
     def colore_testo_primario(self):
         """Bianco o scuro, quello leggibile sul colore principale (luminanza WCAG)."""
-        r, g, b = (int(self.colore_primario[i : i + 2], 16) / 255 for i in (1, 3, 5))
-
-        def lineare(c):
-            return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
-
-        luminanza = 0.2126 * lineare(r) + 0.7152 * lineare(g) + 0.0722 * lineare(b)
-        return "#ffffff" if luminanza < 0.4 else "#182433"
+        return testo_leggibile(self.colore_primario)
 
     @property
     def colore_rgb(self):

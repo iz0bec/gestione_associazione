@@ -21,7 +21,7 @@ from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import timezone
 
-from apps.core import invio
+from apps.core import invio, veste_email
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
 
@@ -282,7 +282,8 @@ def messaggio(spedizione, destinatario, org=None):
             email.attach(a.nome, f.read(), a.tipo)
     if spedizione.segnatura:  # Allegato 6 AgID, appendice C: parte del messaggio di posta
         email.attach(segnatura.NOME_FILE, spedizione.segnatura.encode(), segnatura.TIPO)
-    return email, message_id
+    # veste sobria (documento ufficiale): a capo del testo conservati, niente decorazioni
+    return veste_email.veste(email, org, sobrio=True, markdown=False), message_id
 
 
 def invio_attivo():

@@ -23,6 +23,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core import veste_email
 from apps.core.audit import Azione, registra
 
 log = logging.getLogger(__name__)
@@ -229,8 +230,12 @@ def invia_riepilogo():
         if not elenco:
             continue
         try:
-            EmailMessage(subject=f"Soci da riportare nell'archivio centrale - {org.denominazione}",
-                         body=_testo(elenco, len(propri)), to=[utente.email]).send()  # fmt: skip
+            email = EmailMessage(
+                subject=f"Soci da riportare nell'archivio centrale - {org.denominazione}",
+                body=_testo(elenco, len(propri)), to=[utente.email],
+            )  # fmt: skip
+            veste_email.veste(email, org, titolo="Soci da riportare nell'archivio centrale",
+                              markdown=False).send()  # fmt: skip
             inviati += 1
         except OSError as e:  # posta non raggiungibile: si riprova al giro dopo
             log.warning("Riepilogo dei promemoria non inviato a %s: %s", utente, e)

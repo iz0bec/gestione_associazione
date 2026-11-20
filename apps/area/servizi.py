@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.anagrafica.models import Soggetto
+from apps.core import veste_email
 from apps.core.audit import Azione, registra
 from apps.core.models import Organizzazione
 
@@ -96,8 +97,10 @@ def chiedi_accesso(email, *, base_url, ip=None):
     )
     # come il recupero della password: messaggio di servizio, fuori dalla coda delle comunicazioni
     # (il collegamento non deve restare leggibile nel registro degli invii)
-    EmailMessage(subject=f"Accesso all'area personale - {org.denominazione}", body=corpo,
-                 to=[soggetto.email]).send(fail_silently=False)  # fmt: skip
+    email = EmailMessage(subject=f"Accesso all'area personale - {org.denominazione}", body=corpo,
+                         to=[soggetto.email])  # fmt: skip
+    testo = corpo.rsplit("\n\n-- \n", 1)[0]  # nell'HTML la firma è quella della veste
+    veste_email.veste(email, org, testo=testo, titolo="Accesso all'area personale").send()
     registra(Azione.CONSULTAZIONE, soggetto, utente=None, ip=ip,
              descrizione=f"Area personale: collegamento inviato a {soggetto}")  # fmt: skip
     return True

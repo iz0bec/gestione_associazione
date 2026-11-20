@@ -2,7 +2,8 @@
 # * Progetto:    Gestione Associazione
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
-# * Descrizione: Adattatore allauth: la registrazione libera è disattivata
+# * Descrizione: Adattatore allauth: la registrazione libera è disattivata; le email (recupero
+# *              della password) hanno la veste grafica dell'organizzazione
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -17,6 +18,12 @@ log = logging.getLogger(__name__)
 class AdapterAccount(DefaultAccountAdapter):
     def is_open_for_signup(self, request):
         return False
+
+    def render_mail(self, template_prefix, email, context, headers=None):
+        from apps.core import veste_email
+
+        return veste_email.veste(super().render_mail(template_prefix, email, context, headers),
+                                 markdown=False)  # fmt: skip
 
     def send_mail(self, template_prefix, email, context):
         """Con l'invio delle email disattivato (Sistema -> Servizi di posta) non si spedisce."""

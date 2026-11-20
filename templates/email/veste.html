@@ -1,0 +1,19 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Veste grafica delle email (apps/core/veste_email.py). Tabelle e stili in linea:
+               è il solo HTML che i programmi di posta mostrano allo stesso modo.
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>{{ titolo|default:nome }}</title></head>
+<body style="margin:0;padding:0;background:{{ c.sfondo }}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ c.sfondo }}"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:4px;overflow:hidden;font-family:{{ titoli }}">
+{% if fascia %}<tr><td style="font-size:0;line-height:0;height:4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>{% for colore in fascia %}<td height="4" style="background:{{ colore }};width:{{ larghezza_fascia }}%"></td>{% endfor %}</tr></table></td></tr>
+{% endif %}<tr><td style="background:{{ c.testata }};padding:18px 24px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>{% if logo %}<td style="padding-right:14px;vertical-align:middle"><img src="{{ logo }}" width="64" alt="" style="display:block;border:0;width:64px;height:auto"></td>{% endif %}<td style="vertical-align:middle;color:{{ c.testo_testata }}"><div style="font-size:17px;font-weight:bold;letter-spacing:.5px">{{ nome }}</div>{% if sottotitolo %}<div style="font-family:{{ testo }};font-size:13px;color:{{ c.sottotitolo }};margin-top:3px">{{ sottotitolo }}</div>{% endif %}</td></tr></table></td></tr>
+<tr><td style="height:3px;background:{{ c.accento }};font-size:0;line-height:0">&nbsp;</td></tr>
+<tr><td style="padding:28px 28px 8px;font-family:{{ testo }};font-size:15px;line-height:1.6;color:#2a2a2a">{% if titolo %}<h1 style="font-family:{{ titoli }};font-size:20px;line-height:1.3;color:#1d2433;margin:0 0 18px;font-weight:bold">{{ titolo }}</h1>{% endif %}{{ corpo|safe }}</td></tr>
+<tr><td style="padding:8px 28px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:2px solid {{ c.accento }}"><tr><td style="padding-top:14px;font-family:{{ testo }};font-size:13px;line-height:1.55;color:#555555"><div style="font-family:{{ titoli }};font-size:15px;font-weight:bold;color:{{ c.collegamenti }}">{{ nome }}</div>{% if sottotitolo %}<div>{{ sottotitolo }}</div>{% endif %}{% for riga in firma %}<div>{% if riga.url %}<a href="{{ riga.url }}" style="color:{{ c.collegamenti }};text-decoration:none">{{ riga.testo }}</a>{% else %}{{ riga.testo }}{% endif %}</div>{% endfor %}</td></tr></table></td></tr>
+</table>
+{% if avviso or informativa %}<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px"><tr><td style="padding:14px 8px;font-family:{{ testo }};font-size:11px;line-height:1.5;color:{{ c.tenue }};text-align:center">{{ avviso|safe }}{% if informativa %}<div style="{% if avviso %}margin-top:10px;padding-top:10px;border-top:1px solid {{ c.filetto_tenue }};{% endif %}text-align:left;font-size:10px;line-height:1.5;color:{{ c.tenue }}">{{ informativa|safe }}</div>{% endif %}</td></tr></table>
+{% endif %}</td></tr></table>
+</body></html>
