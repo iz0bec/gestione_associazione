@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.73] - 2026-11-21
+
+### Corretto
+- **Portale dei servizi**: i colori vanno in un file `colori.css` generato invece che in uno stile in
+  linea, che la CSP rigorosa del server web bloccava (testata e pulsanti senza colori).
+
 ## [1.0.72] - 2026-11-21
 
 ### Aggiunto

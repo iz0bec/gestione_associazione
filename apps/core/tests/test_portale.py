@@ -81,3 +81,12 @@ def test_dati_di_riserva_se_non_risponde(portale, tmp_path, monkeypatch):
 def test_solo_indirizzi_web(portale):
     with pytest.raises(ValueError):
         portale.leggi_scheda("file:///etc/passwd")
+
+
+def test_colori_in_un_file_senza_stili_in_linea(portale):
+    html = portale.pagina(CONFIG, {})
+    assert "<style" not in html and 'href="colori.css"' in html
+    css = portale.colori_css({"colori": {"testata": "#112233"}, "sfondo": "foto.jpg"})
+    assert "--testata: #112233" in css and 'url("foto.jpg")' in css
+    with pytest.raises(ValueError):
+        portale.colori_css({"colori": {"accento": "red;}body{display:none"}})

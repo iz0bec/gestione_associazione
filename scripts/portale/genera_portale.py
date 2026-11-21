@@ -18,6 +18,7 @@ e gruppo; tutto il resto (servizi attivi, recapiti) arriva dai gestionali.
 
 import argparse
 import json
+import re
 import shutil
 import sys
 import tomllib
@@ -150,8 +151,19 @@ def scheda_voce(voce, letta, config):
             f'<div class="servizi">{"".join(bottoni)}</div></article>')  # fmt: skip
 
 
-def pagina(config, lette):
+def colori_css(config):
+    """Variabili dei colori in un file: la CSP del portale può vietare gli stili in linea."""
     c = {**COLORI, **config.get("colori", {})}
+    for nome, valore in c.items():
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", valore):
+            raise ValueError(f"colore {nome} non valido: {valore}")
+    sfondo = config.get("sfondo")
+    foto = f'url("{Path(sfondo).name}")' if sfondo else "none"
+    return (f":root {{ --testata: {c['testata']}; --accento: {c['accento']}; "
+            f"--sfondo: {c['sfondo']}; --foto: {foto}; }}\n")  # fmt: skip
+
+
+def pagina(config, lette):
     livelli = []
     for i, livello in enumerate(config.get("livelli", [])):
         gruppi = []
@@ -171,8 +183,6 @@ def pagina(config, lette):
     stemma = config.get("stemma")
     alt = e(config.get("stemma_alt", ""))
     img = f'<img class="stemma" src="{e(Path(stemma).name)}" alt="{alt}">' if stemma else ""
-    sfondo = config.get("sfondo")
-    sfondo_css = f"url({Path(sfondo).name})" if sfondo else "none"
     favicon = config.get("favicon")
     icona_pag = f'<link rel="icon" href="{e(Path(favicon).name)}">' if favicon else ""
     aggiornata = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -185,8 +195,8 @@ def pagina(config, lette):
 <title>{e(config.get("titolo", "Servizi"))}</title>
 <meta name="description" content="{e(config.get("descrizione", ""))}">
 <meta name="color-scheme" content="light dark">
-{icona_pag}<link rel="stylesheet" href="stile.css">
-<style>:root{{--testata:{e(c["testata"])};--accento:{e(c["accento"])};--sfondo:{e(c["sfondo"])};--foto:{sfondo_css}}}</style>
+{icona_pag}<link rel="stylesheet" href="colori.css">
+<link rel="stylesheet" href="stile.css">
 </head>
 <body>
 {ICONE}
@@ -228,6 +238,7 @@ def main():
         if config.get(nome):
             shutil.copyfile(base / config[nome], uscita / Path(config[nome]).name)
     shutil.copyfile(Path(__file__).with_name("stile.css"), uscita / "stile.css")
+    (uscita / "colori.css").write_text(colori_css(config), encoding="utf-8")
     temporaneo = uscita / ".index.html"
     temporaneo.write_text(pagina(config, lette), encoding="utf-8")
     temporaneo.replace(uscita / "index.html")
