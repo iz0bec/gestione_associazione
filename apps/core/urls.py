@@ -72,6 +72,11 @@ urlpatterns = [
         name="casella_modifica",
     ),
     path(
+        "sistema/posta/caselle/<int:pk>/elimina/",
+        views.CasellaEliminaView.as_view(),
+        name="casella_elimina",
+    ),
+    path(
         "sistema/posta/invio/nuovo/",
         views.ServizioInvioNuovoView.as_view(),
         name="servizio_nuovo",

@@ -126,6 +126,10 @@ il servizio viene creato dopo la casella; si cambia a mano se le risposte devono
 indirizzo. Nell'elenco ogni casella mostra «risponde con: …», oppure un avviso se non c'è un servizio
 adatto (le risposte partirebbero dal server generale).
 
+**Eliminare una casella**: il cestino nell'elenco oppure **Elimina** in fondo alla pagina *Modifica*. Si
+elimina solo una casella che non ha mai scaricato messaggi; se ne ha, i messaggi restano nella posta del
+protocollo e la casella si toglie dalla lettura in *Protocollo → Caselle* (*non usata*).
+
 ### Servizi di invio (SMTP)
 
 Ogni **servizio di invio** è un server SMTP con cui il programma spedisce: nome, tipo (**Email** o
@@ -140,7 +144,9 @@ SSL, nome utente (vuoto: l'indirizzo) e password, conservata **cifrata** e mai m
   può scegliere per spedire. Il server generale non si disattiva (prima se ne indica un altro).
 - Per **Aruba**: email `smtps.aruba.it`, PEC `smtps.pec.aruba.it`, porta 465 con SSL; utente e
   password sono quelli della casella.
-- Un servizio che ha già spedito non si elimina (le spedizioni restano nella storia): si disattiva.
+- **Eliminare un servizio**: il cestino nell'elenco oppure **Elimina** in fondo alla pagina *Modifica*.
+  Un servizio già usato per spedire comunicazioni o protocolli non si elimina (le spedizioni ne
+  conservano il riferimento): si disattiva con l'interruttore.
 
 ### Telegram
 
@@ -152,9 +158,13 @@ l'interruttore. Il riquadro indica quante persone sono collegate e l'ultimo cont
 collegamenti (`/start`) e le disiscrizioni (`/stop`) ogni minuto; i messaggi partono solo con l'invio
 attivo. Il server deve poter raggiungere `api.telegram.org` (HTTPS in uscita); non serve aprire porte.
 
+**Rimuovi il bot** (in fondo al riquadro) cancella il token e spegne Telegram, per esempio per passare
+a un altro bot: dopo averne collegato uno nuovo, le persone devono ricollegarsi con il proprio link.
+
 ### SMS e WhatsApp
 
-Il riquadro **SMS e WhatsApp** elenca i **fornitori** (interruttore, **Verifica**, Modifica, Elimina);
+Il riquadro **SMS e WhatsApp** elenca i **fornitori** (interruttore, **Verifica**, Modifica, cestino per
+eliminarli, anche dalla pagina *Modifica*);
 **Nuovo** ne aggiunge uno. Si usa il primo attivo per ciascun canale. Password e token sono cifrati.
 
 | Fornitore | Account | Password o token | Mittente e altro |

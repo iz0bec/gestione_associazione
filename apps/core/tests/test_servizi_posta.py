@@ -357,3 +357,42 @@ def test_interruttore_dei_servizi(client_ruolo, settings):
     assert generale.attivo and "non si disattiva" in testo
     assert client_ruolo("Segretario", username="s").post(
         f"/sistema/posta/invio/{pec.pk}/attivo/", {}).status_code == 403  # fmt: skip
+
+
+def test_eliminazione_delle_caselle(client_ruolo, settings):
+    from email.message import EmailMessage
+
+    from apps.protocollo import posta
+    from apps.protocollo.models import CasellaPosta
+
+    settings.CHIAVE_CIFRATURA = nuova_chiave()
+    c = client_ruolo("Amministratore di sistema")
+    vuota = CasellaPosta.objects.create(nome="Prova", server="s", utente="u")
+    usata = CasellaPosta.objects.create(nome="Segreteria", server="s", utente="u")
+    m = EmailMessage()
+    m["From"], m["Subject"], m["Message-ID"] = "a@example.org", "Ciao", "<1@example.org>"
+    m.set_content("x")
+    posta.salva_messaggio(usata, m.as_bytes())
+    pagina = c.get(f"/sistema/posta/caselle/{vuota.pk}/").content.decode()
+    assert f"/sistema/posta/caselle/{vuota.pk}/elimina/" in pagina  # pulsante Elimina
+    testo = c.post(f"/sistema/posta/caselle/{usata.pk}/elimina/", follow=True).content.decode()
+    assert "non si elimina" in testo and CasellaPosta.objects.filter(pk=usata.pk).exists()
+    c.post(f"/sistema/posta/caselle/{vuota.pk}/elimina/")
+    assert not CasellaPosta.objects.filter(pk=vuota.pk).exists()
+    assert EventoAudit.objects.filter(azione="eliminazione").exists()
+
+
+def test_rimozione_del_bot_telegram(client_ruolo, settings, monkeypatch):
+    from apps.comunicazioni import telegram
+    from apps.core.models import CanaleTelegram
+
+    settings.CHIAVE_CIFRATURA = nuova_chiave()
+    monkeypatch.setattr(telegram, "verifica", lambda token: "ancr_bot")
+    c = client_ruolo("Amministratore di sistema")
+    c.post("/sistema/posta/telegram/", {"azione": "token", "token": "1:x"})
+    c.post("/sistema/posta/telegram/", {"azione": "attiva"})
+    assert CanaleTelegram.corrente().pronto
+    assert "Rimuovi il bot" in c.get("/sistema/posta/").content.decode()
+    c.post("/sistema/posta/telegram/", {"azione": "rimuovi"})
+    canale = CanaleTelegram.corrente()
+    assert not canale.token_cifrato and not canale.attivo and not canale.nome_bot

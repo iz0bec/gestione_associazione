@@ -350,6 +350,30 @@ class CasellaModificaView(_CasellaMixin, PermessoMixin, UpdateView):
     pass
 
 
+class CasellaEliminaView(PermessoMixin, View):
+    """Elimina una casella che non ha mai scaricato messaggi; una con messaggi resta (sono nella
+    storia del protocollo) e si toglie dalla lettura in Protocollo → Caselle."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+
+        from apps.protocollo.models import CasellaPosta
+
+        casella = get_object_or_404(CasellaPosta.objects.all(), pk=pk)
+        if n := casella.messaggi.count():
+            messages.error(request, f"«{casella}» ha già scaricato {n} messaggi, che restano nella "
+                                    "posta del protocollo: non si elimina. Per non leggerla più, "
+                                    "renderla «non usata» in Protocollo → Caselle.")  # fmt: skip
+            return redirect("core:servizi_posta")
+        casella.delete()
+        registra(Azione.ELIMINAZIONE, None, descrizione=f"Casella di posta {casella}")
+        messages.success(request, f"Casella «{casella}» eliminata.")
+        return redirect("core:servizi_posta")
+
+
 def _collega_caselle(servizio):
     """Le caselle con lo stesso indirizzo e senza «Rispondi con» rispondono con questo servizio."""
     from apps.protocollo.models import CasellaPosta
@@ -437,8 +461,9 @@ class ServizioInvioEliminaView(PermessoMixin, View):
         try:
             servizio.delete()
         except ProtectedError:
-            messages.error(request, f"«{servizio}» ha già spedito dei protocolli: non si elimina, "
-                                    "si può disattivare.")  # fmt: skip
+            messages.error(request, f"«{servizio}» è già stato usato per spedire comunicazioni o "
+                                    "protocolli, che ne conservano il riferimento: non si elimina, "
+                                    "si può disattivare con l'interruttore.")  # fmt: skip
         else:
             registra(Azione.ELIMINAZIONE, None, descrizione=f"Servizio di invio {servizio}")
             messages.success(request, f"Servizio di invio «{servizio}» eliminato.")
@@ -576,6 +601,17 @@ class TelegramView(PermessoMixin, View):
                 messages.success(request, f"Telegram: accesso al bot @{nome} riuscito.")
             except telegram.ErroreTelegram as e:
                 messages.error(request, f"Telegram: verifica non riuscita ({e}).")
+        elif azione == "rimuovi" and canale.token_cifrato:
+            bot = canale.nome_bot
+            canale.token_cifrato, canale.nome_bot, canale.attivo, canale.ultimo_errore = (
+                "",
+                "",
+                False,
+                "",
+            )
+            canale.save()
+            registra(Azione.ELIMINAZIONE, canale, descrizione="Bot Telegram", bot=bot)
+            messages.success(request, f"Bot @{bot} rimosso: Telegram non è più configurato.")
         elif azione in ("attiva", "disattiva") and canale.token_cifrato:
             canale.attivo = azione == "attiva"
             canale.save(update_fields=["attivo"])

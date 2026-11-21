@@ -5,6 +5,18 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.71] - 2026-11-21
+
+### Aggiunto
+- **Servizi di posta**: si **eliminano le caselle IMAP** (solo se non hanno mai scaricato messaggi;
+  altrimenti si rendono «non usate» in *Protocollo → Caselle*) e si **rimuove il bot Telegram**.
+  Caselle, server SMTP e servizi SMS/WhatsApp hanno anche un pulsante **Elimina** in fondo alla
+  pagina di modifica, oltre al cestino nell'elenco.
+
+### Corretto
+- Il messaggio di un server SMTP non eliminabile ora spiega che è stato usato anche per le
+  comunicazioni, non solo per i protocolli.
+
 ## [1.0.70] - 2026-11-21
 
 ### Aggiunto
