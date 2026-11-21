@@ -19,7 +19,7 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env", overwrite=False)
 
 APP_NOME = "Gestione Associazione"
-APP_VERSIONE = "1.0.73"
+APP_VERSIONE = "1.0.74"
 APP_AUTORE = "Bartolomeo Santoro aka IZ0BEC"
 APP_EMAIL_AUTORE = "info@iz0bec.info"
 APP_REPOSITORY = "https://mygitlab.iz0bec.info/sbart64/gestione_associazione"
@@ -211,6 +211,13 @@ CHIAVE_CIFRATURA = env("CHIAVE_CIFRATURA", default="")
 # Indirizzo pubblico dell'applicazione (es. https://gestione.miassociazione.it),
 # usato nei QR stampati
 URL_PUBBLICO = env("URL_PUBBLICO", default="").rstrip("/")
+
+# Ambiente dimostrativo (apps/core/demo.py): fascia in ogni pagina, credenziali pubbliche dei ruoli
+# nella pagina di accesso, azzeramento con «manage.py demo» e il 1° di ogni mese dal pianificatore.
+# MAI in un'installazione con dati veri: l'azzeramento cancella database e file.
+DEMO = env.bool("DEMO", default=False)
+DEMO_PASSWORD = env("DEMO_PASSWORD", default="Demo-2026")  # pubblica: utenti dei ruoli
+DEMO_ADMIN_PASSWORD = env("DEMO_ADMIN_PASSWORD", default="")  # privata: amministratore
 
 # API di interoperabilità (ADR-030): impronte SPKI dei certificati con cui l'istanza si presenta
 # alle controparti in rete interna. Quella del certificato servito da Gunicorn si calcola dal file;

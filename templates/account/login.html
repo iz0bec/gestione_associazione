@@ -48,6 +48,16 @@
     {% if SOCIALACCOUNT_ENABLED %}
         {% include "socialaccount/snippets/login.html" with page_layout="entrance" %}
     {% endif %}
+    {% if DEMO %}
+    <div class="alert alert-warning mt-3 mb-0 small" role="note">
+      <div class="fw-bold mb-1"><i class="ti ti-flask me-1"></i>Ambiente dimostrativo</div>
+      <p class="mb-2">Dati di fantasia, azzerati il 1° di ogni mese. Entra con uno dei ruoli; la password è per tutti <code class="user-select-all">{{ DEMO_PASSWORD }}</code>.</p>
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Utente</th><th>Ruolo</th><th class="d-none d-sm-table-cell">Da provare</th></tr></thead>
+        <tbody>{% for utente, ruolo, prova in DEMO_ACCOUNT %}<tr><td><code class="user-select-all">{{ utente }}</code></td><td>{{ ruolo }}</td><td class="d-none d-sm-table-cell text-secondary">{{ prova }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% endif %}
     {% if documenti_pubblici %}<p class="text-center small mt-3 mb-0"><a href="{% url 'documenti_pubblici' %}">Statuto e regolamento</a></p>{% endif %}
 {% endblock content %}
 {% block extra_body %}

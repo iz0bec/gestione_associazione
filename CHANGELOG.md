@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.74] - 2026-11-21
+
+### Aggiunto
+- **Ambiente dimostrativo** (`DEMO=true` nel `.env`, solo in un'installazione dedicata): fascia in
+  ogni pagina, credenziali pubbliche dei ruoli nella pagina di accesso (non dell'amministratore),
+  `manage.py demo --conferma` che cancella database e file e ricarica i dati di fantasia con un logo
+  generato, azzeramento automatico il 1° di ogni mese dal pianificatore. Nessun messaggio parte e gli
+  utenti dei ruoli non possono cambiare la password. Vedi *docs/sistema/ambiente-dimostrativo.md*.
+
 ## [1.0.73] - 2026-11-21
 
 ### Corretto

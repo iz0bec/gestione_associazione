@@ -44,4 +44,13 @@ def applicazione(request):
         "organizzazione": SimpleLazyObject(Organizzazione.corrente),  # 1 query, solo se usata
         "documenti_pubblici": SimpleLazyObject(_documenti_pubblici),
         "MODULI_IN_ARRIVO": MODULI_IN_ARRIVO,
+        **_demo(),
     }
+
+
+def _demo():
+    if not settings.DEMO:
+        return {"DEMO": False}
+    from .demo import ACCOUNT
+
+    return {"DEMO": True, "DEMO_ACCOUNT": ACCOUNT, "DEMO_PASSWORD": settings.DEMO_PASSWORD}

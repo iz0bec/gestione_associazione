@@ -85,6 +85,8 @@ class Command(BaseCommand):
                 self._esegui("conservazione_dati")  # una volta al giorno, insieme al registro
                 self._esegui("aggiorna_collegamenti")
                 self._esegui("promemoria_archivio")
+                if settings.DEMO and not opzioni["una_volta"]:
+                    self._esegui("demo", se_dovuto=True)  # ambiente dimostrativo: il 1° del mese
                 ultimo_registro = adesso.date()
             if (
                 settings.BACKUP_AUTOMATICO

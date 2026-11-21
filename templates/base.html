@@ -23,6 +23,7 @@
     {% include "includes/barra_superiore.html" %}
     <main id="contenuto" class="page-body">
       <div class="container-xl">
+        {% if DEMO %}<div class="alert alert-warning d-flex align-items-center gap-2 py-2 d-print-none" role="status"><i class="ti ti-flask"></i><span><strong>Ambiente dimostrativo</strong> con dati di fantasia: si azzera il 1° di ogni mese e nessun messaggio parte davvero.</span></div>{% endif %}
         {% include "includes/messaggi.html" %}
         {% block intestazione %}
         <div class="page-header d-print-none mb-3">
