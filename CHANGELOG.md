@@ -5,6 +5,20 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.70] - 2026-11-21
+
+### Aggiunto
+- **Avvisi personali** (menu utente → *Avvisi*), su Telegram, SMS o WhatsApp:
+  - **posta da protocollare** a chi gestisce la posta e **nuove domande di iscrizione** a chi le
+    valuta (presidente, segretario, presidente di sezione, per le sezioni che vede): arrivano **da
+    soli su Telegram** a chi l'ha collegato, salvo la scelta di *Nessuno* o di un altro canale;
+  - **sicurezza**, per gli amministratori che li scelgono: accessi falliti ripetuti, accesso di un
+    amministratore da un indirizzo nuovo, operazioni sugli utenti fatte da un altro amministratore,
+    lavori periodici non riusciti (backup compreso).
+
+### Modificato
+- La pagina *Avvisi della posta* diventa la pagina personale *Avvisi*, con una scelta per tipo.
+
 ## [1.0.69] - 2026-11-21
 
 ### Modificato

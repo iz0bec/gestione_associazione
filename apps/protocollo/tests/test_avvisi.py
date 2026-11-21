@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from apps.anagrafica.models import Soggetto
 from apps.comunicazioni import messaggi, telegram
+from apps.core import avvisi as core_avvisi
 from apps.core.cifratura import nuova_chiave
 from apps.core.models import CanaleTelegram, Organizzazione, ServizioMessaggi
 from apps.protocollo import avvisi, posta
@@ -87,17 +88,23 @@ def test_riepilogo_su_telegram(bot, addetto):
     assert testo.endswith("https://gestione.example.it/protocollo/posta/")
 
 
-def test_solo_chi_gestisce_la_posta_e_ha_scelto(bot, addetto, crea_utente):
+def test_solo_chi_gestisce_la_posta_e_telegram_automatico(bot, addetto, crea_utente):
     consigliere = crea_utente("cons", ruoli=["Consigliere"])
     consigliere.soggetto = Soggetto.objects.create(cognome="B", nome="C", telegram_chat_id=88)
     consigliere.avvisi_posta = "telegram"
     consigliere.save()
-    nessuno = crea_utente("altro", ruoli=["Addetto protocollo"])  # non ha scelto
-    assert nessuno.avvisi_posta == ""
+    automatico = crea_utente("auto", ruoli=["Addetto protocollo"])  # non ha scelto: Telegram
+    automatico.soggetto = Soggetto.objects.create(cognome="D", nome="E", telegram_chat_id=99)
+    automatico.save()
+    rinuncia = crea_utente("rinuncia", ruoli=["Addetto protocollo"])
+    rinuncia.soggetto = Soggetto.objects.create(cognome="F", nome="G", telegram_chat_id=55)
+    rinuncia.avvisi_posta = "no"
+    rinuncia.save()
+    crea_utente("senza", ruoli=["Addetto protocollo"])  # Telegram non collegato
     dal = timezone.now()
     _arriva("Uno")
-    assert avvisi.avvisa_nuova_posta(dal) == 1
-    assert [d["chat_id"] for _, d in bot] == [77]
+    assert avvisi.avvisa_nuova_posta(dal) == 2
+    assert sorted(d["chat_id"] for _, d in bot) == [77, 99]
 
 
 def test_niente_avvisi(bot, addetto):
@@ -125,11 +132,11 @@ def test_per_sms(addetto, monkeypatch):
 
 def test_problemi(bot, addetto, crea_utente):
     u = crea_utente("senza", ruoli=["Addetto protocollo"])
-    assert "scheda anagrafica" in avvisi.problema(u, "telegram")
-    assert "non è attivo" in avvisi.problema(u, "sms")  # nessun servizio SMS attivo
+    assert "scheda anagrafica" in core_avvisi.problema(u, "telegram")
+    assert "non è attivo" in core_avvisi.problema(u, "sms")  # nessun servizio SMS attivo
     addetto.soggetto.telegram_chat_id = None
     addetto.soggetto.save()
-    assert avvisi.problema(addetto) == "Telegram non ancora collegato"
+    assert core_avvisi.problema(addetto, "telegram") == "Telegram non ancora collegato"
 
 
 def test_dopo_lo_scaricamento(monkeypatch, addetto):
@@ -144,25 +151,29 @@ def test_dopo_lo_scaricamento(monkeypatch, addetto):
 
 def test_pagina_personale(client, bot, addetto, crea_utente):
     client.force_login(addetto)
-    pagina = client.get("/protocollo/posta/avvisi/").content.decode()
-    assert "Telegram" in pagina and "Collegato dal" in pagina
-    assert "Avvisi della posta" in client.get("/protocollo/posta/").content.decode()
-    r = client.post("/protocollo/posta/avvisi/", {"azione": "prova"}, follow=True)
-    assert "Avviso di prova inviato" in r.content.decode() and bot[-1][1]["chat_id"] == 77
-    client.post("/protocollo/posta/avvisi/", {"azione": "salva", "canale": ""})
+    pagina = client.get("/avvisi/").content.decode()
+    assert "Posta da protocollare" in pagina and "Collegato dal" in pagina
+    assert "Domande di iscrizione" not in pagina  # l'addetto non valuta le domande
+    assert 'href="/avvisi/"' in client.get("/protocollo/posta/").content.decode()
+    r = client.post("/avvisi/", {"azione": "prova"}, follow=True)
+    assert "Avviso di prova inviato su Telegram" in r.content.decode()
+    assert bot[-1][1]["chat_id"] == 77
+    client.post("/avvisi/", {"azione": "salva", "posta": "no"})
     addetto.refresh_from_db()
-    assert addetto.avvisi_posta == ""
+    assert addetto.avvisi_posta == "no"
+    assert client.post("/avvisi/", {"azione": "salva", "posta": "piccione"}).status_code == 302
+    addetto.refresh_from_db()
+    assert addetto.avvisi_posta == "no"  # valore non ammesso: niente cambia
     # senza Telegram collegato: si genera il link personale
     nuovo = crea_utente("nuovo", ruoli=["Addetto protocollo"])
     nuovo.soggetto = Soggetto.objects.create(cognome="Verdi", nome="Anna")
     nuovo.save()
     client.force_login(nuovo)
-    r = client.post("/protocollo/posta/avvisi/", {"azione": "salva", "canale": "telegram"},
-                    follow=True)  # fmt: skip
-    assert "non partono: Telegram non ancora collegato" in r.content.decode()
-    r = client.post("/protocollo/posta/avvisi/", {"azione": "telegram"}, follow=True)
+    r = client.post("/avvisi/", {"azione": "salva", "posta": "telegram"}, follow=True)
+    assert "non partono: Posta da protocollare: Telegram non ancora collegato" in r.content.decode()
+    r = client.post("/avvisi/", {"azione": "telegram"}, follow=True)
     assert "https://t.me/ancr_bot?start=" in r.content.decode()
 
 
 def test_senza_permesso(client_ruolo):
-    assert client_ruolo("Consigliere").get("/protocollo/posta/avvisi/").status_code == 403
+    assert client_ruolo("Consigliere").get("/avvisi/").status_code == 403

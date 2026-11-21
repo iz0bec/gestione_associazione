@@ -61,6 +61,30 @@ Protegge l'account anche se qualcuno scopre la password.
 
 ![La ricerca globale: risultati raggruppati per modulo](immagini/cerca.jpg)
 
+## Avvisi
+
+Menu utente → **Avvisi**: brevi messaggi sul telefono (**Telegram**, **SMS** o **WhatsApp**, fra i canali
+attivi nell'organizzazione) quando succede qualcosa che riguarda il proprio ruolo.
+
+| Avviso | Chi lo riceve | Senza scelta |
+|---|---|---|
+| **Posta da protocollare** | chi gestisce la posta (addetto protocollo, segretario…) | arriva su Telegram, se collegato |
+| **Domande di iscrizione** | chi valuta le domande (presidente, segretario, presidente di sezione…), solo per le sezioni che vede | arriva su Telegram, se collegato |
+| **Sicurezza** | amministratori di sistema | non arriva: va scelto |
+
+Per ogni avviso si sceglie *Automatico* (Telegram, se collegato), un canale preciso o *Nessuno*.
+L'avviso di una domanda non va a chi l'ha appena registrata. Gli **avvisi di sicurezza** segnalano:
+accessi falliti ripetuti dallo stesso indirizzo (al 5°, 20° e 100° in 15 minuti), l'accesso di un
+amministratore da un indirizzo che non usava da 90 giorni, le operazioni sugli utenti fatte da un altro
+amministratore (nuovo utente, ruoli, password, secondo fattore, disattivazione) e i lavori periodici
+non riusciti (es. il backup notturno).
+
+Per Telegram l'utente deve essere collegato alla propria scheda anagrafica (*Sistema → Utenti*):
+**Collega il mio Telegram** dà il link personale da aprire sul telefono. Per SMS e WhatsApp si usa il
+cellulare della scheda (o il telefono del profilo); scegliere WhatsApp vale come consenso a riceverlo.
+**Manda un avviso di prova** controlla che tutto funzioni. Gli avvisi partono solo con l'invio dei
+messaggi attivo (*Sistema → Servizi di posta*).
+
 ## Uscire
 
 Menu utente → **Esci**. La sessione si chiude comunque chiudendo il browser e dopo 8 ore.

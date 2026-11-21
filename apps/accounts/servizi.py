@@ -14,6 +14,7 @@ from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from apps.core import sicurezza
 from apps.core.audit import Azione, registra
 
 from .models import PoliticaRuolo, Utente
@@ -106,11 +107,10 @@ def crea_utente(form, attore) -> tuple[Utente, str]:
     utente.is_superuser = False
     utente.save()
     form.save_m2m()
-    registra(
-        Azione.CREAZIONE,
-        utente,
-        ruoli=[g.name for g in utente.groups.all()],
-        sezioni=[str(s) for s in utente.sezioni.all()],
+    ruoli = [g.name for g in utente.groups.all()]
+    registra(Azione.CREAZIONE, utente, ruoli=ruoli, sezioni=[str(s) for s in utente.sezioni.all()])
+    sicurezza.operazione_utenti(
+        f"Nuovo utente {utente.username} ({', '.join(ruoli) or 'senza ruoli'})", attore
     )
     return utente, password
 
@@ -125,6 +125,10 @@ def aggiorna_utente(form, attore, dettagli: dict) -> Utente:
     form.save_m2m()
     if dettagli.get("campi"):
         registra(Azione.MODIFICA, utente, **dettagli)
+    if ruoli := dettagli.get("campi", {}).get("groups"):
+        prima = ", ".join(ruoli["prima"] or []) or "nessuno"
+        dopo = ", ".join(ruoli["dopo"] or []) or "nessuno"
+        sicurezza.operazione_utenti(f"Ruoli di {utente.username}: {prima} → {dopo}", attore)
     return utente
 
 
@@ -138,6 +142,7 @@ def reimposta_password(utente, attore) -> str:
     utente.deve_cambiare_password = utente.puo_cambiare_password
     utente.save(update_fields=["password", "deve_cambiare_password"])
     registra(Azione.MODIFICA, utente, operazione="password temporanea")
+    sicurezza.operazione_utenti(f"Password temporanea per {utente.username}", attore)
     return password
 
 
@@ -154,6 +159,7 @@ def imposta_password(utente, attore, password, *, obbligo_cambio=False):
     utente.save(update_fields=["password", "deve_cambiare_password"])
     registra(Azione.MODIFICA, utente, operazione="password impostata dall'amministratore",
              obbligo_cambio=utente.deve_cambiare_password)  # fmt: skip
+    sicurezza.operazione_utenti(f"Password di {utente.username} impostata", attore)
     return utente
 
 
@@ -165,6 +171,7 @@ def azzera_secondo_fattore(utente, attore) -> int:
         raise OperazioneNonValida("Il tuo secondo fattore si gestisce dal tuo profilo.")
     eliminati, _ = Authenticator.objects.filter(user=utente).delete()
     registra(Azione.MODIFICA, utente, operazione="secondo fattore azzerato", eliminati=eliminati)
+    sicurezza.operazione_utenti(f"Secondo fattore di {utente.username} azzerato", attore)
     return eliminati
 
 
@@ -182,6 +189,8 @@ def imposta_attivo(utente, attore, attivo: bool) -> None:
         utente,
         operazione="disattivato" if not attivo else "riattivato",
     )
+    stato = "disattivato" if not attivo else "riattivato"
+    sicurezza.operazione_utenti(f"Utente {utente.username} {stato}", attore)
 
 
 @transaction.atomic

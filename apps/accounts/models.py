@@ -13,6 +13,11 @@ from django.db import models
 MINUTI_CONNESSO = 5  # attività più recente di così = «connesso ora»
 
 
+CANALI_AVVISI = [("telegram", "Telegram"), ("sms", "SMS"), ("whatsapp", "WhatsApp")]
+SCELTE_AUTOMATICO = [("", "Automatico: Telegram, se collegato"), ("no", "Nessuno"), *CANALI_AVVISI]
+SCELTE_A_RICHIESTA = [("", "Nessuno"), *CANALI_AVVISI]
+
+
 class Utente(AbstractUser):
     """Account di accesso. I ruoli sono gruppi Django (vedi ruoli.py)."""
 
@@ -41,18 +46,20 @@ class Utente(AbstractUser):
     ultima_attivita = models.DateTimeField(
         "ultima attività", null=True, blank=True, editable=False, db_index=True
     )
+    # avvisi personali per messaggistica (apps/core/avvisi.py, pagina Avvisi del menu utente)
     avvisi_posta = models.CharField(
-        "avvisi della posta da protocollare",
-        max_length=10,
-        blank=True,
-        choices=[
-            ("", "Nessuno"),
-            ("telegram", "Telegram"),
-            ("sms", "SMS"),
-            ("whatsapp", "WhatsApp"),
-        ],  # fmt: skip
-        help_text="Scelto dall'utente: un avviso quando arrivano messaggi nuovi da protocollare.",
-    )
+        "avvisi della posta da protocollare", max_length=10, blank=True, choices=SCELTE_AUTOMATICO,
+        help_text="Vuoto: su Telegram, se collegato. Per chi gestisce la posta.",
+    )  # fmt: skip
+    avvisi_domande = models.CharField(
+        "avvisi delle domande di iscrizione", max_length=10, blank=True,
+        choices=SCELTE_AUTOMATICO,
+        help_text="Vuoto: su Telegram, se collegato. Per chi valuta le domande.",
+    )  # fmt: skip
+    avvisi_sicurezza = models.CharField(
+        "avvisi di sicurezza", max_length=10, blank=True, choices=SCELTE_A_RICHIESTA,
+        help_text="Solo su richiesta. Per gli amministratori.",
+    )  # fmt: skip
     puo_cambiare_password = models.BooleanField(
         "può cambiare la propria password",
         default=True,

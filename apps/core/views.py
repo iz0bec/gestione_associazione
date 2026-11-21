@@ -721,6 +721,102 @@ class AspettoView(PermessoMixin, UpdateView):
         return ctx
 
 
+class AvvisiView(PermessoMixin, TemplateView):
+    """Scelta personale degli avvisi (posta, domande, sicurezza) e collegamento di Telegram.
+    Accessibile a chi ha il permesso di almeno un tipo di avviso."""
+
+    permission_required = (
+        "protocollo.gestisci_posta",
+        "soci.valuta_domanda",
+        "accounts.change_utente",
+    )
+    template_name = "core/avvisi.html"
+
+    def has_permission(self):
+        return any(self.request.user.has_perm(p) for p in self.get_permission_required())
+
+    def _tipi(self):
+        from . import avvisi
+
+        return [t for t in avvisi.TIPI.values() if self.request.user.has_perm(t.permesso)]
+
+    def get_context_data(self, **kwargs):
+        from . import avvisi
+
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        canali = avvisi.canali_disponibili()
+        righe = []
+        for t in self._tipi():
+            canale = avvisi.canale_di(u, t.chiave)
+            scelte = [("", "Automatico: Telegram, se collegato"), (avvisi.NESSUNO, "Nessuno")]
+            if not t.automatico:
+                scelte = [("", "Nessuno")]
+            righe.append({
+                "tipo": t, "scelta": avvisi.scelta(u, t.chiave), "scelte": scelte + canali,
+                "canale": dict(avvisi.CANALI_NOMI).get(canale, ""),
+                "problema": avvisi.problema(u, canale),
+            })  # fmt: skip
+        ctx.update(
+            righe=righe,
+            canali=canali,
+            attivi=any(r["canale"] and not r["problema"] for r in righe),
+            numero=avvisi.numero_di(u),
+            soggetto=u.soggetto,
+            link_telegram=self.request.session.pop("link_telegram", ""),
+        )
+        return ctx
+
+    def post(self, request):
+        from apps.comunicazioni import telegram
+
+        from . import avvisi
+
+        u = request.user
+        azione = request.POST.get("azione")
+        if azione == "salva":
+            canali = dict(avvisi.canali_disponibili())
+            scelte = {}
+            for t in self._tipi():
+                valore = request.POST.get(t.chiave, "")
+                ammessi = {"", *canali} | ({avvisi.NESSUNO} if t.automatico else set())
+                if valore not in ammessi:
+                    messages.error(request, f"{t.nome}: canale non disponibile.")
+                    return redirect("core:avvisi")
+                setattr(u, t.campo, valore)
+                scelte[t.chiave] = valore or "automatico" if t.automatico else valore or "nessuno"
+            u.save(update_fields=[t.campo for t in self._tipi()])
+            if "whatsapp" in scelte.values() and u.soggetto and not u.soggetto.whatsapp_consenso_il:
+                from django.utils import timezone
+
+                u.soggetto.whatsapp_consenso_il = timezone.now()  # scelto dalla persona stessa
+                u.soggetto.save(update_fields=["whatsapp_consenso_il"])
+            registra(Azione.MODIFICA, u, descrizione=f"Avvisi di {u}", **scelte)
+            problemi = [f"{t.nome}: {m}" for t in self._tipi()
+                        if (m := avvisi.problema(u, avvisi.canale_di(u, t.chiave)))]  # fmt: skip
+            if problemi:
+                messages.warning(request, "Scelta salvata, ma non partono: " + "; ".join(problemi))
+            else:
+                messages.success(request, "Scelta salvata.")
+        elif azione == "telegram" and u.soggetto is not None:
+            request.session["link_telegram"] = telegram.link_invito(u.soggetto)
+        elif azione == "prova":
+            canali = {avvisi.canale_di(u, t.chiave) for t in self._tipi()} - {""}
+            for canale in sorted(canali):
+                try:
+                    avvisi.invia(
+                        u,
+                        canale,
+                        f"Prova degli avvisi di {Organizzazione.corrente().denominazione} ({u}).",
+                    )
+                    messages.success(
+                        request, f"Avviso di prova inviato su {dict(avvisi.CANALI_NOMI)[canale]}."
+                    )
+                except avvisi.AvvisoNonInviato as e:
+                    messages.error(request, f"Avviso di prova non inviato: {e}.")
+        return redirect("core:avvisi")
+
+
 class AspettoEmailView(PermessoMixin, View):
     """Veste delle email: si salva dalla stessa pagina Aspetto, con un modulo a parte."""
 

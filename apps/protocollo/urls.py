@@ -49,7 +49,6 @@ urlpatterns = [
     path("registri/", views.RegistriView.as_view(), name="registri"),
     path("registri/<int:pk>/", views.ScaricaRegistroView.as_view(), name="registro"),
     path("posta/", views.PostaView.as_view(), name="posta"),
-    path("posta/avvisi/", views.AvvisiPostaView.as_view(), name="avvisi"),
     path("posta/<int:pk>/", views.MessaggioView.as_view(), name="messaggio"),
     path("posta/<int:pk>/protocolla/", views.ProtocollaMessaggioView.as_view(), name="protocolla"),
     path("posta/<int:pk>/scarta/", views.ScartaMessaggioView.as_view(), name="scarta"),

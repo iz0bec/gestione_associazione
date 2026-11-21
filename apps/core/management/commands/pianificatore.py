@@ -109,8 +109,14 @@ class Command(BaseCommand):
         close_old_connections()
         try:
             call_command(comando, stdout=self.stdout, stderr=self.stderr, **opzioni)
-        except Exception:  # noqa: BLE001 - un lavoro in errore non ferma il pianificatore
+        except Exception as e:  # noqa: BLE001 - un lavoro in errore non ferma il pianificatore
             log.exception("Lavoro %s non riuscito", comando)
+            try:
+                from apps.core import sicurezza
+
+                sicurezza.lavoro_non_riuscito(comando, e)
+            except Exception:  # noqa: BLE001
+                log.warning("Avviso del lavoro non riuscito non inviato", exc_info=True)
         finally:
             close_old_connections()
 

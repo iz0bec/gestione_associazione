@@ -4,7 +4,7 @@
 {% block titolo_pagina %}Posta da protocollare{% endblock %}
 {% block azioni %}
 <div class="btn-list">
-  {% if perms.protocollo.gestisci_posta %}<a class="btn" href="{% url 'protocollo:avvisi' %}"><i class="ti ti-bell me-1"></i>Avvisi{% if user.avvisi_posta %}: {{ user.get_avvisi_posta_display }}{% endif %}</a>{% endif %}
+  {% if perms.protocollo.gestisci_posta %}<a class="btn" href="{% url 'core:avvisi' %}"><i class="ti ti-bell me-1"></i>Avvisi</a>{% endif %}
   {% if perms.protocollo.view_casellaposta %}<a class="btn" href="{% url 'protocollo:caselle' %}"><i class="ti ti-settings me-1"></i>Caselle</a>{% endif %}
   {% if perms.protocollo.gestisci_posta and caselle %}<form method="post">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-mail-down me-1"></i>Scarica ora</button></form>{% endif %}
 </div>

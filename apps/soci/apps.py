@@ -16,6 +16,7 @@ class SociConfig(AppConfig):
     verbose_name = "Soci e tesseramento"
 
     def ready(self):
-        from . import promemoria
+        from . import avvisi, promemoria
 
         promemoria.collega()
+        avvisi.collega()
