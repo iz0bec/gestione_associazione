@@ -854,6 +854,29 @@ components:
             Impronte SHA-256 (base64) delle chiavi pubbliche dei certificati TLS dell'istanza, per la
             verifica in modalità `impronta` in rete interna. Più valori durante un rinnovo.
           items: { type: string }
+        servizi:
+          type: object
+          description: Pagine pubbliche attive (null se spente), per portali e siti dell'associazione.
+          properties:
+            gestionale: { type: string, format: uri }
+            iscrizione: { type: [string, "null"], format: uri, description: Domanda di iscrizione online. }
+            area_soci: { type: [string, "null"], format: uri, description: Accesso all'area personale dei soci. }
+            presentazione: { type: [string, "null"], format: uri, description: Pagina pubblica di presentazione. }
+        recapiti:
+          type: object
+          description: |
+            Recapiti istituzionali dell'ente; presenti solo se l'organizzazione ne consente la
+            pubblicazione (Sistema → Organizzazione, «recapiti nella scheda pubblica»).
+          properties:
+            denominazione: { type: string }
+            indirizzo: { type: string }
+            cap: { type: string }
+            comune: { type: string }
+            provincia: { type: string }
+            telefono: { type: string }
+            email: { type: string }
+            pec: { type: string }
+            sito_web: { type: string }
 
     Jwks:
       type: object

@@ -17,6 +17,7 @@ Per chi installa, configura e mantiene l'applicazione.
 1b. [HTTPS anche in rete interna](https-rete-interna.md) - guida passo passo: CA interna con step-ca o certificato autofirmato
 2. [Configurazione](configurazione.md) - variabili d'ambiente (`.env`)
 2b. [API di interoperabilità](api.md) - proxy, rete interna, impronte TLS; guida per chi integra in [`docs/api`](../api/README.md)
+2c. [Portale dei servizi](portale-servizi.md) - pagina comune generata dalle schede pubbliche delle installazioni
 3. [Sicurezza](sicurezza.md) - misure adottate e raccomandazioni di esercizio
 4. [Backup e ripristino](backup.md)
 4b. [Importazione dai gestionali precedenti](importazione-gestionali.md) - Gestione Soci, Gestione Assemblee, Protocollo ANCR

@@ -1,0 +1,61 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Configurazione d'esempio del portale dei servizi (genera_portale.py): testi,
+# *              colori, immagini e installazioni; servizi e recapiti arrivano dai gestionali.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+titolo = "Servizi dell'Associazione"
+descrizione = "Accesso ai servizi della federazione e delle sezioni."
+ente = "ASSOCIAZIONE DI ESEMPIO"
+motto = "Fondata nel 1950"
+intestazione = "Federazione provinciale"
+sottotitolo = "Portale di accesso ai servizi della federazione e delle sezioni"
+stemma = "stemma.png"          # immagini nella stessa cartella di questo file (facoltative)
+stemma_alt = "Emblema dell'associazione"
+favicon = "favicon.png"
+# sfondo = "sfondo.jpg"        # foto attenuata dietro la testata
+tricolore = true
+senza_recapiti = "Recapiti tramite la federazione"   # schede di gestionali senza recapiti pubblici
+piede = ["Associazione di esempio — Via Roma 1, 00100 Roma"]   # HTML ammesso
+
+[colori]                       # come la veste delle email (Sistema → Aspetto)
+testata = "#0e2525"
+accento = "#a0876e"
+sfondo = "#f1ede6"
+
+[[livelli]]
+grado = "I livello"
+titolo = "Sede nazionale"
+[[livelli.gruppi]]
+[[livelli.gruppi.voci]]        # voce senza gestionale: solo testi e collegamenti
+nome = "Associazione di esempio"
+sottotitolo = "Sede nazionale — Roma"
+ampia = true
+collegamenti = [{ testo = "Sito istituzionale", url = "https://www.example.org" }]
+
+[[livelli]]
+grado = "II livello"
+titolo = "Federazione"
+[[livelli.gruppi]]
+[[livelli.gruppi.voci]]
+nome = "Federazione provinciale"
+gestionale = "https://federazione.example.org"   # da qui: servizi attivi e recapiti
+etichetta = "Gestionale della federazione"
+ampia = true
+
+[[livelli]]
+grado = "III livello"
+titolo = "Sezioni"
+[[livelli.gruppi]]
+titolo = "Provincia di Esempio"
+[[livelli.gruppi.voci]]
+nome = "Sezione di Primo"
+gestionale = "https://primo.example.org"
+[[livelli.gruppi.voci]]
+nome = "Sezione di Secondo"
+gestionale = "https://secondo.example.org"
+escludi = ["telefono"]         # recapiti da non mostrare: sede, telefono, email, pec, sito

@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.72] - 2026-11-21
+
+### Aggiunto
+- **Portale dei servizi** (`scripts/portale/`): genera la pagina comune che elenca federazione e
+  sezioni leggendo **da ogni gestionale** servizi attivi (gestionale, area soci, iscrizione online)
+  e recapiti; configurazione TOML, veste come le email, timer systemd orario, dati dell'ultima
+  lettura se un gestionale non risponde. Documentazione in *docs/sistema/portale-servizi.md*.
+- La scheda pubblica dell'istanza (`/.well-known/gestione-associazione`) indica i **servizi attivi**
+  e, se l'ente lo consente (*Sistema → Organizzazione*, **recapiti nella scheda pubblica**), i
+  **recapiti istituzionali**.
+
 ## [1.0.71] - 2026-11-21
 
 ### Aggiunto

@@ -1,0 +1,121 @@
+/*
+ * ******************************************************
+ * Progetto:    Gestione Associazione
+ * Autore:      Bartolomeo Santoro aka IZ0BEC
+ * Email:       info@iz0bec.info
+ * Descrizione: Foglio di stile del portale dei servizi (scripts/portale), nella stessa veste
+ *              delle email: testata scura, filetti d'accento, carta chiara, titoli con grazie.
+ *              I colori arrivano dalla configurazione (--testata, --accento, --sfondo).
+ * Licenza:     CC0 1.0 Universal (pubblico dominio)
+ * SPDX-License-Identifier: CC0-1.0
+ * ******************************************************
+ */
+:root {
+  --carta: var(--sfondo);
+  --superficie: #ffffff;
+  --testo: #2a2a2a;
+  --titoli: var(--testata);
+  --tenue: #6b6459;
+  --bordo: #ddd5c8;
+  --collegamento: color-mix(in srgb, var(--accento) 60%, #000);
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --carta: #121615;
+    --superficie: #1b2120;
+    --testo: #e6e3de;
+    --titoli: #f1ede6;
+    --tenue: #a9a297;
+    --bordo: #2e3634;
+    --collegamento: color-mix(in srgb, var(--accento) 70%, #fff);
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--carta); color: var(--testo); font: 16px/1.55 var(--sans); }
+a { color: var(--collegamento); }
+a:focus-visible { outline: 2px solid var(--accento); outline-offset: 2px; }
+
+/* testata: come quella delle email, con la foto attenuata dietro */
+.testata {
+  position: relative;
+  background: var(--testata);
+  color: #fff;
+  text-align: center;
+  border-bottom: 3px solid var(--accento);
+  overflow: hidden;
+}
+.testata::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--foto) center / cover no-repeat;
+  opacity: .14;
+  filter: grayscale(1);
+}
+.tricolore { position: relative; height: 5px; background: linear-gradient(90deg, #1a8a3c 0 33.33%, #fff 33.33% 66.66%, #cc2b2b 66.66%); }
+.testata .contenuto { position: relative; padding: 34px 16px 30px; }
+.stemma { width: 112px; height: auto; display: block; margin: 0 auto 16px; background: #fff; border-radius: 50%; padding: 12px; }
+.ente { margin: 0; font: bold clamp(1.05rem, 2.6vw, 1.6rem)/1.25 var(--serif); letter-spacing: .06em; }
+.motto { margin: 6px 0 0; font: italic .9rem var(--serif); color: color-mix(in srgb, #fff 75%, var(--testata)); }
+.filetto { width: 90px; border: 0; border-top: 2px solid var(--accento); margin: 16px auto; }
+.testata h1 { margin: 0; font: normal clamp(1rem, 2.2vw, 1.35rem)/1.3 var(--serif); letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--accento) 55%, #fff); }
+.sottotitolo { margin: 8px 0 0; font-size: .95rem; color: color-mix(in srgb, #fff 80%, var(--testata)); }
+
+/* livelli e schede */
+main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 8px; }
+.livello { margin-bottom: 34px; }
+.livello > header { display: flex; align-items: baseline; gap: 14px; border-bottom: 1px solid var(--bordo); padding-bottom: 8px; margin-bottom: 18px; }
+.grado { font: .78rem var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--accento); }
+.livello h2 { margin: 0; font: bold 1.3rem var(--serif); color: var(--titoli); }
+.gruppo { margin: 22px 0 12px; font: bold 1rem var(--serif); color: var(--tenue); }
+.griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.scheda {
+  display: flex;
+  flex-direction: column;
+  background: var(--superficie);
+  border: 1px solid var(--bordo);
+  border-top: 3px solid var(--accento);
+  border-radius: 4px;
+  padding: 18px 20px;
+}
+.scheda.ampia { grid-column: 1 / -1; }
+.scheda h3 { margin: 0; font: bold 1.12rem/1.3 var(--serif); color: var(--titoli); }
+.denominazione { margin: 3px 0 0; font-size: .88rem; color: var(--tenue); }
+.recapiti { list-style: none; margin: 14px 0 0; padding: 0; font-size: .92rem; }
+.recapiti li { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; overflow-wrap: anywhere; }
+.recapiti svg { flex: none; width: 16px; height: 16px; margin-top: 3px; color: var(--accento); }
+.etichetta { font-size: .78rem; font-weight: 600; color: var(--tenue); }
+.senza { margin: 14px 0 0; font-size: .9rem; color: var(--tenue); }
+.servizi { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 16px; }
+.servizio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--accento);
+  border-radius: 4px;
+  font-size: .9rem;
+  text-decoration: none;
+  color: var(--collegamento);
+}
+.servizio svg { width: 13px; height: 13px; }
+.servizio:hover { background: color-mix(in srgb, var(--accento) 12%, transparent); }
+.servizio.primario { background: var(--testata); border-color: var(--testata); color: #fff; }
+.servizio.primario:hover { background: color-mix(in srgb, var(--testata) 85%, #fff); }
+@media (prefers-color-scheme: dark) { .servizio.primario { background: var(--accento); border-color: var(--accento); color: #111; } }
+
+/* guida e piede */
+.guida { background: var(--superficie); border: 1px solid var(--bordo); border-radius: 4px; padding: 18px 20px; margin: 6px 0 30px; }
+.guida h2 { margin: 0 0 10px; font: bold 1.1rem var(--serif); color: var(--titoli); }
+.guida dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; font-size: .92rem; }
+.guida dt { font-weight: 600; }
+.guida dd { margin: 0; color: var(--tenue); }
+@media (max-width: 560px) { .guida dl { grid-template-columns: 1fr; } .guida dd { margin-bottom: 8px; } }
+footer { background: var(--testata); color: color-mix(in srgb, #fff 80%, var(--testata)); text-align: center; padding: 22px 16px; font-size: .85rem; border-top: 3px solid var(--accento); }
+footer p { margin: 4px 0; }
+footer a { color: #fff; }
+.aggiornata { font-size: .75rem; opacity: .7; }
+.icone { position: absolute; width: 0; height: 0; overflow: hidden; }

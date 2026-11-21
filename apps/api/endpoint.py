@@ -76,14 +76,39 @@ def impronte_tls():
 
 def descrizione_istanza(request):
     org = Organizzazione.corrente()
-    return {
+    descrizione = {
         "istanza": str(chiavi.istanza().uuid),
         "nome": org.denominazione,
         "versioni_api": VERSIONI,
         "jwks_uri": request.build_absolute_uri(reverse("api_jwks")),
         "software_versione": settings.APP_VERSIONE,
         "tls_spki": impronte_tls(),
+        "servizi": servizi_pubblici(request, org),
     }
+    if org.recapiti_pubblici:
+        descrizione["recapiti"] = recapiti_pubblici(org)
+    return descrizione
+
+
+def servizi_pubblici(request, org):
+    """Pagine pubbliche attive (per portali e siti che elencano le installazioni)."""
+    assoluto = request.build_absolute_uri
+    return {
+        "gestionale": assoluto("/"),
+        "iscrizione": assoluto(reverse("iscrizione")) if org.iscrizioni_online else None,
+        "area_soci": assoluto(reverse("area:accesso")) if org.area_soci else None,
+        "presentazione": assoluto("/") if org.pagina_pubblica else None,
+    }
+
+
+def recapiti_pubblici(org):
+    """Recapiti istituzionali dell'ente, solo se l'organizzazione ne consente la pubblicazione."""
+    return {
+        "denominazione": org.denominazione,
+        "indirizzo": org.indirizzo, "cap": org.cap, "comune": org.comune,
+        "provincia": org.provincia, "telefono": org.telefono, "email": org.email,
+        "pec": org.pec, "sito_web": org.sito_web,
+    }  # fmt: skip
 
 
 @endpoint(metodi=("GET", "HEAD"), autenticato=False)

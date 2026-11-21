@@ -275,6 +275,13 @@ class Organizzazione(models.Model):
         help_text="Chi apre l'indirizzo principale senza accesso vede finalità, documenti "
         "pubblici, contatti e il pulsante per accedere; spenta, va alla pagina di accesso.",
     )
+    recapiti_pubblici = models.BooleanField(
+        "recapiti nella scheda pubblica dell'istanza",
+        default=False,
+        help_text="Pubblica sede, telefono, email, PEC e sito dell'ente nella scheda leggibile dai "
+        "programmi (/.well-known/gestione-associazione), per i portali e i siti dell'associazione "
+        "che elencano le sezioni. I servizi attivi vi compaiono comunque.",
+    )
     presentazione = models.TextField(
         "finalità dell'associazione",
         blank=True,

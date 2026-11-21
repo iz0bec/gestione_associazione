@@ -50,6 +50,22 @@ def _codice(r):
 
 @pytest.mark.django_db
 class TestIstanza:
+    def test_servizi_e_recapiti_pubblici(self, client):
+        from apps.core.models import Organizzazione
+
+        Organizzazione.objects.update(
+            iscrizioni_online=True, area_soci=True, email="sez@example.org", comune="Ruoti",
+            recapiti_pubblici=False,
+        )  # fmt: skip
+        dati = client.get("/.well-known/gestione-associazione").json()
+        assert dati["servizi"]["iscrizione"] == "http://testserver/iscrizione/"
+        assert dati["servizi"]["area_soci"] == "http://testserver/area/accesso/"
+        assert dati["servizi"]["presentazione"] is None and "recapiti" not in dati
+        Organizzazione.objects.update(recapiti_pubblici=True)
+        dati = client.get("/.well-known/gestione-associazione").json()
+        assert dati["recapiti"]["email"] == "sez@example.org"
+        assert dati["recapiti"]["comune"] == "Ruoti"
+
     def test_descrizione_firmata_e_jwks(self, client):
         r = client.get("/.well-known/gestione-associazione")
         assert r.status_code == 200
@@ -57,6 +73,7 @@ class TestIstanza:
         assert dati["istanza"] == str(chiavi.istanza().uuid)
         assert dati["versioni_api"] == ["v1"]
         assert dati["jwks_uri"].endswith("/.well-known/gestione-associazione/jwks.json")
+        assert dati["servizi"]["iscrizione"] is None and "recapiti" not in dati
         jwks = client.get("/.well-known/gestione-associazione/jwks.json")
         assert jwks["Content-Type"] == "application/jwk-set+json"
         chiavi_pubbliche = jwks.json()

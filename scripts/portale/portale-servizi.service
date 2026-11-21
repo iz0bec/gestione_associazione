@@ -1,0 +1,17 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Rigenera il portale dei servizi leggendo le schede pubbliche dei gestionali.
+# *              Percorsi d'esempio: adattare configurazione e cartella pubblicata.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+[Unit]
+Description=Portale dei servizi (Gestione Associazione)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /root/gestione-associazione-src/scripts/portale/genera_portale.py /etc/portale-servizi/portale.toml --uscita /var/www/portale-servizi

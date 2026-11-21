@@ -228,6 +228,11 @@ fiscale), il riquadro **Verifica una tessera** (numero e cognome; vedi
 sempre il cruscotto. Senza la spunta l'indirizzo principale porta subito alla pagina di accesso.
 Il collegamento *Anteprima* mostra la pagina anche prima di attivarla.
 
+**Recapiti nella scheda pubblica dell'istanza**: pubblica sede, telefono, email, PEC e sito anche nella
+scheda leggibile dai programmi (`/.well-known/gestione-associazione`), da cui li prende il **portale dei
+servizi** che elenca federazione e sezioni (vedi la documentazione di sistema, *Portale dei servizi*).
+Spenta, il portale mostra solo i servizi attivi (gestionale, area soci, iscrizione online).
+
 ## Documenti pubblici
 
 ![La gestione dei documenti pubblici](immagini/documenti-pubblici.jpg)
