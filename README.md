@@ -22,7 +22,30 @@ Nasce dall'unione di tre applicazioni usate da una sezione ANCR (Associazione Na
 Combattenti e Reduci): **Protocollo ANCR**, **Gestione Soci** e **Gestione Assemblee**.
 L'analisi di partenza è in [docs/analisi/analisi-e-finalita.md](docs/analisi/analisi-e-finalita.md).
 
-> **Stato**: versione stabile `1.0.52`. Installazione su server Debian/Ubuntu o in
+## Prova la demo
+
+**[gestione-demo.iz0bec.info](https://gestione-demo.iz0bec.info)**: un'installazione completa con
+dati di fantasia (l'«Associazione di Esempio»), da usare liberamente senza installare nulla.
+Si entra con uno dei ruoli, tutti con la password `Demo-2026`:
+
+| Utente | Ruolo | Da provare |
+|---|---|---|
+| `presidente` | Presidente | soci, domande di iscrizione, organi sociali, firme |
+| `segretario` | Segretario | soci, protocollo, comunicazioni, verbali |
+| `tesoriere` | Tesoriere | quote, prima nota, rendiconto |
+| `protocollo` | Addetto protocollo | registro di protocollo e posta da protocollare |
+| `sezione` | Presidente di sezione | i soci della sola sezione di Valleverde |
+| `consigliere` | Consigliere | consultazione |
+| `revisore` | Revisore | controllo dei conti |
+
+I dati si azzerano il 1° di ogni mese e nessun messaggio (email, PEC, Telegram, SMS) parte davvero:
+si può provare tutto, anche a sbagliare. Per avere una propria demo: [Ambiente
+dimostrativo](docs/sistema/ambiente-dimostrativo.md).
+
+## Stato
+
+> Versione stabile: vedi le [release](https://github.com/iz0bec/gestione_associazione/releases)
+> e il [CHANGELOG](CHANGELOG.md). Installazione su server Debian/Ubuntu o in
 > un container LXC su Proxmox: vedi [Installazione](docs/sistema/installazione.md).
 > Moduli disponibili: accesso con secondo fattore, ruoli, dati dell'organizzazione,
 > registro attività, **anagrafica unica**, **soci e tesseramento** (libro soci, quote,
