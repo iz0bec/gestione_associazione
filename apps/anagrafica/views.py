@@ -31,7 +31,7 @@ from apps.core.views import PermessoMixin
 from . import codice_fiscale, servizi, vcard
 from .filtri import SoggettoFilter
 from .forms import ConsensoForm, ImportaVCardForm, SoggettoForm
-from .models import Consenso, Soggetto
+from .models import Soggetto
 
 
 class ElencoView(PermessoMixin, FilterView):
@@ -59,14 +59,9 @@ class DettaglioView(PermessoMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["consensi"] = self.object.consensi.all()
-        from apps.comunicazioni.servizi import impliciti_per
+        from apps.comunicazioni.servizi import finalita_implicite
 
-        if impliciti_per([self.object]):
-            registrate = set(self.object.consensi.values_list("finalita", flat=True))
-            ctx["consensi_impliciti"] = [
-                etichetta for valore, etichetta in Consenso.Finalita.choices
-                if valore not in registrate
-            ]  # fmt: skip
+        ctx["consensi_impliciti"] = finalita_implicite(self.object)
         ctx["form_consenso"] = ConsensoForm()
         ctx["socio"] = getattr(self.object, "socio", None)
         from apps.core.models import CanaleTelegram

@@ -165,22 +165,52 @@ def consensi_prestati(soggetti, finalita, *, impliciti=True):
     return prestati
 
 
-def impliciti_per(soggetti, finalita=None):
-    """Id dei soci (attivi o sospesi) per cui vale il consenso implicito: senza alcuna
-    registrazione per la finalità indicata (o, senza finalità, tutti i soci)."""
+# finalità di sola ricezione per email: le sole implicite per chi è in rubrica senza essere socio
+FINALITA_RUBRICA = {Consenso.Finalita.COMUNICAZIONI, Consenso.Finalita.AUGURI}
+
+
+def _impliciti(ids, finalita):
+    """{id: motivo} dei soggetti per cui il consenso alla finalità (None: a una qualsiasi)
+    vale come prestato senza registrazione: soci attivi e sospesi; con l'opzione della rubrica,
+    per comunicazioni e auguri, anche chi non è mai stato socio (enti, autorità, contatti)."""
     from apps.core.models import Organizzazione
     from apps.soci.models import Socio
 
-    if not Organizzazione.corrente().consensi_impliciti_soci:
-        return set()
+    org = Organizzazione.corrente()
+    motivi = {}
+    if org.consensi_impliciti_rubrica and (finalita is None or finalita in FINALITA_RUBRICA):
+        mai_soci = set(ids) - set(
+            Socio.objects.filter(soggetto_id__in=ids).values_list("soggetto_id", flat=True)
+        )
+        motivi.update(dict.fromkeys(mai_soci, "in rubrica"))
+    if org.consensi_impliciti_soci:
+        soci = Socio.objects.filter(soggetto_id__in=ids).exclude(stato=Socio.Stato.CESSATO)
+        motivi.update(dict.fromkeys(soci.values_list("soggetto_id", flat=True), "socio"))
+    return motivi
+
+
+def impliciti_per(soggetti, finalita=None):
+    """Id dei soggetti per cui vale il consenso implicito (vedi `_impliciti`): senza alcuna
+    registrazione per la finalità indicata (o, senza finalità, per una qualsiasi)."""
     ids = [getattr(s, "pk", s) for s in soggetti]
-    soci = set(Socio.objects.filter(soggetto_id__in=ids).exclude(stato=Socio.Stato.CESSATO)
-               .values_list("soggetto_id", flat=True))  # fmt: skip
+    candidati = set(_impliciti(ids, finalita))
     if finalita is None:
-        return soci
-    registrati = set(Consenso.objects.filter(soggetto_id__in=soci, finalita=finalita)
+        return candidati
+    registrati = set(Consenso.objects.filter(soggetto_id__in=candidati, finalita=finalita)
                      .values_list("soggetto_id", flat=True))  # fmt: skip
-    return soci - registrati
+    return candidati - registrati
+
+
+def finalita_implicite(soggetto):
+    """[(etichetta, motivo)] delle finalità senza registrazioni che valgono come prestate."""
+    registrate = set(soggetto.consensi.values_list("finalita", flat=True))
+    risultato = []
+    for valore, etichetta in Consenso.Finalita.choices:
+        if valore not in registrate and (
+            motivo := _impliciti([soggetto.pk], valore).get(soggetto.pk)
+        ):
+            risultato.append((etichetta, motivo))
+    return risultato
 
 
 def motivo_esclusione(soggetto, finalita, con_consenso, indirizzo=None):

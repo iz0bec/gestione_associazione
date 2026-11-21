@@ -5,6 +5,16 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.69] - 2026-11-21
+
+### Modificato
+- **Cruscotto**: nel riquadro dei protocolli, «N messaggi da protocollare» porta alla **posta da
+  protocollare**; il resto del riquadro continua a portare all'elenco dei protocolli.
+- **Consenso implicito per la rubrica** (*Sistema → Organizzazione*, attivo per default): chi è in
+  anagrafica senza essere socio (enti, autorità, personaggi pubblici, contatti) riceve per email
+  comunicazioni associative e auguri senza un consenso registrato, salvo diniego o revoca. Non vale
+  per gli ex soci né per le altre finalità; la scheda lo mostra come «implicito: in rubrica».
+
 ## [1.0.68] - 2026-11-20
 
 ### Aggiunto

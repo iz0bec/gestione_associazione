@@ -21,6 +21,13 @@ from apps.comunicazioni.models import Finalita
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def senza_rubrica_implicita():
+    from apps.core.models import Organizzazione
+
+    Organizzazione.objects.update(consensi_impliciti_rubrica=False)
+
+
 @pytest.fixture
 def utente(crea_utente):
     return crea_utente("segr", ruoli=["Segretario"])

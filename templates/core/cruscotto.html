@@ -42,13 +42,13 @@
   {% endif %}
   {% if protocollo %}
   <div class="col-sm-4">
-    <a class="card card-link" href="{% url 'protocollo:elenco' %}">
+    <div class="card card-link">
       <div class="card-body">
-        <div class="subheader">Protocolli {% now "Y" %}</div>
+        <div class="subheader"><a class="stretched-link text-reset" href="{% url 'protocollo:elenco' %}">Protocolli {% now "Y" %}</a></div>
         <div class="h1 mb-1">{{ protocollo.anno }}</div>
-        <div class="text-secondary">{% if protocollo.posta %}<span class="text-orange">{{ protocollo.posta }} messaggi da protocollare</span>{% else %}nessun messaggio in attesa{% endif %}</div>
+        <div class="text-secondary">{% if protocollo.posta %}<a class="text-orange position-relative z-2" href="{% url 'protocollo:posta' %}">{{ protocollo.posta }} messagg{{ protocollo.posta|pluralize:"io,i" }} da protocollare</a>{% else %}nessun messaggio in attesa{% endif %}</div>
       </div>
-    </a>
+    </div>
   </div>
   {% endif %}
   <div class="col-sm-8">

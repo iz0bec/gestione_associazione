@@ -138,3 +138,17 @@ class TestSicurezzaHttp:
     def test_nessuno_script_inline(self, client_ruolo):
         html = client_ruolo("Segretario").get("/").content.decode()
         assert "<script>" not in html and "onclick=" not in html
+
+
+@pytest.mark.django_db
+def test_cruscotto_posta_da_protocollare_porta_alla_posta(client_ruolo, monkeypatch):
+    from django.urls import reverse
+
+    from apps.core import views
+
+    monkeypatch.setattr(
+        views, "_riepilogo_protocollo", lambda u: {"anno": 3, "ultimi": [], "posta": 2}
+    )
+    pagina = client_ruolo("Segretario").get(reverse("core:cruscotto")).content.decode()
+    assert f'href="{reverse("protocollo:elenco")}">Protocolli' in pagina
+    assert f'href="{reverse("protocollo:posta")}">2 messaggi da protocollare' in pagina

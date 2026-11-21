@@ -46,6 +46,8 @@ def ambiente(settings, tmp_path):
     org = Organizzazione.corrente()
     org.denominazione = "ANCR Sezione di Prova"
     org.email = "segreteria@example.org"
+    # i test dei consensi espliciti: la rubrica implicita ha i suoi (test_consenso_della_rubrica)
+    org.consensi_impliciti_rubrica = False
     org.save()
 
 
@@ -127,6 +129,35 @@ class TestDestinatari:
         pagina = admin.get(reverse("anagrafica:dettaglio", args=[diniego.pk])).content.decode()
         assert "implicito: socio" in pagina and "negato/revocato" in pagina
         Organizzazione.objects.update(consensi_impliciti_soci=False)
+        assert servizi.consensi_prestati(tutti, "comunicazioni") == set()
+
+    def test_consenso_della_rubrica(self, utente, client_ruolo):
+        Organizzazione.objects.update(consensi_impliciti_rubrica=True)
+        ordinario = TipologiaSocio.objects.get(nome="Ordinario")
+        contatto = persona("Contatto")
+        prefettura = Soggetto.objects.create(tipo=Soggetto.Tipo.ENTE, denominazione="Prefettura",
+                                             email="prefettura@example.org")  # fmt: skip
+        diniego = persona("Diniego")
+        Consenso.objects.create(soggetto=diniego, finalita="comunicazioni", prestato=False)
+        cessato = persona("Cessato")
+        s = soci.ammetti_socio(cessato, ordinario, utente, data_ammissione=date(2020, 1, 1))
+        soci.cessa_socio(s, utente, data_cessazione=date(2024, 1, 1), causa="dimissioni")
+        tutti = [contatto, prefettura, diniego, cessato]
+        assert servizi.consensi_prestati(tutti, "comunicazioni") == {contatto.pk, prefettura.pk}
+        assert servizi.consensi_prestati(tutti, "auguri") == {
+            contatto.pk,
+            prefettura.pk,
+            diniego.pk,
+        }
+        assert servizi.consensi_prestati(tutti, "immagini") == set()  # solo ricevere email
+        invio = servizi.crea_invio(utente, oggetto="Cerimonia", corpo="Invito",
+                                   finalita=Finalita.COMUNICAZIONI, soggetti=tutti)  # fmt: skip
+        stati = {d.soggetto_id: d.stato for d in invio.destinatari.all()}
+        assert stati[prefettura.pk] == "in_attesa" and stati[cessato.pk] == "escluso"
+        admin = client_ruolo("Amministratore di sistema")
+        pagina = admin.get(reverse("anagrafica:dettaglio", args=[prefettura.pk])).content.decode()
+        assert "implicito: in rubrica" in pagina
+        Organizzazione.objects.update(consensi_impliciti_rubrica=False)
         assert servizi.consensi_prestati(tutti, "comunicazioni") == set()
 
     def test_registrazione_in_blocco_dei_consensi_impliciti(self, utente):

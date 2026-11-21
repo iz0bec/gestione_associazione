@@ -97,10 +97,17 @@ lo storico resta visibile.
 **Soci: consenso implicito.** Chi è ammesso socio accetta le regole sulla privacy, quindi per i soci
 **attivi e sospesi** ogni finalità senza registrazioni vale come consenso prestato. La scheda la
 mostra come «implicito: socio, salvo diniego». Per escludere un socio da una finalità si registra un
-consenso **negato**: un diniego o una revoca registrati valgono sempre. Ai soci cessati e alle
-persone che non sono socie servono i consensi registrati. Il modulo di adesione stampato riporta
-solo i consensi espressi. L'opzione è in *Sistema → Organizzazione* (**Consensi impliciti per i
-soci**, attiva per default).
+consenso **negato**: un diniego o una revoca registrati valgono sempre. Il modulo di adesione
+stampato riporta solo i consensi espressi. L'opzione è in *Sistema → Organizzazione* (**Consensi
+impliciti per i soci**, attiva per default).
+
+**Rubrica: consenso implicito a ricevere email.** Chi viene inserito in anagrafica senza essere socio
+(enti, autorità, personaggi pubblici, contatti) lo si inserisce proprio per scrivergli: per le
+finalità **Comunicazioni associative** e **Auguri e ricorrenze** il consenso vale come prestato, e la
+scheda lo mostra come «implicito: in rubrica». Anche qui un diniego o una revoca registrati valgono
+sempre. Non vale per le altre finalità (foto, dati a enti collegati…) né per gli **ex soci**, ai quali
+servono i consensi registrati. L'opzione è in *Sistema → Organizzazione* (**Consensi impliciti per la
+rubrica**, attiva per default): chi preferisce chiedere il consenso anche ai contatti la spegne.
 
 Per **registrarli** davvero nelle schede (restano anche se l'opzione si spegne) l'amministratore
 esegue `manage.py consensi_impliciti --esegui`: per ogni socio attivo o sospeso e ogni finalità

@@ -26,8 +26,9 @@ Ogni comunicazione ha una **finalità**, che decide chi la può ricevere:
 | **Auguri e ricorrenze** | compleanni, onomastici, anniversari | solo chi ha il consenso *Auguri e ricorrenze* |
 
 Conta l'**ultimo consenso** registrato in anagrafica: se è stato revocato, la persona è esclusa.
-Per i soci attivi e sospesi, se per la finalità non c'è nessuna registrazione, il consenso è
-**implicito** (salvo diniego esplicito: vedi *Anagrafica → Consensi privacy*).
+Se per la finalità non c'è nessuna registrazione, il consenso è **implicito** per i soci attivi e
+sospesi e per chi è in rubrica senza essere socio (enti, autorità, contatti), salvo diniego
+esplicito: vedi *Anagrafica → Consensi privacy*. Agli ex soci servono i consensi registrati.
 Sono sempre esclusi i **deceduti**, le schede **archiviate** e chi non ha email. Nell'anteprima ogni
 escluso compare con il motivo.
 

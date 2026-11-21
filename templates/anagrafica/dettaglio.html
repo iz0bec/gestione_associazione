@@ -129,7 +129,7 @@
         {% for c in consensi %}
         <div class="list-group-item"><span class="status-dot {% if c.prestato %}status-dot-animated bg-green{% else %}bg-red{% endif %} me-2"></span>{{ c.get_finalita_display }}<div class="small text-secondary">{% if c.prestato %}prestato{% else %}negato/revocato{% endif %} il {{ c.data|date:"d/m/Y" }}{% if c.modalita %} · {{ c.modalita }}{% endif %}</div></div>
         {% empty %}{% if not consensi_impliciti %}<div class="list-group-item text-secondary">Nessun consenso registrato.</div>{% endif %}{% endfor %}
-        {% for f in consensi_impliciti %}<div class="list-group-item"><span class="status-dot bg-green me-2"></span>{{ f }}<div class="small text-secondary">implicito: socio, salvo diniego (registrare «negato» per escluderlo)</div></div>{% endfor %}
+        {% for f, motivo in consensi_impliciti %}<div class="list-group-item"><span class="status-dot bg-green me-2"></span>{{ f }}<div class="small text-secondary">implicito: {{ motivo }}, salvo diniego (registrare «negato» per escluderlo)</div></div>{% endfor %}
       </div>
       {% if perms.anagrafica.add_consenso %}
       <div class="card-body border-top">

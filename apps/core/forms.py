@@ -53,6 +53,7 @@ class OrganizzazioneForm(StileMixin, forms.ModelForm):
 
         model = Organizzazione
         fields = [*CAMPI_ENTE, *CAMPI_MODULO, "informativa_privacy", "consensi_impliciti_soci",
+                  "consensi_impliciti_rubrica",
                   "iscrizioni_online",
                   "area_soci", "pagina_pubblica", "presentazione"]  # fmt: skip
         widgets = {
