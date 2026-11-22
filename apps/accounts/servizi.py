@@ -386,10 +386,10 @@ Non inoltrare questo messaggio: contiene le tue credenziali personali.
 """
 
 
-TESTO_PER_CONTO = """{{{{ saluto }}}} {{{{ nome }}}},
+TESTO_PER_CONTO = """{apertura},
 
-ti scriviamo{qualita} perché **{persona}**, {carica}, non ha un indirizzo email registrato nel
-gestionale di {ente}. Ti chiediamo di consegnare personalmente a questa persona le credenziali di
+**{persona}**, {carica}, non ha un indirizzo email registrato nel gestionale di {ente}: si chiede a
+chi tratta questa comunicazione di consegnare personalmente a questa persona le credenziali di
 accesso qui sotto.
 
 - Indirizzo: {indirizzo}
@@ -397,10 +397,10 @@ accesso qui sotto.
 - Password iniziale: **{password}**
 - Ruolo nel gestionale: {ruoli}
 
-Invitala a **cambiare la password al primo accesso** e a **dotarsi di un indirizzo email**, da
-comunicare alla segreteria perché venga inserito nella sua scheda: per il corretto svolgimento
-delle attività di gestione (recupero della password, avvisi, comunicazioni) è opportuno che ogni
-incaricato ne abbia uno.
+La persona va invitata a **cambiare la password al primo accesso** e a **dotarsi di un indirizzo
+email**, da comunicare alla segreteria perché venga inserito nella sua scheda: per il corretto
+svolgimento delle attività di gestione (recupero della password, avvisi, comunicazioni) è opportuno
+che ogni incaricato ne abbia uno.
 
 Come cambiare la password: aprire {indirizzo} ed entrare con nome utente e password iniziale; in
 alto a destra aprire il menu con il proprio nome, scegliere **Cambia password**, scrivere la
@@ -411,12 +411,13 @@ riguarda la pagina in uso; dal menu con il proprio nome, voce **Manuale**, si tr
 completo e il pulsante **Manuale in PDF** per scaricarlo. Il manuale in PDF è anche qui:
 https://github.com/iz0bec/gestione_associazione/blob/main/docs/manuale/manuale-operativo.pdf
 
-**Uso di queste informazioni**: le credenziali riguardano un'altra persona e ti sono affidate solo
-perché tu possa consegnarle. Usale esclusivamente per questo scopo, non conservarle e non inoltrarle
-ad altri.
+**Uso di queste informazioni**: le credenziali riguardano un'altra persona e sono affidate a chi
+riceve questo messaggio solo perché le consegni. Vanno usate esclusivamente per questo scopo, non
+conservate e non inoltrate ad altri.
 
-Per qualsiasi difficoltà rispondi a questo messaggio.
+Per qualsiasi difficoltà rispondere a questo messaggio.
 """
+APERTURA_ENTE = "Alla cortese attenzione dell'incaricato della trattazione (di norma il Presidente)"
 ORIGINE_BOZZE = "utenti-cariche"
 ORDINE_RICEVENTE = [
     "presidente", "vicepresidente", "segretario", "tesoriere", "consigliere", "supplente",
@@ -474,51 +475,54 @@ def _bozza_diretta(attore, utente, password, indirizzo, org):
 
 
 def _bozza_per_conto(attore, utente, password, indirizzo, org):
-    """Bozza per chi non ha l'email, a chi la consegna; None se non c'è nessun destinatario."""
+    """Bozza per chi non ha l'email: alla casella istituzionale dell'ente, che la riceve chi ne
+    cura la trattazione (di norma il presidente); se l'ente non ha una casella, alla carica più alta
+    dello stesso organo con un'email. None se non c'è nessun destinatario."""
     from apps.comunicazioni import servizi as comunicazioni
     from apps.comunicazioni.models import Finalita
 
     ricevente, carica = (None, None)
     if utente.soggetto:
         ricevente, carica = ricevente_per_conto(utente.soggetto)
-    if ricevente is None and not org.email:
+    if not org.email and ricevente is None:
         return None
     persona = utente.get_full_name() or utente.username
+    descrizione = "incaricato"
+    if carica:
+        descrizione = f"{carica.get_ruolo_display().lower()} ({carica.organo})"
+    apertura = APERTURA_ENTE if org.email else "{{ saluto }} {{ nome }}"
     corpo = TESTO_PER_CONTO.format(
+        apertura=apertura,
         ente=org.denominazione,
         indirizzo=indirizzo,
         utente=utente.username,
         password=password,
         ruoli=", ".join(g.name for g in utente.groups.all()),
         persona=persona,
-        carica=f"{carica.get_ruolo_display().lower()} ({carica.organo})"
-        if carica
-        else "incaricato",
-        qualita=f" in qualità di {ricevente.get_ruolo_display().lower()}" if ricevente else "",
+        carica=descrizione,
     )
     comuni = {
         "oggetto": f"Accesso al gestionale per conto di {persona} - {org.denominazione}",
+        "corpo": corpo,
         "finalita": Finalita.ISTITUZIONALE,
         "origine": ORIGINE_BOZZE,
     }
-    if ricevente is not None:
+    if org.email:
         invio = comunicazioni.crea_invio(
-            attore, corpo=corpo, soggetti=[ricevente.soggetto], **comuni
+            attore, indirizzi=[(org.denominazione, org.email)], **comuni
         )
-    else:  # nessuno con l'email nell'organo: la casella dell'ente
-        corpo = corpo.replace("{{ saluto }} {{ nome }},", "Alla cortese attenzione del Presidente,")
-        invio = comunicazioni.crea_invio(
-            attore, corpo=corpo, indirizzi=[(org.denominazione, org.email)], **comuni
-        )
+    else:  # l'ente non ha una casella: la carica più alta dell'organo con un'email
+        invio = comunicazioni.crea_invio(attore, soggetti=[ricevente.soggetto], **comuni)
     invio.per_conto = persona
     return invio
 
 
 def bozze_credenziali(attore, creati, usate, indirizzo):
     """Una comunicazione in bozza per ogni utente attivo: a chi ha un'email le sue credenziali e i
-    passaggi per cambiare la password; per chi non ce l'ha, una bozza «per conto» alla carica più
-    alta dello stesso organo con un'email (o alla casella dell'ente), che gliele consegni e lo
-    inviti a dotarsi di un'email. Restituisce (bozze create, utenti senza alcun destinatario)."""
+    passaggi per cambiare la password; per chi non ce l'ha, una bozza «per conto» alla casella
+    dell'ente (o, se manca, alla carica più alta dello stesso organo con un'email), perché gliele
+    consegni e lo inviti a dotarsi di un'email.
+    Restituisce (bozze create, utenti senza alcun destinatario)."""
     from apps.core.models import Organizzazione
 
     org = Organizzazione.corrente()

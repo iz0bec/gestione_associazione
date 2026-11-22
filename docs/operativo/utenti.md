@@ -74,10 +74,11 @@ controllano e si inviano da *Comunicazioni*; il testo contiene la password: va c
 accesso; non dice che è condivisa con chi ha la stessa carica).
 
 Chi non ha un'email in anagrafica riceve un indirizzo segnaposto `…@senza-email.invalid` (il recupero
-della password non funziona finché non si inserisce quella vera). Per lui la bozza va **per conto**:
-alla **carica più alta dello stesso organo che ha un'email** (o, se nessuno ce l'ha, alla casella
-dell'ente, all'attenzione del presidente), con le credenziali da consegnare di persona, l'invito a
-**dotarsi di un'email** (serve al corretto svolgimento della gestione: recupero della password, avvisi,
+della password non funziona finché non si inserisce quella vera). Per lui la bozza va **per conto**
+alla **casella istituzionale dell'ente** (*Sistema → Organizzazione*), che la riceve l'incaricato della
+trattazione (di norma il presidente); solo se l'ente non ha una casella, alla carica più alta dello
+stesso organo con un'email. Contiene le credenziali da consegnare di persona, l'invito a **dotarsi di
+un'email** (serve al corretto svolgimento della gestione: recupero della password, avvisi,
 comunicazioni) e l'avvertenza che i dati riguardano un'altra persona e vanno usati solo per la
 consegna. Le bozze non dicono che la password è uguale per chi ha la stessa carica e indicano dove
 trovare il manuale. In un'installazione con più

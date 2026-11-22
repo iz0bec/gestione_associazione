@@ -98,7 +98,8 @@ def test_creazione_dalla_pagina(admin, organi):
     assert Utente.objects.get(username="luca.gialli").email == "luca.gialli@senza-email.invalid"
     assert not Utente.objects.get(username="mario.blu").is_active  # consigliere: non attivo
     assert not Utente.objects.get(username="mario.verdi").is_active
-    # bozze per gli attivi: Rossi e Neri dirette; Gialli (senza email) «per conto» al presidente
+    # bozze per gli attivi: Rossi e Neri dirette; Gialli (senza email) «per conto»: l'ente non ha
+    # una casella, quindi alla carica più alta con un'email
     bozze = Invio.objects.filter(origine="utenti-cariche")
     assert bozze.count() == 3 and all(b.stato == "bozza" for b in bozze)
     corpo = bozze.get(oggetto__startswith="Accesso al gestionale -",
@@ -107,8 +108,8 @@ def test_creazione_dalla_pagina(admin, organi):
     assert "stessa carica" not in corpo  # non si dice che la password è condivisa
     conto = bozze.get(oggetto__contains="per conto di Luca Gialli")
     assert conto.destinatari.get().soggetto.cognome == "Rossi"  # la carica più alta con email
-    assert "luca.gialli" in conto.corpo and "dotarsi di un indirizzo email" in conto.corpo
-    assert "Uso di queste informazioni" in conto.corpo and "in qualità di presidente" in conto.corpo
+    assert "luca.gialli" in conto.corpo and "dotarsi di un indirizzo" in conto.corpo
+    assert "Uso di queste informazioni" in conto.corpo  # l'ente non ha una casella: al presidente
     assert "per conto" in testo and "Luca Gialli" in testo
     # rieseguendo non ricrea nulla
     assert admin.post(URL, {"soggetto": scelti}).status_code == 200
@@ -141,14 +142,16 @@ def test_per_conto_alla_casella_dell_ente(organi):
 
     Organizzazione.objects.update(email="sezione@example.org")
     consiglio, _ = organi
-    s = carica(consiglio, "Solo", "presidente")  # nessuno nell'organo ha l'email
-    creati, usate = servizi.crea_utenti_da_cariche(None, {s.pk}, {}, {"presidente"})
+    carica(consiglio, "Rossi", "presidente", "rossi@example.org")
+    s = carica(consiglio, "Solo", "segretario")  # senza email: va comunque alla casella dell'ente
+    creati, usate = servizi.crea_utenti_da_cariche(None, {s.pk}, {}, {"segretario"})
     bozze, senza = servizi.bozze_credenziali(None, creati, usate, "https://gestione.example.org")
     assert senza == [] and bozze[0].destinatari.get().email == "sezione@example.org"
-    assert bozze[0].corpo.startswith("Alla cortese attenzione del Presidente")
+    assert bozze[0].corpo.startswith("Alla cortese attenzione dell'incaricato della trattazione")
     Organizzazione.objects.update(email="")
-    s2 = carica(consiglio, "Altro", "segretario")
-    creati, usate = servizi.crea_utenti_da_cariche(None, {s2.pk}, {}, {"segretario"})
+    altro_organo = Organo.objects.create(nome="Commissione", sigla="CM", tipo="altro")
+    s2 = carica(altro_organo, "Altro", "componente")  # nessuno con l'email, né l'ente
+    creati, usate = servizi.crea_utenti_da_cariche(None, {s2.pk}, {}, {"altro"})
     assert servizi.bozze_credenziali(None, creati, usate, "x")[1] == [creati[0][0]]
 
 

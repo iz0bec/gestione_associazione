@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.77] - 2026-11-22
+
+### Modificato
+- **Utenti dalle cariche**: le credenziali di chi non ha l'email vanno alla **casella istituzionale
+  dell'ente**, all'attenzione dell'incaricato della trattazione (di norma il presidente); la carica
+  più alta dello stesso organo con un'email resta solo se l'ente non ha una casella.
+- Roadmap: in programma la gestione dell'**inoltro della casella di sezione** dal gestionale (oggi lo
+  fa il fornitore della posta).
+
 ## [1.0.76] - 2026-11-22
 
 ### Modificato

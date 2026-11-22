@@ -212,3 +212,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.
+- **Inoltro della email di sezione** (da fare). Oggi la casella istituzionale di ogni sezione
+  (es. `sezione.pz.sez@…`) è inoltrata dal fornitore della posta a chi la gestisce. In futuro
+  l'inoltro lo governa il gestionale: per ogni sezione chi riceve i messaggi della casella (di norma
+  il presidente, o l'incaricato della trattazione), con le regole cambiate dall'interfaccia e non
+  più dal fornitore, nel rispetto della riservatezza (ad es. le credenziali inviate «per conto» di
+  chi non ha l'email).
