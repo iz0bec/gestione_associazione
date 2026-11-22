@@ -283,3 +283,13 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     presentate con data di arrivo e esito dell'ammissione, elenco degli aventi diritto alla data
     dell'avviso, verbali precompilati, nomina automatica delle nuove cariche e chiusura delle vecchie,
     verbale di passaggio di consegne.
+- **Preimpostazioni dei fornitori di posta** (da fare). In *Sistema → Servizi di posta*, creando una
+  casella (IMAP) o un servizio di invio (SMTP), un menu **«Fornitore»** compila da solo server,
+  porta, cifratura (SSL/STARTTLS), nome utente (di norma l'indirizzo) e cartelle tipiche, lasciando da
+  scrivere solo indirizzo e password; tutto resta modificabile. Fornitori iniziali, email e PEC dove
+  previsto: **Aruba** (email `imaps.aruba.it`/`smtps.aruba.it`, PEC `imaps.pec.aruba.it`/
+  `smtps.pec.aruba.it`), **Register.it**, **Legalmail (InfoCert)**, **Poste PEC**, **Libero/Virgilio**,
+  **Tiscali**, **TIM/Alice**, **Gmail** e **Microsoft 365/Outlook** (con le note su password per le app
+  e accesso moderno), più «Altro» per i valori a mano. L'elenco sta in un file di dati del programma
+  (facile da aggiornare o estendere da chi installa), la scelta del fornitore segna anche *È una PEC*
+  e la verifica di accesso si può lanciare subito dopo. Stessa facilità nella configurazione guidata.
