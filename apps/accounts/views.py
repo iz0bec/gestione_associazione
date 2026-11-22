@@ -285,5 +285,6 @@ class UtentiDaCaricheView(PermessoMixin, View):
         nomi = {k: n for k, n, *_ in servizi.CATEGORIE_CARICA}
         return _senza_cache(render(request, "accounts/utenti_da_cariche_fatto.html", {
             "creati": creati, "bozze": bozze, "senza_email": senza,
+            "per_conto": [b for b in bozze if getattr(b, "per_conto", "")],
             "password": [(nomi[k], v) for k, v in usate.items()],
         }))  # fmt: skip

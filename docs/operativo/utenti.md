@@ -69,11 +69,18 @@ le persone con quella carica. Scrivendo la stessa password in più gestionali (e
 sezioni), chi ha la stessa carica la usa ovunque. Si sceglie anche quali cariche hanno l'utente
 **attivo** (gli altri si attivano in seguito dalla scheda), se **obbligare il cambio** della password
 al primo accesso e se preparare una **comunicazione in bozza** con le credenziali e i passaggi per
-cambiare la password per ogni utente attivo con un'email (le bozze si controllano e si inviano da
-*Comunicazioni*; il testo contiene la password: va cambiata al primo accesso).
+cambiare la password per ogni utente attivo con un'email, e dove trovare il manuale (le bozze si
+controllano e si inviano da *Comunicazioni*; il testo contiene la password: va cambiata al primo
+accesso; non dice che è condivisa con chi ha la stessa carica).
 
 Chi non ha un'email in anagrafica riceve un indirizzo segnaposto `…@senza-email.invalid` (il recupero
-della password non funziona finché non si inserisce quella vera). In un'installazione con più
+della password non funziona finché non si inserisce quella vera). Per lui la bozza va **per conto**:
+alla **carica più alta dello stesso organo che ha un'email** (o, se nessuno ce l'ha, alla casella
+dell'ente, all'attenzione del presidente), con le credenziali da consegnare di persona, l'invito a
+**dotarsi di un'email** (serve al corretto svolgimento della gestione: recupero della password, avvisi,
+comunicazioni) e l'avvertenza che i dati riguardano un'altra persona e vanno usati solo per la
+consegna. Le bozze non dicono che la password è uguale per chi ha la stessa carica e indicano dove
+trovare il manuale. In un'installazione con più
 sezioni, chi ha cariche solo negli organi di una sezione vede solo quella sezione. Le password si
 vedono **una sola volta**, nella pagina che conclude l'operazione.
 

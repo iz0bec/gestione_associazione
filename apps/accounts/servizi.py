@@ -345,7 +345,7 @@ def crea_utenti_da_cariche(attore, soggetti, password, attive, *, obbligo_cambio
 
 
 CAMBIO_OBBLIGATO = "Al primo accesso il programma ti chiederà di sceglierne una nuova."
-CAMBIO_CONSIGLIATO = "**Cambiala al primo accesso**: è comune a chi ricopre la stessa carica."
+CAMBIO_CONSIGLIATO = "**Cambia la password al primo accesso.**"
 MFA_OBBLIGATORIA = (
     "Al primo accesso ti verrà chiesto anche di attivare la **verifica in due passaggi** (app di "
     "autenticazione sul telefono o chiave di sicurezza): segui le indicazioni a schermo."
@@ -375,18 +375,150 @@ Come cambiare la password:
 
 {mfa}
 
-Nel programma trovi il **manuale** con il pulsante **?** in alto. Per qualsiasi difficoltà rispondi
-a questo messaggio.
+Il **manuale** è nel programma: il pulsante **?** in alto, in ogni pagina, apre la parte che
+riguarda la pagina che stai usando; dal menu con il tuo nome, voce **Manuale**, trovi l'indice
+completo e il pulsante **Manuale in PDF** per scaricarlo. Il manuale in PDF è anche qui:
+https://github.com/iz0bec/gestione_associazione/blob/main/docs/manuale/manuale-operativo.pdf
+
+Per qualsiasi difficoltà rispondi a questo messaggio.
 
 Non inoltrare questo messaggio: contiene le tue credenziali personali.
 """
 
 
-def bozze_credenziali(attore, creati, usate, indirizzo):
-    """Una comunicazione in bozza per ogni utente attivo con un'email vera: credenziali e passaggi
-    per cambiare la password. Restituisce (bozze create, utenti senza email)."""
+TESTO_PER_CONTO = """{{{{ saluto }}}} {{{{ nome }}}},
+
+ti scriviamo{qualita} perché **{persona}**, {carica}, non ha un indirizzo email registrato nel
+gestionale di {ente}. Ti chiediamo di consegnare personalmente a questa persona le credenziali di
+accesso qui sotto.
+
+- Indirizzo: {indirizzo}
+- Nome utente: **{utente}**
+- Password iniziale: **{password}**
+- Ruolo nel gestionale: {ruoli}
+
+Invitala a **cambiare la password al primo accesso** e a **dotarsi di un indirizzo email**, da
+comunicare alla segreteria perché venga inserito nella sua scheda: per il corretto svolgimento
+delle attività di gestione (recupero della password, avvisi, comunicazioni) è opportuno che ogni
+incaricato ne abbia uno.
+
+Come cambiare la password: aprire {indirizzo} ed entrare con nome utente e password iniziale; in
+alto a destra aprire il menu con il proprio nome, scegliere **Cambia password**, scrivere la
+password attuale e due volte quella nuova (almeno 12 caratteri, non troppo comune).
+
+Il **manuale** è nel programma: il pulsante **?** in alto, in ogni pagina, apre la parte che
+riguarda la pagina in uso; dal menu con il proprio nome, voce **Manuale**, si trovano l'indice
+completo e il pulsante **Manuale in PDF** per scaricarlo. Il manuale in PDF è anche qui:
+https://github.com/iz0bec/gestione_associazione/blob/main/docs/manuale/manuale-operativo.pdf
+
+**Uso di queste informazioni**: le credenziali riguardano un'altra persona e ti sono affidate solo
+perché tu possa consegnarle. Usale esclusivamente per questo scopo, non conservarle e non inoltrarle
+ad altri.
+
+Per qualsiasi difficoltà rispondi a questo messaggio.
+"""
+ORIGINE_BOZZE = "utenti-cariche"
+ORDINE_RICEVENTE = [
+    "presidente", "vicepresidente", "segretario", "tesoriere", "consigliere", "supplente",
+    "presidente_controllo", "componente",
+]  # fmt: skip
+
+
+def ricevente_per_conto(soggetto):
+    """Chi riceve le credenziali di chi non ha l'email: la carica più alta, con un'email, dello
+    stesso organo (il consiglio prima degli altri). Restituisce (carica del ricevente o None se
+    nessuno: si usa la casella dell'ente, carica della persona)."""
+    from django.db.models import Q
+    from django.utils import timezone
+
+    from apps.organi.models import Carica
+
+    oggi = timezone.localdate()
+    in_corso = Carica.objects.filter(
+        Q(al__isnull=True) | Q(al__gte=oggi), dal__lte=oggi, organo__attivo=True
+    ).exclude(organo__tipo="assemblea")
+    proprie = list(in_corso.filter(soggetto=soggetto).select_related("organo"))
+    for carica in sorted(proprie, key=lambda c: c.organo.tipo != "consiglio"):
+        altri = (
+            in_corso.filter(organo=carica.organo, ruolo__in=ORDINE_RICEVENTE)
+            .exclude(soggetto=soggetto)
+            .exclude(soggetto__email="")
+            .select_related("soggetto")
+        )
+        if altri:
+            return min(altri, key=lambda c: ORDINE_RICEVENTE.index(c.ruolo)), carica
+    return None, (proprie[0] if proprie else None)
+
+
+def _bozza_diretta(attore, utente, password, indirizzo, org):
     from apps.comunicazioni import servizi as comunicazioni
     from apps.comunicazioni.models import Finalita
+
+    corpo = TESTO_CREDENZIALI.format(
+        ente=org.denominazione,
+        indirizzo=indirizzo,
+        utente=utente.username,
+        password=password,
+        ruoli=", ".join(g.name for g in utente.groups.all()),
+        cambio=CAMBIO_OBBLIGATO if utente.deve_cambiare_password else CAMBIO_CONSIGLIATO,
+        mfa=MFA_OBBLIGATORIA if mfa_richiesta(utente) else MFA_CONSIGLIATA,
+    )
+    return comunicazioni.crea_invio(
+        attore,
+        oggetto=f"Accesso al gestionale - {org.denominazione}",
+        corpo=corpo,
+        finalita=Finalita.ISTITUZIONALE,
+        soggetti=[utente.soggetto],
+        origine=ORIGINE_BOZZE,
+    )
+
+
+def _bozza_per_conto(attore, utente, password, indirizzo, org):
+    """Bozza per chi non ha l'email, a chi la consegna; None se non c'è nessun destinatario."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.comunicazioni.models import Finalita
+
+    ricevente, carica = (None, None)
+    if utente.soggetto:
+        ricevente, carica = ricevente_per_conto(utente.soggetto)
+    if ricevente is None and not org.email:
+        return None
+    persona = utente.get_full_name() or utente.username
+    corpo = TESTO_PER_CONTO.format(
+        ente=org.denominazione,
+        indirizzo=indirizzo,
+        utente=utente.username,
+        password=password,
+        ruoli=", ".join(g.name for g in utente.groups.all()),
+        persona=persona,
+        carica=f"{carica.get_ruolo_display().lower()} ({carica.organo})"
+        if carica
+        else "incaricato",
+        qualita=f" in qualità di {ricevente.get_ruolo_display().lower()}" if ricevente else "",
+    )
+    comuni = {
+        "oggetto": f"Accesso al gestionale per conto di {persona} - {org.denominazione}",
+        "finalita": Finalita.ISTITUZIONALE,
+        "origine": ORIGINE_BOZZE,
+    }
+    if ricevente is not None:
+        invio = comunicazioni.crea_invio(
+            attore, corpo=corpo, soggetti=[ricevente.soggetto], **comuni
+        )
+    else:  # nessuno con l'email nell'organo: la casella dell'ente
+        corpo = corpo.replace("{{ saluto }} {{ nome }},", "Alla cortese attenzione del Presidente,")
+        invio = comunicazioni.crea_invio(
+            attore, corpo=corpo, indirizzi=[(org.denominazione, org.email)], **comuni
+        )
+    invio.per_conto = persona
+    return invio
+
+
+def bozze_credenziali(attore, creati, usate, indirizzo):
+    """Una comunicazione in bozza per ogni utente attivo: a chi ha un'email le sue credenziali e i
+    passaggi per cambiare la password; per chi non ce l'ha, una bozza «per conto» alla carica più
+    alta dello stesso organo con un'email (o alla casella dell'ente), che gliele consegni e lo
+    inviti a dotarsi di un'email. Restituisce (bozze create, utenti senza alcun destinatario)."""
     from apps.core.models import Organizzazione
 
     org = Organizzazione.corrente()
@@ -394,21 +526,10 @@ def bozze_credenziali(attore, creati, usate, indirizzo):
     for utente, k in creati:
         if not utente.is_active:
             continue
-        if not (utente.soggetto and utente.soggetto.email):
+        if utente.soggetto and utente.soggetto.email:
+            bozze.append(_bozza_diretta(attore, utente, usate[k], indirizzo, org))
+        elif invio := _bozza_per_conto(attore, utente, usate[k], indirizzo, org):
+            bozze.append(invio)
+        else:
             senza.append(utente)
-            continue
-        cambio = CAMBIO_OBBLIGATO if utente.deve_cambiare_password else CAMBIO_CONSIGLIATO
-        corpo = TESTO_CREDENZIALI.format(
-            ente=org.denominazione,
-            indirizzo=indirizzo,
-            utente=utente.username,
-            password=usate[k],
-            ruoli=", ".join(g.name for g in utente.groups.all()),
-            cambio=cambio,
-            mfa=MFA_OBBLIGATORIA if mfa_richiesta(utente) else MFA_CONSIGLIATA,
-        )
-        bozze.append(comunicazioni.crea_invio(
-            attore, oggetto=f"Accesso al gestionale - {org.denominazione}", corpo=corpo,
-            finalita=Finalita.ISTITUZIONALE, soggetti=[utente.soggetto], origine="utenti-cariche",
-        ))  # fmt: skip
     return bozze, senza

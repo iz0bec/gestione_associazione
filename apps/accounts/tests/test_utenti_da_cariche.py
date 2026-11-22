@@ -98,11 +98,18 @@ def test_creazione_dalla_pagina(admin, organi):
     assert Utente.objects.get(username="luca.gialli").email == "luca.gialli@senza-email.invalid"
     assert not Utente.objects.get(username="mario.blu").is_active  # consigliere: non attivo
     assert not Utente.objects.get(username="mario.verdi").is_active
-    # bozze solo per gli attivi con email: Rossi e Neri (Gialli senza email)
+    # bozze per gli attivi: Rossi e Neri dirette; Gialli (senza email) «per conto» al presidente
     bozze = Invio.objects.filter(origine="utenti-cariche")
-    assert bozze.count() == 2 and all(b.stato == "bozza" for b in bozze)
-    assert "Presidenti-Comuni-2027" in bozze.get(destinatari__soggetto__cognome="Rossi").corpo
-    assert "Senza email in anagrafica" in testo and "Gialli" in testo
+    assert bozze.count() == 3 and all(b.stato == "bozza" for b in bozze)
+    corpo = bozze.get(oggetto__startswith="Accesso al gestionale -",
+                      destinatari__soggetto__cognome="Rossi").corpo  # fmt: skip
+    assert "Presidenti-Comuni-2027" in corpo and "Manuale in PDF" in corpo
+    assert "stessa carica" not in corpo  # non si dice che la password è condivisa
+    conto = bozze.get(oggetto__contains="per conto di Luca Gialli")
+    assert conto.destinatari.get().soggetto.cognome == "Rossi"  # la carica più alta con email
+    assert "luca.gialli" in conto.corpo and "dotarsi di un indirizzo email" in conto.corpo
+    assert "Uso di queste informazioni" in conto.corpo and "in qualità di presidente" in conto.corpo
+    assert "per conto" in testo and "Luca Gialli" in testo
     # rieseguendo non ricrea nulla
     assert admin.post(URL, {"soggetto": scelti}).status_code == 200
     assert Utente.objects.filter(username__startswith="mario.rossi").count() == 1
@@ -127,6 +134,22 @@ def test_sezione_in_installazione_multisezione(organi):
     s = carica(locale, "Locale", "presidente")
     creati, _ = servizi.crea_utenti_da_cariche(None, {s.pk}, {}, {"presidente"})
     assert list(creati[0][0].sezioni.all()) == [beta]
+
+
+def test_per_conto_alla_casella_dell_ente(organi):
+    from apps.core.models import Organizzazione
+
+    Organizzazione.objects.update(email="sezione@example.org")
+    consiglio, _ = organi
+    s = carica(consiglio, "Solo", "presidente")  # nessuno nell'organo ha l'email
+    creati, usate = servizi.crea_utenti_da_cariche(None, {s.pk}, {}, {"presidente"})
+    bozze, senza = servizi.bozze_credenziali(None, creati, usate, "https://gestione.example.org")
+    assert senza == [] and bozze[0].destinatari.get().email == "sezione@example.org"
+    assert bozze[0].corpo.startswith("Alla cortese attenzione del Presidente")
+    Organizzazione.objects.update(email="")
+    s2 = carica(consiglio, "Altro", "segretario")
+    creati, usate = servizi.crea_utenti_da_cariche(None, {s2.pk}, {}, {"segretario"})
+    assert servizi.bozze_credenziali(None, creati, usate, "x")[1] == [creati[0][0]]
 
 
 def test_permesso(client_ruolo):

@@ -19,8 +19,9 @@
     </div>
     {% if bozze or senza_email %}
     <div class="card mt-3"><div class="card-body">
-      {% if bozze %}<p><strong>{{ bozze|length }}</strong> comunicazion{{ bozze|length|pluralize:"e,i" }} in bozza con le credenziali: si controllano e si inviano da <a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a>. Nessun messaggio è ancora partito.</p>{% endif %}
-      {% if senza_email %}<p class="mb-0 text-warning">Senza email in anagrafica, nessuna bozza: {% for u in senza_email %}{{ u.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+      {% if bozze %}<p><strong>{{ bozze|length }}</strong> comunicazion{{ bozze|length|pluralize:"e,i" }} in bozza con le credenziali: si controllano e si inviano da <a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a>. Nessun messaggio è ancora partito.</p>
+      {% if per_conto %}<p class="small">Per chi non ha l'email la bozza va, <em>per conto</em> suo, alla carica più alta dello stesso organo con un'email (o alla casella dell'ente), con l'invito a consegnare le credenziali e a dotarsi di un'email: {% for b in per_conto %}{{ b.per_conto }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}{% endif %}
+      {% if senza_email %}<p class="mb-0 text-warning">Nessun destinatario (né la persona, né altri dell'organo, né l'ente hanno un'email): {% for u in senza_email %}{{ u.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
     </div></div>
     {% endif %}
   </div>

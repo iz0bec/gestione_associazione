@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.76] - 2026-11-22
+
+### Modificato
+- **Utenti dalle cariche**: per chi non ha l'email la bozza con le credenziali va **per conto** alla
+  carica più alta dello stesso organo con un'email (o alla casella dell'ente), con l'invito a
+  consegnarle, a dotarsi di un'email e a usare quei dati solo per la consegna. Le bozze non dicono più
+  che la password è uguale per chi ha la stessa carica e indicano dove trovare il manuale (pulsante
+  **?**, menu → *Manuale* → *Manuale in PDF*, PDF pubblico).
+
 ## [1.0.75] - 2026-11-22
 
 ### Aggiunto
