@@ -234,8 +234,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     secondo fattore, ultimo accesso, email vera o segnaposto); su un host con più installazioni
     `sezioni.sh utenti` lo fa per tutte;
   - `manage.py utenti --reimposta NOME` riporta la password a quella **predefinita del ruolo** (o a
-    una generata) e **invia subito** l'**email personale di notifica** (non resta in bozza: parte
-    appena eseguito il comando, se l'invio dei messaggi è attivo) con le credenziali, i passaggi
+    una generata); come **ultimo passo** il comando chiede se inviare ora l'**email personale di
+    notifica** (`--invia` per rispondere sì senza domanda, `--senza-email` per non mandarla; se non
+    si invia resta in bozza in *Comunicazioni*) con le credenziali, i passaggi
     per cambiarla e dove trovare il manuale; a chi non ha l'email la notifica va alla casella della
     sezione «per conto» (stessa regola di *Utenti dalle cariche*). La password non finisce mai nel
     registro attività, che annota solo l'operazione.
