@@ -5,6 +5,19 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.78] - 2026-11-22
+
+### Aggiunto
+- **Utenti da riga di comando**: `manage.py utenti` elenca gli utenti (ruoli, secondo fattore,
+  ultimo accesso, email vera o segnaposto, password predefinita disponibile); `--reimposta NOME`
+  riporta la password alla **predefinita** (per gli amministratori quella iniziale dell'installazione,
+  per gli altri quella della carica) e come ultimo passo chiede se inviare subito l'email con le
+  credenziali (`--invia`, `--senza-email`; altrimenti resta in bozza). `sezioni.sh utenti` per tutte
+  le sezioni di un host.
+- L'installatore crea `/etc/<installazione>/password-predefinite.json` con la password iniziale
+  dell'admin (ripresa dal file delle credenziali per le installazioni esistenti) e la indica nel `.env`
+  (`PASSWORD_PREDEFINITE`).
+
 ## [1.0.77] - 2026-11-22
 
 ### Modificato

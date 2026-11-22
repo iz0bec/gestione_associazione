@@ -19,7 +19,7 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env", overwrite=False)
 
 APP_NOME = "Gestione Associazione"
-APP_VERSIONE = "1.0.77"
+APP_VERSIONE = "1.0.78"
 APP_AUTORE = "Bartolomeo Santoro aka IZ0BEC"
 APP_EMAIL_AUTORE = "info@iz0bec.info"
 APP_REPOSITORY = "https://mygitlab.iz0bec.info/sbart64/gestione_associazione"
@@ -218,6 +218,11 @@ URL_PUBBLICO = env("URL_PUBBLICO", default="").rstrip("/")
 DEMO = env.bool("DEMO", default=False)
 DEMO_PASSWORD = env("DEMO_PASSWORD", default="Demo-2026")  # pubblica: utenti dei ruoli
 DEMO_ADMIN_PASSWORD = env("DEMO_ADMIN_PASSWORD", default="")  # privata: amministratore
+
+# Password predefinite per «manage.py utenti --reimposta» (JSON {categoria: password}: «admin» =
+# password iniziale dell'installazione, poi presidente, vicepresidente, segretario...). Il file lo
+# scrive l'installatore in /etc/<installazione>/, leggibile solo da root e dal gestionale.
+PASSWORD_PREDEFINITE = env("PASSWORD_PREDEFINITE", default="")
 
 # API di interoperabilità (ADR-030): impronte SPKI dei certificati con cui l'istanza si presenta
 # alle controparti in rete interna. Quella del certificato servito da Gunicorn si calcola dal file;

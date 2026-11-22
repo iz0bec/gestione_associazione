@@ -229,7 +229,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   `/contatti`), calendario degli eventi pubblici con adesioni (`/eventi`), organigramma e recapiti
   della sezione, verifica della tessera. Abbinamento con invito monouso, chiavi conservate da
   WordPress, nessun dato personale dei soci esposto sul sito.
-- **Utenti da riga di comando** (da fare), per l'amministratore del server senza aprire l'interfaccia:
+- ✅ **Utenti da riga di comando** (1.0.78), per l'amministratore del server senza aprire l'interfaccia:
   - `manage.py utenti` elenca gli utenti dell'installazione (nome utente, persona, ruoli, attivo,
     secondo fattore, ultimo accesso, email vera o segnaposto); su un host con più installazioni
     `sezioni.sh utenti` lo fa per tutte;

@@ -22,6 +22,8 @@ Uso: $0 comando [istanza...]
   aggiungi ISTANZA PORTA [opzioni di installa.sh]   nuova installazione, registrata in ${CONF}
   aggiorna [istanza...]   aggiorna tutte (o quelle indicate) al codice di ${SORGENTE}
   stato                   servizi, porte e ultimo backup di ogni istanza
+  utenti [ISTANZA] [opz.] utenti di tutte le istanze (o di una); con ISTANZA anche
+                            --reimposta NOME [--invia|--senza-email] (vedi manage.py utenti --help)
   motd                    installa il messaggio di benvenuto per tutte le istanze
   imposta CHIAVE VALORE   impostazione comune a tutte le istanze, applicata da aggiungi e aggiorna:
                             DOMINIO  nome pubblico, con {sezione} (es. sez-{sezione}.associazione.it)
@@ -76,6 +78,19 @@ case "$comando" in
       b=$(ls -1t "/var/lib/sezione-${istanza}/backup" 2>/dev/null | head -1)
       [[ -n "$b" ]] && b=$(date -r "/var/lib/sezione-${istanza}/backup/$b" '+%d/%m/%Y %H:%M')
       printf '%-22s %-6s %-9s %-13s %s\n' "$istanza" "$porta" "${v:-?}" "${w}/${p}" "${b:-nessuno}"
+    done < <(istanze)
+    ;;
+  utenti)
+    scelta=""
+    if [[ $# -gt 0 && -n "$(porta_di "$1")" ]]; then scelta="$1"; shift; fi
+    if [[ -z "$scelta" && " $* " == *" --reimposta "* ]]; then
+      echo "Con --reimposta indicare l'istanza: $0 utenti ISTANZA --reimposta NOME"; exit 1
+    fi
+    while read -r istanza _; do
+      [[ -n "$scelta" && "$istanza" != "$scelta" ]] && continue
+      echo -e "\n\033[1;35m######## ${istanza}\033[0m"
+      ( cd "/opt/sezione-${istanza}" && runuser -u "sezione_${istanza//-/_}" -- \
+          .venv/bin/python manage.py utenti "$@" )
     done < <(istanze)
     ;;
   imposta)

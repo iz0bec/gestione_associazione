@@ -255,6 +255,41 @@ ALLOWED_HOSTS=gestione.example.it
 4. Creare gli utenti e assegnare i ruoli da *Sistema → Utenti e ruoli*; in *Ruoli* scegliere
    per quali ruoli il secondo fattore è obbligatorio (vedi [Utenti e ruoli](../operativo/utenti.md)).
 
+## Utenti da riga di comando
+
+Per l'amministratore del server, senza aprire l'interfaccia (come utente del servizio):
+
+```bash
+cd /opt/gestione-associazione
+sudo -u gestione .venv/bin/python manage.py utenti            # elenco (--tutti: anche i non attivi)
+sudo -u gestione .venv/bin/python manage.py utenti --reimposta mario.rossi
+```
+
+L'elenco mostra nome utente, persona, ruoli, se è attivo, il secondo fattore, l'ultimo accesso,
+l'email (vera o segnaposto) e la **categoria** della password predefinita (✓ se è disponibile).
+`--reimposta NOME` riporta la password a quella **predefinita**: per gli amministratori la password
+**iniziale dell'installazione**, per gli altri quella della **carica più alta** in corso negli organi
+(presidente, vicepresidente, segretario, …) o, senza cariche, del ruolo. Se non c'è una predefinita
+ne genera una e la mostra una volta; `--password` ne usa una indicata, `--obbligo-cambio` obbliga a
+cambiarla al primo accesso. Come **ultimo passo** chiede se inviare subito l'**email con le
+credenziali** (passaggi per cambiarla e dove trovare il manuale): sì → parte subito; no → resta in
+bozza in *Comunicazioni*. `--invia` risponde sì senza domanda, `--senza-email` non la prepara. A chi
+non ha l'email la notifica va alla casella dell'ente «per conto». Nel registro attività finisce solo
+l'operazione, mai la password.
+
+Le password predefinite sono nel file indicato da `PASSWORD_PREDEFINITE` nel `.env`
+(`/etc/<installazione>/password-predefinite.json`, leggibile solo da root e dal gestionale). Lo crea
+l'installatore con la password iniziale dell'admin (per le installazioni esistenti la riprende da
+`/root/<installazione>-credenziali.txt`); le altre si aggiungono a mano, come root:
+
+```json
+{"admin": "…", "presidente": "…", "vicepresidente": "…", "segretario": "…", "consigliere": "…"}
+```
+
+Categorie: `admin`, `presidente`, `vicepresidente`, `segretario`, `tesoriere`, `consigliere`,
+`supplente`, `controllo` (organo di controllo), `altro`. Con più sezioni sullo stesso host:
+`sezioni.sh utenti` elenca tutte; `sezioni.sh utenti ruoti --reimposta NOME` agisce su una.
+
 ## Aggiornamento
 
 Docker:

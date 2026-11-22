@@ -299,6 +299,24 @@ if [[ "$(gestisci shell -c 'from django.contrib.auth import get_user_model as g;
   umask 022
 fi
 
+# password predefinite per «manage.py utenti --reimposta»: «admin» = password iniziale
+# dell'installazione (per quelle esistenti, dal file delle credenziali in /root); le altre (cariche)
+# si aggiungono a mano. Leggibile solo da root e dal gestionale; mai sovrascritto.
+FILE_PREDEFINITE="/etc/${NOME}/password-predefinite.json"
+mkdir -p "/etc/${NOME}"
+if [[ ! -f "$FILE_PREDEFINITE" ]]; then
+  INIZIALE="$PASSWORD_ADMIN"
+  if [[ -z "$INIZIALE" && -f "/root/${NOME}-credenziali.txt" ]]; then
+    INIZIALE="$(sed -n 's/^password:[[:space:]]*//p' "/root/${NOME}-credenziali.txt" | head -1)"
+  fi
+  umask 077
+  if [[ -n "$INIZIALE" ]]; then printf '{"admin": "%s"}\n' "$INIZIALE" > "$FILE_PREDEFINITE"
+  else echo '{}' > "$FILE_PREDEFINITE"; fi
+  umask 022
+fi
+chown "root:${UTENTE}" "$FILE_PREDEFINITE" && chmod 640 "$FILE_PREDEFINITE"
+grep -q "^PASSWORD_PREDEFINITE=" "${DIR_APP}/.env" || echo "PASSWORD_PREDEFINITE=${FILE_PREDEFINITE}" >> "${DIR_APP}/.env"
+
 passo "Servizi systemd"
 cat > "/etc/systemd/system/${NOME}.service" <<EOF
 [Unit]

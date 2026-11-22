@@ -537,3 +537,113 @@ def bozze_credenziali(attore, creati, usate, indirizzo):
         else:
             senza.append(utente)
     return bozze, senza
+
+
+# --- reimpostazione alla password predefinita (manage.py utenti) ----------------------------------
+GRUPPO_CATEGORIA = [  # ripiego per chi non ha cariche: dal ruolo del gestionale
+    ("Presidente", "presidente"), ("Segretario", "segretario"), ("Tesoriere", "tesoriere"),
+    ("Revisore", "controllo"), ("Consigliere", "consigliere"),
+]  # fmt: skip
+
+
+def password_predefinite() -> dict:
+    """{categoria: password} dal file PASSWORD_PREDEFINITE (JSON, leggibile solo da root e dal
+    gestionale): «admin» è la password iniziale dell'installazione, le altre delle cariche."""
+    import json
+    from pathlib import Path
+
+    from django.conf import settings
+
+    percorso = getattr(settings, "PASSWORD_PREDEFINITE", "")
+    if not percorso or not Path(percorso).is_file():
+        return {}
+    try:
+        dati = json.loads(Path(percorso).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {str(k): str(v) for k, v in dati.items() if isinstance(v, str) and v}
+
+
+def categoria_utente(utente) -> str:
+    """Categoria per la password predefinita: «admin» per gli amministratori, altrimenti la carica
+    più alta in corso negli organi o, in mancanza, il ruolo del gestionale."""
+    from django.db.models import Q
+    from django.utils import timezone
+
+    from apps.organi.models import Carica
+
+    gruppi = set(utente.groups.values_list("name", flat=True))
+    if utente.is_superuser or "Amministratore di sistema" in gruppi:
+        return "admin"
+    if utente.soggetto_id:
+        oggi = timezone.localdate()
+        cariche = Carica.objects.filter(
+            Q(al__isnull=True) | Q(al__gte=oggi), soggetto_id=utente.soggetto_id, dal__lte=oggi,
+            organo__attivo=True,
+        ).exclude(organo__tipo="assemblea").select_related("organo")  # fmt: skip
+        categorie = {categoria_carica(c) for c in cariche}
+        if categorie:
+            return min(categorie, key=_ORDINE.index)
+    for gruppo, categoria in GRUPPO_CATEGORIA:
+        if gruppo in gruppi:
+            return categoria
+    return ""
+
+
+@transaction.atomic
+def reimposta_predefinita(utente, attore=None, *, password=None, obbligo_cambio=False):
+    """Riporta la password a quella predefinita della categoria (o a quella indicata, o a una
+    generata). Restituisce (password, categoria, origine: «predefinita», «indicata», «generata»).
+    Nel registro solo l'operazione, mai la password."""
+    from django.contrib.auth.password_validation import validate_password
+
+    categoria = categoria_utente(utente)
+    if password:
+        validate_password(password, utente)
+        origine = "indicata"
+    elif predefinita := password_predefinite().get(categoria):
+        password, origine = predefinita, "predefinita"
+    else:
+        password, origine = password_temporanea(), "generata"
+    utente.set_password(password)
+    utente.deve_cambiare_password = obbligo_cambio and utente.puo_cambiare_password
+    utente.save(update_fields=["password", "deve_cambiare_password"])
+    operazione = f"password reimpostata ({origine}, categoria «{categoria or '-'}»)"
+    registra(
+        Azione.MODIFICA, utente, utente=attore, origine="riga di comando", operazione=operazione
+    )
+    sicurezza.operazione_utenti(
+        f"Password di {utente.username} reimpostata da riga di comando", attore
+    )
+    return password, categoria, origine
+
+
+def notifica_credenziali(utente, password, indirizzo, *, attore=None, invia=False):
+    """Prepara l'email con le credenziali (diretta o «per conto» alla casella dell'ente) e, con
+    `invia`, la conferma e la spedisce subito. Restituisce (invio o None, esito per l'utente)."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.core.models import Organizzazione
+
+    org = Organizzazione.corrente()
+    if utente.soggetto and utente.soggetto.email:
+        invio = _bozza_diretta(attore, utente, password, indirizzo, org)
+    else:
+        invio = _bozza_per_conto(attore, utente, password, indirizzo, org)
+    if invio is None:
+        return None, "nessun destinatario: né l'utente né l'ente hanno un'email"
+    destinatario = invio.destinatari.first()
+    a_chi = destinatario.email if destinatario else "?"
+    if not invia:
+        return invio, f"bozza pronta in Comunicazioni (a {a_chi})"
+    with transaction.atomic():
+        comunicazioni.conferma(invio, attore)
+    if not comunicazioni.invio_attivo():
+        return invio, f"confermata ma in coda: l'invio dei messaggi è spento (a {a_chi})"
+    comunicazioni.elabora_coda(invio=invio)
+    destinatario.refresh_from_db()
+    if destinatario.stato == destinatario.Stato.INVIATO:
+        return invio, f"inviata a {a_chi}"
+    return (
+        invio,
+        f"in coda, non ancora partita ({destinatario.motivo or destinatario.stato}): a {a_chi}",
+    )
