@@ -17,6 +17,7 @@ urlpatterns = [
     path("", views.UtentiView.as_view(), name="elenco"),
     path("nuovo/", views.UtenteNuovoView.as_view(), name="nuovo"),
     path("ruoli/", views.RuoliView.as_view(), name="ruoli"),
+    path("dalle-cariche/", views.UtentiDaCaricheView.as_view(), name="da_cariche"),
     path("<int:pk>/", views.UtenteView.as_view(), name="utente"),
     path("<int:pk>/password/", views.ReimpostaPasswordView.as_view(), name="password"),
     path(

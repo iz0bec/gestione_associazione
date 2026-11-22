@@ -48,6 +48,35 @@ comunicarla all'interessato di persona o per telefono. Al primo accesso l'utente
 una nuova prima di poter fare qualunque altra cosa. La password temporanea non è conservata in
 chiaro e non compare nel registro attività.
 
+## Utenti dalle cariche
+
+**Utenti e ruoli → Utenti dalle cariche** crea in una volta gli utenti «standard» per chi ha una
+**carica in corso** negli organi sociali (consiglio, organo di controllo, altri organi; non le
+assemblee) e non ha ancora un utente. La pagina elenca le persone con le cariche, il nome utente
+proposto (`nome.cognome`) e i ruoli che riceveranno:
+
+| Carica | Ruoli nel gestionale | Attivo (predefinito) |
+|---|---|---|
+| Presidente, Vicepresidente | Presidente | sì |
+| Segretario | Segretario e Tesoriere | sì |
+| Tesoriere | Tesoriere | no |
+| Consigliere, Supplente | Consigliere | no |
+| Organo di controllo (presidente, componenti) | Revisore | no |
+| Altri organi (es. garanti) | Consigliere | no |
+
+Per ogni tipo di carica si sceglie la **password**: vuota la genera il programma, una sola per tutte
+le persone con quella carica. Scrivendo la stessa password in più gestionali (es. federazione e
+sezioni), chi ha la stessa carica la usa ovunque. Si sceglie anche quali cariche hanno l'utente
+**attivo** (gli altri si attivano in seguito dalla scheda), se **obbligare il cambio** della password
+al primo accesso e se preparare una **comunicazione in bozza** con le credenziali e i passaggi per
+cambiare la password per ogni utente attivo con un'email (le bozze si controllano e si inviano da
+*Comunicazioni*; il testo contiene la password: va cambiata al primo accesso).
+
+Chi non ha un'email in anagrafica riceve un indirizzo segnaposto `…@senza-email.invalid` (il recupero
+della password non funziona finché non si inserisce quella vera). In un'installazione con più
+sezioni, chi ha cariche solo negli organi di una sezione vede solo quella sezione. Le password si
+vedono **una sola volta**, nella pagina che conclude l'operazione.
+
 ## Scheda dell'utente
 
 Nei dati dell'utente due caselle regolano la password:
@@ -88,6 +117,11 @@ Ogni operazione è registrata nel [registro attività](sistema.md#registro-attiv
 Amministratore di sistema, Presidente, Segretario, Tesoriere): chi ha uno di quei ruoli, al
 prossimo accesso, deve configurare un'app di autenticazione (TOTP) o una passkey prima di usare il
 programma (vedi [Primi passi](primi-passi.md)). I codici di recupero da soli non bastano.
+
+L'obbligo è **bloccante**: finché non configura il secondo fattore, l'utente vede solo la pagina per
+farlo (e può uscire). Chi non ha uno smartphone può usare una **chiave di sicurezza o la passkey** del
+computer, oppure un'app di autenticazione per computer (es. KeePassXC); altrimenti si toglie l'obbligo
+al ruolo.
 
 I permessi dei ruoli predefiniti sono fissati dal programma e riallineati a ogni aggiornamento
 (tabella in [Ruoli e permessi](ruoli.md)).

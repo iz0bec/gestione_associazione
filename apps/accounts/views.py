@@ -241,3 +241,49 @@ class RuoliView(PermessoMixin, FormView):
         ctx["predefiniti"] = set(RUOLI)
         ctx["ruoli_mfa"] = servizi.ruoli_con_mfa()
         return ctx
+
+
+class UtentiDaCaricheView(PermessoMixin, View):
+    """Utenti «standard» per chi ha una carica negli organi sociali e non ha ancora un utente:
+    una password per tipo di carica, utenti attivi solo per le cariche scelte, bozze con le
+    credenziali. Le password si mostrano una sola volta."""
+
+    permission_required = "accounts.add_utente"
+    template_name = "accounts/utenti_da_cariche.html"
+
+    def _contesto(self, **extra):
+        proposte = servizi.proposte_da_cariche()
+        presenti = {p["categoria"] for p in proposte}
+        categorie = [
+            {"chiave": k, "nome": n, "ruoli": ", ".join(r), "attiva": a,
+             "persone": sum(1 for p in proposte if p["categoria"] == k)}
+            for k, n, r, a in servizi.CATEGORIE_CARICA if k in presenti
+        ]  # fmt: skip
+        return {"proposte": proposte, "categorie": categorie, **extra}
+
+    def get(self, request):
+        return render(request, self.template_name, self._contesto())
+
+    def post(self, request):
+        from django.conf import settings
+
+        scelti = {int(v) for v in request.POST.getlist("soggetto") if v.isdigit()}
+        password = {k: request.POST.get(f"password_{k}", "") for k, *_ in servizi.CATEGORIE_CARICA}
+        attive = set(request.POST.getlist("attiva"))
+        try:
+            creati, usate = servizi.crea_utenti_da_cariche(
+                request.user, scelti, password, attive,
+                obbligo_cambio=request.POST.get("obbligo_cambio") == "on",
+            )  # fmt: skip
+        except servizi.OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return render(request, self.template_name, self._contesto(dati=request.POST))
+        bozze, senza = [], []
+        if request.POST.get("bozze") == "on":
+            indirizzo = settings.URL_PUBBLICO or request.build_absolute_uri("/").rstrip("/")
+            bozze, senza = servizi.bozze_credenziali(request.user, creati, usate, indirizzo)
+        nomi = {k: n for k, n, *_ in servizi.CATEGORIE_CARICA}
+        return _senza_cache(render(request, "accounts/utenti_da_cariche_fatto.html", {
+            "creati": creati, "bozze": bozze, "senza_email": senza,
+            "password": [(nomi[k], v) for k, v in usate.items()],
+        }))  # fmt: skip

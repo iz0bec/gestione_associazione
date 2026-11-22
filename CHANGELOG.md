@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.75] - 2026-11-22
+
+### Aggiunto
+- **Utenti dalle cariche** (*Sistema → Utenti*): crea in una volta gli utenti di chi ha una carica in
+  corso negli organi sociali e non ha ancora un utente, con i ruoli dalla carica (presidente e
+  vice → Presidente, segretario → Segretario e Tesoriere, consiglieri → Consigliere, organo di
+  controllo → Revisore), una password per tipo di carica (scelta o generata, mostrata una volta),
+  utenti attivi solo per le cariche scelte (predefinite: presidente, vice, segretario), obbligo di
+  cambio facoltativo, sezione limitata nelle installazioni con più sezioni e **bozze di comunicazione**
+  con le credenziali e i passaggi per cambiare la password.
+
 ## [1.0.74] - 2026-11-21
 
 ### Aggiunto

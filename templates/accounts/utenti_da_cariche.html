@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Utenti «standard» per chi ha una carica negli organi sociali: scelta delle persone,
+               password per tipo di carica, utenti attivi, bozze con le credenziali
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Utenti dalle cariche{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'utenti:elenco' %}">Utenti</a></div>{% endblock %}
+{% block titolo_pagina %}Utenti dalle cariche degli organi{% endblock %}
+{% block contenuto %}
+{% if not proposte %}
+<div class="card"><div class="card-body">
+  <p class="mb-0">Tutte le persone con una carica in corso negli organi sociali hanno già un utente. Le cariche si inseriscono in <a href="{% url 'organi:organi' %}">Organi sociali</a>.</p>
+</div></div>
+{% else %}
+<form method="post">{% csrf_token %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Persone con una carica e senza utente</h3></div>
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter">
+          <thead><tr><th class="w-1"></th><th>Persona</th><th>Cariche</th><th>Utente proposto</th><th>Ruoli</th></tr></thead>
+          <tbody>
+          {% for p in proposte %}
+            <tr>
+              <td><input class="form-check-input" type="checkbox" name="soggetto" value="{{ p.soggetto.pk }}" checked aria-label="Crea l'utente per {{ p.soggetto }}"></td>
+              <td><a href="{{ p.soggetto.get_absolute_url }}">{{ p.soggetto }}</a>{% if not p.soggetto.email %}<div class="small text-warning"><i class="ti ti-mail-off me-1"></i>senza email</div>{% endif %}</td>
+              <td class="small">{% for c in p.cariche %}{{ c.get_ruolo_display }} · {{ c.organo }}{% if c.organo.sezione %} ({{ c.organo.sezione }}){% endif %}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+              <td><code>{{ p.username }}</code></td>
+              <td class="small">{{ p.ruoli|join:", " }}{% if p.sezioni %}<div class="text-secondary">solo {{ p.sezioni|join:", " }}</div>{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Password e attivazione per carica</h3></div>
+      <div class="card-body">
+        <p class="small text-secondary">Una password per tipo di carica, uguale per chi ricopre la stessa carica. Vuota: generata dal programma. Scrivendola uguale in più gestionali, chi ha la stessa carica usa la stessa password ovunque.</p>
+        {% for c in categorie %}
+        <div class="mb-3">
+          <label class="form-label" for="pw-{{ c.chiave }}">{{ c.nome }} <span class="text-secondary small">({{ c.persone }} · {{ c.ruoli }})</span></label>
+          <input class="form-control font-monospace" type="text" id="pw-{{ c.chiave }}" name="password_{{ c.chiave }}" autocomplete="off" placeholder="generata" minlength="12">
+          <label class="form-check mt-1 mb-0"><input class="form-check-input" type="checkbox" name="attiva" value="{{ c.chiave }}"{% if c.attiva %} checked{% endif %}><span class="form-check-label small">Utente attivo</span></label>
+        </div>
+        {% endfor %}
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="obbligo_cambio"><span class="form-check-label">Obbliga a cambiare la password al primo accesso</span></label>
+        <label class="form-check mb-0"><input class="form-check-input" type="checkbox" name="bozze" checked><span class="form-check-label">Prepara una comunicazione in bozza con le credenziali per ogni utente attivo con email</span></label>
+      </div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'utenti:elenco' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-users-plus me-1"></i>Crea gli utenti</button></div>
+    </div>
+    <p class="small text-secondary mt-3">Ruoli: presidente e vicepresidente → Presidente; segretario → Segretario e Tesoriere; consiglieri e supplenti → Consigliere; organo di controllo → Revisore. Chi non ha un'email riceve un indirizzo segnaposto non recapitabile. Gli utenti non attivi si attivano in seguito dalla loro scheda.</p>
+  </div>
+</div>
+</form>
+{% endif %}
+{% endblock %}

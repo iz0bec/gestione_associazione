@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Esito della creazione degli utenti dalle cariche (password mostrate una sola volta)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Utenti creati{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'utenti:elenco' %}">Utenti</a></div>{% endblock %}
+{% block titolo_pagina %}Utenti creati dalle cariche{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Password per carica</h3></div>
+      <div class="card-body">
+        <dl class="row mb-0">{% for nome, pw in password %}<dt class="col-5">{{ nome }}</dt><dd class="col-7"><code class="user-select-all">{{ pw }}</code></dd>{% endfor %}</dl>
+        <div class="alert alert-warning mt-3 mb-0">Le password sono mostrate <strong>solo ora</strong> e non sono conservate in chiaro nel registro: annotale prima di lasciare la pagina.</div>
+      </div>
+    </div>
+    {% if bozze or senza_email %}
+    <div class="card mt-3"><div class="card-body">
+      {% if bozze %}<p><strong>{{ bozze|length }}</strong> comunicazion{{ bozze|length|pluralize:"e,i" }} in bozza con le credenziali: si controllano e si inviano da <a href="{% url 'comunicazioni:invii' %}">Comunicazioni</a>. Nessun messaggio è ancora partito.</p>{% endif %}
+      {% if senza_email %}<p class="mb-0 text-warning">Senza email in anagrafica, nessuna bozza: {% for u in senza_email %}{{ u.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    </div></div>
+    {% endif %}
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter">
+          <thead><tr><th>Utente</th><th>Persona</th><th>Ruoli</th><th>Stato</th></tr></thead>
+          <tbody>{% for u, categoria in creati %}<tr><td><a href="{% url 'utenti:utente' u.pk %}"><code>{{ u.username }}</code></a></td><td>{{ u.get_full_name }}</td><td class="small">{{ u.groups.all|join:", " }}</td><td>{% if u.is_active %}<span class="badge bg-green-lt">attivo</span>{% else %}<span class="badge bg-secondary-lt">non attivo</span>{% endif %}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      <div class="card-footer"><a class="btn" href="{% url 'utenti:elenco' %}">Torna agli utenti</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
