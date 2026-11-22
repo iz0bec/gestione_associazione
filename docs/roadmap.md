@@ -240,3 +240,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     per cambiarla e dove trovare il manuale; a chi non ha l'email la notifica va alla casella della
     sezione «per conto» (stessa regola di *Utenti dalle cariche*). La password non finisce mai nel
     registro attività, che annota solo l'operazione.
+- **Organi sociali** (da fare):
+  - **stampa in un unico PDF di tutti gli organi sociali**: per ogni organo (dell'associazione e, con
+    più sezioni, di ogni sezione) le cariche in corso con nome, ruolo, data di nomina e **email di
+    contatto**, su carta intestata e con data di stampa; scelta degli organi e dell'eventuale
+    sezione, per l'uso interno (i recapiti sono dati personali: stampa riservata ai ruoli che
+    gestiscono gli organi).
