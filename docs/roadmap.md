@@ -218,3 +218,14 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   il presidente, o l'incaricato della trattazione), con le regole cambiate dall'interfaccia e non
   più dal fornitore, nel rispetto della riservatezza (ad es. le credenziali inviate «per conto» di
   chi non ha l'email).
+- **Esenzione dalla verifica in due passaggi per singolo utente** (da fare). Quando un ruolo la
+  rende obbligatoria, l'amministratore può esentarne un utente che non può attivarla (niente
+  smartphone né chiave di sicurezza), dalla sua scheda in *Sistema → Utenti*: con motivo e scadenza
+  facoltativa, registrata nel registro attività e indicata nell'elenco degli utenti; l'esenzione non
+  vale per l'Amministratore di sistema.
+- **Connettore per WordPress via API** (da fare). Un plugin WordPress (licenza compatibile, CC0 o
+  GPL per il solo plugin) che usa le API di interoperabilità v1 come controparte abbinata: modulo
+  di domanda di iscrizione e modulo contatti sul sito che arrivano nel gestionale (`/domande`,
+  `/contatti`), calendario degli eventi pubblici con adesioni (`/eventi`), organigramma e recapiti
+  della sezione, verifica della tessera. Abbinamento con invito monouso, chiavi conservate da
+  WordPress, nessun dato personale dei soci esposto sul sito.
