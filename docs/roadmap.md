@@ -293,3 +293,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   e accesso moderno), più «Altro» per i valori a mano. L'elenco sta in un file di dati del programma
   (facile da aggiornare o estendere da chi installa), la scelta del fornitore segna anche *È una PEC*
   e la verifica di accesso si può lanciare subito dopo. Stessa facilità nella configurazione guidata.
+- **Comunicazioni della campagna tessere riconoscibili** (da fare). Gli invii generati dalla campagna
+  (avvisi, solleciti, ordini) hanno oggetti tutti uguali («Tesseramento 2027: quota e richiesta delle
+  tessere»), quindi nell'elenco delle *Comunicazioni* non si capisce a quale sezione o soggetto vanno.
+  L'oggetto si personalizza con il destinatario (es. «… – Sezione di Ruoti», segnaposto `{{ sezione }}`
+  nei modelli del tesseramento) e l'elenco mostra comunque la colonna del destinatario (o «N
+  destinatari») e il filtro per origine (campagna, anno, sezione), anche per gli invii già fatti.

@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.81] - 2026-11-22
+
+### Corretto
+- **Modulo di richiesta delle tessere aperto con Numbers** (Mac, iPad): non veniva riconosciuto,
+  perché Numbers toglie il foglio nascosto con la firma e rinomina il foglio. Ora il modulo porta
+  anche un **codice di controllo visibile** (in fondo al foglio) che resta dopo l'esportazione in
+  Excel; i moduli già inviati senza firma si riconoscono dalla struttura come **non verificati**, con
+  l'avviso di controllare il mittente; un allegato `.numbers`, `.ods` o `.xls` sulla posta da
+  protocollare viene segnalato con le istruzioni (prima era ignorato in silenzio). Le istruzioni del
+  modulo spiegano come rispondere da Numbers (File → Esporta come → Excel).
+
 ## [1.0.80] - 2026-11-22
 
 ### Aggiunto

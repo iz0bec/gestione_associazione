@@ -16,6 +16,7 @@
       <div class="card-header"><h3 class="card-title">Anteprima: nulla è ancora stato registrato</h3></div>
       <div class="card-body">
         <dl class="row mb-0">
+          {% if dati.avviso %}<dd class="col-12"><div class="alert alert-warning small mb-2"><i class="ti ti-alert-triangle me-1"></i>{{ dati.avviso }}</div></dd>{% endif %}
           <dt class="col-5">Sezione</dt><dd class="col-7">{{ dati.sezione.denominazione }} ({{ dati.sezione.codice }})</dd>
           <dt class="col-5">Anno</dt><dd class="col-7">{{ dati.anno }}</dd>
           <dt class="col-5">Tessere richieste</dt><dd class="col-7"><strong>{{ dati.quantita }}</strong></dd>

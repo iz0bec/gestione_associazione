@@ -24,6 +24,14 @@ FOGLIO = "Richiesta tessere"
 FOGLIO_DATI = "dati"
 # celle da compilare (colonna B)
 CELLA_QUANTITA, CELLA_REFERENTE, CELLA_TELEFONO, CELLA_NOTE = "B12", "B13", "B14", "B15"
+CELLA_CONTROLLO = "B19"  # codice di controllo visibile: sopravvive a Numbers e ad altri programmi
+ETICHETTE = {"A6": "Codice della sezione", "A7": "Anno di tesseramento",
+             "A12": "Tessere richieste (numero)"}  # fmt: skip
+ALTRI_FORMATI = (".numbers", ".ods", ".xls", ".xlsm", ".csv", ".pdf")
+AVVISO_NON_VERIFICATO = (
+    "Modulo senza codice di controllo (passato da Numbers o da un altro programma): controllate "
+    "che il mittente sia davvero la sezione indicata prima di registrare la richiesta."
+)
 
 
 class ModuloNonValido(ValueError):
@@ -52,7 +60,8 @@ def istruzioni(anno, sezione, scadenza=None):
         f"{sezione.codice}.xlsx», scrivete nelle celle gialle il numero di tessere richieste, "
         f"il referente, il telefono ed eventuali note, salvatelo senza cambiare nome né formato "
         f"e rispondete a questa email allegandolo (oppure speditelo{a_chi}){entro}. "
-        "Non modificate le altre celle: il modulo viene letto in automatico."
+        "Non modificate le altre celle: il modulo viene letto in automatico. Con Numbers (Mac, "
+        "iPad) rispondete con il file Excel: File → Esporta come → Excel."
     )
 
 
@@ -86,6 +95,11 @@ def genera(anno, sezione, *, quota=None, scadenza=None, precedente=None) -> byte
         ("Note", None),
         ("", None),
         ("Totale da versare (€)", f'=IF(ISNUMBER({CELLA_QUANTITA}),{CELLA_QUANTITA}*B8,"")'),
+        ("", None),
+        (
+            "Codice di controllo (non modificare)",
+            " ".join((FIRMA, VERSIONE, str(anno), sezione.codice, _firma(anno, sezione.codice))),
+        ),
     ]
     for n, (etichetta, valore) in enumerate(righe, start=1):
         ws.cell(n, 1, etichetta)
@@ -102,6 +116,8 @@ def genera(anno, sezione, *, quota=None, scadenza=None, precedente=None) -> byte
         ws[cella].fill = giallo
         ws[cella].protection = Protection(locked=False)
     ws[CELLA_NOTE].alignment = Alignment(wrap_text=True, vertical="top")
+    for cella in ("A19", CELLA_CONTROLLO):
+        ws[cella].font = Font(size=8, color="808080")
     ws.row_dimensions[15].height = 45
     validazione = DataValidation(
         type="whole", operator="greaterThan", formula1="0", showErrorMessage=True,
@@ -131,29 +147,79 @@ def sembra_modulo(nome, contenuto) -> bool:
     return True
 
 
-def leggi(contenuto: bytes) -> dict:
-    """Dati di un modulo compilato, dopo i controlli (firma, sezione, quantità)."""
-    from openpyxl import load_workbook
+def _foglio(wb):
+    """Il foglio del modulo, anche rinominato (Numbers: «Richiesta tessere_Tabella 1»)."""
+    if FOGLIO in wb.sheetnames:
+        return wb[FOGLIO]
+    for nome in wb.sheetnames:
+        if nome.startswith(FOGLIO):
+            return wb[nome]
+    for ws in wb.worksheets:
+        if str(ws["A12"].value or "").strip() == ETICHETTE["A12"]:
+            return ws
+    return None
 
+
+def _marcatura(wb, ws):
+    """(marca, versione, anno, codice, firma) dal foglio nascosto o dal codice di controllo
+    visibile; None se il programma usato li ha tolti."""
+    if FOGLIO_DATI in wb.sheetnames:
+        return tuple(str(wb[FOGLIO_DATI].cell(n, 1).value or "") for n in range(1, 6))
+    for riga in ws.iter_rows():
+        for cella in riga:
+            parti = str(cella.value or "").split()
+            if len(parti) == 5 and parti[0] == FIRMA:
+                return tuple(parti)
+    return None
+
+
+def _codice(valore):
+    """Codice della sezione come scritto o come numero (Numbers trasforma «007» in 7)."""
     from .models import Sezione
+
+    testo = str(valore or "").strip()
+    if testo.endswith(".0"):
+        testo = testo[:-2]
+    sezione = Sezione.objects.filter(codice=testo).first()
+    if sezione is None and testo.isdigit():
+        cifre = testo.lstrip("0")
+        sezione = next((s for s in Sezione.objects.all() if s.codice.lstrip("0") == cifre), None)
+    return testo, sezione
+
+
+def leggi(contenuto: bytes) -> dict:
+    """Dati di un modulo compilato, dopo i controlli (firma, sezione, quantità). Un modulo che ha
+    perso la firma (aperto e salvato con Numbers o un altro programma) si riconosce dalla struttura
+    e torna con `verificato` falso e l'avviso da mostrare."""
+    from openpyxl import load_workbook
 
     try:
         wb = load_workbook(io.BytesIO(contenuto), data_only=True, read_only=False)
     except (zipfile.BadZipFile, OSError, KeyError, ValueError) as e:
         raise ModuloNonValido("Il file non è un modulo Excel leggibile.") from e
-    if FOGLIO_DATI not in wb.sheetnames or FOGLIO not in wb.sheetnames:
+    ws = _foglio(wb)
+    if ws is None:
         raise ModuloNonValido("Il file non è un modulo di richiesta di tessere.")
-    valori = [str(wb[FOGLIO_DATI].cell(n, 1).value or "") for n in range(1, 6)]
-    marca, versione, anno, codice, firma = valori
-    if marca != FIRMA or versione != VERSIONE or not anno.isdigit():
-        raise ModuloNonValido("Il file non è un modulo di richiesta di tessere.")
-    if not hmac.compare_digest(firma, _firma(anno, codice)):
-        raise ModuloNonValido("Modulo non riconosciuto: è stato modificato o viene da un'altra "
-                              "installazione.")  # fmt: skip
-    sezione = Sezione.objects.filter(codice=codice).first()
+    marcatura = _marcatura(wb, ws)
+    if marcatura is not None:
+        marca, versione, anno, codice, firma = marcatura
+        if marca != FIRMA or versione != VERSIONE or not anno.isdigit():
+            raise ModuloNonValido("Il file non è un modulo di richiesta di tessere.")
+        if not hmac.compare_digest(firma, _firma(anno, codice)):
+            raise ModuloNonValido("Modulo non riconosciuto: è stato modificato o viene da "
+                                  "un'altra installazione.")  # fmt: skip
+        codice, sezione = _codice(codice)
+        verificato = True
+    else:  # nessuna firma: si riconosce dalle etichette, senza garanzia sull'origine
+        if any(str(ws[c].value or "").strip() != t for c, t in ETICHETTE.items()):
+            raise ModuloNonValido("Il file non è un modulo di richiesta di tessere.")
+        anno = str(ws["B7"].value or "").strip().removesuffix(".0")
+        if not anno.isdigit():
+            raise ModuloNonValido("Nel modulo manca l'anno di tesseramento.")
+        codice, sezione = _codice(ws["B6"].value)
+        verificato = False
     if sezione is None:
         raise ModuloNonValido(f"Sezione {codice} non trovata.")
-    ws = wb[FOGLIO]
     grezzo = ws[CELLA_QUANTITA].value
     try:
         quantita = int(grezzo) if not isinstance(grezzo, float) or grezzo.is_integer() else -1
@@ -163,17 +229,23 @@ def leggi(contenuto: bytes) -> dict:
         raise ModuloNonValido("Nel modulo manca il numero di tessere richieste (cella gialla).")
 
     def testo(cella):
-        return str(ws[cella].value or "").strip()
+        valore = ws[cella].value
+        if isinstance(valore, float) and valore.is_integer():
+            valore = int(valore)  # es. un telefono scritto come numero
+        return str(valore or "").strip()
 
     return {
         "anno": int(anno), "sezione": sezione, "quantita": quantita,
         "referente": testo(CELLA_REFERENTE)[:100], "telefono": testo(CELLA_TELEFONO)[:30],
-        "note": testo(CELLA_NOTE)[:500],
+        "note": testo(CELLA_NOTE)[:500], "verificato": verificato,
+        "avviso": "" if verificato else AVVISO_NON_VERIFICATO,
     }  # fmt: skip
 
 
 def note_richiesta(dati) -> str:
     parti = [dati["note"]] if dati["note"] else []
+    if not dati.get("verificato", True):
+        parti.append("modulo senza codice di controllo")
     contatto = " ".join(p for p in (dati["referente"], dati["telefono"]) if p)
     if contatto:
         parti.append(f"Referente: {contatto}")
@@ -188,7 +260,16 @@ def cerca_nel_messaggio(messaggio):
 
     for indice, allegato in enumerate(messaggio.allegati or []):
         nome = allegato.get("nome", "")
-        if not nome.lower().endswith(".xlsx"):
+        minuscolo = nome.lower()
+        if "richiesta-tessere" in minuscolo and minuscolo.endswith(ALTRI_FORMATI):
+            formato = minuscolo.rsplit(".", 1)[-1]
+            return {"indice": indice, "nome": nome, "errore": (
+                f"Il modulo è arrivato in formato .{formato} (es. salvato con Numbers): il "
+                "gestionale legge solo il file Excel (.xlsx). Chiedete alla sezione di rispondere "
+                "con il file Excel (in Numbers: File → Esporta come → Excel), oppure convertitelo "
+                "voi e caricatelo dalla campagna delle tessere, «Importa modulo»."
+            )}  # fmt: skip
+        if not minuscolo.endswith(".xlsx"):
             continue
         try:
             with default_storage.open(allegato["percorso"], "rb") as f:

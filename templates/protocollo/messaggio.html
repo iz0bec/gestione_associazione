@@ -28,6 +28,7 @@
           <p class="small mb-2"><span class="badge bg-green-lt">tessere</span> Allegato «{{ modulo_tessere.nome }}»: modulo di richiesta di tessere.</p>
           {% if modulo_tessere.errore %}<div class="alert alert-warning small mb-0">{{ modulo_tessere.errore }} Chiedete alla sezione di correggerlo e rimandarlo, oppure registrate la richiesta a mano.</div>
           {% else %}{% with d=modulo_tessere.dati %}
+          {% if d.avviso %}<div class="alert alert-warning small mb-2"><i class="ti ti-alert-triangle me-1"></i>{{ d.avviso }}</div>{% endif %}
           <p class="mb-2"><strong>{{ d.sezione.denominazione }}</strong>: <strong>{{ d.quantita }}</strong> tessere {{ d.anno }}{% if d.referente %} · referente {{ d.referente }}{% endif %}{% if d.telefono %} ({{ d.telefono }}){% endif %}{% if d.note %}<br><span class="text-secondary small">{{ d.note }}</span>{% endif %}</p>
           <form method="post" action="{% url 'soci:richiesta_da_messaggio' messaggio.pk modulo_tessere.indice %}">{% csrf_token %}<button class="btn btn-success w-100" type="submit"><i class="ti ti-stamp me-1"></i>Protocolla e registra la richiesta</button></form>
           <div class="form-hint mt-1">Il messaggio viene protocollato in entrata e la richiesta entra nella campagna delle tessere {{ d.anno }}.</div>

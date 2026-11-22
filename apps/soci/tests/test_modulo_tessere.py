@@ -177,3 +177,55 @@ def test_rispetta_le_sezioni_dell_utente(client_ruolo, sezione):
         segretario.get(f"/soci/tessere/modulo-richiesta.xlsx?sezione={sezione.pk}").status_code
         == 403
     )
+
+
+def _come_numbers(contenuto, *, togli_controllo=False, codice_numerico=False):
+    """Ciò che fa Numbers esportando in Excel: toglie i fogli nascosti e rinomina il foglio."""
+    wb = load_workbook(io.BytesIO(contenuto))
+    del wb[modulo_tessere.FOGLIO_DATI]
+    ws = wb[modulo_tessere.FOGLIO]
+    ws.title = f"{modulo_tessere.FOGLIO}_Tabella 1"
+    if togli_controllo:
+        ws["A19"], ws["B19"] = None, None
+    if codice_numerico:
+        ws["B6"] = 7  # «007» diventato numero
+    ws["B14"] = 3312876839  # telefono scritto come numero
+    uscita = io.BytesIO()
+    wb.save(uscita)
+    return uscita.getvalue()
+
+
+def test_modulo_passato_da_numbers_resta_verificato(sezione):
+    contenuto = _compila(modulo_tessere.genera(ANNO, sezione))
+    dati = modulo_tessere.leggi(_come_numbers(contenuto))  # vale il codice di controllo visibile
+    assert dati["verificato"] and dati["avviso"] == "" and dati["sezione"] == sezione
+    assert dati["telefono"] == "3312876839"
+
+
+def test_modulo_senza_firma_riconosciuto_non_verificato(sezione):
+    contenuto = _compila(modulo_tessere.genera(ANNO, sezione), quantita=100)
+    dati = modulo_tessere.leggi(
+        _come_numbers(contenuto, togli_controllo=True, codice_numerico=True)
+    )
+    assert not dati["verificato"] and "senza codice di controllo" in dati["avviso"]
+    assert (dati["sezione"], dati["quantita"], dati["anno"]) == (sezione, 100, ANNO)
+    assert "modulo senza codice di controllo" in modulo_tessere.note_richiesta(dati)
+
+
+def test_controllo_visibile_manomesso_rifiutato(sezione):
+    contenuto = _come_numbers(_compila(modulo_tessere.genera(ANNO, sezione)))
+    wb = load_workbook(io.BytesIO(contenuto))
+    ws = wb.worksheets[0]
+    ws["B19"] = ws["B19"].value.replace(" 007 ", " 003 ")
+    falso = io.BytesIO()
+    wb.save(falso)
+    with pytest.raises(modulo_tessere.ModuloNonValido, match="non riconosciuto"):
+        modulo_tessere.leggi(falso.getvalue())
+
+
+def test_allegato_in_formato_numbers_segnalato(sezione):
+    class Messaggio:
+        allegati = [{"nome": "richiesta-tessere-2027-007 2.numbers", "percorso": "x"}]
+
+    trovato = modulo_tessere.cerca_nel_messaggio(Messaggio())
+    assert "formato .numbers" in trovato["errore"] and "Importa modulo" in trovato["errore"]
