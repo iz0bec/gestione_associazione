@@ -86,13 +86,19 @@ nell'esportazione iCal. Senza durata non si calcola nulla.
 ### Composizione degli organi (PDF)
 
 **Organi sociali → Composizione (PDF)** stampa in **un unico PDF** le cariche in corso di tutti gli
-organi (consigli, organi di controllo e gli altri; non le assemblee), raggruppati per associazione e,
-con più sezioni, per sezione: carica, nominativo, data di nomina e, per chi vede i recapiti in
+organi (consigli, organi di controllo e gli altri; non le assemblee), raggruppati per ente e,
+con più sezioni, per sezione, ognuno con i suoi **recapiti** (indirizzo postale, email e PEC: quelli
+dell'ente da *Sistema → Organizzazione*, quelli delle sezioni da *Sistema → Sezioni*): carica, nominativo, data di nomina e, per chi vede i recapiti in
 anagrafica, **email e telefono di contatto**. Si sceglie se stampare tutti gli organi, solo quelli
 dell'associazione o quelli di una sezione, e la **data** a cui considerare le cariche (predefinita:
 oggi). Chi è limitato ad alcune sezioni vede solo le proprie. Con i recapiti il documento è **a uso
 interno** (lo dice in calce) e la stampa resta nel registro attività. Per un solo organo resta
 l'organigramma grafico, dalla sua scheda.
+
+Come **forma** si sceglie la *tabella* (descritta sopra) oppure l'**organigramma con le foto**: lo
+schema grafico di ogni organo (una pagina per organo, presidente in alto) con la **foto** della scheda
+anagrafica di ciascun componente o le sue iniziali, senza recapiti. È utile per riconoscere i
+componenti; gli organi senza componenti in carica non si stampano.
 
 ## Rappresentante legale
 

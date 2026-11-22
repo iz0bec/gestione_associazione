@@ -444,7 +444,8 @@ class ImportaForm(StileMixin, forms.Form):
 class SezioneForm(StileMixin, forms.ModelForm):
     class Meta:
         model = Sezione
-        fields = ["codice", "nome", "comune", "provincia", "email", "attiva", "ordine"]
+        fields = ["codice", "nome", "indirizzo", "cap", "comune", "provincia", "email", "pec",
+                  "attiva", "ordine"]  # fmt: skip
         widgets = {"provincia": forms.TextInput(attrs={"maxlength": 2, "class": "text-uppercase"})}
         labels = {"email": "Email istituzionale"}
         help_texts = {

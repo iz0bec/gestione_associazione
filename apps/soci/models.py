@@ -47,6 +47,9 @@ class Sezione(RisorsaApi):
     comune = models.CharField(max_length=100, blank=True)
     provincia = models.CharField(max_length=2, blank=True, validators=[validatore_provincia])
     email = models.EmailField(blank=True)
+    pec = models.EmailField("PEC", blank=True)
+    indirizzo = models.CharField("indirizzo della sede", max_length=255, blank=True)
+    cap = models.CharField("CAP", max_length=5, blank=True)
     attiva = models.BooleanField(default=True)
     ordine = models.PositiveSmallIntegerField(default=0)
     modificato_il = models.DateTimeField("modificato il", auto_now=True)
@@ -64,6 +67,14 @@ class Sezione(RisorsaApi):
         """Come si scrive nei documenti: «Sezione di Ruoti» (o il nome, se lo dice già)."""
         nome = self.nome.strip()
         return nome if nome.lower().startswith("sezione") else f"Sezione di {nome}"
+
+    @property
+    def indirizzo_postale(self):
+        """«Via Roma 1 - 85056 Ruoti (PZ)»: le parti che ci sono."""
+        luogo = " ".join(x for x in (self.cap, self.comune) if x)
+        if luogo and self.provincia:
+            luogo += f" ({self.provincia})"
+        return " - ".join(x for x in (self.indirizzo, luogo) if x)
 
     @classmethod
     def predefinita(cls):

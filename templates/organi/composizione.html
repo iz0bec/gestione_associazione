@@ -22,6 +22,11 @@
             {% for s in sezioni %}<option value="{{ s.pk }}">Sezione di {{ s.nome }}</option>{% endfor %}{% endif %}
           </select>
         </div>
+        <div class="mb-3">
+          <div class="form-label">Forma</div>
+          <label class="form-check"><input class="form-check-input" type="radio" name="forma" value="tabella" checked><span class="form-check-label">Tabella{% if contatti %} con email e telefono di contatto{% endif %} <span class="text-secondary small">(tutti gli organi di seguito)</span></span></label>
+          <label class="form-check mb-0"><input class="form-check-input" type="radio" name="forma" value="organigramma"><span class="form-check-label">Organigramma con le foto <span class="text-secondary small">(una pagina per organo, senza recapiti: utile per riconoscere i componenti)</span></span></label>
+        </div>
         <div class="mb-0">
           <label class="form-label" for="giorno">In carica al</label>
           <input class="form-control" type="date" id="giorno" name="giorno" value="{{ oggi|date:'Y-m-d' }}">
@@ -33,7 +38,7 @@
   <div class="col-lg-6">
     <div class="card"><div class="card-body small text-secondary">
       {% if contatti %}<p>Email e telefono vengono dalle schede anagrafiche: il PDF contiene <strong>dati personali</strong> ed è per uso interno. La stampa resta nel registro attività.</p>{% else %}<p>Il tuo ruolo non vede i recapiti in anagrafica: il PDF riporta solo cariche, nominativi e date.</p>{% endif %}
-      <p class="mb-0">Per un solo organo c'è anche l'organigramma grafico, dalla sua scheda.</p>
+      <p class="mb-0">L'organigramma usa la foto della scheda anagrafica di ciascuno (o le iniziali, se manca): per aggiungerla si apre la scheda della persona.</p>
     </div></div>
   </div>
 </div>

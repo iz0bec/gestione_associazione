@@ -11,6 +11,7 @@
   .sottotitolo { text-align: center; font-size: 9pt; color: #555; margin-bottom: 12pt; }
   h2 { font-size: 13pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; border-bottom: 1.2pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; padding-bottom: 2pt; margin: 14pt 0 6pt; }
   h3 { font-size: 10.5pt; margin: 10pt 0 4pt; }
+  .recapiti { font-size: 8.5pt; color: #444; margin: -2pt 0 4pt; }
   .organo { page-break-inside: avoid; }
   table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
   th { text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .3pt; color: #555; border-bottom: .8pt solid #999; padding: 3pt 4pt; }
@@ -24,8 +25,9 @@
 {% block contenuto %}
 <h1>Composizione degli organi sociali</h1>
 <div class="sottotitolo">{{ organizzazione.denominazione }} · cariche in corso al {{ giorno|date:"d/m/Y" }}</div>
-{% for titolo, voci in gruppi %}
+{% for titolo, recapiti, voci in gruppi %}
 <h2>{{ titolo }}</h2>
+{% if recapiti.indirizzo or recapiti.email or recapiti.pec %}<div class="recapiti">{% if recapiti.indirizzo %}{{ recapiti.indirizzo }}{% endif %}{% if recapiti.email %}{% if recapiti.indirizzo %} · {% endif %}Email {{ recapiti.email }}{% endif %}{% if recapiti.pec %}{% if recapiti.indirizzo or recapiti.email %} · {% endif %}PEC {{ recapiti.pec }}{% endif %}</div>{% endif %}
 {% for organo, cariche in voci %}
 <div class="organo">
   <h3>{{ organo.nome }}</h3>

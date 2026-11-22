@@ -5,6 +5,21 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.80] - 2026-11-22
+
+### Aggiunto
+- **Composizione degli organi**: anche in forma di **organigramma con le foto** dei componenti (una
+  pagina per organo, senza recapiti, utile per riconoscerli), scelta nella stessa pagina della stampa
+  unica.
+- **Sezioni**: indirizzo della sede, CAP e **PEC** (*Sistema → Sezioni*).
+- Roadmap: **rinnovo degli organi a scadenza del mandato** (fasi, termini e modelli dallo Statuto e
+  dal Regolamento ANCR, generalizzati in profili elettorali per altre associazioni).
+
+### Corretto
+- **Composizione degli organi (PDF)**: il gruppo principale porta il nome dell'ente (non più
+  «Associazione») e ogni gruppo riporta i recapiti dell'ente o della sezione: indirizzo postale,
+  email e PEC.
+
 ## [1.0.79] - 2026-11-22
 
 ### Aggiunto

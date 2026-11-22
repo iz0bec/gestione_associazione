@@ -143,12 +143,16 @@ class ComposizioneView(PermessoMixin, View):
         except ValueError:
             giorno = timezone.localdate()
         try:
-            pdf = servizi.pdf_composizione_organi(request.user, scelta=scelta, giorno=giorno)
+            forma = "organigramma" if request.GET.get("forma") == "organigramma" else "tabella"
+            pdf = servizi.pdf_composizione_organi(
+                request.user, scelta=scelta, giorno=giorno, forma=forma
+            )
         except servizi.OperazioneNonValida as e:
             messages.error(request, " ".join(e.messages))
             return redirect("organi:composizione")
         risposta = HttpResponse(pdf, content_type="application/pdf")
-        risposta["Content-Disposition"] = f'inline; filename="organi_sociali_{giorno:%Y%m%d}.pdf"'
+        nome = "organigramma" if forma == "organigramma" else "organi_sociali"
+        risposta["Content-Disposition"] = f'inline; filename="{nome}_{giorno:%Y%m%d}.pdf"'
         return risposta
 
 

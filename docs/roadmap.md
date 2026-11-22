@@ -246,3 +246,40 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     contatto**, su carta intestata e con data di stampa; scelta degli organi e dell'eventuale
     sezione, per l'uso interno (i recapiti sono dati personali: stampa riservata ai ruoli che
     gestiscono gli organi).
+- **Rinnovo degli organi a scadenza del mandato** (da fare): la procedura elettorale guidata, dalla
+  scadenza alla proclamazione, con i termini calcolati dal programma.
+  - *Fasi e termini dell'ANCR* (Statuto artt. 46-47, Regolamento applicativo art. 22 «Sezioni:
+    procedure e modalità di votazione»), da usare come profilo predefinito per le sezioni:
+    1. **indizione** del Congresso sezionale da parte del Consiglio direttivo uscente almeno **due
+       mesi prima** della scadenza quadriennale (sede, ordine del giorno, termine e modalità per le
+       liste); l'elettorato è dei soci tesserati **prima dell'invio dell'avviso** e il tesseramento si
+       sospende dalla convocazione;
+    2. **convocazione** con avvisi personali, lettera/email o bacheca almeno **otto giorni prima**:
+       luogo, data e ora, seconda convocazione ad almeno un'ora, giorno delle elezioni, seggio e orari;
+    3. **presentazione delle liste** entro **15 giorni prima** del Congresso: candidati soci in regola,
+       una sola lista per candidato, incarico indicato accanto a ogni nome; composizione per soglia di
+       soci (fino a 100: Presidente, Vice, Segretario, Sindaco controllore; oltre 100: anche quattro
+       consiglieri, Collegio dei sindaci e Collegio dei garanti di tre membri); fino a **quattro
+       supplenti**; verifica e ammissione delle liste da parte del Consiglio uscente, con i motivi
+       delle esclusioni;
+    4. **votazione**: voto alla lista (nomi non modificabili), alzata di mano con lista unica,
+       scrutinio segreto con più liste e Commissione elettorale (presidente e due componenti), fino a
+       **due deleghe** per socio, elenco degli aventi diritto dal presidente uscente;
+    5. **proclamazione e verbali** con i modelli del Regolamento (B2 commissione elettorale, C2/C3
+       elezione, D2 proclamazione, D4 delega), **ricorsi** al Consiglio provinciale entro **15 giorni**,
+       trasmissione dei verbali alla Federazione entro **10 giorni**, non accettazione della carica
+       entro la prima convocazione del nuovo Consiglio (subentrano i supplenti);
+    6. **insediamento**: nomina delle cariche negli organi dalla lista eletta e **passaggio di
+       consegne** entro **10 giorni** (modello G1), con il verbale inviato alla Federazione.
+  - *Generalizzazione per altre associazioni*: un **profilo elettorale** per tipo di organo, modificabile
+    in *Organi sociali*, con i termini in giorni/mesi rispetto alla scadenza o al congresso (indizione,
+    avviso, liste, ricorsi, trasmissione, consegne), le regole delle liste (composizione per soglia di
+    soci, supplenti, una lista per candidato), le modalità di voto (alzata di mano/scrutinio, deleghe) e
+    i **modelli** come modelli di stampa con segnaposto (`apps/documenti`), così che ogni statuto si
+    traduca in configurazione senza toccare il codice. Il profilo ANCR resta come preimpostato;
+    gli altri partono da un profilo generico (ETS: assemblea che elegge il consiglio).
+  - *Nel programma*: scadenzario e cruscotto con le date di ogni fase (già c'è la scadenza dei
+    mandati), convocazione dal modello e invio con Comunicazioni (protocollata), registro delle liste
+    presentate con data di arrivo e esito dell'ammissione, elenco degli aventi diritto alla data
+    dell'avviso, verbali precompilati, nomina automatica delle nuove cariche e chiusura delle vecchie,
+    verbale di passaggio di consegne.
