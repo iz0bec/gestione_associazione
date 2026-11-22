@@ -1,0 +1,51 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Composizione di tutti gli organi sociali in un unico PDF: cariche in corso con
+               nominativo, data di nomina ed (eventualmente) email e telefono di contatto
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Composizione degli organi sociali{% endblock %}
+{% block stile %}
+  h1 { text-align: center; margin-bottom: 2pt; }
+  .sottotitolo { text-align: center; font-size: 9pt; color: #555; margin-bottom: 12pt; }
+  h2 { font-size: 13pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; border-bottom: 1.2pt solid {{ organizzazione.colore_primario|default:"#1d4e89" }}; padding-bottom: 2pt; margin: 14pt 0 6pt; }
+  h3 { font-size: 10.5pt; margin: 10pt 0 4pt; }
+  .organo { page-break-inside: avoid; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
+  th { text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .3pt; color: #555; border-bottom: .8pt solid #999; padding: 3pt 4pt; }
+  td { border-bottom: .5pt solid #ddd; padding: 3pt 4pt; vertical-align: top; }
+  td.carica { width: 22%; font-weight: bold; }
+  td.dal { width: 11%; white-space: nowrap; }
+  td.email { word-break: break-all; }
+  .vuoto { color: #777; font-style: italic; font-size: 9pt; }
+  .riservato { margin-top: 14pt; font-size: 7.5pt; color: #666; border-top: .5pt solid #ccc; padding-top: 4pt; }
+{% endblock %}
+{% block contenuto %}
+<h1>Composizione degli organi sociali</h1>
+<div class="sottotitolo">{{ organizzazione.denominazione }} · cariche in corso al {{ giorno|date:"d/m/Y" }}</div>
+{% for titolo, voci in gruppi %}
+<h2>{{ titolo }}</h2>
+{% for organo, cariche in voci %}
+<div class="organo">
+  <h3>{{ organo.nome }}</h3>
+  {% if cariche %}
+  <table>
+    <thead><tr><th>Carica</th><th>Nominativo</th><th>Dal</th>{% if contatti %}<th>Email</th><th>Telefono</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for c in cariche %}
+      <tr>
+        <td class="carica">{{ c.get_ruolo_display }}</td>
+        <td>{% if c.soggetto.titolo %}{{ c.soggetto.titolo }} {% endif %}{{ c.soggetto.nome_completo }}</td>
+        <td class="dal">{{ c.dal|date:"d/m/Y" }}</td>
+        {% if contatti %}<td class="email">{{ c.soggetto.email|default:"—" }}</td><td>{{ c.soggetto.cellulare|default:c.soggetto.telefono|default:"—" }}</td>{% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="vuoto">Nessun componente in carica.</div>{% endif %}
+</div>
+{% endfor %}
+{% endfor %}
+{% if contatti %}<div class="riservato">Documento a uso interno: contiene dati personali di contatto (Regolamento UE 2016/679). Non diffondere.</div>{% endif %}
+{% endblock %}

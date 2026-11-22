@@ -691,6 +691,61 @@ def pdf_organigramma_sezione(sezione, utente):
     return pdf
 
 
+ORDINE_RUOLI = [r for livello in LIVELLI_ORGANIGRAMMA for r in livello]
+
+
+def composizione_organi(utente, *, scelta="tutti", giorno=None):
+    """Organi attivi (non assemblee) con le cariche in corso al giorno, raggruppati:
+    [(titolo del gruppo, [(organo, [cariche])])]. `scelta`: «tutti», «associazione» o l'id di una
+    sezione; chi è limitato a delle sezioni vede solo le sue (e gli organi dell'associazione)."""
+    from apps.soci import sezioni
+
+    giorno = giorno or timezone.localdate()
+    organi = (
+        Organo.objects.filter(attivo=True).exclude(tipo=Organo.Tipo.ASSEMBLEA)
+        .select_related("sezione").order_by("ordine", "nome")
+    )  # fmt: skip
+    visibili = sezioni.id_sezioni(utente)
+    if visibili is not None:
+        organi = organi.filter(Q(sezione__isnull=True) | Q(sezione__in=visibili))
+    if scelta == "associazione":
+        organi = organi.filter(sezione__isnull=True)
+    elif scelta != "tutti":
+        organi = organi.filter(sezione_id=int(scelta))
+    gruppi = {}
+    for organo in organi:
+        cariche = sorted(
+            organo.cariche_al(giorno).select_related("soggetto"),
+            key=lambda c: (ORDINE_RUOLI.index(c.ruolo) if c.ruolo in ORDINE_RUOLI else 99,
+                           c.soggetto.nome_completo),
+        )  # fmt: skip
+        titolo = f"Sezione di {organo.sezione.nome}" if organo.sezione else "Associazione"
+        gruppi.setdefault((organo.sezione.nome if organo.sezione else "", titolo), []).append(
+            (organo, cariche)
+        )
+    return [(titolo, voci) for (_, titolo), voci in sorted(gruppi.items())]
+
+
+def pdf_composizione_organi(utente, *, scelta="tutti", giorno=None):
+    """Un unico PDF con la composizione di tutti gli organi scelti; email e telefono solo a chi
+    può già vederli in anagrafica (dati personali: documento a uso interno)."""
+    from apps.core.pdf import genera_pdf
+
+    giorno = giorno or timezone.localdate()
+    gruppi = composizione_organi(utente, scelta=scelta, giorno=giorno)
+    if not any(voci for _, voci in gruppi):
+        raise OperazioneNonValida("Nessun organo da stampare per la scelta fatta.")
+    contatti = utente.has_perm("anagrafica.view_soggetto")
+    pdf = genera_pdf("organi/pdf/composizione.html", {
+        "gruppi": gruppi, "giorno": giorno, "contatti": contatti,
+        "organizzazione": Organizzazione.corrente(),
+    })  # fmt: skip
+    registra(Azione.ESPORTAZIONE, None, utente=utente, documento="composizione degli organi",
+             descrizione="Composizione degli organi sociali (PDF)", scelta=str(scelta),
+             giorno=str(giorno), contatti=contatti)  # fmt: skip
+    return pdf
+
+
 ORGANI_DI_SEZIONE = [
     ("Consiglio direttivo", "CD", Organo.Tipo.CONSIGLIO),
     ("Assemblea dei soci", "ASS", Organo.Tipo.ASSEMBLEA),

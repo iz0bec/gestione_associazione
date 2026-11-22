@@ -83,6 +83,17 @@ preavviso in poi la scadenza compare nel **cruscotto**, riquadro *Mandati in sca
 passata e la carica non è stata chiusa), e nel **calendario**, categoria *Mandati*, anche
 nell'esportazione iCal. Senza durata non si calcola nulla.
 
+### Composizione degli organi (PDF)
+
+**Organi sociali → Composizione (PDF)** stampa in **un unico PDF** le cariche in corso di tutti gli
+organi (consigli, organi di controllo e gli altri; non le assemblee), raggruppati per associazione e,
+con più sezioni, per sezione: carica, nominativo, data di nomina e, per chi vede i recapiti in
+anagrafica, **email e telefono di contatto**. Si sceglie se stampare tutti gli organi, solo quelli
+dell'associazione o quelli di una sezione, e la **data** a cui considerare le cariche (predefinita:
+oggi). Chi è limitato ad alcune sezioni vede solo le proprie. Con i recapiti il documento è **a uso
+interno** (lo dice in calce) e la stampa resta nel registro attività. Per un solo organo resta
+l'organigramma grafico, dalla sua scheda.
+
 ## Rappresentante legale
 
 Di solito il rappresentante legale è il presidente, e allora non serve fare nulla. Può però essere

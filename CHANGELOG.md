@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.79] - 2026-11-22
+
+### Aggiunto
+- **Composizione degli organi in un unico PDF** (*Organi sociali → Composizione (PDF)*): cariche in
+  corso di tutti gli organi (o solo dell'associazione, o di una sezione) alla data scelta, raggruppate
+  per associazione e sezioni, con nominativo, data di nomina ed **email e telefono di contatto** per
+  chi vede i recapiti in anagrafica (documento a uso interno, stampa nel registro attività).
+
 ## [1.0.78] - 2026-11-22
 
 ### Aggiunto

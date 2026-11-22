@@ -116,6 +116,42 @@ class OrganigrammaView(PermessoMixin, View):
         return risposta
 
 
+class ComposizioneView(PermessoMixin, View):
+    """Stampa unica della composizione degli organi sociali (scelta e PDF)."""
+
+    permission_required = "organi.view_organo"
+
+    def get(self, request):
+        from datetime import date
+
+        from apps.soci import sezioni as sez
+        from apps.soci.models import Sezione
+
+        if not request.GET.get("pdf"):
+            elenco = []
+            if sez.multisezione():
+                elenco = sez.filtra(Sezione.objects.filter(attiva=True), request.user, campo="pk")
+            return render(request, "organi/composizione.html", {
+                "sezioni": elenco, "oggi": timezone.localdate(),
+                "contatti": request.user.has_perm("anagrafica.view_soggetto"),
+            })  # fmt: skip
+        scelta = request.GET.get("scelta", "tutti")
+        if scelta not in ("tutti", "associazione") and not scelta.isdigit():
+            scelta = "tutti"
+        try:
+            giorno = date.fromisoformat(request.GET.get("giorno", ""))
+        except ValueError:
+            giorno = timezone.localdate()
+        try:
+            pdf = servizi.pdf_composizione_organi(request.user, scelta=scelta, giorno=giorno)
+        except servizi.OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return redirect("organi:composizione")
+        risposta = HttpResponse(pdf, content_type="application/pdf")
+        risposta["Content-Disposition"] = f'inline; filename="organi_sociali_{giorno:%Y%m%d}.pdf"'
+        return risposta
+
+
 class OrganoView(PermessoMixin, DetailView):
     permission_required = "organi.view_organo"
     model = Organo

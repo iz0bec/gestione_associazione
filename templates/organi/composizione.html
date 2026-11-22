@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scelta della stampa unica della composizione degli organi sociali
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Composizione degli organi{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}Composizione degli organi sociali{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <form method="get" action="{% url 'organi:composizione' %}" class="card">
+      <input type="hidden" name="pdf" value="1">
+      <div class="card-body">
+        <p>Un unico PDF con le cariche in corso di tutti gli organi (consigli, organi di controllo e gli altri; non le assemblee){% if contatti %}, con email e telefono di contatto{% endif %}.</p>
+        <div class="mb-3">
+          <label class="form-label" for="scelta">Organi</label>
+          <select class="form-select" id="scelta" name="scelta">
+            <option value="tutti">Tutti</option>
+            {% if sezioni %}<option value="associazione">Solo quelli dell'associazione</option>
+            {% for s in sezioni %}<option value="{{ s.pk }}">Sezione di {{ s.nome }}</option>{% endfor %}{% endif %}
+          </select>
+        </div>
+        <div class="mb-0">
+          <label class="form-label" for="giorno">In carica al</label>
+          <input class="form-control" type="date" id="giorno" name="giorno" value="{{ oggi|date:'Y-m-d' }}">
+        </div>
+      </div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'organi:organi' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit"><i class="ti ti-file-type-pdf me-1"></i>Stampa il PDF</button></div>
+    </form>
+  </div>
+  <div class="col-lg-6">
+    <div class="card"><div class="card-body small text-secondary">
+      {% if contatti %}<p>Email e telefono vengono dalle schede anagrafiche: il PDF contiene <strong>dati personali</strong> ed è per uso interno. La stampa resta nel registro attività.</p>{% else %}<p>Il tuo ruolo non vede i recapiti in anagrafica: il PDF riporta solo cariche, nominativi e date.</p>{% endif %}
+      <p class="mb-0">Per un solo organo c'è anche l'organigramma grafico, dalla sua scheda.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

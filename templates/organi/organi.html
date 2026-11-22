@@ -4,6 +4,7 @@
 {% block azioni %}
 <div class="btn-list">
   <a class="btn" href="{% url 'organi:riunioni' %}"><i class="ti ti-calendar-event me-1"></i>Tutte le riunioni</a>
+  <a class="btn" href="{% url 'organi:composizione' %}"><i class="ti ti-file-type-pdf me-1"></i>Composizione (PDF)</a>
   {% if perms.organi.view_rappresentantelegale %}<a class="btn" href="{% url 'organi:rappresentanti' %}"><i class="ti ti-scale me-1"></i>Rappresentante legale</a>{% endif %}
   {% if perms.organi.gestisci_firme %}<a class="btn" href="{% url 'organi:firme' %}"><i class="ti ti-signature me-1"></i>Firme e timbri</a>{% endif %}
   {% if perms.organi.view_modelloconvocazione %}<a class="btn" href="{% url 'organi:modelli_convocazione' %}"><i class="ti ti-template me-1"></i>Modelli di convocazione</a>{% endif %}
