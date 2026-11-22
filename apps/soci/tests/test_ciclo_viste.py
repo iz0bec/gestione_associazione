@@ -292,7 +292,10 @@ def test_avviso_protocollato_con_i_valori_e_non_i_segnaposto(admin, sezione, set
     invio.refresh_from_db()
     protocollo = invio.protocollo
     assert protocollo is not None
-    assert protocollo.oggetto == f"Tesseramento {ANNO}: quota e richiesta delle tessere"
+    assert (
+        protocollo.oggetto
+        == f"Tesseramento {ANNO}: quota e richiesta delle tessere – Sezione di Avigliano"
+    )
     allegato = protocollo.allegati.get(nome="comunicazione.txt")
     with allegato.file.open("rb") as f:
         testo = f.read().decode()

@@ -68,6 +68,53 @@
 | **1.0.33** ✅ | area personale dei soci con accesso tramite collegamento via email | GitHub, GitLab |
 | **1.0.34** ✅ | messaggio della password in italiano, manuale dei backup aggiornato al formato incrementale | GitHub, GitLab |
 | **1.0.35** ✅ | chat interna fra gli utenti del gestionale (a due e di gruppo, riservata ai partecipanti) | GitHub, GitLab |
+| **1.0.36** ✅ | HTTPS dall'installatore (certificato della propria CA o autofirmato), guida HTTPS anche in rete interna | GitHub, GitLab |
+| **1.0.37** ✅ | certificati con rinnovo automatico: `--tls-step` (step-ca) e `--tls-acme` (certbot); CA interna su Proxmox | GitHub, GitLab |
+| **1.0.38** ✅ | API di interoperabilità F1: identità dell'istanza, firma di richieste e risposte, abbinamento con invito monouso | GitHub, GitLab |
+| **1.0.39** ✅ | campagna delle tessere con le sezioni, avvisi alle sezioni, importazione delle consegne | GitHub, GitLab |
+| **1.0.40** ✅ | correzioni della campagna delle tessere | GitHub, GitLab |
+| **1.0.41** ✅ | azioni su più comunicazioni insieme; email istituzionale della sezione | GitHub, GitLab |
+| **1.0.42** ✅ | modifica delle bozze delle comunicazioni, «Seleziona tutte» | GitHub, GitLab |
+| **1.0.43** ✅ | testo degli avvisi del tesseramento modificabile | GitHub, GitLab |
+| **1.0.44** ✅ | correzione di un errore 500 | GitHub, GitLab |
+| **1.0.45** ✅ | comunicazioni annullate in un elenco a parte | GitHub, GitLab |
+| **1.0.46** ✅ | risposta della sezione all'avviso di tesseramento; email della federazione nella campagna | GitHub, GitLab |
+| **1.0.47** ✅ | ruolo del collegamento (federazione/sezione), scambio dei documenti del ciclo delle tessere, documenti in arrivo | GitHub, GitLab |
+| **1.0.48** ✅ | richiesta di tessere firmata dal presidente della sezione, con il PDF originale | GitHub, GitLab |
+| **1.0.49** ✅ | comunicazioni protocollate con i segnaposto risolti | GitHub, GitLab |
+| **1.0.50** ✅ | modulo Excel della richiesta di tessere e recupero del modulo compilato dalla posta | GitHub, GitLab |
+| **1.0.51** ✅ | modulo di richiesta tessere scaricabile dall'elenco dei soci | GitHub, GitLab |
+| **1.0.52** ✅ | più sezioni sullo stesso host (`sezioni.sh`) | GitHub, GitLab |
+| **1.0.53** ✅ | reverse proxy nel `.env` generato dall'installatore | GitHub, GitLab |
+| **1.0.54** ✅ | correzione del token del bot Telegram | GitHub, GitLab |
+| **1.0.55** ✅ | verifica dei soci fra federazione e sezione via API (popolamento e modifiche campo per campo); promemoria per l'archivio centrale | GitHub, GitLab |
+| **1.0.56** ✅ | correzioni della verifica dei soci | GitHub, GitLab |
+| **1.0.57** ✅ | correzione dei ruoli invertiti fra federazione e sezione | GitHub, GitLab |
+| **1.0.58** ✅ | verifica dei soci: soci doppi | GitHub, GitLab |
+| **1.0.59** ✅ | telefono e cellulare negli scambi fra installazioni | GitHub, GitLab |
+| **1.0.60** ✅ | consensi impliciti per i soci | GitHub, GitLab |
+| **1.0.61** ✅ | verifica dei soci e importazione: luogo di nascita | GitHub, GitLab |
+| **1.0.62** ✅ | registrazione in blocco dei consensi impliciti | GitHub, GitLab |
+| **1.0.63** ✅ | dal rinnovo alla richiesta di tessere; ordine alla sede nazionale per email; pagamenti al livello superiore | GitHub, GitLab |
+| **1.0.64** ✅ | richiesta di tessere per email | GitHub, GitLab |
+| **1.0.65** ✅ | rubrica dai collegamenti API (ente in anagrafica); verifica dei soci via API da Soci → Importa e verifica | GitHub, GitLab |
+| **1.0.66** ✅ | segnatura di protocollo AgID (Segnatura.xml firmata XAdES-B), sigillo dell'ente, copia PDF con il timbro | GitHub, GitLab |
+| **1.0.67** ✅ | correzione e annullamento delle richieste di tessere registrate a mano | GitHub, GitLab |
+| **1.0.68** ✅ | veste grafica delle email (Sistema → Aspetto): logo incorporato, colori, firma, informativa; email di prova | GitHub, GitLab |
+| **1.0.69** ✅ | cruscotto: collegamento alla posta da protocollare; consenso implicito alle email per la rubrica | GitHub, GitLab |
+| **1.0.70** ✅ | avvisi personali su Telegram, SMS o WhatsApp: posta, domande di iscrizione, sicurezza | GitHub, GitLab |
+| **1.0.71** ✅ | eliminazione delle caselle IMAP e del bot Telegram; pulsante Elimina nei servizi di posta | GitHub, GitLab |
+| **1.0.72** ✅ | portale dei servizi generato dalle schede pubbliche dei gestionali; recapiti pubblici facoltativi | GitHub, GitLab |
+| **1.0.73** ✅ | correzione dei colori del portale dei servizi (CSP) | GitHub, GitLab |
+| **1.0.74** ✅ | ambiente dimostrativo con dati di fantasia e azzeramento mensile (demo pubblica) | GitHub, GitLab |
+| **1.0.75** ✅ | utenti dalle cariche degli organi, con password per carica e bozze delle credenziali | GitHub, GitLab |
+| **1.0.76** ✅ | credenziali «per conto» a chi non ha l'email; testo delle bozze con il manuale | GitHub, GitLab |
+| **1.0.77** ✅ | credenziali per conto alla casella dell'ente | GitHub, GitLab |
+| **1.0.78** ✅ | utenti da riga di comando: elenco e reimpostazione alla password predefinita con notifica | GitHub, GitLab |
+| **1.0.79** ✅ | composizione di tutti gli organi sociali in un unico PDF, con i recapiti | GitHub, GitLab |
+| **1.0.80** ✅ | organigramma con le foto nella stampa unica; recapiti di ente e sezioni (indirizzo, PEC) | GitHub, GitLab |
+| **1.0.81** ✅ | modulo di richiesta delle tessere riconosciuto anche dopo Numbers; allegati .numbers segnalati | GitHub, GitLab |
+| **1.0.82** ✅ | comunicazioni della campagna tessere riconoscibili: oggetto con la sezione; elenco con destinatario, ricerca e filtro per origine | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
@@ -293,7 +340,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   e accesso moderno), più «Altro» per i valori a mano. L'elenco sta in un file di dati del programma
   (facile da aggiornare o estendere da chi installa), la scelta del fornitore segna anche *È una PEC*
   e la verifica di accesso si può lanciare subito dopo. Stessa facilità nella configurazione guidata.
-- **Comunicazioni della campagna tessere riconoscibili** (da fare). Gli invii generati dalla campagna
+- ✅ **Comunicazioni della campagna tessere riconoscibili** (1.0.82). Gli invii generati dalla campagna
   (avvisi, solleciti, ordini) hanno oggetti tutti uguali («Tesseramento 2027: quota e richiesta delle
   tessere»), quindi nell'elenco delle *Comunicazioni* non si capisce a quale sezione o soggetto vanno.
   L'oggetto si personalizza con il destinatario (es. «… – Sezione di Ruoti», segnaposto `{{ sezione }}`

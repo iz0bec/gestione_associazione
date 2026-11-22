@@ -35,6 +35,16 @@ escluso compare con il motivo.
 Ogni destinatario riceve un **messaggio separato**: nessuno vede gli indirizzi degli altri. Le risposte
 arrivano all'email dell'associazione (*Sistema → Organizzazione*).
 
+## L'elenco delle comunicazioni
+
+*Comunicazioni* elenca gli invii, divisi per stato (bozze, in coda, inviate; le annullate a parte).
+Sotto l'oggetto di ogni invio c'è **a chi va**: la sezione per gli invii della campagna delle
+tessere, il nome del destinatario, due nomi o «N destinatari». La casella **Cerca** trova un invio per
+oggetto o destinatario (es. «Ruoti») e il menu **origine** mostra solo quelli di un tipo: campagna
+tessere, convocazioni, auguri e ricorrenze, promemoria di rinnovo, domande di iscrizione, tessere ai
+soci, credenziali di accesso o scritte a mano. Gli avvisi della campagna delle tessere hanno anche
+l'oggetto con la sezione («… – Sezione di Ruoti»).
+
 ## Scrivere una comunicazione
 
 ![Il registro delle comunicazioni](immagini/comunicazioni.jpg)

@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.82] - 2026-11-22
+
+### Modificato
+- **Comunicazioni della campagna tessere riconoscibili**: gli avvisi alle sezioni (tesseramento,
+  sollecito, attribuzione) hanno l'oggetto con la sezione («… – Sezione di Ruoti»), anche nel
+  protocollo. L'elenco *Comunicazioni* mostra sotto l'oggetto **a chi va** (la sezione, il
+  destinatario o «N destinatari», anche per gli invii già fatti), con la **ricerca** per oggetto o
+  destinatario e il **filtro per origine** (campagna tessere, convocazioni, auguri, promemoria,
+  domande, tessere, credenziali, scritte a mano).
+- Roadmap: tabella dei rilasci aggiornata fino alla 1.0.82.
+
 ## [1.0.81] - 2026-11-22
 
 ### Corretto

@@ -63,6 +63,29 @@ def _errore(request, e):
 # --- invii -------------------------------------------------------------------------------------
 
 
+# origini degli invii per il filtro dell'elenco: (etichetta, prefissi o valori di Invio.origine)
+ORIGINI = {
+    "mano": ("Scritte a mano", ("",)),
+    "tessere": ("Campagna tessere", ("tessere_",)),
+    "riunione": ("Convocazioni", ("riunione",)),
+    "ricorrenza": ("Auguri e ricorrenze", ("ricorrenza",)),
+    "rinnovo": ("Promemoria di rinnovo", ("rinnovo",)),
+    "domanda": ("Domande di iscrizione", ("domanda",)),
+    "tessera": ("Tessere ai soci", ("tessera",)),
+    "credenziali": ("Credenziali di accesso", ("utenti-cariche", "consigli-")),
+}
+
+
+def _filtro_origine(chiave):
+    _, valori = ORIGINI[chiave]
+    if valori == ("",):
+        return Q(origine="")
+    filtro = Q()
+    for v in valori:
+        filtro |= Q(origine__startswith=v)
+    return filtro
+
+
 class InviiView(PermessoMixin, ListView):
     permission_required = "comunicazioni.view_invio"
     template_name = "comunicazioni/invii.html"
@@ -88,6 +111,13 @@ class InviiView(PermessoMixin, ListView):
             qs = qs.filter(stato=stato)
         else:  # le annullate hanno un elenco a parte
             qs = qs.exclude(stato=Invio.Stato.ANNULLATO)
+        if (origine := self.request.GET.get("origine")) in ORIGINI:
+            qs = qs.filter(_filtro_origine(origine))
+        if q := self.request.GET.get("q", "").strip():
+            qs = qs.filter(
+                Q(oggetto__icontains=q) | Q(contesto__sezione__icontains=q)
+                | Q(destinatari__nome__icontains=q) | Q(destinatari__email__icontains=q)
+            ).distinct()  # fmt: skip
         return qs
 
     def get_context_data(self, **kwargs):
@@ -95,6 +125,9 @@ class InviiView(PermessoMixin, ListView):
         ctx["stati"] = [(v, e) for v, e in Invio.Stato.choices if v != Invio.Stato.ANNULLATO]
         ctx["n_annullate"] = Invio.objects.filter(stato=Invio.Stato.ANNULLATO).count()
         ctx["stato"] = self.request.GET.get("stato", "")
+        ctx["origini"] = [(k, v[0]) for k, v in ORIGINI.items()]
+        ctx["origine"] = self.request.GET.get("origine", "")
+        ctx["q"] = self.request.GET.get("q", "")
         ctx["oggi"] = anniversari.eventi(giorni=0)
         return ctx
 

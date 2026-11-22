@@ -103,6 +103,15 @@ def test_avviso_con_modulo_istruzioni_e_anno_precedente(admin, sezione):
         and "{{ tessere_anno_precedente }}" in invio.corpo
     )
     assert invio.contesto["tessere_anno_precedente"] == 25
+    # oggetto riconoscibile: la sezione nel titolo dell'elenco e nell'email
+    assert invio.oggetto.endswith("– {{ sezione }}") and invio.titolo.endswith("– Sezione di Ruoti")
+    assert invio.per_chi == "Sezione di Ruoti"
+    elenco = admin.get("/comunicazioni/", {"q": "Ruoti", "origine": "tessere"}).content.decode()
+    assert "Sezione di Ruoti" in elenco
+    assert (
+        "Sezione di Ruoti"
+        not in admin.get("/comunicazioni/", {"origine": "ricorrenza"}).content.decode()
+    )
     assert "rispondete a questa email allegandolo" in invio.contesto["istruzioni_risposta"]
     with allegato.file.open("rb") as f:
         assert modulo_tessere.leggi(_compila(f.read()))["sezione"] == sezione

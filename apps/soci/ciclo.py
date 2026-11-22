@@ -513,6 +513,8 @@ def prepara_avvisi(utente, *, tipo, anno, sezioni=(), consegne=(), riferimento_a
             k: {"prima": v, "dopo": getattr(modello, k)} for k, v in prima.items()
             if v != getattr(modello, k)
         })  # fmt: skip
+    if "{{ sezione }}" not in oggetto:  # riconoscibile nell'elenco e per chi lo riceve
+        oggetto = f"{oggetto} – {{{{ sezione }}}}"
     base = contesto_anno(anno)
     if tipo == "sollecito":
         base |= {"riferimento_avviso": riferimento_avviso.strip() or DA_INDICARE,

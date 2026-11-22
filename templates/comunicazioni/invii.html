@@ -21,6 +21,16 @@
       <li class="nav-item ms-auto"><a class="nav-link{% if stato == 'annullato' %} active{% endif %}" href="?stato=annullato"><i class="ti ti-archive me-1"></i>Annullate{% if n_annullate %} <span class="badge bg-secondary-lt ms-1">{{ n_annullate }}</span>{% endif %}</a></li>
     </ul>
   </div>
+  <form method="get" class="card-body border-bottom py-2 d-flex flex-wrap align-items-center gap-2">
+    {% if stato %}<input type="hidden" name="stato" value="{{ stato }}">{% endif %}
+    <input class="form-control form-control-sm w-auto flex-fill" type="search" name="q" value="{{ q }}" placeholder="Cerca per oggetto o destinatario (es. Ruoti)" aria-label="Cerca">
+    <select class="form-select form-select-sm w-auto" name="origine" aria-label="Origine" data-invio-automatico>
+      <option value="">Tutte le origini</option>
+      {% for k, e in origini %}<option value="{{ k }}"{% if origine == k %} selected{% endif %}>{{ e }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-sm" type="submit"><i class="ti ti-search me-1"></i>Cerca</button>
+    {% if q or origine %}<a class="btn btn-sm btn-link" href="?{% if stato %}stato={{ stato }}{% endif %}">Azzera</a>{% endif %}
+  </form>
   {% if perms.comunicazioni.conferma_invio %}
   <form method="post" action="{% url 'comunicazioni:azione_massiva' %}" id="azioni-invii">{% csrf_token %}
     <input type="hidden" name="ritorno" value="{{ request.get_full_path }}">
@@ -41,7 +51,7 @@
         <tr>
           {% if perms.comunicazioni.conferma_invio %}<td>{% if i.stato == "bozza" or i.stato == "in_coda" %}<input class="form-check-input" type="checkbox" name="invii" value="{{ i.pk }}" form="azioni-invii" aria-label="Seleziona {{ i.titolo }}">{% endif %}</td>{% endif %}
           <td class="text-nowrap">{{ i.creato_il|date:"d/m/Y H:i" }}</td>
-          <td><a class="text-reset fw-medium" href="{{ i.get_absolute_url }}">{{ i.titolo }}</a><div class="small text-secondary">{{ i.finalita_breve }}{% if i.creato_da %} · {{ i.creato_da }}{% elif i.origine %} · automatico{% endif %}</div></td>
+          <td><a class="text-reset fw-medium" href="{{ i.get_absolute_url }}">{{ i.titolo }}</a><div class="small text-secondary">{% with chi=i.per_chi %}{% if chi %}<i class="ti ti-user me-1"></i>{{ chi }} · {% endif %}{% endwith %}{{ i.finalita_breve }}{% if i.creato_da %} · {{ i.creato_da }}{% elif i.origine %} · automatico{% endif %}</div></td>
           <td class="d-none d-md-table-cell">{{ i.n_inviati }} / {{ i.n_totale }}</td>
           <td>{% include "comunicazioni/_stato_invio.html" %}</td>
         </tr>

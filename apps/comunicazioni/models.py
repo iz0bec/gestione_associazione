@@ -187,6 +187,17 @@ class Invio(ModelloBase):
         }[self.finalita]
 
     @property
+    def per_chi(self):
+        """A chi va, per gli elenchi: la sezione (invii della campagna tessere), un nome, due nomi
+        o «N destinatari» (esclusi i non raggiungibili)."""
+        if sezione := (self.contesto or {}).get("sezione"):
+            return sezione
+        nomi = [d.nome or d.email for d in self.destinatari.all() if d.stato != "escluso"]
+        if len(nomi) <= 2:
+            return ", ".join(n for n in nomi if n)
+        return f"{len(nomi)} destinatari"
+
+    @property
     def titolo(self):
         """Oggetto per elenchi e intestazioni: con un solo destinatario i segnaposto sono risolti
         con i suoi dati (come nell'email inviata); con più destinatari restano quelli personali."""

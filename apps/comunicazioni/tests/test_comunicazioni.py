@@ -504,3 +504,22 @@ class TestPromemoriaRinnovo:
         assert p.attivo and p.date_invio == "15/01, 01/03" and p.ora == 10
         r = c.post("/comunicazioni/promemoria-rinnovo/", {"date_invio": "mai", "ora": "10"})
         assert "giorno/mese" in r.content.decode()
+
+
+def test_elenco_con_destinatario_ricerca_e_origine(client_ruolo, crea_utente):
+    admin = client_ruolo("Amministratore di sistema")
+    utente = crea_utente("autore", ruoli=["Segretario"])
+    a = persona("Alfa", email="alfa@example.org")
+    b = persona("Beta", email="beta@example.org")
+    c = persona("Gamma", email="gamma@example.org")
+    uno = servizi.crea_invio(utente, oggetto="Avviso unico", corpo="Testo", soggetti=[a],
+                             finalita=Finalita.ISTITUZIONALE)  # fmt: skip
+    tanti = servizi.crea_invio(utente, oggetto="Avviso a tutti", corpo="Testo",
+                               soggetti=[a, b, c], finalita=Finalita.ISTITUZIONALE)  # fmt: skip
+    assert uno.per_chi == "Alfa Mario" and tanti.per_chi == "3 destinatari"
+    pagina = admin.get("/comunicazioni/", {"q": "beta"}).content.decode()
+    assert "Avviso a tutti" in pagina and "Avviso unico" not in pagina
+    assert "Avviso unico" in admin.get("/comunicazioni/", {"origine": "mano"}).content.decode()
+    assert (
+        "Avviso unico" not in admin.get("/comunicazioni/", {"origine": "tessere"}).content.decode()
+    )
