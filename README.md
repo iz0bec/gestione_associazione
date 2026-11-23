@@ -42,14 +42,6 @@ I dati si azzerano il 1° di ogni mese e nessun messaggio (email, PEC, Telegram,
 si può provare tutto, anche a sbagliare. Per avere una propria demo: [Ambiente
 dimostrativo](docs/sistema/ambiente-dimostrativo.md).
 
-## Manuali online
-
-I manuali si consultano anche su **[wiki.ancravigliano.it](https://wiki.ancravigliano.it)**: il
-[manuale operativo](https://wiki.ancravigliano.it/manuale-operativo) e il
-[manuale per il sistemista](https://wiki.ancravigliano.it/manuale-sistemista), con la ricerca in tutte
-le pagine. Il riferimento resta la cartella [docs](docs/), aggiornata a ogni versione: il wiki può
-essere indietro di qualche versione.
-
 ## Stato
 
 > Versione stabile: vedi le [release](https://github.com/iz0bec/gestione_associazione/releases)

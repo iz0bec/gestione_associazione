@@ -12,7 +12,6 @@
 # Manuale operativo
 
 Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consiglieri.
-Si consulta anche online, con la ricerca, su [wiki.ancravigliano.it](https://wiki.ancravigliano.it/manuale-operativo).
 
 1. [Configurazione iniziale](configurazione-iniziale.md) - il wizard del primo accesso e **cosa preparare prima**
 2. [Primi passi](primi-passi.md) - accesso, verifica in due passaggi, come è fatta l'interfaccia
