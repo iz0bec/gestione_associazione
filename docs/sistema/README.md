@@ -12,6 +12,7 @@
 # Manuale di sistema
 
 Per chi installa, configura e mantiene l'applicazione.
+Si consulta anche online, con la ricerca, su [wiki.ancravigliano.it](https://wiki.ancravigliano.it/manuale-sistemista).
 
 1. [Installazione](installazione.md) - Docker oppure server Linux con systemd
 1b. [HTTPS anche in rete interna](https-rete-interna.md) - guida passo passo: CA interna con step-ca o certificato autofirmato

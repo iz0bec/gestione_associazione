@@ -5,6 +5,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Documentazione
+- Riferimento ai **manuali online** su [wiki.ancravigliano.it](https://wiki.ancravigliano.it)
+  (manuale operativo e manuale per il sistemista) nel README e negli indici dei manuali.
+
 ## [1.0.82] - 2026-11-22
 
 ### Modificato
