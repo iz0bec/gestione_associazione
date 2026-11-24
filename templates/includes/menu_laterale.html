@@ -63,8 +63,12 @@
         </li>
         {% endif %}
         {% if perms.organi.view_organo %}
-        <li class="nav-item{% if nome == 'organi' %} active{% endif %}">
+        <li class="nav-item{% if nome == 'organi' or nome == 'elezioni' %} active{% endif %}">
           <a class="nav-link" href="{% url 'organi:organi' %}"><span class="nav-link-icon"><i class="ti ti-gavel"></i></span><span class="nav-link-title">Organi sociali</span></a>
+        </li>
+        {% elif perms.elezioni.view_rinnovo %}
+        <li class="nav-item{% if nome == 'elezioni' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'elezioni:rinnovi' %}"><span class="nav-link-icon"><i class="ti ti-checkbox"></i></span><span class="nav-link-title">Rinnovo degli organi</span></a>
         </li>
         {% elif perms.organi.gestisci_firme %}
         <li class="nav-item{% if nome == 'organi' %} active{% endif %}">

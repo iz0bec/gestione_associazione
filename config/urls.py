@@ -49,6 +49,7 @@ urlpatterns = [
     path("anagrafica/", include("apps.anagrafica.urls")),
     path("soci/", include("apps.soci.urls")),
     path("protocollo/", include("apps.protocollo.urls")),
+    path("organi/rinnovi/", include("apps.elezioni.urls")),
     path("organi/", include("apps.organi.urls")),
     path("comunicazioni/", include("apps.comunicazioni.urls")),
     path("tesoreria/", include("apps.tesoreria.urls")),

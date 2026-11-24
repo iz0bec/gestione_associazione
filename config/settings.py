@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "apps.soci",
     "apps.protocollo",
     "apps.organi",
+    "apps.elezioni",
     "apps.comunicazioni",
     "apps.tesoreria",
     "apps.patrimonio",

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modifica di un profilo elettorale
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{% if object %}{{ object }}{% else %}Nuovo profilo elettorale{% endif %}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'elezioni:profili' %}">Profili elettorali</a></div>{% endblock %}
+{% block titolo_pagina %}{% if object %}{{ object }}{% else %}Nuovo profilo elettorale{% endif %}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-body">{{ form }}</div>
+  <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'elezioni:profili' %}">Annulla</a><button class="btn btn-primary ms-auto" type="submit">Salva</button></div>
+</form>
+{% endblock %}

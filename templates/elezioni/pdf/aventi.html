@@ -1,0 +1,19 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: aventi
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+<h1>{{ titolo }}</h1>
+<div class="sotto">{{ profilo.nome_assemblea }} · {{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }}<br>Aventi diritto fissati alla data dell'avviso{% if rinnovo.avviso_il %} del {{ rinnovo.avviso_il|date:"d/m/Y" }}{% endif %}</div>
+{% if rinnovo.federazione %}
+<table class="dati"><tr><th>Sezione</th><th>Rappresentante (presidente o delegato)</th><th class="num">Voti spettanti</th><th>Firma</th></tr>
+{% for r in rinnovo.aventi_diritto %}<tr><td>{{ r.nome }}</td><td>{{ r.delegato }}</td><td class="num">{{ r.voti }}</td><td style="width:30%"></td></tr>{% endfor %}
+<tr><th colspan="2">Totale</th><th class="num">{{ voti_totali }}</th><th></th></tr></table>
+{% else %}
+<table class="dati"><tr><th>#</th><th>N. socio</th><th>Cognome e nome</th><th>Firma</th><th>Delega a</th></tr>
+{% for r in rinnovo.aventi_diritto %}<tr><td>{{ forloop.counter }}</td><td>{{ r.numero }}</td><td>{{ r.nome }}</td><td style="width:28%"></td><td style="width:22%"></td></tr>{% endfor %}</table>
+<p class="piccolo">Totale aventi diritto: {{ voti_totali }}. Al massimo {{ profilo.max_deleghe }} deleghe per socio votante.</p>
+{% endif %}
+{% endblock %}

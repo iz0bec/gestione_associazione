@@ -105,6 +105,16 @@ ORGANI_SEGRETERIA = [
     "organi.change_modelloconvocazione",
 ]
 
+ELEZIONI_LETTURA = [
+    "elezioni.view_rinnovo",
+    "elezioni.view_lista",
+    "elezioni.view_profiloelettorale",
+]
+ELEZIONI_GESTIONE = [
+    *ELEZIONI_LETTURA,
+    "elezioni.gestisci_rinnovi",
+]
+
 COMUNICAZIONI_LETTURA = [
     "comunicazioni.view_invio",
     "comunicazioni.view_ricorrenza",
@@ -224,6 +234,9 @@ RUOLI = {
         *ORGANI_SEGRETERIA,
         "organi.add_organo",
         "organi.change_organo",
+        *ELEZIONI_GESTIONE,
+        "elezioni.add_profiloelettorale",
+        "elezioni.change_profiloelettorale",
         *COMUNICAZIONI_GESTIONE,
         *TESORERIA_GESTIONE,
         *PATRIMONIO_GESTIONE,
@@ -248,6 +261,7 @@ RUOLI = {
         "organi.change_riunione",
         "organi.convoca_riunione",
         "organi.verbalizza",
+        *ELEZIONI_GESTIONE,
         *COMUNICAZIONI_INVIO,
         *TESORERIA_LETTURA,
         *PATRIMONIO_LETTURA,
@@ -270,6 +284,9 @@ RUOLI = {
         "soci.trasferisci_socio",
         *PROTOCOLLO_RESPONSABILE,
         *ORGANI_SEGRETERIA,
+        *ELEZIONI_GESTIONE,
+        "elezioni.add_profiloelettorale",
+        "elezioni.change_profiloelettorale",
         *COMUNICAZIONI_GESTIONE,
         "tesoreria.view_esercizio",
         *PATRIMONIO_GESTIONE,
@@ -282,6 +299,7 @@ RUOLI = {
         *SOCI_TESORERIA,
         *PROTOCOLLO_LETTURA,
         *ORGANI_LETTURA,
+        *ELEZIONI_LETTURA,
         *COMUNICAZIONI_INVIO,
         *TESORERIA_GESTIONE,
         *PATRIMONIO_GESTIONE,
@@ -301,6 +319,7 @@ RUOLI = {
         "soci.valuta_domanda",
         "soci.esporta_libro_soci",
         "soci.gestisci_tessere_fisiche",
+        *ELEZIONI_GESTIONE,  # il rinnovo della propria sezione (filtrato per sezione)
         *CALENDARIO_LETTURA,
         *DOCUMENTI_STAMPA,
     ],
@@ -309,6 +328,7 @@ RUOLI = {
         *ANAGRAFICA_SCRITTURA,
         *PROTOCOLLO_OPERATIVO,
         *ORGANI_LETTURA,
+        *ELEZIONI_LETTURA,
         *COMUNICAZIONI_LETTURA,
         *DOCUMENTI_STAMPA,
     ],
@@ -318,6 +338,7 @@ RUOLI = {
         *SOCI_LETTURA,
         *PROTOCOLLO_LETTURA,
         *ORGANI_LETTURA,
+        *ELEZIONI_LETTURA,
         "comunicazioni.view_ricorrenza",
         "tesoreria.view_esercizio",
         *PATRIMONIO_LETTURA,
@@ -331,6 +352,7 @@ RUOLI = {
         "protocollo.esporta_protocollo",
         "protocollo.view_registrogiornaliero",
         *ORGANI_LETTURA,
+        *ELEZIONI_LETTURA,
         *COMUNICAZIONI_LETTURA,
         *TESORERIA_LETTURA,
         *PATRIMONIO_LETTURA,

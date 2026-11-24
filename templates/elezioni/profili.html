@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Profili elettorali: termini e regole dei rinnovi
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Profili elettorali{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'elezioni:rinnovi' %}">Rinnovo degli organi</a></div>{% endblock %}
+{% block titolo_pagina %}Profili elettorali{% endblock %}
+{% block azioni %}{% if perms.elezioni.add_profiloelettorale %}<a class="btn btn-primary" href="{% url 'elezioni:profilo_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo profilo</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Profilo</th><th>Livello</th><th>Termini (giorni)</th><th>Liste</th></tr></thead>
+      <tbody>{% for p in profili %}
+        <tr>
+          <td>{% if perms.elezioni.change_profiloelettorale %}<a href="{% url 'elezioni:profilo' p.pk %}">{{ p.nome }}</a>{% else %}{{ p.nome }}{% endif %}{% if not p.attivo %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}<div class="small text-secondary">{{ p.riferimento }}</div></td>
+          <td>{{ p.get_livello_display }}</td>
+          <td class="small">indizione {{ p.giorni_indizione }} · avviso {{ p.giorni_avviso }} · liste {{ p.giorni_liste }} · ricorsi {{ p.giorni_ricorsi }} · verbali {{ p.giorni_trasmissione }} · consegne {{ p.giorni_consegne }}</td>
+          <td class="small">soglia {{ p.soglia_soci }} soci · supplenti fino a {{ p.supplenti_max }} · deleghe {{ p.max_deleghe }}{% if p.voto_ponderato %} · voto ponderato{% endif %}</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

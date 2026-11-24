@@ -31,5 +31,6 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 16. [Eventi e cerimonie](eventi.md) - eventi con posti e accompagnatori, adesioni dalla segreteria e dal modulo pubblico, foglio presenze
 17. [Chat interna](chat.md) - messaggi fra gli utenti del gestionale, a due o in gruppo
 18. [Collegamenti API](collegamenti-api.md) - collegare altre installazioni (federazione e sezioni) e integrazioni esterne: inviti, impronta, prova
+19. [Rinnovo degli organi](rinnovo-organi.md) - procedura elettorale guidata: indizione, convocazione, liste, voto, proclamazione, nomine, consegne
 
 Sono pronti tutti i moduli previsti per la 0.0.1.

@@ -1,0 +1,27 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Base dei documenti del rinnovo degli organi (sigla del modello del Regolamento)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} - {{ rinnovo.ente }}{% endblock %}
+{% block stile %}
+  .sigla { text-align: right; font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4pt; }
+  h1 { font-size: 13pt; text-align: center; margin: 6pt 0 2pt; text-transform: uppercase; }
+  .sotto { text-align: center; font-size: 10pt; margin-bottom: 12pt; }
+  table.dati { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 9.5pt; }
+  table.dati th, table.dati td { border: 0.5pt solid #888; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  table.dati th { background: #eee; }
+  .num { text-align: right !important; }
+  .riga { border-bottom: 0.5pt dotted #777; min-height: 14pt; margin: 6pt 0; }
+  .firme-tabella { width: 100%; margin-top: 24pt; }
+  .firme-tabella td { width: 50%; padding-top: 22pt; vertical-align: top; }
+  .linea { border-top: 0.5pt solid #333; width: 70%; margin-top: 18pt; }
+  .piccolo { font-size: 8.5pt; color: #444; }
+  .gruppo { font-weight: bold; margin-top: 10pt; text-transform: uppercase; font-size: 9.5pt; }
+  {% block stile_documento %}{% endblock %}
+{% endblock %}
+{% block contenuto %}
+{% if sigla %}<div class="sigla">ALLEGATO {{ sigla }}</div>{% endif %}
+{% block documento %}{% endblock %}
+{% endblock %}

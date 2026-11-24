@@ -6,6 +6,18 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Rinnovo degli organi a scadenza del mandato** (nuovo modulo, *Organi sociali → Rinnovo degli
+  organi*): procedura elettorale guidata con i **profili elettorali** (ANCR congresso sezionale e
+  provinciale, assemblea ETS generica; modificabili): termini calcolati dalla scadenza dei mandati,
+  indizione, assemblea, convocazione con gli **aventi diritto fissati all'avviso** (soci in regola;
+  per la federazione le sezioni con i voti dei loro soci) e avviso in bozza in Comunicazioni,
+  **compilazione delle liste** con il controllo della composizione per soglia di soci, dei supplenti,
+  delle doppie candidature, delle quote e delle accettazioni, modulo da firmare, presentazione
+  protocollata, ammissione o esclusione motivata, esiti del voto (alzata di mano o scrutinio, deleghe,
+  schede, parità), proclamazione, rinunce, ricorsi, **insediamento automatico** delle nuove cariche
+  negli organi sociali, passaggio di consegne, trasmissione dei verbali protocollata. Verbali dai
+  modelli del Regolamento ANCR (B1/B2, C1/C2/C3, D1/D2, D3/D4, G/G1), scheda e aventi diritto in PDF;
+  scadenze nel calendario e nel cruscotto.
 - **Fornitori di posta**: in *Sistema → Servizi di posta*, creando una casella (IMAP) o un servizio di
   invio (SMTP), il menu **Fornitore** compila server, porta, cifratura e PEC: Aruba (email e PEC),
   Legalmail, Poste PEC, Libero, Virgilio, Tiscali, TIM, Gmail e Microsoft 365, con le note utili

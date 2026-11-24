@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Elenco dei rinnovi degli organi e dei mandati in scadenza senza rinnovo avviato
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Rinnovo degli organi{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'organi:organi' %}">Organi sociali</a></div>{% endblock %}
+{% block titolo_pagina %}Rinnovo degli organi{% endblock %}
+{% block azioni %}
+<div class="btn-list">
+  {% if perms.elezioni.view_profiloelettorale %}<a class="btn" href="{% url 'elezioni:profili' %}"><i class="ti ti-adjustments me-1"></i>Profili elettorali</a>{% endif %}
+  {% if perms.elezioni.gestisci_rinnovi %}<a class="btn btn-primary" href="{% url 'elezioni:nuovo' %}"><i class="ti ti-plus me-1"></i>Avvia un rinnovo</a>{% endif %}
+</div>
+{% endblock %}
+{% block contenuto %}
+{% if da_avviare %}
+<div class="alert alert-warning">
+  <div class="fw-bold mb-1"><i class="ti ti-hourglass me-1"></i>Mandati in scadenza senza un rinnovo avviato</div>
+  {% for d in da_avviare %}<div>{% if d.sezione %}Sezione di {{ d.sezione.nome }}{% else %}Organi dell'ente{% endif %}: scadenza il {{ d.scadenza|date:"d/m/Y" }}{% if perms.elezioni.gestisci_rinnovi %} · <a href="{% url 'elezioni:nuovo' %}{% if d.sezione %}?sezione={{ d.sezione.pk }}{% endif %}">avvia il rinnovo</a>{% endif %}</div>{% endfor %}
+</div>
+{% endif %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>Organi</th><th>Mandato</th><th>Fase</th><th>Prossimo passo</th><th>Assemblea</th></tr></thead>
+      <tbody>
+        {% for r in rinnovi %}
+        <tr>
+          <td><a href="{{ r.get_absolute_url }}">{{ r.ente }}</a><div class="small text-secondary">{{ r.profilo }}</div></td>
+          <td>{{ r.quadriennio }}</td>
+          <td><span class="badge {% if r.fase == 'concluso' %}bg-green-lt{% elif r.fase == 'annullato' %}bg-secondary-lt{% else %}bg-blue-lt{% endif %}">{{ r.get_fase_display }}</span></td>
+          <td>{% with t=r.prossimo %}{% if t %}{{ t.titolo }} <span class="small {% if t.stato == 'scaduto' %}text-danger{% elif t.stato == 'vicino' %}text-warning{% else %}text-secondary{% endif %}">entro il {{ t.entro|date:"d/m/Y" }}</span>{% else %}<span class="text-secondary">-</span>{% endif %}{% endwith %}</td>
+          <td>{{ r.data_assemblea|date:"d/m/Y H:i"|default:"-" }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="text-secondary">Nessun rinnovo avviato. Quando i mandati si avvicinano alla scadenza compaiono qui sopra e nel cruscotto.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

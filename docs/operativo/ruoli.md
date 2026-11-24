@@ -34,6 +34,7 @@ Va sempre assegnato insieme alla sua sezione (*Sistema → Utenti e ruoli → Se
 - **soci, tesseramento e domande di iscrizione della sola propria sezione**: ammissioni, modifiche,
   cessazioni, tesseramenti, tessere fisiche, valutazione delle domande, libro soci;
 - **calendario** e **stampa dei documenti** dai modelli;
+- **rinnovo degli organi della propria sezione** (congresso sezionale, liste, esiti, nomine);
 - **non** accede a protocollo, organi sociali, comunicazioni, tesoreria, patrimonio, né alle
   configurazioni (tipologie, listino, sezioni, utenti). Non registra incassi (vanno in prima nota).
 
@@ -102,6 +103,15 @@ può scegliere per sé gli **avvisi** dei messaggi nuovi su Telegram, SMS o What
 
 I **timbri** degli enti (associazione e sezioni) li gestisce solo l'**amministratore di sistema**, da
 *Sistema → Organizzazione* (permesso `organi.gestisci_timbri`).
+
+### Rinnovo degli organi
+
+| Ruolo | Consulta i rinnovi e i documenti | Conduce il rinnovo (indizione, liste, esiti, nomine) | Profili elettorali |
+|---|---|---|---|
+| Amministratore di sistema, Segretario | sì | sì | modifica |
+| Presidente | sì | sì | consulta |
+| Presidente di sezione | della propria sezione | della propria sezione | consulta |
+| Tesoriere, Addetto protocollo, Consigliere, Revisore | sì | - | consulta |
 
 ### Comunicazioni e anniversari
 

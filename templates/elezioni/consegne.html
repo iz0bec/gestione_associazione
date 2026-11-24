@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Dati del verbale di passaggio di consegne (modelli G e G1)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Passaggio di consegne · {{ rinnovo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ rinnovo.get_absolute_url }}">{{ rinnovo }}</a></div>{% endblock %}
+{% block titolo_pagina %}Passaggio di consegne{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{{ rinnovo.get_absolute_url }}">Annulla</a><button class="btn btn-primary ms-auto" type="submit">Salva</button></div>
+    </form>
+  </div>
+  <div class="col-lg-4"><div class="card"><div class="card-body small">
+    <p>Entro <strong>{{ rinnovo.profilo.giorni_consegne }} giorni</strong> dalle elezioni il presidente uscente e il nuovo presidente compilano il verbale di consegna, alla presenza di due testimoni, da inviare {% if rinnovo.federazione %}alla Commissione nazionale verifica soci{% else %}al Presidente di Federazione{% endif %}.</p>
+    <p class="mb-0">I beni dell'inventario si consegnano anche da <a href="{% url 'patrimonio:passaggi' %}">Patrimonio → Passaggio di consegne</a>, che ne fotografa l'elenco con i valori.</p>
+  </div></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: lista
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+<h1>Presentazione di una lista di candidati</h1>
+<div class="sotto">{{ profilo.nome_assemblea }} · {{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }}</div>
+<p>Al Consiglio direttivo uscente{% if rinnovo.sezione %} della {{ rinnovo.ente }}{% endif %}.</p>
+<p>Il sottoscritto <strong>{{ lista.capolista.soggetto.nome_completo }}</strong>, candidato alla carica di Presidente, presenta la seguente lista{% if lista.motto %} «{{ lista.motto }}»{% endif %} per l'elezione delle cariche sociali, indicando accanto a ciascun nome l'incarico che andrà ad assumere.</p>
+<table class="dati"><tr><th>Incarico</th><th>Cognome e nome</th><th>Nato/a il</th><th>Firma per accettazione della carica{% if profilo.dichiarazione_requisiti %} e dichiarazione dei requisiti{% endif %}</th></tr>
+{% for c in lista.candidati.all %}<tr><td>{{ c.get_incarico_display }}</td><td>{{ c.soggetto.nome_completo }}</td><td>{{ c.soggetto.data_nascita|date:"d/m/Y" }}</td><td style="width:38%"></td></tr>{% endfor %}</table>
+<p class="piccolo">I candidati dichiarano di essere soci in regola con il pagamento delle quote annuali, di non essere candidati in altre liste e di accettare la carica qualora risultassero eletti.{% if profilo.dichiarazione_requisiti %} Dichiarano inoltre, sotto la propria responsabilità, di essere in possesso dei requisiti e di accettare gli impegni indicati all'art. 5 dello Statuto e di non essere incorsi nelle condizioni di cui all'art. 7 dello Statuto.{% endif %}</p>
+<p class="piccolo">Composizione richiesta: {{ composizione }}. Termine di presentazione: {{ rinnovo.termine_liste|date:"j F Y" }}.</p>
+{% if lista.programma %}<p class="gruppo">Programma</p><p>{{ lista.programma|linebreaksbr }}</p>{% endif %}
+<table class="firme-tabella"><tr><td>Data ......................................</td><td>Il candidato Presidente<div class="linea"></div></td></tr></table>
+<p class="piccolo" style="margin-top:20pt">Spazio per il Consiglio uscente: lista n. {{ lista.numero|default:"....." }} presentata il {% if lista.presentata_il %}{{ lista.presentata_il|date:"d/m/Y H:i" }}{% else %}.............. alle ore ........{% endif %}{% if lista.protocollo %}, prot. n. {{ lista.protocollo.segnatura }}{% endif %}.</p>
+{% endblock %}

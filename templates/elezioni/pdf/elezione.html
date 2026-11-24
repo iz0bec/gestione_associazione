@@ -1,0 +1,27 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: elezione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+<h1>Verbale delle elezioni {% if rinnovo.federazione %}per il Presidente provinciale, il Consiglio direttivo, il Collegio sindacale e il Collegio dei garanti{% else %}per il Presidente, il Consiglio direttivo sezionale, il Collegio sindacale{% endif %}</h1>
+<div class="sotto">{{ rinnovo.ente }}{% if not rinnovo.federazione %} · {% if rinnovo.alzata_di_mano %}una sola lista di candidati{% else %}più liste di candidati{% endif %}{% endif %}</div>
+<p>L'anno {{ rinnovo.votato_il|date:"Y" }}, addì {{ rinnovo.votato_il|date:"j" }} del mese di {{ rinnovo.votato_il|date:"F" }} si è riunita la Commissione elettorale, nominata dall'Assemblea del {{ profilo.nome_assemblea }}, composta da:</p>
+<p>Presidente: {{ rinnovo.commissione_presidente|default:rinnovo.presidente_assemblea }}<br>Segretario: {{ rinnovo.commissione_segretario|default:rinnovo.segretario_assemblea }}<br>Scrutatori: {% for c in componenti %}{{ c }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</p>
+{% if rinnovo.alzata_di_mano %}
+<p>Dopo aver accertato, sulla base del verbale della Commissione elettorale, che è valida n. 1 lista, essendo stata presentata una sola lista la votazione è avvenuta per alzata di mano, per un totale di voti {{ rinnovo.lista_eletta.voti|default:"0" }} (presenti {{ rinnovo.presenti }}, per delega {{ rinnovo.deleghe }}).</p>
+{% else %}
+<p>Dopo aver firmato le schede elettorali ricevute in consegna dal Presidente del Congresso e dopo aver accertato, sulla base del verbale della Commissione elettorale, che sono valide n. {{ ammesse|length }} liste, hanno dato inizio alle operazioni di voto.{% if rinnovo.non_partecipanti %} Non hanno partecipato alla votazione le Sezioni di: {{ rinnovo.non_partecipanti }}.{% endif %}</p>
+<p>La votazione è stata aperta alle ore {{ rinnovo.voto_aperto|time:"H:i"|default:"......" }} ed è stata chiusa alle ore {{ rinnovo.voto_chiuso|time:"H:i"|default:"......" }}; alle ore {{ rinnovo.scrutinio_ore|time:"H:i"|default:"......" }} è iniziato lo scrutinio.</p>
+<table class="dati"><tr><td>Schede votate</td><td class="num">{{ rinnovo.schede_votate }}</td></tr><tr><td>Schede nulle</td><td class="num">{{ rinnovo.schede_nulle }}</td></tr><tr><td>Schede bianche</td><td class="num">{{ rinnovo.schede_bianche }}</td></tr></table>
+<p>Risultano dallo scrutinio:</p>
+<table class="dati">{% for l in ammesse %}<tr><td>Lista n. {{ l.numero }} candidato Presidente {{ l.capolista.soggetto.nome_completo }}</td><td class="num">voti {{ l.voti }}</td></tr>{% endfor %}</table>
+{% endif %}
+{% if rinnovo.lista_eletta %}<p>Sono stati eletti:</p>
+{% regroup eletti by get_incarico_display as gruppi %}
+<table class="dati"><tr><th>Carica</th><th>Cognome e nome</th><th>Telefono</th><th>Email</th><th>Indirizzo</th></tr>
+{% for g in gruppi %}{% for c in g.list %}<tr><td>{{ g.grouper }}</td><td>{{ c.soggetto.nome_completo }}</td><td>{{ c.soggetto.cellulare|default:c.soggetto.telefono }}</td><td>{{ c.soggetto.email }}</td><td>{{ c.soggetto.indirizzo }} {{ c.soggetto.comune }}</td></tr>{% endfor %}{% endfor %}</table>{% endif %}
+{% if rinnovo.note_votazione %}<p>{{ rinnovo.note_votazione|linebreaksbr }}</p>{% endif %}
+<table class="firme-tabella"><tr><td>Il Segretario<div class="linea"></div></td><td>Il Presidente di Commissione<div class="linea"></div></td></tr><tr><td colspan="2">Gli scrutatori<div class="linea"></div></td></tr></table>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: proclamazione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+<h1>Verbale di proclamazione degli eletti</h1>
+<div class="sotto">{{ rinnovo.ente }}</div>
+<p>Il Presidente del {{ profilo.nome_assemblea }}{% if rinnovo.presidente_assemblea %}, {{ rinnovo.presidente_assemblea }},{% endif %} avuto dal Presidente del seggio elettorale il verbale delle elezioni alle cariche sociali dell'Associazione per il mandato {{ rinnovo.quadriennio }}, alle ore {{ rinnovo.proclamato_il|date:"H:i"|default:"......" }} del giorno {{ rinnovo.proclamato_il|date:"j F Y"|default:rinnovo.votato_il|date:"j F Y" }} legge all'Assemblea i risultati delle votazioni e proclama eletti a:</p>
+{% regroup eletti by get_incarico_display as gruppi %}
+{% for g in gruppi %}<p class="gruppo">{{ g.grouper }}</p>
+<table class="dati"><tr><th>Cognome e nome</th><th>Telefono</th><th>Email</th><th>Indirizzo</th></tr>{% for c in g.list %}<tr><td>{{ c.soggetto.nome_completo }}</td><td>{{ c.soggetto.cellulare|default:c.soggetto.telefono }}</td><td>{{ c.soggetto.email }}</td><td>{{ c.soggetto.indirizzo }} {{ c.soggetto.comune }}</td></tr>{% endfor %}</table>
+{% endfor %}
+<p>Del che è verbale. Letto, confermato e sottoscritto.</p>
+<table class="firme-tabella"><tr><td>{{ rinnovo.luogo|default:organizzazione.comune }}, lì {{ rinnovo.proclamato_il|date:"d/m/Y"|default:"..........." }}</td><td>Il Presidente del {{ profilo.nome_assemblea }}<div class="linea"></div></td></tr></table>
+{% endblock %}

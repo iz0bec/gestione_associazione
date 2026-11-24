@@ -165,6 +165,18 @@ def _mandati(dal, al):
             )  # fmt: skip
 
 
+def _rinnovi(dal, al):
+    from apps.elezioni.servizi import eventi_calendario
+
+    for rinnovo, t in eventi_calendario(dal, al):
+        yield Evento(
+            uid=f"rinnovo-{rinnovo.pk}-{t.codice}", titolo=f"Rinnovo organi: {t.titolo} "
+            f"({rinnovo.ente})", inizio=t.entro, descrizione=t.nota,
+            percorso=rinnovo.get_absolute_url(), categoria="Rinnovo degli organi",
+            icona="checkbox",
+        )  # fmt: skip
+
+
 def _eventi_associazione(dal, al):
     from apps.eventi.models import Evento as EventoAssociazione
 
@@ -223,6 +235,8 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _mandati(dal, al)
     if utente.has_perm("eventi.view_evento"):
         elenco += _eventi_associazione(dal, al)
+    if utente.has_perm("elezioni.view_rinnovo"):
+        elenco += _rinnovi(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):
         elenco += _appuntamenti(dal, al)
     return elenco

@@ -1,0 +1,27 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: consegne
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+{% with c=rinnovo.consegne %}
+<h1>Verbale di passaggio di consegne di beni e materiale</h1>
+<div class="sotto">{{ organizzazione.denominazione }}{% if rinnovo.sezione %} · {{ rinnovo.ente }}{% endif %}</div>
+<p>Oggi {{ c.giorno_testo|default:"...................." }}{% if c.ora %} alle ore {{ c.ora }}{% endif %} presso la sede {{ c.sede|default:"...................." }} si sono incontrati il Sig. <strong>{{ c.consegnante|default:"...................." }}</strong> nella qualità di Presidente uscente e il Sig. <strong>{{ c.ricevente|default:"...................." }}</strong> nella qualità di Presidente eletto, per procedere alla consegna di documenti, beni e materiale vario di proprietà o attinente {% if rinnovo.sezione %}la {{ rinnovo.ente }}{% else %}la Federazione{% endif %}.</p>
+<p>Sono altresì presenti, in qualità di testimoni delle consegne: 1) {{ c.testimone_1|default:"...................................." }}; 2) {{ c.testimone_2|default:"...................................." }}.</p>
+<p>Il Sig. {{ c.consegnante }} consegna al Sig. {{ c.ricevente }} la seguente documentazione, debitamente firmata dai comparenti nell'ultima pagina scritta:</p>
+<ul>
+<li>Bilancio alla data del {{ c.bilancio_al_testo|default:"............" }} con il saldo pari a € {{ c.saldo|default:"............" }};</li>
+{% for riga in c.documenti.splitlines %}{% if riga %}<li>{{ riga }};</li>{% endif %}{% empty %}<li>Libro verbali; {% if rinnovo.sezione %}Bandiera della Sezione{% else %}Labaro e/o Bandiera della Federazione{% endif %}; Registro protocollo; Libro di contabilità; Libro iscritti; Libro contratti di comodato d'uso immobili;</li>{% endfor %}
+<li>N. {{ c.libretti_postali|default:"...." }} libretti postali; N. {{ c.libretti_bancari|default:"...." }} libretti bancari;</li>
+<li>Liquidità per € {{ c.liquidita|default:"............" }}.</li>
+</ul>
+<p>Il Sig. {{ c.consegnante }} consegna poi il seguente materiale:</p>
+<p>{{ c.materiale|linebreaksbr|default:"........................................................................................................" }}</p>
+<p>Il Sig. {{ c.consegnante }} consegna infine una relazione da cui risultano sia i crediti che i debiti sia verso i soci che verso terzi.</p>
+<p>Il Presidente uscente dichiara che i pagamenti relativi alle utenze, alle tasse e imposte (es. luce, acqua, gas, telefono, tasse sui rifiuti, ecc.) {% if c.utenze_regolari %}sono regolari{% else %}sono regolari / non sono regolari (cancellare la voce che non interessa){% endif %}.</p>
+<p>Letto, confermato e sottoscritto alle ore ........ del {{ c.giorno_testo|default:"............" }}.</p>
+<table class="firme-tabella"><tr><td>Il Consegnante<div class="linea"></div></td><td>Il Ricevente<div class="linea"></div></td></tr><tr><td colspan="2">I Testimoni<div class="linea"></div></td></tr></table>
+{% endwith %}
+{% endblock %}

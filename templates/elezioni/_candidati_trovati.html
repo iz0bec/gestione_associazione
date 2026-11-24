@@ -1,0 +1,16 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Soci trovati per la lista, con l'incarico da assegnare
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+<div class="list-group list-group-flush">
+{% for s, in_regola in risultati %}
+<form method="post" action="{% url 'elezioni:candidato' lista.pk %}" class="list-group-item d-flex align-items-center gap-2 flex-wrap">{% csrf_token %}
+  <input type="hidden" name="soggetto" value="{{ s.pk }}">
+  <span class="flex-fill">{{ s.nome_completo }}{% if not in_regola %} <span class="small text-orange">· non in regola con la quota</span>{% endif %}</span>
+  <select class="form-select form-select-sm w-auto" name="incarico" aria-label="Incarico di {{ s.nome_completo }}">{% for valore, nome in incarichi %}<option value="{{ valore }}">{{ nome }}</option>{% endfor %}</select>
+  <label class="form-check mb-0 small"><input class="form-check-input" type="checkbox" name="accettazione"> <span class="form-check-label">firmata</span></label>
+  <button class="btn btn-sm btn-primary" type="submit"><i class="ti ti-plus"></i><span class="ms-1">Aggiungi</span></button>
+</form>
+{% empty %}{% if q|length > 1 %}<div class="list-group-item text-secondary small">Nessuna persona trovata.</div>{% endif %}{% endfor %}
+</div>

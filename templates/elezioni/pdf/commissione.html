@@ -1,0 +1,21 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: commissione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+<h1>Verbale della Commissione elettorale</h1>
+<div class="sotto">{{ rinnovo.ente }}</div>
+<p>L'anno {{ rinnovo.votato_il|date:"Y"|default:"........" }}, addì {{ rinnovo.votato_il|date:"j"|default:"...." }} del mese di {{ rinnovo.votato_il|date:"F"|default:"................" }} si è riunita la Commissione per la verifica dei poteri, nominata dall'Assemblea del {{ profilo.nome_assemblea }}, composta da:</p>
+<p>Presidente: {{ rinnovo.commissione_presidente|default:"......................................" }}<br>Segretario: {{ rinnovo.commissione_segretario|default:"......................................" }}<br>Componenti: {% for c in componenti %}{{ c }}{% if not forloop.last %}, {% endif %}{% empty %}......................................{% endfor %}</p>
+<p>la quale ha esaminato le liste dei candidati a Presidente {% if rinnovo.federazione %}di Federazione{% else %}di Sezione{% endif %} rilevando quanto segue: {% for l in liste %}lista n. {{ l.numero }} ({{ l.capolista.soggetto.nome_completo }}) {{ l.get_stato_display|lower }}{% if l.motivo_esclusione %} per: {{ l.motivo_esclusione }}{% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>
+{% if rinnovo.federazione %}
+<p>Inoltre la Commissione ha esaminato la posizione delle singole Sezioni che hanno diritto a partecipare al Congresso con voto deliberativo. Dall'operazione di verifica dei poteri risultano validi voti n. {{ voti_totali }}, in rappresentanza di n. {{ rinnovo.aventi_diritto|length }} Sezioni.</p>
+<table class="dati"><tr><th>Sezione</th><th>Nome del delegato</th><th class="num">Voti spettanti</th><th>Presente</th></tr>
+{% for r in rinnovo.aventi_diritto %}<tr><td>{{ r.nome }}</td><td>{{ r.delegato }}</td><td class="num">{{ r.voti }}</td><td>{% if r.presente %}sì{% else %}no{% endif %}</td></tr>{% endfor %}</table>
+{% else %}
+<p>Inoltre ha esaminato la posizione dei singoli soci che hanno diritto a partecipare al Congresso con voto deliberativo. Dall'operazione di verifica risultano avere diritto al voto n. {{ voti_totali }} soci; presenti o votanti {{ rinnovo.presenti }}, voti per delega {{ rinnovo.deleghe }} (elenco degli aventi diritto allegato).</p>
+{% endif %}
+<table class="firme-tabella"><tr><td>Il Presidente<div class="linea"></div></td><td>Il Segretario<div class="linea"></div></td></tr><tr><td colspan="2">I Componenti<div class="linea"></div></td></tr></table>
+{% endblock %}

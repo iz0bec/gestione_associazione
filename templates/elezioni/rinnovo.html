@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di un rinnovo degli organi: fasi e termini, azioni della fase, liste, esiti,
+               eletti, ricorsi, insediamento, consegne, trasmissione e documenti
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ rinnovo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'elezioni:rinnovi' %}">Rinnovo degli organi</a></div>{% endblock %}
+{% block titolo_pagina %}{{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }} <span class="badge {% if rinnovo.fase == 'concluso' %}bg-green-lt{% elif rinnovo.fase == 'annullato' %}bg-secondary-lt{% else %}bg-blue-lt{% endif %} ms-2">{{ rinnovo.get_fase_display }}</span>{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+
+    {# --- fase corrente --- #}
+    {% if puo_gestire and rinnovo.aperto %}
+    <div class="card mb-3 border-primary">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-player-play me-2"></i>Prossimo passo</h2></div>
+      <div class="card-body">
+        {% if rinnovo.fase == "preparazione" %}
+        <p>Il consiglio uscente <strong>indice</strong> il {{ rinnovo.profilo.nome_assemblea|lower }}{% if rinnovo.scadenza %} entro il {{ termini.0.entro|date:"d/m/Y" }} (mandato in scadenza il {{ rinnovo.scadenza|date:"d/m/Y" }}){% endif %}, scegliendo sede e ordine del giorno.</p>
+        <form method="post" action="{% url 'elezioni:indici' rinnovo.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+          <div class="col-md-3"><label class="form-label" for="indici-giorno">Indetto il</label><input class="form-control" id="indici-giorno" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}"></div>
+          <div class="col-md-6"><label class="form-label" for="indici-atto">Atto</label><input class="form-control" id="indici-atto" name="atto" placeholder="Es. delibera del consiglio direttivo del …"></div>
+          <div class="col-md-3"><button class="btn btn-primary w-100" type="submit">Indici</button></div>
+        </form>
+        {% elif rinnovo.fase == "indetto" or rinnovo.fase == "convocato" %}
+        {% if rinnovo.data_assemblea %}
+        <p><strong>{{ rinnovo.profilo.nome_assemblea }}</strong>: {{ rinnovo.data_assemblea|date:"l j F Y, H:i" }} presso {{ rinnovo.luogo }}{% if rinnovo.seconda_convocazione %}; seconda convocazione {{ rinnovo.seconda_convocazione|date:"j F, H:i" }}{% endif %}. Liste entro il {{ rinnovo.termine_liste|date:"d/m/Y" }}. <a href="{% url 'elezioni:assemblea' rinnovo.pk %}">Modifica</a></p>
+        {% for a in avvisi_assemblea %}<div class="text-warning small"><i class="ti ti-alert-triangle me-1"></i>{{ a }}</div>{% endfor %}
+        {% else %}
+        <p>Si fissano data, luogo, seggio e ordine del giorno dell'assemblea: <a class="btn btn-primary btn-sm" href="{% url 'elezioni:assemblea' rinnovo.pk %}">Imposta l'assemblea</a></p>
+        {% endif %}
+        {% if rinnovo.fase == "indetto" and rinnovo.data_assemblea %}
+        <hr class="my-3">
+        <p class="mb-2"><strong>Convocazione</strong> entro il {{ termini.1.entro|date:"d/m/Y" }}: il programma fissa {% if rinnovo.federazione %}le sezioni con i loro voti{% else %}gli aventi diritto (soci in regola){% endif %} alla data dell'avviso e prepara l'avviso in bozza in Comunicazioni.</p>
+        <form method="post" action="{% url 'elezioni:convoca' rinnovo.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+          <div class="col-md-3"><label class="form-label" for="convoca-giorno">Avviso del</label><input class="form-control" id="convoca-giorno" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}"></div>
+          <div class="col-md-6"><label class="form-check mb-2"><input class="form-check-input" type="checkbox" name="comunicazione" checked> <span class="form-check-label">Prepara la comunicazione in bozza</span></label></div>
+          <div class="col-md-3"><button class="btn btn-primary w-100" type="submit">Convoca</button></div>
+        </form>
+        {% elif rinnovo.fase == "convocato" %}
+        <p class="mt-2 mb-0">Convocato il {{ rinnovo.avviso_il|date:"d/m/Y" }}: {{ voti_totali }} {% if rinnovo.federazione %}voti di {{ rinnovo.aventi_diritto|length }} sezioni{% else %}aventi diritto{% endif %}{% if rinnovo.invio_avviso_id %} · <a href="{% url 'comunicazioni:invio' rinnovo.invio_avviso_id %}">avviso in Comunicazioni</a>{% endif %}. Ora si compilano e presentano le <a href="#liste">liste</a>; il consiglio uscente le esamina.</p>
+        {% endif %}
+        {% elif rinnovo.fase == "liste" %}
+        <p>Liste esaminate: si vota {% if modalita == "alzata" %}per <strong>alzata di mano</strong> (una sola lista){% else %}a <strong>scrutinio segreto</strong>{% endif %}. Stampare le <a href="{% url 'elezioni:documento' rinnovo.pk 'scheda' %}" target="_blank" rel="noopener">schede</a> e l'<a href="{% url 'elezioni:documento' rinnovo.pk 'aventi' %}" target="_blank" rel="noopener">elenco degli aventi diritto</a>; dopo il voto:</p>
+        <a class="btn btn-primary" href="{% url 'elezioni:esiti' rinnovo.pk %}"><i class="ti ti-checkbox me-1"></i>Registra gli esiti</a>
+        {% elif rinnovo.fase == "votato" %}
+        {% if rinnovo.lista_eletta %}
+        <p>Risulta eletta la <strong>{{ rinnovo.lista_eletta }}</strong>. Il presidente dell'assemblea legge i risultati e proclama gli eletti.</p>
+        <form method="post" action="{% url 'elezioni:proclama' rinnovo.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-speakerphone me-1"></i>Proclama gli eletti</button></form>
+        {% else %}<p class="text-warning">Non c'è una lista eletta (parità o nessun voto): correggere gli esiti o decidere secondo lo statuto.</p>{% endif %}
+        <a class="btn ms-2" href="{% url 'elezioni:esiti' rinnovo.pk %}">Correggi gli esiti</a>
+        {% elif rinnovo.fase == "proclamato" %}
+        <p>Proclamati il {{ rinnovo.proclamato_il|date:"d/m/Y H:i" }}. Chi non accetta la carica lo dichiara per iscritto entro la prima riunione del nuovo consiglio (segnalarlo negli <a href="#eletti">eletti</a>). Poi l'<strong>insediamento</strong> registra le nuove cariche negli organi sociali e chiude quelle uscenti.</p>
+        <form method="post" action="{% url 'elezioni:insedia' rinnovo.pk %}" class="row g-2 align-items-end" data-conferma="Registrare le nuove cariche e chiudere quelle uscenti?">{% csrf_token %}
+          <div class="col-md-4"><label class="form-label" for="insedia-giorno">Insediamento dal</label><input class="form-control" id="insedia-giorno" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}"></div>
+          <div class="col-md-4"><button class="btn btn-primary w-100" type="submit"><i class="ti ti-users-group me-1"></i>Insedia i nuovi organi</button></div>
+        </form>
+        {% elif rinnovo.fase == "insediato" %}
+        <p>Nuovi organi insediati il {{ rinnovo.insediato_il|date:"d/m/Y" }}. Completare passaggio di consegne e trasmissione dei verbali, poi concludere (eventualmente con la data della ratifica nazionale).</p>
+        <form method="post" action="{% url 'elezioni:concludi' rinnovo.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+          <div class="col-md-4"><label class="form-label" for="ratifica">Esiti ratificati il (facoltativo)</label><input class="form-control" id="ratifica" type="date" name="ratificato_il"></div>
+          <div class="col-md-4"><button class="btn btn-primary w-100" type="submit">Concludi il rinnovo</button></div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% if rinnovo.fase == "annullato" %}<div class="alert alert-secondary">Annullato: {{ rinnovo.motivo_annullamento }}</div>{% endif %}
+    {% if dopo_avviso %}<div class="alert alert-info small"><i class="ti ti-info-circle me-1"></i>{{ dopo_avviso|length }} soci iscritti dopo l'avviso del {{ rinnovo.avviso_il|date:"d/m/Y" }} partecipano ma <strong>non votano</strong>{% if rinnovo.profilo.sospende_tesseramento %} (tesseramento sospeso fino al giorno dopo il voto){% endif %}: {% for s in dopo_avviso %}{{ s.soggetto.nome_completo }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+
+    {# --- liste --- #}
+    <div class="card mb-3" id="liste">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-list-numbers me-2"></i>Liste dei candidati</h2>
+        {% if puo_gestire and rinnovo.fase == "indetto" or puo_gestire and rinnovo.fase == "convocato" %}<div class="card-actions"><form method="post" action="{% url 'elezioni:lista_nuova' rinnovo.pk %}">{% csrf_token %}<button class="btn btn-sm btn-primary" type="submit"><i class="ti ti-plus me-1"></i>Compila una lista</button></form></div>{% endif %}
+      </div>
+      <div class="card-body small text-secondary pb-0">Composizione per {{ soci_soglia }} soci{% if rinnovo.soci_alla_soglia is None %} (provvisoria: si fissa all'avviso){% endif %}: {{ composizione }}.</div>
+      <div class="list-group list-group-flush">
+        {% for l in liste %}
+        <div class="list-group-item">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a class="fw-medium flex-fill" href="{{ l.get_absolute_url }}">{{ l }}{% if l.motto %} «{{ l.motto }}»{% endif %}</a>
+            <span class="badge {% if l.stato == 'ammessa' %}bg-green-lt{% elif l.stato == 'esclusa' or l.stato == 'ritirata' %}bg-red-lt{% elif l.stato == 'presentata' %}bg-blue-lt{% else %}bg-secondary-lt{% endif %}">{{ l.get_stato_display }}</span>
+            {% if l.presentata_il %}<span class="small text-secondary">presentata il {{ l.presentata_il|date:"d/m/Y H:i" }}</span>{% endif %}
+            {% if l.voti or rinnovo.fase == "votato" or rinnovo.fase == "proclamato" %}<span class="badge bg-azure-lt">{{ l.voti }} voti</span>{% endif %}
+          </div>
+          {% if l.problemi %}<div class="small text-warning mt-1">{% for p in l.problemi %}<div><i class="ti ti-alert-triangle me-1"></i>{{ p }}</div>{% endfor %}</div>{% endif %}
+          {% if l.motivo_esclusione %}<div class="small text-danger mt-1">Esclusa: {{ l.motivo_esclusione }}</div>{% endif %}
+          {% if puo_gestire and l.stato == "presentata" and rinnovo.aperto %}
+          <form method="post" action="{% url 'elezioni:lista_azione' l.pk 'esamina' %}" class="row g-2 mt-1 align-items-end">{% csrf_token %}
+            <div class="col-md-6"><input class="form-control form-control-sm" name="motivo" placeholder="Motivi dell'esclusione (solo se esclusa)" aria-label="Motivi dell'esclusione"></div>
+            <div class="col-md-3"><input class="form-control form-control-sm" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}" aria-label="Data dell'esame"></div>
+            <div class="col-md-3 btn-list flex-nowrap"><button class="btn btn-sm btn-success" name="ammessa" value="1" type="submit">Ammetti</button><button class="btn btn-sm btn-outline-danger" name="ammessa" value="0" type="submit">Escludi</button></div>
+          </form>
+          {% endif %}
+        </div>
+        {% empty %}<div class="list-group-item text-secondary">Nessuna lista. {% if rinnovo.fase == "preparazione" %}Le liste si compilano dopo l'indizione.{% endif %}</div>{% endfor %}
+      </div>
+    </div>
+
+    {# --- esiti ed eletti --- #}
+    {% if rinnovo.votato_il %}
+    <div class="card mb-3" id="esiti">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-checkbox me-2"></i>Esiti del voto del {{ rinnovo.votato_il|date:"d/m/Y" }}</h2></div>
+      <div class="card-body">
+        <div>{% if rinnovo.alzata_di_mano %}Votazione per alzata di mano{% else %}Scrutinio segreto: schede votate {{ rinnovo.schede_votate }}, bianche {{ rinnovo.schede_bianche }}, nulle {{ rinnovo.schede_nulle }}{% endif %}; presenti {{ rinnovo.presenti }}, per delega {{ rinnovo.deleghe }}; aventi diritto {{ voti_totali }}{% if rinnovo.federazione %} voti{% endif %}.</div>
+        {% if rinnovo.commissione_presidente %}<div class="small text-secondary">Commissione elettorale: {{ rinnovo.commissione_presidente }} (presidente){% if rinnovo.commissione_segretario %}, {{ rinnovo.commissione_segretario }} (segretario){% endif %}.</div>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% if eletti %}
+    <div class="card mb-3" id="eletti">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-award me-2"></i>{% if rinnovo.proclamato_il %}Eletti proclamati{% else %}Eletti (da proclamare){% endif %}</h2></div>
+      <div class="list-group list-group-flush">
+        {% for c in eletti %}
+        <div class="list-group-item d-flex align-items-center gap-2">
+          <span class="flex-fill{% if c.rinuncia %} text-decoration-line-through text-secondary{% endif %}">{{ c.get_incarico_display }}: {{ c.soggetto.nome_completo }}</span>
+          {% if c.rinuncia %}<span class="badge bg-orange-lt">non accetta la carica</span>{% endif %}
+          {% if puo_gestire and rinnovo.fase == "proclamato" %}<form method="post" action="{% url 'elezioni:candidato_azione' c.lista_id c.pk 'rinuncia' %}">{% csrf_token %}<input type="hidden" name="valore" value="{% if c.rinuncia %}0{% else %}1{% endif %}"><button class="btn btn-sm" type="submit">{% if c.rinuncia %}Accetta{% else %}Non accetta{% endif %}</button></form>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if rinnovo.fase == "proclamato" %}<div class="card-footer small text-secondary">Chi non accetta non viene nominato; il nuovo consiglio coopta i supplenti con una delibera (Organi sociali → nomina).</div>{% endif %}
+    </div>
+    {% endif %}
+
+    {# --- ricorsi --- #}
+    {% if rinnovo.votato_il %}
+    <div class="card mb-3" id="ricorsi">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-scale me-2"></i>Ricorsi</h2><div class="card-actions small text-secondary">entro il {{ termini.4.entro|date:"d/m/Y" }} a: {{ rinnovo.profilo.organo_ricorsi }}</div></div>
+      <div class="list-group list-group-flush">
+        {% for ric in ricorsi %}
+        <div class="list-group-item">
+          <div class="d-flex gap-2"><strong class="flex-fill">{{ ric }}</strong><span class="badge {% if ric.esito == 'pendente' %}bg-orange-lt{% elif ric.esito == 'accolto' %}bg-red-lt{% else %}bg-green-lt{% endif %}">{{ ric.get_esito_display }}</span></div>
+          <div class="small">{{ ric.motivi|linebreaksbr }}</div>
+          {% if ric.decisione %}<div class="small text-secondary">Decisione del {{ ric.deciso_il|date:"d/m/Y" }}: {{ ric.decisione }}</div>{% endif %}
+          {% if puo_gestire and ric.esito == "pendente" %}
+          <form method="post" action="{% url 'elezioni:ricorsi' rinnovo.pk %}" class="row g-2 mt-1">{% csrf_token %}<input type="hidden" name="ricorso" value="{{ ric.pk }}">
+            <div class="col-md-7"><input class="form-control form-control-sm" name="decisione" placeholder="Decisione" aria-label="Decisione"></div>
+            <div class="col-md-5 btn-list flex-nowrap"><button class="btn btn-sm" name="esito" value="respinto" type="submit">Respinto</button><button class="btn btn-sm btn-outline-danger" name="esito" value="accolto" type="submit">Accolto</button></div>
+          </form>{% endif %}
+        </div>
+        {% empty %}<div class="list-group-item text-secondary small">Nessun ricorso registrato.</div>{% endfor %}
+      </div>
+      {% if puo_gestire and rinnovo.aperto %}
+      <form method="post" action="{% url 'elezioni:ricorsi' rinnovo.pk %}" class="card-body row g-2 border-top">{% csrf_token %}
+        <div class="col-md-3"><input class="form-control form-control-sm" type="date" name="presentato_il" value="{{ oggi|date:'Y-m-d' }}" aria-label="Presentato il"></div>
+        <div class="col-md-4"><input class="form-control form-control-sm" name="presentato_da" placeholder="Presentato da" aria-label="Presentato da"></div>
+        <div class="col-md-5"><input class="form-control form-control-sm" name="motivi" placeholder="Motivi" aria-label="Motivi"></div>
+        <div class="col-12"><button class="btn btn-sm" type="submit"><i class="ti ti-plus me-1"></i>Registra un ricorso</button></div>
+      </form>{% endif %}
+    </div>
+    {% endif %}
+
+    {# --- dopo la proclamazione --- #}
+    {% if rinnovo.proclamato_il and rinnovo.fase != "annullato" %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-send me-2"></i>Consegne e trasmissione</h2></div>
+      <div class="list-group list-group-flush">
+        <div class="list-group-item d-flex align-items-center gap-2 flex-wrap">
+          <span class="flex-fill">Passaggio di consegne {% if rinnovo.consegne_il %}<span class="text-success">del {{ rinnovo.consegne_il|date:"d/m/Y" }}</span>{% else %}entro il {{ termini.6.entro|date:"d/m/Y" }}{% endif %}</span>
+          {% if puo_gestire and rinnovo.aperto %}<a class="btn btn-sm" href="{% url 'elezioni:consegne' rinnovo.pk %}">{% if rinnovo.consegne_il %}Modifica{% else %}Compila{% endif %}</a>{% endif %}
+          {% if rinnovo.consegne_il %}<a class="btn btn-sm" href="{% url 'elezioni:documento' rinnovo.pk 'consegne' %}" target="_blank" rel="noopener">Verbale PDF</a>{% endif %}
+        </div>
+        <div class="list-group-item">
+          {% if rinnovo.trasmesso_il %}<span class="text-success">Verbali trasmessi il {{ rinnovo.trasmesso_il|date:"d/m/Y" }}{% if rinnovo.protocollo_trasmissione %}, prot. {{ rinnovo.protocollo_trasmissione.segnatura }}{% endif %}</span>
+          {% elif puo_gestire and rinnovo.aperto %}
+          <form method="post" action="{% url 'elezioni:trasmetti' rinnovo.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+            <div class="col-12 small">Trasmissione dei verbali entro il {{ termini.5.entro|date:"d/m/Y" }} a: {{ rinnovo.profilo.destinatario_verbali }}</div>
+            <div class="col-md-4"><input class="form-control form-control-sm" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}" aria-label="Trasmessi il"></div>
+            <div class="col-md-5">{% if perms.protocollo.add_protocollo %}<label class="form-check mb-0"><input class="form-check-input" type="checkbox" name="protocolla" checked> <span class="form-check-label">Protocolla in uscita con i PDF</span></label>{% endif %}</div>
+            <div class="col-md-3"><button class="btn btn-sm w-100" type="submit">Trasmessi</button></div>
+          </form>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-calendar-due me-2"></i>Fasi e termini</h2></div>
+      <div class="list-group list-group-flush">
+        {% for t in termini %}
+        <div class="list-group-item small">
+          <div class="d-flex"><span class="flex-fill fw-medium">{% if t.stato == "fatto" %}<i class="ti ti-circle-check text-success me-1"></i>{% elif t.stato == "scaduto" %}<i class="ti ti-alert-circle text-danger me-1"></i>{% elif t.stato == "vicino" %}<i class="ti ti-clock text-warning me-1"></i>{% else %}<i class="ti ti-circle text-secondary me-1"></i>{% endif %}{{ t.titolo }}</span>
+          <span>{% if t.fatto %}{{ t.fatto|date:"d/m/Y" }}{% elif t.entro %}entro il {{ t.entro|date:"d/m/Y" }}{% else %}-{% endif %}</span></div>
+          {% if t.nota %}<div class="text-secondary">{{ t.nota }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="card-footer small text-secondary">{{ rinnovo.profilo }}{% if rinnovo.profilo.riferimento %} · {{ rinnovo.profilo.riferimento }}{% endif %}{% if rinnovo.scadenza %} · mandato in scadenza il {{ rinnovo.scadenza|date:"d/m/Y" }}{% endif %}</div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-file-type-pdf me-2"></i>Documenti</h2></div>
+      <div class="list-group list-group-flush">
+        {% for codice, nome, sigla in documenti %}
+        <a class="list-group-item list-group-item-action small d-flex" href="{% url 'elezioni:documento' rinnovo.pk codice %}" target="_blank" rel="noopener"><span class="flex-fill">{{ nome }}</span>{% if sigla %}<span class="badge bg-secondary-lt">{{ sigla }}</span>{% endif %}</a>
+        {% endfor %}
+      </div>
+      <div class="card-footer small text-secondary">I verbali si compilano con i dati registrati; i campi mancanti restano da scrivere a mano.</div>
+    </div>
+    {% if puo_gestire and rinnovo.aperto and rinnovo.fase != "insediato" %}
+    <form method="post" action="{% url 'elezioni:annulla' rinnovo.pk %}" class="card card-body" data-conferma="Annullare il rinnovo?">{% csrf_token %}
+      <label class="form-label" for="annulla-motivo">Annulla il rinnovo</label>
+      <input class="form-control form-control-sm mb-2" id="annulla-motivo" name="motivo" placeholder="Motivo" required>
+      <button class="btn btn-sm btn-outline-danger" type="submit">Annulla</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Compilazione di una lista: candidati con l'incarico, controllo della composizione,
+               accettazioni, presentazione (anche protocollata) e modulo da firmare
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ lista }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ rinnovo.get_absolute_url }}">{{ rinnovo }}</a></div>{% endblock %}
+{% block titolo_pagina %}{{ lista }} <span class="badge {% if lista.stato == 'ammessa' %}bg-green-lt{% elif lista.stato == 'bozza' %}bg-secondary-lt{% elif lista.stato == 'presentata' %}bg-blue-lt{% else %}bg-red-lt{% endif %} ms-2">{{ lista.get_stato_display }}</span>{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'elezioni:documento' rinnovo.pk 'lista' %}?lista={{ lista.pk }}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Modulo da firmare</a>{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-users me-2"></i>Candidati</h2></div>
+      <div class="list-group list-group-flush">
+        {% for c in candidati %}
+        <div class="list-group-item d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge bg-blue-lt">{{ c.get_incarico_display }}</span>
+          <a class="flex-fill text-reset" href="{{ c.soggetto.get_absolute_url }}">{{ c.soggetto.nome_completo }}</a>
+          {% if c.accettazione %}<span class="small text-success"><i class="ti ti-signature me-1"></i>accettazione firmata</span>{% else %}<span class="small text-warning">accettazione da firmare</span>{% endif %}
+          {% if modificabile and puo_gestire %}
+          <form method="post" action="{% url 'elezioni:candidato_azione' lista.pk c.pk 'accettazione' %}">{% csrf_token %}<input type="hidden" name="valore" value="{% if c.accettazione %}0{% else %}1{% endif %}"><button class="btn btn-sm" type="submit">{% if c.accettazione %}Togli firma{% else %}Firmata{% endif %}</button></form>
+          <form method="post" action="{% url 'elezioni:candidato_azione' lista.pk c.pk 'togli' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" aria-label="Togli {{ c.soggetto.nome_completo }}"><i class="ti ti-x"></i></button></form>
+          {% endif %}
+        </div>
+        {% empty %}<div class="list-group-item text-secondary">Nessun candidato. Si comincia dal candidato presidente.</div>{% endfor %}
+      </div>
+      {% if modificabile and puo_gestire %}
+      <div class="card-body border-top">
+        <label class="form-label" for="cerca-candidato">Aggiungi un candidato</label>
+        <div class="input-icon mb-1"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+          <input type="search" class="form-control" id="cerca-candidato" name="cerca" placeholder="Cerca tra i soci (nome, cognome…)" autocomplete="off" data-ricerca-scelta hx-get="{% url 'elezioni:cerca' lista.pk %}" hx-trigger="input changed delay:300ms" hx-target="#candidati-trovati">
+        </div>
+        <div id="candidati-trovati"></div>
+      </div>
+      {% endif %}
+    </div>
+    {% if modificabile and puo_gestire %}
+    <form method="post" action="{% url 'elezioni:lista_azione' lista.pk 'programma' %}" class="card mb-3">{% csrf_token %}
+      <div class="card-header"><h2 class="card-title">Dati della lista</h2></div>
+      <div class="card-body row g-2">
+        <div class="col-md-6"><label class="form-label" for="motto">Denominazione o motto (facoltativo)</label><input class="form-control" id="motto" name="motto" value="{{ lista.motto }}" maxlength="150"></div>
+        <div class="col-md-6"><label class="form-label" for="presentatore">Presentata da</label><input class="form-control" id="presentatore" name="presentatore" value="{{ lista.presentatore }}" maxlength="150"></div>
+        <div class="col-12"><label class="form-label" for="programma">Programma (facoltativo)</label><textarea class="form-control" id="programma" name="programma" rows="3">{{ lista.programma }}</textarea></div>
+      </div>
+      <div class="card-footer text-end"><button class="btn" type="submit">Salva</button></div>
+    </form>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-checklist me-2"></i>Composizione</h2></div>
+      <div class="list-group list-group-flush">
+        {% for valore, nome, regola, n in incarichi %}
+        <div class="list-group-item small d-flex"><span class="flex-fill">{{ nome }}</span><span class="{% if n < regola.0 or n > regola.1 %}text-warning{% else %}text-success{% endif %}">{{ n }} {% if regola.0 == regola.1 %}di {{ regola.1 }}{% elif regola.0 %}({{ regola.0 }}–{{ regola.1 }}){% else %}(fino a {{ regola.1 }}){% endif %}</span></div>
+        {% endfor %}
+      </div>
+      {% if problemi %}<div class="card-body small text-warning border-top">{% for p in problemi %}<div><i class="ti ti-alert-triangle me-1"></i>{{ p }}</div>{% endfor %}</div>
+      {% elif lista.stato == "bozza" %}<div class="card-body small text-success border-top"><i class="ti ti-circle-check me-1"></i>Lista conforme alle regole del profilo.</div>{% endif %}
+    </div>
+    {% if puo_gestire and rinnovo.aperto %}
+    <div class="card">
+      <div class="card-body">
+        {% if lista.stato == "bozza" %}
+        <p class="small">Stampare il <strong>modulo</strong>, farlo firmare ai candidati (accettazione{% if rinnovo.profilo.dichiarazione_requisiti %} e dichiarazione dei requisiti{% endif %}) e registrare la presentazione quando viene depositato{% if rinnovo.termine_liste %}, entro il {{ rinnovo.termine_liste|date:"d/m/Y" }}{% endif %}.</p>
+        <form method="post" action="{% url 'elezioni:lista_azione' lista.pk 'presenta' %}" class="mb-2" data-conferma="Registrare la presentazione? Dopo la lista non si modifica più.">{% csrf_token %}
+          {% if puo_protocollare %}<label class="form-check"><input class="form-check-input" type="checkbox" name="protocolla" checked> <span class="form-check-label">Protocolla in entrata</span></label>{% endif %}
+          <button class="btn btn-primary w-100" type="submit"><i class="ti ti-file-check me-1"></i>Presentata</button>
+        </form>
+        <form method="post" action="{% url 'elezioni:lista_azione' lista.pk 'elimina' %}" data-conferma="Eliminare la lista in compilazione?">{% csrf_token %}<button class="btn btn-outline-danger w-100" type="submit">Elimina</button></form>
+        {% elif lista.stato == "presentata" or lista.stato == "ammessa" %}
+        <p class="small">Presentata il {{ lista.presentata_il|date:"d/m/Y H:i" }}{% if lista.protocollo %} (prot. {{ lista.protocollo.segnatura }}){% endif %}. {% if lista.stato == "presentata" %}L'ammissione si decide nella scheda del rinnovo.{% endif %}</p>
+        <form method="post" action="{% url 'elezioni:lista_azione' lista.pk 'ritira' %}" data-conferma="Ritirare la lista?">{% csrf_token %}<button class="btn btn-outline-danger w-100" type="submit">Ritira la lista</button></form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

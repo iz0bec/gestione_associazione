@@ -1,0 +1,17 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: scheda
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block piede %}{% endblock %}
+{% block documento %}
+<h1>Scheda di votazione</h1>
+<div class="sotto">{{ profilo.nome_assemblea }} · {{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }}{% if rinnovo.data_assemblea %} · {{ rinnovo.data_assemblea|date:"j F Y" }}{% endif %}</div>
+<p class="piccolo">Si vota la lista tracciando un segno nel riquadro. Il voto è espresso alla lista: i nomi non si possono sostituire o cancellare.{% if profilo.voto_ponderato %} Scheda da ........ voti.{% endif %}</p>
+{% for l in ammesse %}
+<table class="dati" style="margin-top:10pt"><tr><th style="width:12mm;text-align:center;font-size:16pt">&#9633;</th><th>Lista n. {{ l.numero }}{% if l.motto %} «{{ l.motto }}»{% endif %} — candidato Presidente {{ l.capolista.soggetto.nome_completo }}</th></tr>
+<tr><td></td><td>{% for c in l.candidati.all %}{{ c.get_incarico_display }}: {{ c.soggetto.nome_completo }}{% if not forloop.last %} · {% endif %}{% endfor %}</td></tr></table>
+{% empty %}<p>Nessuna lista ammessa.</p>{% endfor %}
+<table class="firme-tabella"><tr><td class="piccolo">Il Presidente della Commissione elettorale<div class="linea"></div></td><td class="piccolo">Gli scrutatori<div class="linea"></div></td></tr></table>
+{% endblock %}

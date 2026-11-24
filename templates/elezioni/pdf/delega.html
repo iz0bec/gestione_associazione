@@ -1,0 +1,15 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: delega
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block documento %}
+<h1>Delega {% if rinnovo.federazione %}per l'espressione di voto per il rinnovo del Consiglio direttivo della Federazione{% else %}ad altro socio per l'espressione di voto per il rinnovo del Consiglio direttivo{% endif %}</h1>
+<div class="sotto">{{ rinnovo.ente }}</div>
+<p>Io sottoscritto/a ........................................................................, nato/a a ........................................ e residente a ........................................ in via ........................................ n. ......, socio ordinario dell'{{ organizzazione.denominazione }}{% if not rinnovo.federazione %}{% if rinnovo.sezione %} – {{ rinnovo.ente }}{% endif %}, con tessera n. ............, valevole per l'anno in corso{% else %} – Sezione di ........................................, con tessera n. ............, e Presidente della Sezione di ........................................{% endif %}, con la presente</p>
+<p style="text-align:center;font-weight:bold;letter-spacing:4pt">DELEGO</p>
+<p>il Sig./la Sig.ra ........................................................................, nato/a a ........................................ e residente a ........................................ in via ........................................ n. ......{% if not rinnovo.federazione %}, socio ordinario di questa Sezione con tessera n. ............, valevole per l'anno in corso{% endif %}, ad esprimere per mio conto il voto in occasione delle elezioni per il rinnovo del Consiglio direttivo {% if rinnovo.federazione %}provinciale{% else %}sezionale{% endif %} per il mandato {{ rinnovo.quadriennio }} durante il {{ profilo.nome_assemblea }} che si terrà il giorno {{ rinnovo.data_assemblea|date:"j F Y"|default:"...................." }}{% if rinnovo.apertura_seggio %} dalle ore {{ rinnovo.apertura_seggio|time:"H:i" }} alle ore {{ rinnovo.chiusura_seggio|time:"H:i" }}{% endif %}.</p>
+<table class="firme-tabella"><tr><td>........................................, lì ....................</td><td>Firma<div class="linea"></div></td></tr></table>
+<p class="piccolo" style="margin-top:18pt">N.B. Ogni socio può avere al massimo {{ profilo.max_deleghe }} deleghe.</p>
+{% endblock %}

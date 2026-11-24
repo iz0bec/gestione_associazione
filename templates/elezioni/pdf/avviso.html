@@ -1,0 +1,22 @@
+{% extends "elezioni/pdf/_base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rinnovo degli organi, documento PDF: avviso
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% load firme %}
+{% block documento %}
+<p style="text-align:right">{{ organizzazione.comune }}{% if organizzazione.comune %}, {% endif %}{{ rinnovo.avviso_il|default:oggi|date:"j F Y" }}</p>
+<p>{% if rinnovo.federazione %}Ai Presidenti delle Sezioni{% else %}Alle socie e ai soci{% if rinnovo.sezione %} della {{ rinnovo.ente }}{% endif %}{% endif %}</p>
+<p><strong>Oggetto: convocazione del {{ profilo.nome_assemblea }} per il rinnovo delle cariche sociali (mandato {{ rinnovo.quadriennio }})</strong></p>
+<p>Il Consiglio direttivo uscente{% if rinnovo.delibera_indizione %}, con {{ rinnovo.delibera_indizione }},{% endif %} ha indetto il {{ profilo.nome_assemblea }} che si terrà
+in prima convocazione il giorno <strong>{{ rinnovo.data_assemblea|date:"l j F Y" }} alle ore {{ rinnovo.data_assemblea|date:"H:i" }}</strong> presso {{ rinnovo.luogo }}{% if rinnovo.seconda_convocazione %}
+e, occorrendo, in seconda convocazione il giorno <strong>{{ rinnovo.seconda_convocazione|date:"l j F Y" }} alle ore {{ rinnovo.seconda_convocazione|date:"H:i" }}</strong>, valida qualunque sia il numero dei presenti{% endif %}, con il seguente</p>
+<p><strong>Ordine del giorno</strong></p>
+<ol>{% for p in rinnovo.ordine_del_giorno.splitlines %}{% if p %}<li>{{ p }}</li>{% endif %}{% endfor %}</ol>
+<p>Le elezioni si svolgono il giorno {{ rinnovo.data_assemblea|date:"j F Y" }} presso {{ rinnovo.seggio|default:rinnovo.luogo }}{% if rinnovo.apertura_seggio %}: il seggio è aperto dalle ore {{ rinnovo.apertura_seggio|time:"H:i" }}{% if rinnovo.chiusura_seggio %} alle ore {{ rinnovo.chiusura_seggio|time:"H:i" }}{% endif %}{% endif %}.</p>
+<p>Le liste dei candidati si presentano al Consiglio direttivo uscente entro il <strong>{{ rinnovo.termine_liste|date:"j F Y" }}</strong>. Ogni lista indica accanto a ciascun nome l'incarico che andrà ad assumere ({{ composizione }}); i candidati devono essere soci in regola con le quote e non possono presentarsi in più liste. Il voto è espresso alla lista e i nomi non si possono sostituire o cancellare.</p>
+{% if rinnovo.federazione %}<p>Partecipano al Congresso i Presidenti delle Sezioni attive o i loro delegati (modello D3), con tanti voti quanti sono i soci della Sezione.</p>
+{% else %}<p>Hanno diritto di voto i soci tesserati prima dell'invio di questo avviso, direttamente o per delega a un altro socio (modello D4); ciascun socio può votare con al massimo {{ profilo.max_deleghe }} deleghe oltre al proprio voto.{% if profilo.sospende_tesseramento %} Il tesseramento è sospeso fino al giorno successivo alle elezioni.{% endif %}</p>{% endif %}
+{% firme "presidente" giorno=rinnovo.avviso_il|default:oggi sezione=rinnovo.sezione %}
+{% endblock %}

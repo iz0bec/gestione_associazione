@@ -3,6 +3,7 @@
 {% block titolo_pagina %}Organi sociali{% endblock %}
 {% block azioni %}
 <div class="btn-list">
+  {% if perms.elezioni.view_rinnovo %}<a class="btn" href="{% url 'elezioni:rinnovi' %}"><i class="ti ti-checkbox me-1"></i>Rinnovo degli organi</a>{% endif %}
   <a class="btn" href="{% url 'organi:riunioni' %}"><i class="ti ti-calendar-event me-1"></i>Tutte le riunioni</a>
   <a class="btn" href="{% url 'organi:composizione' %}"><i class="ti ti-file-type-pdf me-1"></i>Composizione (PDF)</a>
   {% if perms.organi.view_rappresentantelegale %}<a class="btn" href="{% url 'organi:rappresentanti' %}"><i class="ti ti-scale me-1"></i>Rappresentante legale</a>{% endif %}

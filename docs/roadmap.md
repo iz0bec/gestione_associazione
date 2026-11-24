@@ -201,8 +201,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   *iscrizione?* sulla posta, dati recuperati dal testo, dai PDF allegati (campi e testo) e dal mittente
   senza inventare nulla, avviso dei doppioni, domanda e protocollazione in entrata in un'unica
   operazione, **richiesta firmata** sulla domanda (anche per quelle a mano o online) che passa al socio
-  all'accoglimento con il riferimento al protocollo. *Da fare*: risposta di conferma di ricezione al
-  mittente (modello di Comunicazioni). ✅ Fatta: conferma di ricezione con il numero di protocollo.
+  all'accoglimento con il riferimento al protocollo. ✅ Risposta di conferma di ricezione al mittente,
+  con il numero di protocollo.
 - ✅ Eventi e cerimonie con adesioni (1.0.32): segreteria, modulo pubblico, area del socio.
 - ✅ Scadenza dei mandati delle cariche (1.0.29): durata per organo,
   avvisi prima della scadenza nel cruscotto e nello scadenzario.
@@ -259,13 +259,13 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.
-- **Inoltro della email di sezione** (da fare). Oggi la casella istituzionale di ogni sezione
+- ✅ **Inoltro della email di sezione** (non rilasciato: pulsante *Inoltro* della casella; destinatari scelti a mano, reindirizzo trasparente con ripiego, riservati all'incaricato). Oggi la casella istituzionale di ogni sezione
   (es. `sezione.pz.sez@…`) è inoltrata dal fornitore della posta a chi la gestisce. In futuro
   l'inoltro lo governa il gestionale: per ogni sezione chi riceve i messaggi della casella (di norma
   il presidente, o l'incaricato della trattazione), con le regole cambiate dall'interfaccia e non
   più dal fornitore, nel rispetto della riservatezza (ad es. le credenziali inviate «per conto» di
   chi non ha l'email).
-- **Esenzione dalla verifica in due passaggi per singolo utente** (da fare). Quando un ruolo la
+- ✅ **Esenzione dalla verifica in due passaggi per singolo utente** (non rilasciato). Quando un ruolo la
   rende obbligatoria, l'amministratore può esentarne un utente che non può attivarla (niente
   smartphone né chiave di sicurezza), dalla sua scheda in *Sistema → Utenti*: con motivo e scadenza
   facoltativa, registrata nel registro attività e indicata nell'elenco degli utenti; l'esenzione non
@@ -293,7 +293,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     contatto**, su carta intestata e con data di stampa; scelta degli organi e dell'eventuale
     sezione, per l'uso interno (i recapiti sono dati personali: stampa riservata ai ruoli che
     gestiscono gli organi).
-- **Rinnovo degli organi a scadenza del mandato** (da fare): la procedura elettorale guidata, dalla
+- ✅ **Rinnovo degli organi a scadenza del mandato** (non rilasciato, modulo `apps/elezioni`; sezioni e federazione, compilazione delle liste, esiti senza spoglio guidato, avviso senza blocco del tesseramento): la procedura elettorale guidata, dalla
   scadenza alla proclamazione, con i termini calcolati dal programma.
   - *Fasi e termini dell'ANCR* (Statuto artt. 46-47, Regolamento applicativo art. 22 «Sezioni:
     procedure e modalità di votazione»), da usare come profilo predefinito per le sezioni:
@@ -330,7 +330,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     presentate con data di arrivo e esito dell'ammissione, elenco degli aventi diritto alla data
     dell'avviso, verbali precompilati, nomina automatica delle nuove cariche e chiusura delle vecchie,
     verbale di passaggio di consegne.
-- **Preimpostazioni dei fornitori di posta** (da fare). In *Sistema → Servizi di posta*, creando una
+- ✅ **Preimpostazioni dei fornitori di posta** (non rilasciato; più i fornitori personalizzati degli amministratori; Register.it escluso: parametri non verificati). In *Sistema → Servizi di posta*, creando una
   casella (IMAP) o un servizio di invio (SMTP), un menu **«Fornitore»** compila da solo server,
   porta, cifratura (SSL/STARTTLS), nome utente (di norma l'indirizzo) e cartelle tipiche, lasciando da
   scrivere solo indirizzo e password; tutto resta modificabile. Fornitori iniziali, email e PEC dove

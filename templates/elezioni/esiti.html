@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Esiti della votazione: assemblea, commissione elettorale, verifica dei poteri
+               (sezioni presenti, congresso provinciale), schede e voti per lista
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Esiti · {{ rinnovo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ rinnovo.get_absolute_url }}">{{ rinnovo }}</a></div>{% endblock %}
+{% block titolo_pagina %}Esiti del voto{% endblock %}
+{% block contenuto %}
+<form method="post" novalidate>{% csrf_token %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title">Voti alle liste</h2><div class="card-actions small text-secondary">{% if modalita == "alzata" %}una sola lista: alzata di mano{% else %}scrutinio segreto{% endif %} · aventi diritto {{ voti_totali }}{% if rinnovo.federazione %} voti{% endif %}</div></div>
+      <div class="list-group list-group-flush">
+        {% for l in ammesse %}
+        <div class="list-group-item d-flex align-items-center gap-2"><label class="flex-fill" for="voti-{{ l.pk }}">{{ l }}</label><input class="form-control w-auto" id="voti-{{ l.pk }}" type="number" min="0" name="voti_{{ l.pk }}" value="{{ l.voti }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+    {% if rinnovo.federazione %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title">Verifica dei poteri: sezioni presenti</h2></div>
+      <div class="table-responsive"><table class="table table-vcenter card-table">
+        <thead><tr><th>Presente</th><th>Sezione</th><th>Rappresentante</th><th class="text-end">Voti</th></tr></thead>
+        <tbody>{% for r in rinnovo.aventi_diritto %}<tr>
+          <td><input class="form-check-input" type="checkbox" name="presente_{{ r.sezione }}" aria-label="{{ r.nome }} presente"{% if r.presente %} checked{% endif %}></td>
+          <td>{{ r.nome }}</td>
+          <td><input class="form-control form-control-sm" name="delegato_{{ r.sezione }}" value="{{ r.delegato }}" aria-label="Rappresentante di {{ r.nome }}"></td>
+          <td class="text-end">{{ r.voti }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    {% endif %}
+    <div class="card mb-3"><div class="card-body">{{ form }}</div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body small">
+      <p>Si registrano solo gli <strong>esiti</strong>: il voto si svolge in assemblea come sempre. Il programma controlla i totali, calcola la lista eletta e compila i verbali {% if rinnovo.profilo.modelli == "ancr_sezione" %}B2, C2/C3 e D2{% elif rinnovo.profilo.modelli == "ancr_federazione" %}B1, C1 e D1{% endif %}.</p>
+      <p class="mb-0">Deleghe: al massimo {{ rinnovo.profilo.max_deleghe }} per votante. In caso di parità non si proclama: si decide secondo lo statuto.</p>
+    </div>
+    <div class="card-footer d-flex"><a class="btn btn-link" href="{{ rinnovo.get_absolute_url }}">Annulla</a><button class="btn btn-primary ms-auto" type="submit">Registra gli esiti</button></div></div>
+  </div>
+</div>
+</form>
+{% endblock %}

@@ -91,6 +91,13 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
             from apps.organi.servizi import mandati_in_scadenza
 
             ctx["mandati"] = mandati_in_scadenza()
+        if self.request.user.has_perm("elezioni.view_rinnovo"):
+            from apps.elezioni import servizi as elezioni
+
+            rinnovi = list(elezioni.filtra_per_utente(elezioni.rinnovi_aperti(), self.request.user))
+            for r in rinnovi:
+                r.prossimo = elezioni.prossimo_termine(r)
+            ctx["rinnovi_in_corso"] = rinnovi
         if self.request.user.has_perm("protocollo.view_protocollo"):
             ctx["protocollo"] = _riepilogo_protocollo(self.request.user)
         ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(
