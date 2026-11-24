@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Campagna tessere nella federazione**: il pulsante accanto alle richieste delle sezioni preparava
+  l'email «richiesta di tessere alla federazione» (pensata per il gestionale di una sezione), che
+  nella federazione partiva verso la federazione stessa. Ora nella federazione prepara la
+  **conferma di ricezione alla sezione** (casella della sezione e presidente in carica, con il
+  riepilogo della richiesta allegato); l'email «alla federazione» resta solo nei gestionali delle
+  sezioni.
+
 ### Aggiunto
 - **Rinnovo degli organi a scadenza del mandato** (nuovo modulo, *Organi sociali → Rinnovo degli
   organi*): procedura elettorale guidata con i **profili elettorali** (ANCR congresso sezionale e

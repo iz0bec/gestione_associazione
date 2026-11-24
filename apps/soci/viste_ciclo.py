@@ -13,6 +13,7 @@ import contextlib
 from datetime import date
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -292,6 +293,28 @@ class RispostaRichiestaView(PermessoMixin, View):
             return _alla_campagna(richiesta.anno)
         messages.success(request, "Richiesta preparata in bozza: controllala, modificala se serve "
                          "e confermala per spedirla alla federazione.")  # fmt: skip
+        return redirect(invio)
+
+
+class ConfermaRichiestaView(PermessoMixin, View):
+    """Lato federazione: prepara in bozza la conferma di ricezione della richiesta alla sezione."""
+
+    permission_required = PERMESSO
+
+    def post(self, request, pk):
+        richiesta = get_object_or_404(RichiestaTessere.objects.select_related("sezione"), pk=pk)
+        if not request.user.has_perm("comunicazioni.add_invio"):
+            raise PermissionDenied
+        try:
+            invio = ciclo.prepara_conferma(
+                request.user, richiesta,
+                protocolla=request.user.has_perm("protocollo.add_protocollo"),
+            )  # fmt: skip
+        except OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return _alla_campagna(richiesta.anno)
+        messages.success(request, f"Conferma alla {richiesta.sezione.denominazione} in bozza: "
+                         "controllala e confermala per spedirla.")  # fmt: skip
         return redirect(invio)
 
 

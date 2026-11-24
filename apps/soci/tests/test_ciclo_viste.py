@@ -212,6 +212,8 @@ def test_risposta_della_sezione_alla_federazione(admin, sezione):
     from apps.comunicazioni.models import Invio
     from apps.core.models import Organizzazione
 
+    Sezione.objects.exclude(pk=sezione.pk).update(attiva=False)  # gestionale di una sezione
+
     richiesta = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=40,
                                          note="Servono entro marzo.")  # fmt: skip
     url = f"/soci/tessere/richieste/{richiesta.pk}/rispondi/"
@@ -338,3 +340,35 @@ def test_richiesta_arrivata_via_api_non_si_corregge(admin, sezione):
     assert admin.get(f"/soci/tessere/richieste/{api.pk}/modifica/").status_code == 302
     with pytest.raises(OperazioneNonValida):
         ciclo.modifica_richiesta(admin.utente, api, quantita=5)
+
+
+def test_conferma_della_federazione_alla_sezione(admin, sezione):
+    """Nella federazione (più sezioni) il pulsante della richiesta prepara la conferma per la
+    sezione, non l'email «alla federazione» (che partirebbe verso la federazione stessa)."""
+    from apps.comunicazioni.models import Invio
+    from apps.core.models import Organizzazione
+
+    Sezione.objects.create(codice="ZZ", nome="Altra")  # più sezioni: siamo la federazione
+    Organizzazione.objects.filter(pk=1).update(federazione_email="fed@example.org")
+    sezione.email = "sezione@example.org"
+    sezione.save()
+    presidente = _presidente("Vito", "Masiello", sezione)
+    presidente.email = "vito@example.org"
+    presidente.save()
+    richiesta = ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=90)
+    pagina = admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
+    assert f"/soci/tessere/richieste/{richiesta.pk}/conferma/" in pagina
+    assert f"/soci/tessere/richieste/{richiesta.pk}/rispondi/" not in pagina
+    r = admin.post(f"/soci/tessere/richieste/{richiesta.pk}/rispondi/", follow=True)
+    assert "alla sezione si manda la conferma" in r.content.decode() and not Invio.objects.exists()
+    r = admin.post(f"/soci/tessere/richieste/{richiesta.pk}/conferma/")
+    invio = Invio.objects.get()
+    assert r.status_code == 302 and invio.origine == "tessere_conferma" and invio.stato == "bozza"
+    assert set(invio.destinatari.values_list("email", flat=True)) == {
+        "sezione@example.org",
+        "vito@example.org",
+    }
+    from apps.comunicazioni import servizi as comunicazioni
+
+    email = comunicazioni.messaggio(invio, invio.destinatari.first())
+    assert "90 tessere" in email.body and sezione.nome in email.subject

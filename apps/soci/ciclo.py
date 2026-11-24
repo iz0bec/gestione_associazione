@@ -575,6 +575,9 @@ def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None,
     from apps.comunicazioni import servizi as comunicazioni
     from apps.comunicazioni.models import Finalita, Modello
 
+    if canale_richiesta() == "registro":  # nella federazione: la federazione scriverebbe a sé
+        raise OperazioneNonValida("Questa è la federazione: alla sezione si manda la conferma "
+                                  "di ricezione della richiesta.")  # fmt: skip
     org = Organizzazione.corrente()
     if not org.federazione_email:
         raise OperazioneNonValida(
@@ -606,6 +609,51 @@ def prepara_risposta(utente, richiesta, *, riferimento_avviso="", servizio=None,
     except comunicazioni.OperazioneNonValida as e:
         raise OperazioneNonValida(" ".join(e.messages)) from None
     return invio
+
+
+ORIGINE_CONFERMA = "tessere_conferma"
+OGGETTO_CONFERMA = "Tesseramento {{ anno }}: ricevuta la richiesta di tessere – {{ sezione }}"
+TESTO_CONFERMA = """Alla Presidenza della {{ sezione }},
+
+confermiamo di aver ricevuto la richiesta di {{ quantita }} tessere per il tesseramento {{ anno }}, del {{ data_richiesta }}{{ riferimento }}.
+
+La richiesta è registrata nel fabbisogno della {{ federazione }}: riceverete l'avviso quando le tessere saranno pronte per la consegna. In allegato il riepilogo della richiesta.
+{{ note_richiesta }}
+Cordiali saluti
+{{ organizzazione }}"""  # noqa: E501
+
+
+def prepara_conferma(utente, richiesta, *, servizio=None, protocolla=True):
+    """Lato federazione: conferma di ricezione della richiesta alla sezione (casella della sezione
+    e presidente in carica, come gli avvisi del ciclo), in bozza con il PDF della richiesta."""
+    from apps.comunicazioni import servizi as comunicazioni
+    from apps.comunicazioni.models import Finalita
+
+    sezione = richiesta.sezione
+    indirizzi, soggetti = destinatari(sezione)
+    if not indirizzi and not soggetti:
+        raise OperazioneNonValida(f"La {sezione.denominazione} non ha un'email né un presidente "
+                                  "in carica con l'email (Sistema → Sezioni).")  # fmt: skip
+    org = Organizzazione.corrente()
+    rif = f", prot. n. {richiesta.protocollo.segnatura}" if richiesta.protocollo_id else ""
+    contesto = {
+        "anno": richiesta.anno, "sezione": sezione.denominazione,
+        "quantita": richiesta.quantita, "data_richiesta": _data(richiesta.data),
+        "riferimento": rif, "federazione": org.denominazione,
+        "note_richiesta": f"\nNote: {richiesta.note}\n" if richiesta.note else "",
+        "organizzazione": org.denominazione,
+    }  # fmt: skip
+    try:
+        return comunicazioni.crea_invio(
+            utente, oggetto=OGGETTO_CONFERMA, corpo=TESTO_CONFERMA,
+            finalita=Finalita.ISTITUZIONALE, soggetti=soggetti, indirizzi=indirizzi,
+            protocolla=protocolla, origine=ORIGINE_CONFERMA, origine_id=richiesta.pk,
+            contesto=contesto, servizio=servizio,
+            allegati=[(f"richiesta-tessere-{richiesta.anno}-{sezione.codice}.pdf",
+                       pdf_richiesta(richiesta))],
+        )  # fmt: skip
+    except comunicazioni.OperazioneNonValida as e:
+        raise OperazioneNonValida(" ".join(e.messages)) from None
 
 
 def pdf_richiesta(richiesta) -> bytes:
