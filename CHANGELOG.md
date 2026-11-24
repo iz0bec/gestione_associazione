@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.92] - 2026-11-24
+
+### Corretto
+- **Connettore WordPress 0.1.2**: quando il cron aggiorna il titolo dell'articolo di un evento,
+  dal testo del redattore non spariscono più video incorporati, iframe e altro HTML consentito solo
+  agli amministratori (prima WordPress risalvava tutto l'articolo passandolo al filtro kses).
+
 ## [1.0.91] - 2026-11-24
 
 ### Corretto
