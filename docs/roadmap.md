@@ -259,10 +259,12 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
       - se federazione e sezione modificano lo stesso socio vale l'**ordine di tempo** (le modifiche
         si applicano nell'ordine in cui sono state fatte) e l'incongruenza si **notifica per email**
         a entrambe le parti.
-  - **Prossimo passo (F4)**: allineamento **automatico** dopo la prima verifica (lettura periodica
-    con `sincronizza_collegamenti`), con l'ordine di tempo, l'avviso email delle incongruenze e la
-    notifica alla federazione di ogni rinnovo ricevuto; spinta (`POST /consegne`) per le sezioni
-    dietro NAT.
+  - ✅ **Allineamento automatico** (1.0.93) dopo la prima verifica: lavoro `allinea_soci` ogni 15
+    minuti, ordine di tempo rispetto all'ultimo allineamento, incongruenze notificate per email,
+    ogni novità (rinnovi, nuovi soci, cessazioni) notificata a chi gestisce i soci; **spinta**
+    (`POST /consegne`, flusso `soci`) per le sezioni che la federazione non raggiunge.
+  - **Resto della F4** (da fare): cariche delle sezioni visibili in federazione, numeri del
+    tesseramento per sezione, eventi provinciali condivisi.
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.
@@ -283,6 +285,18 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   `/contatti`), calendario degli eventi pubblici con adesioni (`/eventi`), organigramma e recapiti
   della sezione, verifica della tessera. Abbinamento con invito monouso, chiavi conservate da
   WordPress, nessun dato personale dei soci esposto sul sito.
+- **Eventi del connettore WordPress come tipo di contenuto proprio** (da fare, deciso il 24/11/2026):
+  invece di legarsi a un plugin di calendario (es. The Events Calendar), il connettore registra un
+  tipo di contenuto «Evento» con pagina dell'evento e archivio `/eventi/`, blocco calendario (mese e
+  elenco), dati strutturati schema.org/Event, feed iCal, adesione e posti liberi dal gestionale; testo
+  e foto del redattore, bozza per default; filtro WordPress per chi vuole riversarli altrove; ripiego
+  su «articolo normale» per i temi che non mostrano bene un tipo nuovo. Ad Avigliano da decidere se
+  affiancarlo a The Events Calendar o sostituirlo.
+- **Guide rapide per ruolo** (da fare, deciso il 24/11/2026): una guida breve per ogni ruolo
+  (`apps/accounts/ruoli.py`: segreteria, tesoreria, presidenza, protocollo, consiglieri, revisori,
+  amministratore…) con i **flussi di lavoro** essenziali spiegati per passaggi chiave (es. accogliere una
+  domanda, rinnovare una tessera, protocollare la posta, convocare una riunione, chiudere l'esercizio),
+  raggiungibili dall'aiuto in linea e stampabili; le guide complete restano in `docs/operativo/`.
 - ✅ **Utenti da riga di comando** (1.0.78), per l'amministratore del server senza aprire l'interfaccia:
   - `manage.py utenti` elenca gli utenti dell'installazione (nome utente, persona, ruoli, attivo,
     secondo fattore, ultimo accesso, email vera o segnaposto); su un host con più installazioni

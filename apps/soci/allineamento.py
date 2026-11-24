@@ -195,7 +195,8 @@ def confronta(righe_remote, sezione, *, da_sezione):
         d = _pulita(remota)
         nome = f"{d['cognome']} {d['nome']}".strip() or "(senza nome)"
         voce = {"indice": i, "nome": nome, "codice_fiscale": d["codice_fiscale"],
-                "modifiche": [], "motivo": "", "piu_recente": ""}  # fmt: skip
+                "modifiche": [], "motivo": "", "piu_recente": "",
+                "remoto_il": remota.get("modificato_il") or "", "locale_il": ""}  # fmt: skip
         try:
             soggetto = trova(d, sezione, remota.get("tessere") or []) if d["cognome"] else None
         except Omonimi as e:
@@ -226,6 +227,7 @@ def confronta(righe_remote, sezione, *, da_sezione):
             locale = max([socio.modificato_il, socio.soggetto.modificato_il,
                           *(t.modificato_il for t in tessere.get(socio.pk, []))])  # fmt: skip
             remoto = _momento(remota.get("modificato_il"))
+            voce["locale_il"] = locale.isoformat()
             if modifiche and remoto:
                 voce["piu_recente"] = "controparte" if remoto > locale else "qui"
             voce.update(stato="differenze" if modifiche else "invariato", modifiche=modifiche)

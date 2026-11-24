@@ -9,6 +9,7 @@
 # ******************************************************
 
 from django.contrib import messages
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -269,6 +270,49 @@ class VerificaSociNuovaView(PermessoMixin, View):
                 return redirect(torna)
             return redirect("api:controparte", pk=pk)
         return redirect("api:verifica_soci", pk=verifica.pk)
+
+
+class AllineamentoView(PermessoMixin, View):
+    """Allineamento automatico dei soci con la controparte: attiva, disattiva, esegui ora."""
+
+    permission_required = "soci.importa_soci"
+
+    def post(self, request, pk, azione):
+        from apps.collegamenti import soci as allineamento_soci
+        from apps.soci import sezioni
+
+        from . import tessere
+
+        cliente = get_object_or_404(ClienteApi, pk=pk)
+        if sezione := tessere.sezione_per(cliente):
+            sezioni.controlla(request.user, sezione.pk)
+        try:
+            if azione == "attiva":
+                allineamento_soci.attiva_automatico(cliente, request.user)
+                messages.success(request, "Allineamento automatico attivato: i soci si "
+                                 "allineano da soli ogni 15 minuti.")  # fmt: skip
+            elif azione == "disattiva":
+                allineamento_soci.disattiva_automatico(cliente, request.user)
+                messages.success(request, "Allineamento automatico disattivato.")
+            elif azione == "ora" and cliente.allineamento_spinta and \
+                    cliente.ruolo == ClienteApi.Ruolo.FEDERAZIONE:  # fmt: skip
+                esito = allineamento_soci.spingi(cliente, sempre=True) or {}
+                come = {"automatica": "applicati subito",
+                        "in_anteprima": "da verificare presso la federazione"}  # fmt: skip
+                testo = come.get(esito.get("applicazione"), "ricevuti")
+                messages.success(request, f"Soci inviati alla federazione: {testo}.")
+            elif azione == "ora" and cliente.allineamento_automatico:
+                v = allineamento_soci.allinea(cliente)
+                if v:
+                    return redirect("api:verifica_soci", pk=v.pk)
+                messages.success(request, "Allineamento eseguito: nessuna novità.")
+            else:
+                raise Http404
+        except allineamento_soci.OperazioneNonValida as e:
+            cliente.allineamento_errore = str(e)[:1000]
+            cliente.save(update_fields=["allineamento_errore"])
+            messages.error(request, str(e))
+        return redirect("api:controparte", pk=pk)
 
 
 class VerificaSociView(PermessoMixin, DetailView):

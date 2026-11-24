@@ -308,6 +308,20 @@ def soci(request):
     return risposta_cifrata(request, dati)
 
 
+@endpoint(metodi=("POST",), ambito="consegne:scrittura", idempotente=True, cifrato=True)
+def consegne(request):
+    """Modalità a spinta: la sezione che non si raggiunge invia l'elenco dei suoi soci (stesso
+    contenuto di GET /soci). Con l'allineamento automatico acceso si applica subito in ordine di
+    tempo, altrimenti resta una verifica da decidere."""
+    from apps.collegamenti import soci as allineamento_soci
+
+    try:
+        esito = allineamento_soci.ricevi_consegna(request.cliente_api, corpo(request, cifrato=True))
+    except allineamento_soci.OperazioneNonValida as e:
+        raise Problema("operazione-non-valida", 422, str(e)) from e
+    return JsonResponse(esito)
+
+
 @endpoint(metodi=("GET",))
 def riepilogo(request, flusso):
     _, visibili = _flusso(request, flusso)

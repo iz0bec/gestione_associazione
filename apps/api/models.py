@@ -163,6 +163,27 @@ class ClienteApi(models.Model):
         related_name="controparti_api", editable=False,
         help_text="Voce di rubrica con i contatti della controparte (federazione o sezione).",
     )  # fmt: skip
+    allineamento_automatico = models.BooleanField(
+        "allineamento automatico dei soci", default=False, editable=False,
+        help_text="Dopo la prima Verifica soci: i soci si allineano da soli, in ordine di tempo.",
+    )  # fmt: skip
+    allineamento_spinta = models.BooleanField(
+        "soci a spinta",
+        default=False,
+        help_text="Per una controparte che non si raggiunge (es. dietro NAT). Se è la federazione: "
+        "le inviamo noi l'elenco dei nostri soci quando cambia. Se è una sezione: è lei a inviarlo "
+        "e non lo leggiamo noi.",
+    )
+    allineato_il = models.DateTimeField(
+        "ultimo allineamento",
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="Riferimento dell'ordine di tempo: conta ciò che è cambiato dopo.",
+    )
+    allineamento_errore = models.TextField(blank=True, editable=False)
+    spinta_impronta = models.CharField(max_length=64, blank=True, editable=False)
+    spinta_inviata_il = models.DateTimeField(null=True, blank=True, editable=False)
     note = models.TextField(blank=True)
     creata_il = models.DateTimeField(auto_now_add=True)
     abbinata_il = models.DateTimeField(null=True, blank=True)
@@ -430,6 +451,13 @@ class VerificaSoci(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     esiti = models.JSONField(default=list, blank=True)
+    automatica = models.BooleanField(
+        default=False, help_text="Allineamento automatico: applicata senza scelte a mano."
+    )
+    origine = models.CharField(
+        max_length=10, default="lettura",
+        choices=[("lettura", "letta dalla controparte"), ("spinta", "inviata dalla controparte")],
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "verifica dei soci"

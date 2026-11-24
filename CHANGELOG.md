@@ -5,6 +5,20 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Allineamento automatico dei soci fra federazione e sezione** (F4): dopo una prima *Verifica
+  soci* applicata si attiva dalla scheda della controparte; ogni 15 minuti (lavoro `allinea_soci`
+  del pianificatore) i soci si allineano da soli in **ordine di tempo** rispetto all'ultimo
+  allineamento, con le regole di *chi aggiorna cosa*. Un socio cambiato da entrambe le parti è
+  un'**incongruenza**: vale la modifica più recente e parte un'email; le voci che non si sistemano
+  da sole restano da verificare a mano. Ogni giro con novità lascia un allineamento consultabile e
+  un'**email a chi gestisce i soci** (supervisione della federazione su rinnovi, nuovi soci e
+  cessazioni). Pulsanti *Allinea ora* e *Disattiva*.
+- **Soci a spinta** (`POST /api/v1/consegne`, flusso `soci`): la sezione che la federazione non
+  raggiunge le invia l'elenco dei suoi soci quando cambia; la federazione lo applica da sé o ne fa
+  una verifica da decidere.
+- Roadmap: eventi del connettore WordPress come tipo di contenuto proprio; guide rapide per ruolo.
+
 ## [1.0.92] - 2026-11-24
 
 ### Corretto

@@ -77,6 +77,7 @@ class Command(BaseCommand):
             if opzioni["una_volta"] or time.monotonic() - ultima_posta >= intervallo:
                 self._esegui("scarica_posta")
                 self._esegui("sincronizza_collegamenti")  # stessa cadenza della posta
+                self._esegui("allinea_soci")
                 ultima_posta = time.monotonic()
             if opzioni["una_volta"] or (
                 adesso.hour >= opzioni["ora_registro"] and ultimo_registro != adesso.date()

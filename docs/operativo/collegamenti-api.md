@@ -162,6 +162,42 @@ Chi aggiorna cosa:
 La pagina della verifica resta consultabile con gli esiti. I dati ricevuti si cancellano appena la
 verifica è applicata (o dopo 30 giorni se non lo è).
 
+### Allineamento automatico
+
+Dopo una **prima Verifica soci applicata**, nel riquadro **Soci** della controparte si può
+premere **Attiva l'allineamento automatico**. Da quel momento, ogni 15 minuti, il gestionale fa da
+solo la verifica e applica le modifiche, con le stesse regole di *chi aggiorna cosa* e in **ordine
+di tempo** rispetto all'ultimo allineamento:
+
+- un socio cambiato **solo presso la controparte** si aggiorna qui; un socio **nuovo** si crea;
+- un socio cambiato **solo qui** non si tocca: sarà la controparte a prendere la modifica;
+- un socio cambiato **da entrambe le parti** è un'**incongruenza**: vale la modifica più recente
+  e chi gestisce i soci riceve un'email «Incongruenze nell'allineamento» da controllare (la
+  riceve anche l'altra installazione, dalla propria parte);
+- le voci che non si sistemano da sole (omonimi, socio di un'altra sezione, tessera con numero
+  diverso) restano **da verificare a mano** con una *Verifica soci* manuale, e si segnalano una
+  volta sola.
+
+Ogni giro che porta novità lascia una voce **«allineamento automatico»** fra le verifiche recenti,
+con il dettaglio, e un'**email** a chi gestisce i soci di quella sezione: così la **federazione
+supervisiona** ogni rinnovo, nuovo socio o cessazione arrivati dalla sezione, e la sezione vede ciò
+che arriva dalla federazione. **Allinea ora** esegue subito un giro; **Disattiva** torna alla sola
+verifica manuale. Se la controparte non risponde, l'errore resta nel riquadro e si riprova al giro
+dopo. Lo scambio con file Excel resta sempre possibile.
+
+### Sezione che la federazione non raggiunge (a spinta)
+
+Se la federazione non può chiamare la sezione (sezione dietro NAT o senza indirizzo pubblico), in
+*Modifica* della controparte si spunta **«Soci a spinta»** da tutte e due le parti:
+
+- sulla **sezione** (controparte = federazione): è la sezione a **inviare** l'elenco dei suoi soci
+  alla federazione, ogni 15 minuti **solo se è cambiato** (pulsante **Invia ora i soci** per farlo
+  subito); la federazione deve concederle l'ambito **«Consegna dei cambiamenti»**;
+- sulla **federazione** (controparte = sezione): non la si legge più; ogni invio della sezione si
+  applica da sé se l'allineamento automatico è acceso, altrimenti diventa una **Verifica soci da
+  decidere** (un invio nuovo sostituisce quello non ancora deciso) e chi gestisce i soci riceve
+  un'email.
+
 ## Cosa arriva dalle integrazioni
 
 - **Adesioni**: compaiono nell'evento come le altre, con origine «Integrazione (API)». Valgono le

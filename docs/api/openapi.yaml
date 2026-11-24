@@ -19,7 +19,7 @@ info:
     **Approvato (ADR-030).** Implementati: F1 `/.well-known/…`, `/abbinamenti`, `/prova`,
     `/chiavi`; F2 `/cambiamenti`, `/riepiloghi/{flusso}`, `/eventi` (lettura), `/sezioni`; F3
     cifratura, adesioni, `/domande`, `/contatti`, `/documenti`, `/organigramma`, `/tessere/{codice}`.
-    `/soci`, `/lotti` e `/consegne` arrivano con le fasi successive.
+    `/lotti` arriva con le fasi successive; `/consegne` accetta il flusso `soci`.
 
     **Ambiti**: `eventi:lettura`, `adesioni:lettura`, `adesioni:scrittura`, `sezioni:lettura`,
     `domande:scrittura`, `contatti:scrittura`, `documenti:lettura`, `organigramma:lettura`,
@@ -302,9 +302,14 @@ paths:
       operationId: consegna
       summary: Modalità a spinta (mittente non raggiungibile)
       description: |
-        Ambito `consegne:scrittura`. Il mittente invia i propri cambiamenti, in ordine e senza buchi,
-        con le risorse. Il destinatario memorizza e applica con le regole dell'importazione; risponde
-        con l'ultimo progressivo accettato. Ripetere una consegna già accettata non ha effetti.
+        Ambito `consegne:scrittura`. Oggi è disponibile il flusso **`soci`** (dalla 1.0.93): la
+        sezione che la federazione non raggiunge invia l'elenco completo dei propri soci, con lo
+        stesso contenuto di `GET /soci`, quando cambia. Se sulla federazione l'allineamento
+        automatico è acceso si applica subito, in ordine di tempo (`applicazione: automatica`);
+        altrimenti diventa una Verifica soci da decidere (`in_anteprima`), che sostituisce quella
+        inviata prima. Solo una controparte con ruolo «sezione» può consegnare i soci (altrimenti 422).
+        Per i flussi a cambiamenti (in futuro) il mittente invia i propri cambiamenti, in ordine e
+        senza buchi, con le risorse, e il destinatario risponde con l'ultimo progressivo accettato.
       parameters:
         - $ref: "#/components/parameters/DestinatarioIstanza"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -992,6 +997,26 @@ components:
         progressivo: { type: integer, description: Progressivo a cui si riferisce il riepilogo. }
 
     Consegna:
+      oneOf:
+        - $ref: "#/components/schemas/ConsegnaSoci"
+        - $ref: "#/components/schemas/ConsegnaCambiamenti"
+
+    ConsegnaSoci:
+      type: object
+      required: [flusso, soci]
+      properties:
+        flusso: { const: soci }
+        sezione:
+          type: object
+          properties:
+            codice: { type: string }
+            nome: { type: string }
+        soci:
+          type: array
+          description: Elenco completo, come in `GET /soci` (cessati compresi, tessere recenti).
+          items: { type: object }
+
+    ConsegnaCambiamenti:
       type: object
       required: [flusso, cambiamenti, risorse]
       properties:
@@ -1007,11 +1032,17 @@ components:
 
     EsitoConsegna:
       type: object
-      required: [flusso, accettato_fino_a]
+      required: [flusso, applicazione]
       properties:
         flusso: { type: string }
-        accettato_fino_a: { type: integer }
+        accettato_fino_a: { type: integer, description: Solo per i flussi a cambiamenti. }
         applicazione: { enum: [automatica, in_anteprima] }
+        conteggi:
+          type: object
+          description: >-
+            Flusso `soci`. Automatica: creato, aggiornato, errore, incongruenze, da_verificare
+            (vuoto se non è cambiato nulla). In anteprima: nuovo, differenze, invariato, escluso.
+          additionalProperties: { type: integer }
 
     CursoreSuccessivo:
       type: [string, "null"]

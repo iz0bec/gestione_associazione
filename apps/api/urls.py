@@ -25,6 +25,11 @@ urlpatterns = [
         name="verifica_soci_nuova",
     ),
     path("verifiche-soci/<int:pk>/", views.VerificaSociView.as_view(), name="verifica_soci"),
+    path(
+        "<int:pk>/allineamento/<str:azione>/",
+        views.AllineamentoView.as_view(),
+        name="allineamento",
+    ),
     path("<int:pk>/modifica/", views.ControparteModificaView.as_view(), name="modifica"),
     path("<int:pk>/<str:azione>/", views.ControparteAzioneView.as_view(), name="azione"),
 ]

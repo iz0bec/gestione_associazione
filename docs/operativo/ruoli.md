@@ -177,8 +177,10 @@ in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 | Amministratore di sistema | sì | sì | sì |
 | Tutti gli altri | - | - | - |
 
-La *Verifica soci* richiede il permesso di importare i soci e di consultare le controparti; chi è
-limitato a una sezione la esegue solo per quella.
+La *Verifica soci* e l'**allineamento automatico** (attivarlo, disattivarlo, «Allinea ora»)
+richiedono il permesso di importare i soci e di consultare le controparti; chi è limitato a una
+sezione li gestisce solo per quella. Gli avvisi email dell'allineamento vanno a chi può modificare
+i soci della sezione.
 
 ### Chat interna
 

@@ -171,7 +171,8 @@ class ControparteForm(StileMixin, _IndirizziMixin, forms.ModelForm):
         fields = ["nome", "ruolo", "sezione", "ambiti", "ip_ammessi", "scade_il",
                   "indirizzo_pubblico",
                   "indirizzo_interno", "rete_interna", "verifica_tls", "ca_pem", "tls_spki",
-                  "http_in_chiaro", "indirizzo_notifiche", "notifiche_flussi", "note"]  # fmt: skip
+                  "http_in_chiaro", "indirizzo_notifiche", "notifiche_flussi",
+                  "allineamento_spinta", "note"]  # fmt: skip
         widgets = {
             "ip_ammessi": forms.Textarea(attrs={"rows": 2, "class": "font-monospace"}),
             "ca_pem": forms.Textarea(attrs={"rows": 4, "class": "font-monospace"}),

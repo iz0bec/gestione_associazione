@@ -52,7 +52,8 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/api/v1/documenti`, `/api/v1/documenti/{id}/file` | firma + `documenti:lettura` | documenti pubblici |
 | `/api/v1/organigramma` | firma + `organigramma:lettura` | cariche in corso (ruolo e nome) |
 | `/api/v1/tessere/{codice}` | firma + `tessere:verifica` | validità, anno e sezione di una tessera (nient'altro) |
-| `/api/v1/soci` | firma + `soci:lettura` + ruolo | soci della sezione della controparte (cifrati), per la *Verifica soci* |
+| `/api/v1/soci` | firma + `soci:lettura` + ruolo | soci della sezione della controparte (cifrati), per la *Verifica soci* e l'allineamento automatico |
+| `/api/v1/consegne` (POST) | firma + `consegne:scrittura` + ruolo «sezione», **cifrato** | modalità a spinta: la sezione invia l'elenco dei suoi soci (flusso `soci`) |
 | `/api/v1/cambiamenti?flusso=tessere`, `/api/v1/ciclo-tessere/{risorsa}/{uuid}` | firma + `tessere:scambio` + ruolo | ciclo delle tessere fra federazione e sezione: consegne, ricevute, richieste, prese in carico (con il PDF) |
 
 Le risposte, comprese quelle pubbliche e gli errori, sono **firmate** con la chiave dell'istanza.
@@ -150,6 +151,13 @@ Il lavoro `sincronizza_collegamenti` (ogni 15 minuti) legge il flusso dell'altra
 cursore salvato, verifica la catena, scarica i documenti e li mette nella coda dei **documenti in
 arrivo**, che si confermano dalla campagna delle tessere. Se una voce manca o è alterata, la
 lettura si ferma e l'errore resta visibile nella scheda della controparte.
+
+Il lavoro `allinea_soci` (ogni 15 minuti, dal pianificatore) esegue l'**allineamento automatico dei
+soci** con le controparti che lo hanno acceso (legge `/soci` e applica in ordine di tempo rispetto
+all'ultimo allineamento) e, sulla sezione con **«Soci a spinta»**, invia alla federazione l'elenco dei
+soci con `POST /consegne` quando cambia (impronta dell'elenco). È rieseguibile; gli avvisi
+(novità e incongruenze) partono per email a chi ha il permesso di modificare i soci della sezione,
+con il server di posta generale.
 
 ## Rotazione delle chiavi
 

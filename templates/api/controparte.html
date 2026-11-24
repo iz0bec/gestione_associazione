@@ -78,9 +78,27 @@
       <div class="card-body small">
         <p class="mb-2">{% if c.ruolo == 'sezione' %}Confronta i soci di questa sezione con quelli che la sezione ha nel suo gestionale: anagrafiche, stato e rinnovi.{% else %}Confronta i soci della sezione con quelli che la federazione ha nel suo gestionale: dalla federazione arrivano le anagrafiche.{% endif %}
           I soci che mancano qui si creano; per quelli presenti si mostrano le modifiche da fare e si sceglie quali applicare.</p>
-        <form method="post" action="{% url 'api:verifica_soci_nuova' c.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-user-check me-1"></i>Verifica soci</button></form>
-        {% if verifiche_soci %}<div class="mt-3"><strong>Verifiche recenti</strong>
-          <ul class="mb-0">{% for v in verifiche_soci %}<li><a href="{% url 'api:verifica_soci' v.pk %}">{{ v.creata_il|date:"d/m/Y H:i" }}</a>{% if v.creata_da %} · {{ v.creata_da }}{% endif %} · {% if v.applicata_il %}applicata{% else %}<span class="text-warning">da decidere</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+        {% if not c.allineamento_spinta or c.ruolo == 'federazione' %}<form method="post" action="{% url 'api:verifica_soci_nuova' c.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="ti ti-user-check me-1"></i>Verifica soci</button></form>{% else %}<p class="mb-0 text-secondary">La sezione invia lei i propri soci (a spinta): ogni invio diventa una verifica da decidere, o si applica da sé con l'allineamento automatico.</p>{% endif %}
+        <hr class="my-3">
+        <div class="fw-medium mb-1"><i class="ti ti-refresh me-1"></i>Allineamento automatico</div>
+        {% if c.allineamento_automatico %}
+        <p class="mb-2"><span class="badge bg-green-lt">attivo</span> I soci si allineano da soli ogni 15 minuti, in ordine di tempo: si applica ciò che è cambiato presso la controparte dopo l'ultimo allineamento{% if c.ruolo == 'sezione' %} (anagrafiche, stato, cessazioni e rinnovi){% else %} (solo le anagrafiche: stato e rinnovi sono della sezione){% endif %}. Se lo stesso socio è cambiato da entrambe le parti vale la modifica più recente e arriva un'email di incongruenza. Ultimo allineamento: {{ c.allineato_il|date:"d/m/Y H:i"|default:"—" }}.</p>
+        {% else %}
+        <p class="mb-2">Dopo una prima Verifica soci applicata, i soci possono allinearsi da soli ogni 15 minuti; chi gestisce i soci riceve per email ogni novità e le incongruenze.</p>
+        {% endif %}
+        {% if c.allineamento_spinta and c.ruolo == 'federazione' %}<p class="mb-2"><span class="badge bg-azure-lt">a spinta</span> La federazione non ci raggiunge: le inviamo noi l'elenco dei soci quando cambia{% if c.spinta_inviata_il %} (ultimo invio {{ c.spinta_inviata_il|date:"d/m/Y H:i" }}){% endif %}.</p>{% endif %}
+        {% if c.allineamento_errore %}<div class="alert alert-warning py-2 mb-2">{{ c.allineamento_errore }}</div>{% endif %}
+        <div class="btn-list">
+          {% if c.allineamento_automatico %}
+          <form method="post" action="{% url 'api:allineamento' c.pk 'ora' %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-player-play me-1"></i>Allinea ora</button></form>
+          <form method="post" action="{% url 'api:allineamento' c.pk 'disattiva' %}">{% csrf_token %}<button class="btn btn-outline-secondary" type="submit">Disattiva</button></form>
+          {% else %}
+          <form method="post" action="{% url 'api:allineamento' c.pk 'attiva' %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-refresh me-1"></i>Attiva l'allineamento automatico</button></form>
+          {% endif %}
+          {% if c.allineamento_spinta and c.ruolo == 'federazione' %}<form method="post" action="{% url 'api:allineamento' c.pk 'ora' %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-send me-1"></i>Invia ora i soci</button></form>{% endif %}
+        </div>
+        {% if verifiche_soci %}<div class="mt-3"><strong>Verifiche e allineamenti recenti</strong>
+          <ul class="mb-0">{% for v in verifiche_soci %}<li><a href="{% url 'api:verifica_soci' v.pk %}">{{ v.creata_il|date:"d/m/Y H:i" }}</a> · {% if v.automatica %}allineamento automatico{% with k=v.proposta.conteggi %}: {{ k.creato|default:0 }} creati, {{ k.aggiornato|default:0 }} aggiornati{% if k.incongruenze %}, <span class="text-warning">{{ k.incongruenze }} incongruenze</span>{% endif %}{% if k.errore or k.da_verificare %}, <span class="text-danger">{{ k.errore|add:k.da_verificare }} da vedere</span>{% endif %}{% endwith %}{% else %}{% if v.origine == 'spinta' %}inviata dalla sezione{% elif v.creata_da %}{{ v.creata_da }}{% endif %} · {% if v.applicata_il %}applicata{% else %}<span class="text-warning">da decidere</span>{% endif %}{% endif %}</li>{% endfor %}</ul></div>{% endif %}
       </div>
       {% endif %}
     </div>

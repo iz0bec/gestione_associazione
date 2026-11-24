@@ -12,11 +12,21 @@
 {% with c=verifica.proposta.conteggi %}
 <div class="card mb-3">
   <div class="card-body">
-    <div class="small text-secondary mb-2">Letta il {{ verifica.creata_il|date:"d/m/Y H:i" }}{% if verifica.creata_da %} da {{ verifica.creata_da }}{% endif %} · {% if verifica.da_sezione %}dalla sezione arrivano anagrafiche, stato, cessazioni e rinnovi{% else %}dalla federazione arrivano le anagrafiche (stato e rinnovi restano della sezione){% endif %}.</div>
+    <div class="small text-secondary mb-2">{% if verifica.automatica %}<span class="badge bg-azure-lt me-1">allineamento automatico</span>{% elif verifica.origine == 'spinta' %}<span class="badge bg-azure-lt me-1">inviata dalla sezione</span>{% endif %}{% if verifica.automatica %}Eseguito{% else %}Letta{% endif %} il {{ verifica.creata_il|date:"d/m/Y H:i" }}{% if verifica.creata_da %} da {{ verifica.creata_da }}{% endif %} · {% if verifica.da_sezione %}dalla sezione arrivano anagrafiche, stato, cessazioni e rinnovi{% else %}dalla federazione arrivano le anagrafiche (stato e rinnovi restano della sezione){% endif %}.</div>
+    {% if verifica.automatica %}
+    <span class="badge bg-green-lt me-1">creati: {{ c.creato|default:0 }}</span>
+    <span class="badge bg-yellow-lt me-1">aggiornati: {{ c.aggiornato|default:0 }}</span>
+    {% if c.incongruenze %}<span class="badge bg-orange-lt me-1">incongruenze: {{ c.incongruenze }}</span>{% endif %}
+    {% if c.errore %}<span class="badge bg-red-lt me-1">errori: {{ c.errore }}</span>{% endif %}
+    {% if c.da_verificare %}<span class="badge bg-red-lt me-1">da verificare a mano: {{ c.da_verificare }}</span>{% endif %}
+    {% if c.incongruenze %}<p class="small mt-2 mb-0">Incongruenza: lo stesso socio è stato modificato qui e presso la controparte dopo l'ultimo allineamento; vale la modifica più recente. Controllare che il risultato sia giusto e correggere a mano se serve.</p>{% endif %}
+    {% if c.da_verificare %}<p class="small mt-2 mb-0">Le voci «da verificare» non si applicano da sole: sistemarle con una <strong>Verifica soci</strong> manuale dalla scheda della controparte.</p>{% endif %}
+    {% else %}
     <span class="badge bg-green-lt me-1">da creare: {{ c.nuovo }}</span>
     <span class="badge bg-yellow-lt me-1">con modifiche: {{ c.differenze }}</span>
     <span class="badge bg-secondary-lt me-1">allineati: {{ c.invariato }}</span>
     {% if c.escluso %}<span class="badge bg-red-lt me-1">esclusi: {{ c.escluso }}</span>{% endif %}
+    {% endif %}
     {% if verifica.proposta.solo_qui %}<span class="badge bg-blue-lt">solo qui: {{ verifica.proposta.solo_qui|length }}</span>{% endif %}
   </div>
 </div>
@@ -45,7 +55,7 @@
     <tbody>{% for v in voci %}<tr>
       <td>{% if v.stato == 'nuovo' or v.stato == 'differenze' %}<input class="form-check-input" type="checkbox" name="scelti" value="{{ v.indice }}" aria-label="Applica a {{ v.nome }}"{% if v.stato == 'nuovo' or v.piu_recente != 'qui' %} checked{% endif %}{% if verifica.applicata_il %} disabled{% endif %}>{% endif %}</td>
       <td>{{ v.nome }}{% if v.codice_fiscale %}<div class="small text-secondary">{{ v.codice_fiscale }}</div>{% endif %}</td>
-      <td>{% if v.stato == 'nuovo' %}<span class="badge bg-green-lt">da creare</span>{% elif v.stato == 'differenze' %}<span class="badge bg-yellow-lt">da aggiornare</span>{% if v.piu_recente == 'qui' %}<div class="small text-warning mt-1">il dato qui è più recente</div>{% elif v.piu_recente == 'controparte' %}<div class="small text-secondary mt-1">la controparte è più recente</div>{% endif %}{% else %}<span class="badge bg-red-lt">escluso</span>{% endif %}{% if v.motivo %}<div class="small text-secondary">{{ v.motivo }}</div>{% endif %}</td>
+      <td>{% if v.allineamento == 'conflitto' %}<span class="badge bg-orange-lt">incongruenza</span><div class="small text-secondary mt-1">vale la modifica più recente: {% if v.vince == 'controparte' %}della controparte (applicata){% else %}di qui (non applicata){% endif %}</div>{% elif v.allineamento == 'a_mano' %}<span class="badge bg-red-lt">da verificare a mano</span>{% elif v.stato == 'nuovo' %}<span class="badge bg-green-lt">da creare</span>{% elif v.stato == 'differenze' %}<span class="badge bg-yellow-lt">da aggiornare</span>{% if v.piu_recente == 'qui' %}<div class="small text-warning mt-1">il dato qui è più recente</div>{% elif v.piu_recente == 'controparte' %}<div class="small text-secondary mt-1">la controparte è più recente</div>{% endif %}{% else %}<span class="badge bg-red-lt">escluso</span>{% endif %}{% if v.motivo %}<div class="small text-secondary">{{ v.motivo }}</div>{% endif %}</td>
       <td class="small">{% for m in v.modifiche %}<div><strong>{{ m.0 }}</strong>: {{ m.1 }} → {{ m.2 }}</div>{% empty %}{% if v.stato == 'nuovo' %}iscrizione al libro soci con i dati ricevuti{% endif %}{% endfor %}</td>
     </tr>{% endfor %}</tbody>
   </table></div>
