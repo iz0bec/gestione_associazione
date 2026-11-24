@@ -1104,11 +1104,19 @@ def stato_inviti(anno):
 
 
 def conferme_inviate(richieste):
+    """{richiesta: «inviata» o «bozza»} per le conferme di ricezione preparate (le annullate no;
+    se ce n'è una partita vale quella)."""
     from apps.comunicazioni.models import Invio
 
-    return set(Invio.objects.filter(
+    stati = {}
+    for origine_id, stato in Invio.objects.filter(
         origine=ORIGINE_CONFERMA, origine_id__in=[r.pk for r in richieste],
-    ).exclude(stato=Invio.Stato.ANNULLATO).values_list("origine_id", flat=True))  # fmt: skip
+    ).exclude(stato=Invio.Stato.ANNULLATO).values_list("origine_id", "stato"):  # fmt: skip
+        if stato == Invio.Stato.BOZZA:
+            stati.setdefault(origine_id, "bozza")
+        else:
+            stati[origine_id] = "inviata"
+    return stati
 
 
 def fasi_verso_sezioni(anno):
@@ -1118,7 +1126,9 @@ def fasi_verso_sezioni(anno):
     avvisate = sum(1 for s in stati if s["avviso"])
     richieste = list(RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False))
     con_richiesta = sum(1 for s in stati if s["richiesta"])
-    confermate = len(conferme_inviate(richieste))
+    conferme = conferme_inviate(richieste)
+    confermate = sum(1 for v in conferme.values() if v == "inviata")
+    in_bozza = len(conferme) - confermate
     da_registrare = len(richieste_in_arrivo(anno))
     righe = quadratura(anno)
     richiesto = sum(r.richieste for r in righe)
@@ -1132,6 +1142,7 @@ def fasi_verso_sezioni(anno):
              "in_corso" if da_registrare else _stato(con_richiesta, attive),
              f"{con_richiesta} sezioni su {attive}, {richiesto} tessere; confermate "
              f"{confermate} su {len(richieste)}"
+             + (f" ({in_bozza} in bozza)" if in_bozza else "")
              + (f"; da registrare {da_registrare}" if da_registrare else ""),
              "richieste-sezioni"),
         Fase(3, "Consegna alle sezioni", _stato(consegnato, richiesto),

@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.89] - 2026-11-24
+
+### Corretto
+- Campagna delle tessere: le conferme di ricezione **in bozza** non contano più come inviate
+  («confermate N su M (K in bozza)»); accanto alla richiesta l'etichetta distingue «confermata» da
+  «conferma in bozza».
+
 ## [1.0.88] - 2026-11-24
 
 ### Corretto

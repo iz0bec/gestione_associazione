@@ -373,9 +373,12 @@ def test_conferma_della_federazione_alla_sezione(admin, sezione):
     email = comunicazioni.messaggio(invio, invio.destinatari.first())
     assert "90 tessere" in email.body and sezione.nome in email.subject
     assert "{{" not in email.body + email.subject
+    assert "(1 in bozza)" in ciclo.fasi_verso_sezioni(ANNO)[1].sintesi
+    assert "conferma in bozza" in admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
     comunicazioni.conferma(invio, admin.utente)  # nessun segnaposto sconosciuto
     invio.refresh_from_db()
     assert invio.stato == "in_coda"
+    assert "confermate 1 su 1" in ciclo.fasi_verso_sezioni(ANNO)[1].sintesi
 
 
 def _protocollo_entrata(utente, oggetto):

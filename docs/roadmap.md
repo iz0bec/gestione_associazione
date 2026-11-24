@@ -121,6 +121,7 @@
 | **1.0.86** ✅ | campagna delle tessere: titoli corretti verso l'ente sovraordinato | GitHub, GitLab |
 | **1.0.87** ✅ | campagna: le richieste arrivate dal collegamento si registrano nella fase 2 | GitHub, GitLab |
 | **1.0.88** ✅ | conferma di ricezione della richiesta di tessere: segnaposto registrati | GitHub, GitLab |
+| **1.0.89** ✅ | campagna: conferme in bozza distinte da quelle inviate | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
