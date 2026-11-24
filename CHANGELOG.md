@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.83] - 2026-11-24
+
 ### Corretto
 - **Campagna tessere nella federazione**: il pulsante accanto alle richieste delle sezioni preparava
   l'email «richiesta di tessere alla federazione» (pensata per il gestionale di una sezione), che

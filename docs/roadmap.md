@@ -115,6 +115,7 @@
 | **1.0.80** ✅ | organigramma con le foto nella stampa unica; recapiti di ente e sezioni (indirizzo, PEC) | GitHub, GitLab |
 | **1.0.81** ✅ | modulo di richiesta delle tessere riconosciuto anche dopo Numbers; allegati .numbers segnalati | GitHub, GitLab |
 | **1.0.82** ✅ | comunicazioni della campagna tessere riconoscibili: oggetto con la sezione; elenco con destinatario, ricerca e filtro per origine | GitHub, GitLab |
+| **1.0.83** ✅ | rinnovo degli organi conforme al Regolamento ANCR (liste, votanti e deleghe, esiti, nomine, decadenza e commissariamento); fornitori di posta; esenzione dal secondo fattore; inoltro della email di sezione; conferma alla sezione della richiesta di tessere | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)
@@ -259,13 +260,13 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.
-- ✅ **Inoltro della email di sezione** (non rilasciato: pulsante *Inoltro* della casella; destinatari scelti a mano, reindirizzo trasparente con ripiego, riservati all'incaricato). Oggi la casella istituzionale di ogni sezione
+- ✅ **Inoltro della email di sezione** (1.0.83: pulsante *Inoltro* della casella; destinatari scelti a mano, reindirizzo trasparente con ripiego, riservati all'incaricato). Oggi la casella istituzionale di ogni sezione
   (es. `sezione.pz.sez@…`) è inoltrata dal fornitore della posta a chi la gestisce. In futuro
   l'inoltro lo governa il gestionale: per ogni sezione chi riceve i messaggi della casella (di norma
   il presidente, o l'incaricato della trattazione), con le regole cambiate dall'interfaccia e non
   più dal fornitore, nel rispetto della riservatezza (ad es. le credenziali inviate «per conto» di
   chi non ha l'email).
-- ✅ **Esenzione dalla verifica in due passaggi per singolo utente** (non rilasciato). Quando un ruolo la
+- ✅ **Esenzione dalla verifica in due passaggi per singolo utente** (1.0.83). Quando un ruolo la
   rende obbligatoria, l'amministratore può esentarne un utente che non può attivarla (niente
   smartphone né chiave di sicurezza), dalla sua scheda in *Sistema → Utenti*: con motivo e scadenza
   facoltativa, registrata nel registro attività e indicata nell'elenco degli utenti; l'esenzione non
@@ -293,9 +294,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     contatto**, su carta intestata e con data di stampa; scelta degli organi e dell'eventuale
     sezione, per l'uso interno (i recapiti sono dati personali: stampa riservata ai ruoli che
     gestiscono gli organi).
-- ✅ **Decadenza anticipata degli organi e commissariamento** (non rilasciato): decadono consiglio e sindaci, commissario (o, fino alla nomina, il presidente decaduto come commissario provvisorio) che firma, rinnovo straordinario entro dodici mesi prorogabili.
-- ✅ **Conformità al Regolamento ANCR** (non rilasciato): registro dei votanti e deleghe, commissione elettorale, schede di peso, adempimenti, supplenti, prima riunione, cooptazioni, determinazioni e relazione del commissario, commissario amministrativo.
-- ✅ **Rinnovo degli organi a scadenza del mandato** (non rilasciato, modulo `apps/elezioni`; sezioni e federazione, compilazione delle liste, esiti senza spoglio guidato, avviso senza blocco del tesseramento): la procedura elettorale guidata, dalla
+- ✅ **Decadenza anticipata degli organi e commissariamento** (1.0.83): decadono consiglio e sindaci, commissario (o, fino alla nomina, il presidente decaduto come commissario provvisorio) che firma, rinnovo straordinario entro dodici mesi prorogabili.
+- ✅ **Conformità al Regolamento ANCR** (1.0.83): registro dei votanti e deleghe, commissione elettorale, schede di peso, adempimenti, supplenti, prima riunione, cooptazioni, determinazioni e relazione del commissario, commissario amministrativo.
+- ✅ **Rinnovo degli organi a scadenza del mandato** (1.0.83, modulo `apps/elezioni`; sezioni e federazione, compilazione delle liste, esiti senza spoglio guidato, avviso senza blocco del tesseramento): la procedura elettorale guidata, dalla
   scadenza alla proclamazione, con i termini calcolati dal programma.
   - *Fasi e termini dell'ANCR* (Statuto artt. 46-47, Regolamento applicativo art. 22 «Sezioni:
     procedure e modalità di votazione»), da usare come profilo predefinito per le sezioni:
@@ -332,7 +333,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     presentate con data di arrivo e esito dell'ammissione, elenco degli aventi diritto alla data
     dell'avviso, verbali precompilati, nomina automatica delle nuove cariche e chiusura delle vecchie,
     verbale di passaggio di consegne.
-- ✅ **Preimpostazioni dei fornitori di posta** (non rilasciato; più i fornitori personalizzati degli amministratori; Register.it escluso: parametri non verificati). In *Sistema → Servizi di posta*, creando una
+- ✅ **Preimpostazioni dei fornitori di posta** (1.0.83; più i fornitori personalizzati degli amministratori; Register.it escluso: parametri non verificati). In *Sistema → Servizi di posta*, creando una
   casella (IMAP) o un servizio di invio (SMTP), un menu **«Fornitore»** compila da solo server,
   porta, cifratura (SSL/STARTTLS), nome utente (di norma l'indirizzo) e cartelle tipiche, lasciando da
   scrivere solo indirizzo e password; tutto resta modificabile. Fornitori iniziali, email e PEC dove
