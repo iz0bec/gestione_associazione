@@ -116,8 +116,11 @@ protocollare) lo segnalano con un avviso.
 
 Ogni **casella** è un indirizzo email o PEC da leggere: nome, *è una PEC*, server IMAP, porta, SSL,
 utente e password (conservata **cifrata**, serve la chiave `CHIAVE_CIFRATURA`), cartella da leggere,
-cartella in cui spostare i messaggi scaricati (`PROCESSATA`) e giorni da scaricare. Per **Aruba**:
-email `imaps.aruba.it`, PEC `imaps.pec.aruba.it`, porta 993 con SSL. Una casella nuova resta spenta
+cartella in cui spostare i messaggi scaricati (`PROCESSATA`) e giorni da scaricare. Il menu
+**Fornitore**, in cima al modulo, compila da solo server, porta, cifratura e *è una PEC* (vedi
+[Fornitori di posta](#fornitori-di-posta)): restano da scrivere nome utente (di norma l'indirizzo) e
+password. La spunta **Verifica l'accesso dopo il salvataggio** prova subito il collegamento e ne mostra
+l'esito, senza scaricare nulla. Una casella nuova resta spenta
 finché non la si abilita in *Protocollo → Caselle* (interruttore **Usata dal protocollo**).
 
 **Rispondi con** indica il servizio di invio con cui si risponde ai messaggi arrivati nella casella. Si
@@ -142,8 +145,9 @@ SSL, nome utente (vuoto: l'indirizzo) e password, conservata **cifrata** e mai m
 - Gli altri servizi, come la **PEC**, si scelgono in *Spedisci* dalla scheda di un protocollo in uscita.
 - L'**interruttore** accanto a ogni servizio lo attiva o lo disattiva: un servizio disattivato non si
   può scegliere per spedire. Il server generale non si disattiva (prima se ne indica un altro).
-- Per **Aruba**: email `smtps.aruba.it`, PEC `smtps.pec.aruba.it`, porta 465 con SSL; utente e
-  password sono quelli della casella.
+- Il menu **Fornitore** compila server, porta, cifratura e tipo (Email o PEC); utente e password sono
+  quelli della casella. Con **Verifica l'accesso dopo il salvataggio** il programma prova subito il
+  collegamento al server, senza spedire nulla.
 - **Eliminare un servizio**: il cestino nell'elenco oppure **Elimina** in fondo alla pagina *Modifica*.
   Un servizio già usato per spedire comunicazioni o protocolli non si elimina (le spedizioni ne
   conservano il riferimento): si disattiva con l'interruttore.
@@ -189,6 +193,36 @@ errore mostra il motivo (password errata, server o cartella sbagliati, server no
 
 Utile durante il collaudo, quando il server di posta non è ancora configurato, o per fermare
 tutto in caso di problemi.
+
+
+### Fornitori di posta
+
+Il menu **Fornitore** delle caselle e dei servizi di invio propone i parametri dei fornitori più
+diffusi; si sceglie, si controlla e si salva. Tutti i valori restano modificabili: se si scrive a mano
+il server, vale quello scritto.
+
+| Fornitore | Lettura (IMAP) | Spedizione (SMTP) |
+|---|---|---|
+| Aruba (email) | `imaps.aruba.it` 993 SSL | `smtps.aruba.it` 465 SSL |
+| Aruba PEC | `imaps.pec.aruba.it` 993 SSL | `smtps.pec.aruba.it` 465 SSL |
+| Legalmail (InfoCert) PEC | `mbox.cert.legalmail.it` 993 SSL | `sendm.cert.legalmail.it` 465 SSL |
+| Poste Italiane PEC (Postecertifica) | `mail.postecertifica.it` 993 SSL | `mail.postecertifica.it` 465 SSL |
+| Libero | `imapmail.libero.it` 993 SSL | `smtp.libero.it` 465 SSL |
+| Virgilio | `in.virgilio.it` 993 SSL | `out.virgilio.it` 465 SSL |
+| Tiscali | `imap.tiscali.it` 993 SSL | `smtp.tiscali.it` 465 SSL |
+| TIM (tim.it) | `imap.tim.it` 143 STARTTLS | `smtp.tim.it` 587 STARTTLS |
+| TIM (alice.it, tin.it) | `in.alice.it` 143 STARTTLS | `out.alice.it` 587 STARTTLS |
+| Gmail / Google Workspace | `imap.gmail.com` 993 SSL | `smtp.gmail.com` 465 SSL |
+| Microsoft 365 / Outlook.com | `outlook.office365.com` 993 SSL | `smtp.office365.com` 587 STARTTLS |
+
+Alcuni fornitori hanno una **nota** che compare quando li si sceglie: Gmail richiede una «password
+per le app», Poste la password generata dal pannello della casella, TIM accetta i programmi di posta
+solo dalla propria rete, Microsoft sta togliendo l'accesso con nome utente e password.
+
+Per un fornitore che non è nell'elenco (ad esempio la posta del proprio dominio) si usa **Nuovo
+fornitore** nel riquadro *Fornitori di posta*: nome, *è una PEC*, server IMAP e/o SMTP con porta e
+cifratura e una nota facoltativa. I fornitori aggiunti compaiono **in cima** al menu; eliminarli non
+cambia le caselle e i servizi già creati.
 
 ## Sezioni
 

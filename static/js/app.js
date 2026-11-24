@@ -350,6 +350,33 @@
     }
   });
 
+  // Fornitore di posta: <select data-fornitore-posta='{"id": {server, porta, ssl, pec, nota}}'>
+  // compila server, porta, cifratura e PEC del modulo; la nota va in [data-fornitore-nota]
+  document.addEventListener("change", function (ev) {
+    var scelta = ev.target.closest && ev.target.closest("select[data-fornitore-posta]");
+    if (!scelta || !scelta.form) return;
+    var dati = {};
+    try { dati = JSON.parse(scelta.getAttribute("data-fornitore-posta")); } catch (e) { return; }
+    var voce = dati[scelta.value];
+    var modulo = scelta.form;
+    var nota = modulo.querySelector("[data-fornitore-nota]");
+    if (nota) {
+      nota.textContent = voce && voce.nota ? voce.nota : "";
+      nota.classList.toggle("nascosto", !(voce && voce.nota));
+    }
+    if (!voce) return;
+    var imposta = function (nome, valore) {
+      var campo = modulo.elements[nome];
+      if (!campo) return;
+      if (campo.type === "checkbox") campo.checked = !!valore; else campo.value = valore;
+    };
+    imposta("server", voce.server);
+    imposta("porta", voce.porta);
+    imposta("ssl", voce.ssl);
+    imposta("pec", voce.pec);
+    imposta("tipo", voce.pec ? "pec" : "email");
+  });
+
   document.addEventListener("DOMContentLoaded", function () { inizializza(document); });
   document.addEventListener("htmx:load", function (ev) { inizializza(ev.target); });
 })();

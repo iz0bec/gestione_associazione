@@ -233,11 +233,14 @@ class ServiziPostaView(PermessoMixin, UpdateView):
         from apps.protocollo.models import CasellaPosta, DestinatarioSpedizione
 
         ctx = super().get_context_data(**kwargs)
-        from .models import ServizioInvio
+        from . import fornitori_posta
+        from .models import FornitorePosta, ServizioInvio
 
         ctx.update(
             smtp=invio.stato_env(),
             servizi=ServizioInvio.objects.all(),
+            fornitori_personalizzati=FornitorePosta.objects.all(),
+            fornitori_predefiniti=fornitori_posta.predefiniti(),
             generale=invio.servizio_generale(),
             cifratura=cifratura_disponibile(),
             **_comandi_chiave(),
@@ -262,18 +265,23 @@ class VerificaCasellaView(PermessoMixin, View):
         from django.shortcuts import get_object_or_404
 
         from apps.protocollo.models import CasellaPosta
-        from apps.protocollo.posta import ErroreCasella, verifica_casella
 
-        casella = get_object_or_404(CasellaPosta, pk=pk)
-        try:
-            esito = verifica_casella(casella)
-        except ErroreCasella as e:
-            messages.error(request, f"{casella}: {e}")
-        except Exception as e:  # noqa: BLE001 - es. password non decifrabile
-            messages.error(request, f"{casella}: verifica non riuscita ({type(e).__name__}).")
-        else:
-            messages.success(request, f"{casella}: {esito}")
+        _verifica_casella(request, get_object_or_404(CasellaPosta, pk=pk))
         return redirect("core:servizi_posta")
+
+
+def _verifica_casella(request, casella):
+    """Prova di accesso IMAP con l'esito nei messaggi della pagina."""
+    from apps.protocollo.posta import ErroreCasella, verifica_casella
+
+    try:
+        esito = verifica_casella(casella)
+    except ErroreCasella as e:
+        messages.error(request, f"{casella}: {e}")
+    except Exception as e:  # noqa: BLE001 - es. password non decifrabile
+        messages.error(request, f"{casella}: verifica non riuscita ({type(e).__name__}).")
+    else:
+        messages.success(request, f"{casella}: {esito}")
 
 
 class VerificaSmtpView(PermessoMixin, View):
@@ -339,6 +347,8 @@ class _CasellaMixin:
                          password_cambiata=bool(form.cleaned_data.get("nuova_password")) or None,
                          **dettagli)  # fmt: skip
             messages.success(self.request, f"Casella «{self.object}» salvata.")
+        if form.cleaned_data.get("verifica"):
+            _verifica_casella(self.request, self.object)
         return risposta
 
 
@@ -408,6 +418,8 @@ class _ServizioInvioMixin:
                      password_cambiata=bool(form.cleaned_data.get("nuova_password")) or None,
                      **dettagli)  # fmt: skip
         messages.success(self.request, f"Servizio di invio «{self.object}» salvato.")
+        if form.cleaned_data.get("verifica"):
+            _verifica_servizio(self.request, self.object)
         return risposta
 
 
@@ -480,13 +492,69 @@ class VerificaServizioView(PermessoMixin, View):
 
         from .models import ServizioInvio
 
-        servizio = get_object_or_404(ServizioInvio, pk=pk)
-        try:
-            messages.success(request, f"{servizio}: {invio.verifica(servizio)}.")
-        except Exception as e:  # noqa: BLE001 - l'esito si mostra all'amministratore
-            dettaglio = f"{type(e).__name__}: {str(e)[:150]}"
-            messages.error(request, f"{servizio}: accesso a {servizio.server}:{servizio.porta} "
-                                    f"non riuscito ({dettaglio}).")  # fmt: skip
+        _verifica_servizio(request, get_object_or_404(ServizioInvio, pk=pk))
+        return redirect("core:servizi_posta")
+
+
+def _verifica_servizio(request, servizio):
+    """Prova di accesso SMTP (nessun messaggio spedito) con l'esito nei messaggi della pagina."""
+    try:
+        messages.success(request, f"{servizio}: {invio.verifica(servizio)}.")
+    except Exception as e:  # noqa: BLE001 - l'esito si mostra all'amministratore
+        dettaglio = f"{type(e).__name__}: {str(e)[:150]}"
+        messages.error(request, f"{servizio}: accesso a {servizio.server}:{servizio.porta} "
+                                f"non riuscito ({dettaglio}).")  # fmt: skip
+
+
+class _FornitorePostaMixin:
+    permission_required = "core.gestisci_servizi_posta"
+    template_name = "core/fornitore_posta.html"
+    success_url = reverse_lazy("core:servizi_posta")
+
+    def get_form_class(self):
+        from .forms import FornitorePostaForm
+
+        return FornitorePostaForm
+
+    def get_queryset(self):
+        from .models import FornitorePosta
+
+        return FornitorePosta.objects.all()
+
+    def form_valid(self, form):
+        nuovo = form.instance.pk is None
+        dettagli = {} if nuovo else campi_modificati(form)
+        risposta = super().form_valid(form)
+        if nuovo or dettagli.get("campi"):
+            registra(Azione.CREAZIONE if nuovo else Azione.MODIFICA, self.object,
+                     descrizione=f"Fornitore di posta {self.object}", **dettagli)  # fmt: skip
+        messages.success(self.request, f"Fornitore «{self.object}» salvato: si sceglie creando una "
+                                       "casella o un servizio di invio.")  # fmt: skip
+        return risposta
+
+
+class FornitorePostaNuovoView(_FornitorePostaMixin, PermessoMixin, CreateView):
+    pass
+
+
+class FornitorePostaModificaView(_FornitorePostaMixin, PermessoMixin, UpdateView):
+    pass
+
+
+class FornitorePostaEliminaView(PermessoMixin, View):
+    """Elimina un fornitore personalizzato: caselle e servizi già creati restano come sono."""
+
+    permission_required = "core.gestisci_servizi_posta"
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+
+        from .models import FornitorePosta
+
+        fornitore = get_object_or_404(FornitorePosta, pk=pk)
+        registra(Azione.ELIMINAZIONE, fornitore, descrizione=f"Fornitore di posta {fornitore}")
+        fornitore.delete()
+        messages.success(request, f"Fornitore «{fornitore}» eliminato.")
         return redirect("core:servizi_posta")
 
 

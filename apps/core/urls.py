@@ -65,6 +65,21 @@ urlpatterns = [
         views.ServizioMessaggiAzioneView.as_view(),
         name="messaggi_azione",
     ),
+    path(
+        "sistema/posta/fornitori/nuovo/",
+        views.FornitorePostaNuovoView.as_view(),
+        name="fornitore_nuovo",
+    ),
+    path(
+        "sistema/posta/fornitori/<int:pk>/",
+        views.FornitorePostaModificaView.as_view(),
+        name="fornitore_modifica",
+    ),
+    path(
+        "sistema/posta/fornitori/<int:pk>/elimina/",
+        views.FornitorePostaEliminaView.as_view(),
+        name="fornitore_elimina",
+    ),
     path("sistema/posta/caselle/nuova/", views.CasellaNuovaView.as_view(), name="casella_nuova"),
     path(
         "sistema/posta/caselle/<int:pk>/",

@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Fornitori di posta**: in *Sistema → Servizi di posta*, creando una casella (IMAP) o un servizio di
+  invio (SMTP), il menu **Fornitore** compila server, porta, cifratura e PEC: Aruba (email e PEC),
+  Legalmail, Poste PEC, Libero, Virgilio, Tiscali, TIM, Gmail e Microsoft 365, con le note utili
+  (password per le app, accesso dalla sola rete TIM…). Gli amministratori aggiungono **fornitori
+  personalizzati** (es. la posta del proprio dominio), proposti in cima al menu. Nuova spunta
+  **Verifica l'accesso dopo il salvataggio** per provare subito il collegamento.
+
 ## [1.0.82] - 2026-11-22
 
 ### Modificato

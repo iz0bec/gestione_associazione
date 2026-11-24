@@ -99,7 +99,48 @@ class ServiziPostaForm(StileMixin, forms.ModelForm):
         fields = ["invio_email", "ricezione_posta"]
 
 
-class CasellaForm(StileMixin, forms.ModelForm):
+class _FornitoreMixin:
+    """Menu «Fornitore» che compila server, porta e cifratura (app.js con data-fornitore-posta;
+    senza JavaScript li compila il salvataggio, se il server è vuoto) e la verifica dell'accesso
+    subito dopo il salvataggio."""
+
+    ruolo = "imap"
+
+    def _aggiungi_fornitore(self):
+        from . import fornitori_posta
+
+        campo = forms.ChoiceField(
+            label="Fornitore",
+            required=False,
+            choices=fornitori_posta.scelte(self.ruolo),
+            help_text="Compila server, porta e cifratura (restano modificabili): poi bastano "
+            "indirizzo e password.",
+        )
+        campo.widget.attrs["data-fornitore-posta"] = fornitori_posta.per_il_modulo(self.ruolo)
+        self.fields = {"fornitore": campo, **self.fields}
+        self.fields["server"].required = False
+        self.fields["verifica"] = forms.BooleanField(
+            label="Verifica l'accesso dopo il salvataggio",
+            required=False,
+            initial=self.instance.pk is None,
+            help_text="Prova il collegamento con i dati salvati: nulla viene scaricato o spedito.",
+        )
+
+    def _applica_fornitore(self, dati):
+        from . import fornitori_posta
+
+        voce = fornitori_posta.trova(self.ruolo, dati.get("fornitore"))
+        if voce and not (dati.get("server") or "").strip():
+            parametri = voce[self.ruolo]
+            dati["server"] = self.instance.server = parametri["server"]
+            dati["porta"] = self.instance.porta = parametri.get("porta", dati.get("porta"))
+            dati["ssl"] = self.instance.ssl = bool(parametri.get("ssl", True))
+            self._imposta_pec(dati, bool(voce.get("pec")))
+        if not (dati.get("server") or "").strip():
+            self.add_error("server", "Indicare il server o scegliere un fornitore.")
+
+
+class CasellaForm(_FornitoreMixin, StileMixin, forms.ModelForm):
     """Casella IMAP (email o PEC) da leggere; l'uso si abilita in Protocollo → Caselle."""
 
     nuova_password = forms.CharField(
@@ -122,12 +163,17 @@ class CasellaForm(StileMixin, forms.ModelForm):
         from .models import ServizioInvio
 
         super().__init__(*args, **kwargs)
+        self._aggiungi_fornitore()
         campo = self.fields["servizio_risposta"]
         campo.queryset = ServizioInvio.objects.filter(attivo=True).order_by("tipo", "nome")
         campo.empty_label = "— quello con lo stesso indirizzo —"
 
+    def _imposta_pec(self, dati, pec):
+        dati["pec"] = self.instance.pec = pec
+
     def clean(self):
         dati = super().clean()
+        self._applica_fornitore(dati)
         processata = (dati.get("cartella_processata") or "").strip()
         if processata and processata.lower() == (dati.get("cartella") or "").strip().lower():
             self.add_error("cartella_processata", "Deve essere diversa dalla cartella da leggere.")
@@ -156,8 +202,10 @@ class CasellaForm(StileMixin, forms.ModelForm):
         return super().save(commit)
 
 
-class ServizioInvioForm(StileMixin, forms.ModelForm):
+class ServizioInvioForm(_FornitoreMixin, StileMixin, forms.ModelForm):
     """Server SMTP per email o PEC (la password resta cifrata e non si mostra mai)."""
+
+    ruolo = "smtp"
 
     nuova_password = forms.CharField(
         label="Password",
@@ -175,11 +223,19 @@ class ServizioInvioForm(StileMixin, forms.ModelForm):
             "generale", "attivo",
         ]  # fmt: skip
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._aggiungi_fornitore()
+
+    def _imposta_pec(self, dati, pec):
+        dati["tipo"] = self.instance.tipo = "pec" if pec else "email"
+
     def clean(self):
         from .cifratura import cifratura_disponibile
         from .models import ServizioInvio
 
         dati = super().clean()
+        self._applica_fornitore(dati)
         if not cifratura_disponibile():
             raise forms.ValidationError(
                 "Manca la chiave di cifratura (CHIAVE_CIFRATURA): chiedere all'amministratore di "
@@ -204,6 +260,26 @@ class ServizioInvioForm(StileMixin, forms.ModelForm):
         if self.cleaned_data.get("nuova_password"):
             self.instance.imposta_password(self.cleaned_data["nuova_password"])
         return super().save(commit)
+
+
+class FornitorePostaForm(StileMixin, forms.ModelForm):
+    """Fornitore di posta personalizzato: almeno il server IMAP o quello SMTP."""
+
+    class Meta:
+        from .models import FornitorePosta
+
+        model = FornitorePosta
+        fields = [
+            "nome", "pec", "imap_server", "imap_porta", "imap_ssl", "smtp_server", "smtp_porta",
+            "smtp_ssl", "nota", "attivo",
+        ]  # fmt: skip
+
+    def clean(self):
+        dati = super().clean()
+        server = (dati.get("imap_server") or "").strip() or (dati.get("smtp_server") or "").strip()
+        if not server:
+            raise forms.ValidationError("Indicare almeno il server IMAP o il server SMTP.")
+        return dati
 
 
 class ServizioMessaggiForm(StileMixin, forms.ModelForm):

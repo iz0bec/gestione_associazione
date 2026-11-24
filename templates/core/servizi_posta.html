@@ -101,6 +101,29 @@
   </div>
 </div>
 <div class="row g-3 mt-0">
+  <div class="col-12" id="fornitori">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-building-broadcast-tower me-1"></i>Fornitori di posta</h3>
+        <div class="card-actions"><a class="btn btn-sm btn-primary" href="{% url 'core:fornitore_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo fornitore</a></div>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for f in fornitori_personalizzati %}
+        <div class="list-group-item small d-flex align-items-center gap-2 flex-wrap">
+          <strong class="flex-fill">{{ f.nome }}{% if f.pec %} <span class="badge bg-blue-lt">PEC</span>{% endif %}{% if not f.attivo %} <span class="badge bg-secondary-lt">non proposto</span>{% endif %}</strong>
+          <span class="text-secondary">{% if f.imap_server %}IMAP {{ f.imap_server }}:{{ f.imap_porta }}{% endif %}{% if f.imap_server and f.smtp_server %} · {% endif %}{% if f.smtp_server %}SMTP {{ f.smtp_server }}:{{ f.smtp_porta }}{% endif %}</span>
+          <a class="btn btn-sm" href="{% url 'core:fornitore_modifica' f.pk %}">Modifica</a>
+        </div>
+        {% endfor %}
+        <div class="list-group-item small text-secondary">
+          Già pronti nel programma: {% for f in fornitori_predefiniti %}{{ f.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+          Si scelgono dal menu «Fornitore» creando una casella o un servizio di invio; quelli aggiunti qui compaiono per primi.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row g-3 mt-0">
   <div class="col-lg-6">
     <div class="card">
       <div class="card-header">

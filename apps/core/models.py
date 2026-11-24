@@ -690,3 +690,43 @@ class ServizioMessaggi(models.Model):
     def attivo_per(cls, canale):
         tipi = ["whatsapp"] if canale == "whatsapp" else ["skebby", "aruba", "twilio"]
         return cls.objects.filter(attivo=True, tipo__in=tipi).exclude(segreto_cifrato="").first()
+
+
+class FornitorePosta(models.Model):
+    """Fornitore di posta aggiunto dall'amministratore (oltre a quelli del programma): server,
+    porta e cifratura proposti quando si crea una casella o un servizio di invio."""
+
+    nome = models.CharField(max_length=100, unique=True, help_text="Es. «Posta del Comune».")
+    pec = models.BooleanField("è una PEC", default=False)
+    imap_server = models.CharField("server IMAP", max_length=200, blank=True)
+    imap_porta = models.PositiveIntegerField("porta IMAP", default=993)
+    imap_ssl = models.BooleanField(
+        "IMAP con SSL implicito", default=True, help_text="Porta 993: SSL; porta 143: STARTTLS."
+    )
+    smtp_server = models.CharField("server SMTP", max_length=200, blank=True)
+    smtp_porta = models.PositiveIntegerField("porta SMTP", default=465)
+    smtp_ssl = models.BooleanField(
+        "SMTP con SSL implicito", default=True, help_text="Porta 465: SSL; porta 587: STARTTLS."
+    )
+    nota = models.CharField(
+        max_length=500, blank=True, help_text="Mostrata a chi lo sceglie (es. password per le app)."
+    )
+    attivo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "fornitore di posta"
+        verbose_name_plural = "fornitori di posta"
+        ordering = ["nome"]
+
+    def __str__(self):
+        return self.nome
+
+    def come_voce(self):
+        voce = {"id": f"p{self.pk}", "nome": self.nome, "pec": self.pec, "nota": self.nota}
+        if self.imap_server:
+            voce["imap"] = {"server": self.imap_server, "porta": self.imap_porta,
+                            "ssl": self.imap_ssl}  # fmt: skip
+        if self.smtp_server:
+            voce["smtp"] = {"server": self.smtp_server, "porta": self.smtp_porta,
+                            "ssl": self.smtp_ssl}  # fmt: skip
+        return voce
