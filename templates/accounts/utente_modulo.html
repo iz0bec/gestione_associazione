@@ -38,6 +38,7 @@
           <dd class="col-6">
             {% if utente.ha_mfa %}<span class="text-success"><i class="ti ti-shield-check"></i> attivo</span>
             {% elif mfa_richiesta %}<span class="text-danger">richiesto dal ruolo, da configurare</span>
+            {% elif esenzione_attiva %}<span class="text-warning"><i class="ti ti-shield-minus"></i> esentato</span>
             {% else %}non configurato{% endif %}
             {% if fattori %}<div class="small text-secondary">{% for f in fattori %}{% if f == "totp" %}app di autenticazione{% elif f == "webauthn" %}passkey{% else %}codici di recupero{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
           </dd>
@@ -53,6 +54,26 @@
         <form method="post" action="{% url 'utenti:azzera_mfa' utente.pk %}" data-conferma="Eliminare app di autenticazione, passkey e codici di recupero di questo utente?">{% csrf_token %}
           <button class="btn w-100" type="submit"><i class="ti ti-shield-off me-1"></i>Azzera il secondo fattore</button>
         </form>
+        {% endif %}
+        {% if mfa_dal_ruolo and esenzione_ammessa and not utente.ha_mfa or esenzione_attiva %}
+        <div class="border rounded p-2 small" id="esenzione">
+          {% if esenzione_attiva %}
+          <div class="mb-2"><strong>Esentato dal secondo fattore</strong> dal {{ utente.mfa_esenzione_dal|date:"d/m/Y" }}{% if utente.mfa_esenzione_fino %} fino al {{ utente.mfa_esenzione_fino|date:"d/m/Y" }}{% else %}, senza scadenza{% endif %}.<div class="text-secondary">Motivo: {{ utente.mfa_esenzione_motivo }}</div></div>
+          <form method="post" action="{% url 'utenti:esenzione_mfa' utente.pk %}" data-conferma="Revocare l'esenzione? Al prossimo accesso dovrà configurare il secondo fattore.">{% csrf_token %}
+            <input type="hidden" name="revoca" value="1"><button class="btn btn-sm w-100" type="submit"><i class="ti ti-shield-lock me-1"></i>Revoca l'esenzione</button>
+          </form>
+          {% else %}
+          <form method="post" action="{% url 'utenti:esenzione_mfa' utente.pk %}">{% csrf_token %}
+            <div class="fw-bold mb-1">Esenta dal secondo fattore</div>
+            <div class="text-secondary mb-2">Per chi non può attivarlo (niente smartphone né chiave di sicurezza). Resta nel registro attività.</div>
+            <label class="form-label" for="esenzione-motivo">Motivo</label>
+            <input class="form-control form-control-sm mb-2" id="esenzione-motivo" name="motivo" maxlength="300" required>
+            <label class="form-label" for="esenzione-fino">Fino al (facoltativo)</label>
+            <input class="form-control form-control-sm mb-2" id="esenzione-fino" name="fino" type="date">
+            <button class="btn btn-sm w-100" type="submit"><i class="ti ti-shield-minus me-1"></i>Esenta</button>
+          </form>
+          {% endif %}
+        </div>
         {% endif %}
         <form method="post" action="{% url 'utenti:attivo' utente.pk %}"{% if utente.is_active %} data-conferma="Disattivare l'utente? Non potrà più accedere; i suoi dati e il registro restano."{% endif %}>{% csrf_token %}
           <input type="hidden" name="attivo" value="{% if utente.is_active %}0{% else %}1{% endif %}">

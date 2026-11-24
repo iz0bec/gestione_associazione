@@ -33,7 +33,21 @@ def _senza_cache(risposta):
 def _con_secondo_fattore(queryset):
     fattori = Authenticator.objects.filter(user=OuterRef("pk"), type__in=servizi.FATTORI_FORTI)
     obblighi = PoliticaRuolo.objects.filter(ruolo__user=OuterRef("pk"), mfa_obbligatoria=True)
-    return queryset.annotate(ha_mfa=Exists(fattori), mfa_obbligo=Exists(obblighi))
+    from django.contrib.auth.models import Group
+    from django.db.models import BooleanField, Case, Q, When
+    from django.utils import timezone
+
+    amministratore = Group.objects.filter(user=OuterRef("pk"), name=servizi.RUOLO_AMMINISTRATORE)
+    esente = (
+        Q(mfa_esenzione_motivo__gt="", is_superuser=False)
+        & (Q(mfa_esenzione_fino__isnull=True) | Q(mfa_esenzione_fino__gte=timezone.localdate()))
+        & ~Exists(amministratore)
+    )
+    return queryset.annotate(
+        ha_mfa=Exists(fattori),
+        mfa_obbligo=Exists(obblighi),
+        mfa_esente=Case(When(esente, then=True), default=False, output_field=BooleanField()),
+    )
 
 
 def _limite_connessi():
@@ -138,6 +152,9 @@ class UtenteView(PermessoMixin, UpdateView):
         ctx.update(
             fattori=Authenticator.objects.filter(user=u).values_list("type", flat=True),
             mfa_richiesta=servizi.mfa_richiesta(u),
+            mfa_dal_ruolo=servizi.mfa_dal_ruolo(u),
+            esenzione_attiva=servizi.esenzione_mfa_attiva(u),
+            esenzione_ammessa=not servizi.e_amministratore(u),
             modificabile=not (u.is_superuser and not self.request.user.is_superuser),
             se_stesso=u.pk == self.request.user.pk,
         )
@@ -206,6 +223,35 @@ class AzzeraSecondoFattoreView(_AzioneUtente):
             f"Secondo fattore di «{utente}» azzerato: al prossimo accesso entrerà solo con la "
             "password (e dovrà configurarlo di nuovo se il ruolo lo richiede).",
         )
+
+
+class EsenzioneMfaView(_AzioneUtente):
+    """Esenzione dal secondo fattore (motivo, scadenza facoltativa) o sua revoca."""
+
+    def esegui(self, request, utente):
+        from datetime import date
+
+        if request.POST.get("revoca"):
+            servizi.revoca_esenzione_mfa(utente, request.user)
+            messages.success(
+                request,
+                f"Esenzione di «{utente}» revocata: se il ruolo lo richiede, "
+                "al prossimo accesso dovrà configurare il secondo fattore.",
+            )
+            return None
+        fino = None
+        if request.POST.get("fino"):
+            try:
+                fino = date.fromisoformat(request.POST["fino"])
+            except ValueError:
+                raise servizi.OperazioneNonValida("Data di scadenza non valida.") from None
+        servizi.esenta_secondo_fattore(utente, request.user, request.POST.get("motivo", ""), fino)
+        messages.success(
+            request,
+            f"«{utente}» è esentato dal secondo fattore"
+            f"{' fino al ' + fino.strftime('%d/%m/%Y') if fino else ''}.",
+        )
+        return None
 
 
 class AttivaView(_AzioneUtente):

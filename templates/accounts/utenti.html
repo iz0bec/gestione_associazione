@@ -67,6 +67,7 @@
             </td>
             <td class="d-none d-lg-table-cell">
               {% if u.ha_mfa %}<span class="text-success"><i class="ti ti-shield-check"></i> attivo</span>
+              {% elif u.mfa_obbligo and u.mfa_esente %}<span class="text-warning" title="{{ u.mfa_esenzione_motivo }}"><i class="ti ti-shield-minus"></i> esentato{% if u.mfa_esenzione_fino %} fino al {{ u.mfa_esenzione_fino|date:"d/m/Y" }}{% endif %}</span>
               {% elif u.mfa_obbligo %}<span class="text-danger"><i class="ti ti-shield-x"></i> richiesto, da configurare</span>
               {% else %}<span class="text-secondary small">no</span>{% endif %}
             </td>

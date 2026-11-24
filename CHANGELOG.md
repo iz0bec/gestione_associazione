@@ -12,6 +12,10 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   (password per le app, accesso dalla sola rete TIM…). Gli amministratori aggiungono **fornitori
   personalizzati** (es. la posta del proprio dominio), proposti in cima al menu. Nuova spunta
   **Verifica l'accesso dopo il salvataggio** per provare subito il collegamento.
+- **Esenzione dal secondo fattore per singolo utente**: dalla scheda in *Sistema → Utenti*, per chi non
+  può attivarlo (niente smartphone né chiave di sicurezza) anche se il ruolo lo richiede; motivo
+  obbligatorio e scadenza facoltativa, indicata nell'elenco degli utenti, nel registro attività e
+  negli avvisi di sicurezza; revocabile; mai per l'Amministratore di sistema né per se stessi.
 
 ## [1.0.82] - 2026-11-22
 

@@ -66,6 +66,14 @@ class Utente(AbstractUser):
         help_text="Tolta la spunta, la password la imposta solo l'amministratore (niente cambio "
         "né recupero via email da parte dell'utente).",
     )
+    # esenzione dal secondo fattore richiesto dal ruolo (solo da apps/accounts/servizi.py)
+    mfa_esenzione_motivo = models.CharField(
+        "motivo dell'esenzione dal secondo fattore", max_length=300, blank=True, editable=False
+    )
+    mfa_esenzione_dal = models.DateField(null=True, blank=True, editable=False)
+    mfa_esenzione_fino = models.DateField(
+        "esenzione valida fino al", null=True, blank=True, editable=False
+    )
 
     class Meta:
         verbose_name = "utente"

@@ -29,4 +29,5 @@ urlpatterns = [
         name="azzera_mfa",
     ),
     path("<int:pk>/attivo/", views.AttivaView.as_view(), name="attivo"),
+    path("<int:pk>/esenzione-mfa/", views.EsenzioneMfaView.as_view(), name="esenzione_mfa"),
 ]

@@ -105,6 +105,9 @@ Modifica dei dati, dei ruoli e delle sezioni; nel riquadro **Accesso**:
 - **Azzera il secondo fattore** - per chi ha perso il telefono o la passkey: elimina app di
   autenticazione, passkey e codici di recupero; se il ruolo lo richiede, l'utente dovrà
   configurarlo di nuovo al prossimo accesso;
+- **Esenta dal secondo fattore** - compare quando il ruolo dell'utente rende obbligatorio il secondo
+  fattore e l'utente non l'ha ancora configurato; vedi [Esenzione per singolo
+  utente](#esenzione-per-singolo-utente);
 - **Disattiva / Riattiva** - un utente disattivato non può accedere; i suoi dati e le sue operazioni
   nel registro attività restano. Gli utenti non si eliminano.
 
@@ -128,8 +131,23 @@ programma (vedi [Primi passi](primi-passi.md)). I codici di recupero da soli non
 
 L'obbligo è **bloccante**: finché non configura il secondo fattore, l'utente vede solo la pagina per
 farlo (e può uscire). Chi non ha uno smartphone può usare una **chiave di sicurezza o la passkey** del
-computer, oppure un'app di autenticazione per computer (es. KeePassXC); altrimenti si toglie l'obbligo
-al ruolo.
+computer, oppure un'app di autenticazione per computer (es. KeePassXC); se nemmeno questo è
+possibile, lo si **esenta** singolarmente, senza togliere l'obbligo a tutto il ruolo.
+
+### Esenzione per singolo utente
+
+Nella scheda dell'utente, riquadro **Esenta dal secondo fattore**: si scrive il **motivo**
+(obbligatorio, ad esempio «non ha uno smartphone né una chiave di sicurezza») e, se serve, la data
+**fino al** quale vale; senza data vale finché non la si revoca. Da quel momento l'utente entra con la
+sola password, anche se il suo ruolo richiede il secondo fattore.
+
+- Nell'elenco degli utenti compare **esentato** (con la scadenza, se c'è; il motivo si legge passando
+  sopra con il mouse); alla scadenza l'obbligo torna da solo al prossimo accesso.
+- **Revoca l'esenzione**, nello stesso riquadro, la toglie subito.
+- L'**Amministratore di sistema** non si può esentare (e un'esenzione rimasta a chi riceve quel ruolo
+  non vale); nessuno può esentare se stesso.
+- Esenzione e revoca finiscono nel [registro attività](sistema.md#registro-attività) con il motivo, e
+  gli altri amministratori ricevono l'avviso di sicurezza.
 
 I permessi dei ruoli predefiniti sono fissati dal programma e riallineati a ogni aggiornamento
 (tabella in [Ruoli e permessi](ruoli.md)).

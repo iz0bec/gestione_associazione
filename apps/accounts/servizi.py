@@ -19,6 +19,8 @@ from apps.core.audit import Azione, registra
 
 from .models import PoliticaRuolo, Utente
 
+RUOLO_AMMINISTRATORE = "Amministratore di sistema"
+
 # Caratteri senza ambiguità (niente 0/O, 1/l/I)
 _ALFABETO = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 PERMESSO_GESTIONE = "accounts.change_utente"
@@ -63,10 +65,70 @@ def ha_secondo_fattore(utente) -> bool:
     return Authenticator.objects.filter(user=utente, type__in=FATTORI_FORTI).exists()
 
 
-def mfa_richiesta(utente) -> bool:
+def mfa_dal_ruolo(utente) -> bool:
+    """Il ruolo richiede il secondo fattore (prima di un'eventuale esenzione)."""
     return PoliticaRuolo.objects.filter(
         ruolo__in=utente.groups.all(), mfa_obbligatoria=True
     ).exists()
+
+
+def e_amministratore(utente) -> bool:
+    return utente.is_superuser or utente.groups.filter(name=RUOLO_AMMINISTRATORE).exists()
+
+
+def esenzione_mfa_attiva(utente, oggi=None) -> bool:
+    """Esenzione valida oggi: con un motivo, non scaduta e mai per gli amministratori."""
+    from django.utils import timezone
+
+    if not utente.mfa_esenzione_motivo or e_amministratore(utente):
+        return False
+    oggi = oggi or timezone.localdate()
+    return utente.mfa_esenzione_fino is None or utente.mfa_esenzione_fino >= oggi
+
+
+def mfa_richiesta(utente) -> bool:
+    return mfa_dal_ruolo(utente) and not esenzione_mfa_attiva(utente)
+
+
+@transaction.atomic
+def esenta_secondo_fattore(utente, attore, motivo: str, fino=None) -> None:
+    """Esenta l'utente dal secondo fattore richiesto dal ruolo (es. niente smartphone né chiave di
+    sicurezza). Mai per l'Amministratore di sistema; motivo obbligatorio; scadenza facoltativa."""
+    from django.utils import timezone
+
+    puo_gestire(attore, utente)
+    motivo = (motivo or "").strip()
+    if utente.pk == attore.pk:
+        raise OperazioneNonValida("Non puoi esentare te stesso dal secondo fattore.")
+    if e_amministratore(utente):
+        raise OperazioneNonValida(
+            "L'Amministratore di sistema non si può esentare dal secondo fattore."
+        )
+    if not motivo:
+        raise OperazioneNonValida("Indicare il motivo dell'esenzione.")
+    oggi = timezone.localdate()
+    if fino and fino < oggi:
+        raise OperazioneNonValida("La scadenza dell'esenzione non può essere già passata.")
+    utente.mfa_esenzione_motivo, utente.mfa_esenzione_dal = motivo[:300], oggi
+    utente.mfa_esenzione_fino = fino
+    utente.save(update_fields=["mfa_esenzione_motivo", "mfa_esenzione_dal", "mfa_esenzione_fino"])
+    registra(Azione.MODIFICA, utente, operazione="esenzione dal secondo fattore",
+             motivo=utente.mfa_esenzione_motivo,
+             fino=fino.isoformat() if fino else "senza scadenza")  # fmt: skip
+    sicurezza.operazione_utenti(f"Esenzione dal secondo fattore per {utente.username}", attore)
+
+
+@transaction.atomic
+def revoca_esenzione_mfa(utente, attore) -> None:
+    puo_gestire(attore, utente)
+    if not utente.mfa_esenzione_motivo:
+        return
+    utente.mfa_esenzione_motivo = ""
+    utente.mfa_esenzione_dal = utente.mfa_esenzione_fino = None
+    utente.save(update_fields=["mfa_esenzione_motivo", "mfa_esenzione_dal", "mfa_esenzione_fino"])
+    registra(Azione.MODIFICA, utente, operazione="esenzione dal secondo fattore revocata")
+    sicurezza.operazione_utenti(f"Esenzione dal secondo fattore revocata a {utente.username}",
+                                attore)  # fmt: skip
 
 
 def ruoli_con_mfa() -> set[int]:
