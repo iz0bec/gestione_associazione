@@ -1028,9 +1028,10 @@ def dichiara_decadenza(utente, *, sezione, giorno, motivo, organi_ids=(), commis
                        termine=None, disposto_da="", atto="", profilo=None, note=""):  # fmt: skip
     """Fine anticipata degli organi: decadono sempre il consiglio e l'organo di controllo (sindaci),
     più gli altri organi indicati in `organi_ids`; le cariche si chiudono. Il commissario (carica
-    «commissario» nel consiglio: firma al posto del presidente) è quello nominato o, se manca, ad
-    interim il presidente decaduto. Si apre il rinnovo straordinario entro il termine (dodici mesi,
-    prorogabili); un rinnovo in corso si annulla."""
+    «commissario» nel consiglio: firma al posto del presidente) è quello nominato dall'ente
+    sovraordinato o, finché non è nominato, il presidente decaduto (commissario provvisorio).
+    Si apre il rinnovo straordinario entro il termine (dodici mesi, prorogabili); un rinnovo in
+    corso si annulla."""
     from apps.organi import servizi as organi
     from apps.organi.models import Organo
 
@@ -1042,12 +1043,12 @@ def dichiara_decadenza(utente, *, sezione, giorno, motivo, organi_ids=(), commis
         raise OperazioneNonValida("Il commissario è una persona.")
     consiglio = organo_consiglio(sezione)
     interim = False
-    if commissario is None:  # ad interim il presidente decaduto
+    if commissario is None:  # il presidente decaduto, fino alla nomina del commissario
         uscente = None
         if consiglio is not None:
             uscente = consiglio.cariche_al(giorno).filter(ruolo="presidente").first()
         if uscente is None:
-            raise OperazioneNonValida("Non c'è un presidente in carica che resti ad interim: "
+            raise OperazioneNonValida("Non c'è un presidente in carica che faccia da commissario: "
                                       "indicare il commissario.")  # fmt: skip
         commissario, interim = uscente.soggetto, True
     termine = termine or _piu_mesi(giorno, MESI_COMMISSARIO)
@@ -1072,7 +1073,9 @@ def dichiara_decadenza(utente, *, sezione, giorno, motivo, organi_ids=(), commis
         sezione, Organo.Tipo.CONSIGLIO, nome, "CD", profilo.durata_mandato)  # fmt: skip
     organi.nomina(consiglio, commissario, "commissario", giorno, utente,
                   atto=atto or f"Commissariamento dal {giorno:%d/%m/%Y}",
-                  note="ad interim (presidente decaduto)" if interim else "")  # fmt: skip
+                  note="commissario provvisorio: presidente decaduto, fino alla nomina del "
+                  "commissario" if interim
+                  else "")  # fmt: skip
     for vecchio in Rinnovo.objects.filter(sezione=sezione).exclude(
         fase__in=[Fase.CONCLUSO, Fase.ANNULLATO]
     ):
@@ -1091,6 +1094,54 @@ def dichiara_decadenza(utente, *, sezione, giorno, motivo, organi_ids=(), commis
     )  # fmt: skip
     registra(Azione.CREAZIONE, decadenza, utente=utente, motivo=motivo, cariche_chiuse=chiuse,
              commissario=str(commissario), interim=interim, termine=str(termine))  # fmt: skip
+    return decadenza
+
+
+@transaction.atomic
+def nomina_commissario(decadenza, utente, *, commissario, giorno, disposto_da="", atto=""):
+    """Il commissario nominato dall'ente sovraordinato (Regolamento art. 19) subentra al presidente
+    decaduto: il termine di dodici mesi decorre dalla nomina."""
+    from apps.organi import servizi as organi
+    from apps.organi.models import Carica
+
+    if decadenza.chiusa_il:
+        raise OperazioneNonValida("Il commissariamento è già concluso.")
+    if not decadenza.interim:
+        raise OperazioneNonValida("Il commissario è già stato nominato.")
+    if not commissario.is_persona:
+        raise OperazioneNonValida("Il commissario è una persona.")
+    if giorno < decadenza.giorno:
+        raise OperazioneNonValida("La nomina non può precedere la decadenza.")
+    attuale = (
+        Carica.objects.filter(
+            ruolo="commissario", organo__sezione=decadenza.sezione, dal__lte=giorno
+        )
+        .filter(Q(al__isnull=True) | Q(al__gt=giorno))
+        .first()
+    )
+    consiglio = organo_consiglio(decadenza.sezione)
+    if attuale is not None:
+        consiglio = attuale.organo
+        if attuale.soggetto_id != commissario.pk:
+            organi.termina_carica(attuale, giorno, utente, motivo="Nominato il commissario")
+    if attuale is None or attuale.soggetto_id != commissario.pk:
+        organi.nomina(consiglio, commissario, "commissario", giorno, utente,
+                      atto=atto or f"Nomina del commissario del {giorno:%d/%m/%Y}")  # fmt: skip
+    elif atto:
+        attuale.note, attuale.nomina = "", atto[:200]
+        attuale.save(update_fields=["note", "nomina"])
+    decadenza.commissario, decadenza.interim = commissario, False
+    decadenza.termine, decadenza.prorogato_al = _piu_mesi(giorno, MESI_COMMISSARIO), None
+    if disposto_da:
+        decadenza.disposto_da = disposto_da
+    if atto:
+        decadenza.atto = atto
+    decadenza.modificato_da = utente
+    decadenza.save()
+    if decadenza.rinnovo_id:
+        Rinnovo.objects.filter(pk=decadenza.rinnovo_id).update(scadenza=decadenza.termine)
+    registra(Azione.MODIFICA, decadenza, utente=utente, commissario=str(commissario),
+             nomina=str(giorno), atto=atto)  # fmt: skip
     return decadenza
 
 

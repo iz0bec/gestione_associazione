@@ -35,6 +35,7 @@ urlpatterns = [
     path("<int:pk>/concludi/", views.ConcludiView.as_view(), name="concludi"),
     path("<int:pk>/annulla/", views.AnnullaView.as_view(), name="annulla"),
     path("<int:pk>/proroga/", views.ProrogaView.as_view(), name="proroga"),
+    path("<int:pk>/commissario/", views.NominaCommissarioView.as_view(), name="commissario"),
     path("<int:pk>/documenti/<str:codice>/", views.DocumentoView.as_view(), name="documento"),
     path("liste/<int:pk>/", views.ListaView.as_view(), name="lista"),
     path("liste/<int:pk>/cerca/", views.CercaCandidatiView.as_view(), name="cerca"),

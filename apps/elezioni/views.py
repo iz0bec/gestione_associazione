@@ -602,6 +602,19 @@ class CercaPersonaView(PermessoMixin, View):
         return render(request, "elezioni/_persone_trovate.html", {"risultati": risultati, "q": q})
 
 
+class NominaCommissarioView(_AzioneRinnovo):
+    def azione(self, request, r):
+        decadenza = get_object_or_404(Decadenza, rinnovo=r, chiusa_il__isnull=True)
+        commissario = get_object_or_404(Soggetto, pk=request.POST.get("commissario") or 0)
+        servizi.nomina_commissario(
+            decadenza, request.user, commissario=commissario,
+            giorno=_data(request.POST.get("giorno"), timezone.localdate()),
+            disposto_da=request.POST.get("disposto_da", "")[:150],
+            atto=request.POST.get("atto", "")[:200],
+        )  # fmt: skip
+        messages.success(request, f"Commissario nominato: {commissario.nome_completo}.")
+
+
 class ProrogaView(_AzioneRinnovo):
     def azione(self, request, r):
         decadenza = get_object_or_404(Decadenza, rinnovo=r, chiusa_il__isnull=True)

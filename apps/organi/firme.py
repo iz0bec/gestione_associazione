@@ -81,8 +81,8 @@ def in_carica_al(ruolo, giorno=None, sezione=None):
 
 
 def commissario_al(giorno=None, sezione=None):
-    """Firma del commissario in carica (organi decaduti), «ad interim» se è il presidente
-    decaduto; None se non c'è."""
+    """Firma del commissario in carica (organi decaduti): «provvisorio» se è il presidente
+    decaduto in attesa della nomina del commissario; None se non c'è."""
     from .models import Carica
 
     giorno = _giorno(giorno)
@@ -95,7 +95,7 @@ def commissario_al(giorno=None, sezione=None):
     )
     if carica is None:
         return None
-    qualifica = QUALIFICHE["commissario"] + (" ad interim" if "interim" in carica.note else "")
+    qualifica = QUALIFICHE["commissario"] + (" provvisorio" if "provvisorio" in carica.note else "")
     return Firma(qualifica, carica.soggetto.intestazione, carica.soggetto_id)
 
 

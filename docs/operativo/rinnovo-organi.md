@@ -89,9 +89,12 @@ dalla Giunta esecutiva nazionale) o nasce una **nuova sezione** affidata a un co
 - si indicano sezione (vuota: gli organi dell'ente), motivo, giorno, chi lo ha disposto e il
   provvedimento. Decadono sempre il **consiglio direttivo** e l'**organo di controllo** (sindaci), a
   scelta anche gli altri organi elettivi (es. garanti): le loro cariche si chiudono da quel giorno;
-- il **commissario** si sceglie dall'anagrafica; se non lo si indica, la carica la tiene **ad interim
-  il presidente decaduto**. Entra nel consiglio con la carica di **Commissario** («ad interim» se è
-  il presidente decaduto), firma i documenti al posto del presidente (anche come legale
+- il **commissario** è quello nominato dall'ente sovraordinato (Consiglio direttivo di Federazione
+  per una sezione, Giunta esecutiva nazionale per una federazione: Regolamento art. 19), che
+  *assume temporaneamente in sé tutte le cariche*. Finché non è nominato, il **presidente decaduto**
+  è **commissario provvisorio**; la nomina si registra poi nella scheda del rinnovo (*Nomina del
+  commissario*) e da quel giorno decorrono i dodici mesi. Il commissario entra nel consiglio con la
+  carica di **Commissario**, firma i documenti al posto del presidente (anche come legale
   rappresentante) e indice il nuovo congresso; avvisi, moduli delle liste e verbali lo indicano al
   posto del consiglio uscente. Senza un presidente in carica (es. una nuova sezione) il commissario
   va indicato;

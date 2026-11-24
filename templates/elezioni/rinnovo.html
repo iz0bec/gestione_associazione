@@ -15,8 +15,18 @@
     {% with d=rinnovo.decadenza %}{% if d %}
     <div class="alert alert-warning">
       <div class="fw-bold">{{ d }}{% if d.chiusa_il %} · concluso il {{ d.chiusa_il|date:"d/m/Y" }}{% endif %}</div>
-      <div class="small">{{ d.get_motivo_display }}{% if d.disposto_da %}, disposto da {{ d.disposto_da }}{% endif %}{% if d.atto %} ({{ d.atto }}){% endif %}. {% if d.organi_sciolti %}Organi decaduti: {{ d.organi_sciolti|join:", " }} ({{ d.cariche_chiuse }} cariche chiuse). {% endif %}{% if d.commissario %}Commissario: <strong>{{ d.commissario.nome_completo }}</strong>{% if d.interim %} (ad interim, presidente decaduto){% endif %}. {% endif %}Nuovo congresso entro il <strong>{{ d.scadenza|date:"d/m/Y" }}</strong>{% if d.prorogato_al %} (prorogato{% if d.atto_proroga %}: {{ d.atto_proroga }}{% endif %}){% endif %}.</div>
-      {% if puo_gestire and not d.chiusa_il and d.commissario and not d.prorogato_al %}
+      <div class="small">{{ d.get_motivo_display }}{% if d.disposto_da %}, disposto da {{ d.disposto_da }}{% endif %}{% if d.atto %} ({{ d.atto }}){% endif %}. {% if d.organi_sciolti %}Organi decaduti: {{ d.organi_sciolti|join:", " }} ({{ d.cariche_chiuse }} cariche chiuse). {% endif %}{% if d.commissario %}Commissario: <strong>{{ d.commissario.nome_completo }}</strong>{% if d.interim %} — <strong>commissario provvisorio</strong> (il presidente decaduto), in attesa della nomina del commissario da parte dell'ente sovraordinato{% endif %}. {% endif %}Nuovo congresso entro il <strong>{{ d.scadenza|date:"d/m/Y" }}</strong>{% if d.prorogato_al %} (prorogato{% if d.atto_proroga %}: {{ d.atto_proroga }}{% endif %}){% endif %}.</div>
+      {% if puo_gestire and not d.chiusa_il and d.interim %}
+      <form method="post" action="{% url 'elezioni:commissario' rinnovo.pk %}" class="row g-2 mt-1 align-items-end">{% csrf_token %}
+        <div class="col-12 small fw-bold">Nomina del commissario (Regolamento art. 19)</div>
+        <div class="col-md-6"><div id="commissario-scelto"></div><input type="search" class="form-control form-control-sm" name="cerca" placeholder="Cerca il commissario in anagrafica" autocomplete="off" aria-label="Cerca il commissario" data-ricerca-scelta hx-get="{% url 'elezioni:cerca_persona' %}" hx-trigger="input changed delay:300ms" hx-target="#persone-trovate"><div class="list-group list-group-flush" id="persone-trovate"></div></div>
+        <div class="col-md-3"><input class="form-control form-control-sm" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}" aria-label="Nominato il"></div>
+        <div class="col-md-3"><input class="form-control form-control-sm" name="disposto_da" placeholder="{% if rinnovo.sezione %}Consiglio direttivo di Federazione{% else %}Giunta esecutiva nazionale{% endif %}" aria-label="Nominato da"></div>
+        <div class="col-md-9"><input class="form-control form-control-sm" name="atto" placeholder="Provvedimento di nomina" aria-label="Provvedimento di nomina"></div>
+        <div class="col-md-3"><button class="btn btn-sm btn-primary w-100" type="submit">Nomina</button></div>
+      </form>
+      {% endif %}
+      {% if puo_gestire and not d.chiusa_il and d.commissario and not d.interim and not d.prorogato_al %}
       <form method="post" action="{% url 'elezioni:proroga' rinnovo.pk %}" class="row g-2 mt-1 align-items-end">{% csrf_token %}
         <div class="col-md-3"><input class="form-control form-control-sm" type="date" name="fino" aria-label="Proroga fino al"></div>
         <div class="col-md-6"><input class="form-control form-control-sm" name="atto" placeholder="Provvedimento di proroga" aria-label="Provvedimento di proroga"></div>

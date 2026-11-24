@@ -21,7 +21,7 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 - **Decadenza anticipata degli organi e commissariamento**: dall'elenco dei rinnovi si registra la
   fine anticipata del consiglio (dimissioni, scioglimento, nuova sezione): decadono consiglio e
   sindaci (cariche chiuse) e subentra il **commissario** (nuova carica degli organi sociali, che firma
-  al posto del presidente) o, se non è nominato, ad interim il presidente decaduto; si apre il **rinnovo straordinario** entro dodici mesi (prorogabili), chiuso
+  al posto del presidente) o, finché l'ente sovraordinato non lo nomina, il presidente decaduto come **commissario provvisorio**; si apre il **rinnovo straordinario** entro dodici mesi (prorogabili), chiuso
   all'insediamento dei nuovi organi.
 - **Fornitori di posta**: in *Sistema → Servizi di posta*, creando una casella (IMAP) o un servizio di
   invio (SMTP), il menu **Fornitore** compila server, porta, cifratura e PEC: Aruba (email e PEC),

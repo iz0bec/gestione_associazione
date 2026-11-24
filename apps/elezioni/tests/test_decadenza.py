@@ -112,7 +112,7 @@ def avvia_esistente(r, utente):
     return r
 
 
-def test_senza_commissario_resta_ad_interim_il_presidente(sezione, segretario):
+def test_commissario_provvisorio_e_nomina(sezione, segretario):
     alfa, consiglio, controllo, iscritti = sezione
     d = servizi.dichiara_decadenza(segretario, sezione=alfa, giorno=OGGI, motivo="dimissioni")
     presidente = iscritti[0].soggetto
@@ -121,9 +121,28 @@ def test_senza_commissario_resta_ad_interim_il_presidente(sezione, segretario):
     assert carica.ruolo == "commissario" and carica.soggetto == presidente
     assert not controllo.cariche_al(OGGI).exists()
     firma = firme("presidente", giorno=OGGI, sezione=alfa, immagini=False)[0]
-    assert firma.qualifica == "Il Commissario ad interim" and firma.soggetto_id == presidente.pk
-    assert d.rinnovo.chi_indice == "Il Commissario ad interim"
+    assert firma.qualifica == "Il Commissario provvisorio" and firma.soggetto_id == presidente.pk
+    assert d.rinnovo.chi_indice == "Il Commissario provvisorio"
     assert d.termine == servizi._piu_mesi(OGGI, 12)
+    # la nomina dell'ente sovraordinato: subentra il commissario, il termine decorre da lì
+    nominato = persona("Nominato")
+    giorno = OGGI + timedelta(days=10)
+    servizi.nomina_commissario(
+        d,
+        segretario,
+        commissario=nominato,
+        giorno=giorno,
+        disposto_da="Consiglio direttivo di Federazione",
+        atto="del. 4",
+    )
+    d.refresh_from_db()
+    assert not d.interim and d.commissario == nominato
+    assert d.termine == servizi._piu_mesi(giorno, 12) and d.rinnovo.scadenza == d.termine
+    firma = firme("presidente", giorno=giorno, sezione=alfa, immagini=False)[0]
+    assert firma.qualifica == "Il Commissario" and firma.soggetto_id == nominato.pk
+    assert d.rinnovo.chi_indice == "Il Commissario"
+    with pytest.raises(servizi.OperazioneNonValida, match="già stato nominato"):
+        servizi.nomina_commissario(d, segretario, commissario=nominato, giorno=giorno)
 
 
 def test_senza_presidente_serve_il_commissario(segretario, settings, tmp_path):

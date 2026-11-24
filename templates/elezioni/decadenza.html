@@ -21,7 +21,7 @@
             <input type="search" class="form-control" name="cerca" placeholder="Cerca in anagrafica" autocomplete="off" aria-label="Cerca il commissario" data-ricerca-scelta hx-get="{% url 'elezioni:cerca_persona' %}" hx-trigger="input changed delay:300ms" hx-target="#persone-trovate">
           </div>
           <div class="list-group list-group-flush" id="persone-trovate"></div>
-          <div class="form-hint">Nominato con la carica di <strong>Commissario</strong> nel consiglio: firma i documenti al posto del presidente e indice il nuovo congresso. Se non lo si indica, resta <strong>ad interim il presidente decaduto</strong>.</div>
+          <div class="form-hint">Nominato con la carica di <strong>Commissario</strong> nel consiglio: firma i documenti al posto del presidente e indice il nuovo congresso. Se non è ancora nominato dall'ente sovraordinato, il <strong>presidente decaduto</strong> è <strong>commissario provvisorio</strong> fino alla nomina, che si registra poi nella scheda del rinnovo.</div>
         </div>
         {% endif %}{{ campo.as_field_group }}{% endfor %}
       </div>
@@ -33,7 +33,7 @@
       <p>Quando un consiglio <strong>decade prima della scadenza</strong> (dimissioni della maggioranza, scioglimento con provvedimento motivato del Consiglio direttivo provinciale per una sezione, della Giunta esecutiva nazionale per una federazione) o nasce una <strong>nuova sezione</strong>, si registra qui:</p>
       <ul>
         <li>decadono il <strong>consiglio direttivo</strong> e l'<strong>organo di controllo</strong> (sindaci), più gli altri organi elettivi se indicato: le cariche si chiudono dal giorno della decadenza;</li>
-        <li>il <strong>commissario</strong> nominato entra in carica e firma al posto del presidente; senza nomina, la carica la tiene <strong>ad interim il presidente decaduto</strong>;</li>
+        <li>il <strong>commissario</strong> entra in carica e firma al posto del presidente; finché l'ente sovraordinato non lo nomina, il <strong>presidente decaduto</strong> è <strong>commissario provvisorio</strong>;</li>
         <li>si apre il <strong>rinnovo straordinario</strong>, con il nuovo congresso entro dodici mesi, prorogabili di altri dodici.</li>
       </ul>
       <p class="mb-0">All'insediamento dei nuovi organi il commissariamento si chiude da solo. Un rinnovo ordinario in corso viene annullato.</p>
