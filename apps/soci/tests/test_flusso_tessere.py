@@ -135,15 +135,37 @@ class TestRichiestaInPreparazione:
         ciclo.invia_richiesta(capo, bozza)
         assert ciclo.da_ordinare(ANNO)[0]["quantita"] == 3
 
-    def test_senza_fabbisogno_la_bozza_si_toglie(self, capo):
+    def test_senza_fabbisogno_la_bozza_resta_e_ricalcola_la_toglie(self, capo):
         sezione = Sezione.predefinita()
         socio = _soci(capo, 1)[0]
         tessera = servizi.rilascia_tessera(socio, ANNO, capo)
         bozza, _ = ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)
         assert bozza.quantita == 1
         servizi.annulla_tessera(tessera, capo, motivo="non rinnova")
-        assert ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)[0] is None
+        # l'aggiornamento automatico non toglie una richiesta (anche preparata a mano)
+        assert ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)[0] == bozza
+        assert ciclo.aggiorna_in_preparazione(capo, ANNO, sezione, togli=True)[0] is None
         assert not RichiestaTessere.objects.exists()
+
+    def test_sezione_senza_soci_nel_gestionale_prepara_a_mano(self, capo, client):
+        """Una sezione che non tiene i soci nel gestionale (fabbisogno zero) prepara la
+        richiesta a mano con «Registra» e poi la invia alla federazione."""
+        sezione = Sezione.predefinita()
+        assert ciclo.canale_richiesta() != "registro"
+        client.force_login(capo)
+        r = client.post(f"/soci/tessere/campagna/{ANNO}/richiesta/", {
+            "sezione": sezione.pk, "quantita": 90, "data": date.today().isoformat(),
+        }, follow=True)  # fmt: skip
+        assert "Richiesta preparata: 90 tessere" in r.content.decode()
+        bozza = RichiestaTessere.objects.get()
+        assert bozza.inviata_il is None and ciclo.in_preparazione(ANNO, sezione) == bozza
+        assert (
+            "Invia alla federazione" in r.content.decode()
+            or "Prepara l&#x27;email" in (r.content.decode())
+            or "Prepara l'email" in r.content.decode()
+        )
+        ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)  # un rinnovo: resta
+        assert RichiestaTessere.objects.get().quantita == 90
 
 
 class TestOrdineEPagamenti:

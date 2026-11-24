@@ -116,6 +116,7 @@
 | **1.0.81** ✅ | modulo di richiesta delle tessere riconosciuto anche dopo Numbers; allegati .numbers segnalati | GitHub, GitLab |
 | **1.0.82** ✅ | comunicazioni della campagna tessere riconoscibili: oggetto con la sezione; elenco con destinatario, ricerca e filtro per origine | GitHub, GitLab |
 | **1.0.83** ✅ | rinnovo degli organi conforme al Regolamento ANCR (liste, votanti e deleghe, esiti, nomine, decadenza e commissariamento); fornitori di posta; esenzione dal secondo fattore; inoltro della email di sezione; conferma alla sezione della richiesta di tessere | GitHub, GitLab |
+| **1.0.84** ✅ | richiesta di tessere preparata a mano dalle sezioni senza soci nel gestionale, da inviare alla federazione | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

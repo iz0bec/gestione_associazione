@@ -200,6 +200,15 @@ preparazione** dell'anno:
   annullando l'email la richiesta torna modificabile;
 - nella federazione, per una sua sezione: entra nel fabbisogno dell'anno, pronto per l'ordine.
 
+Una sezione che **non tiene i soci nel gestionale** (fabbisogno calcolato zero) prepara la richiesta a
+mano: nella campagna **Registra**, con la quantità; la richiesta compare in *Richieste in
+preparazione* e da lì si invia alla federazione come le altre. L'aggiornamento automatico dei rinnovi
+non la toglie; la toglie solo *Ricalcola*.
+
+Nella **federazione**, accanto a ogni richiesta delle sezioni, il pulsante con la busta prepara la
+**conferma di ricezione** per la sezione (casella della sezione e presidente in carica), in bozza in
+*Comunicazioni* con il riepilogo della richiesta allegato.
+
 Le richieste in preparazione non contano nella quadratura né negli ordini finché non si inviano.
 
 **Nella sezione**, se ha la propria installazione:

@@ -142,10 +142,23 @@ class RichiestaNuovaView(_ModuloCiclo):
              "campagna). La richiesta arrivata per email o PEC va prima protocollata.")  # fmt: skip
 
     def esegui(self, d):
+        # nel gestionale di una sezione la richiesta si prepara e poi si invia alla federazione
+        # (collegamento o email); nella federazione si registra quella arrivata da una sezione
+        sezione_locale = ciclo.canale_richiesta() != "registro"
+        if sezione_locale and (bozza := ciclo.in_preparazione(self.anno, d["sezione"])):
+            ciclo.modifica_in_preparazione(self.request.user, bozza, quantita=d["quantita"],
+                                           note=d["note"])  # fmt: skip
+            return (
+                f"Richiesta in preparazione aggiornata: {bozza.quantita} tessere. Inviala "
+                "alla federazione dal riquadro «Richieste in preparazione»."
+            )
         r = ciclo.registra_richiesta(
             self.request.user, anno=self.anno, sezione=d["sezione"], quantita=d["quantita"],
-            data=d["data"], note=d["note"],
+            data=d["data"], note=d["note"], in_preparazione=sezione_locale,
         )  # fmt: skip
+        if sezione_locale:
+            return (f"Richiesta preparata: {r.quantita} tessere. Inviala alla federazione dal "
+                    "riquadro «Richieste in preparazione».")  # fmt: skip
         return f"Richiesta registrata: {r}."
 
 
@@ -687,8 +700,9 @@ class RichiestaPreparazioneView(PermessoMixin, View):
         azione = request.POST.get("azione")
         try:
             if azione == "ricalcola":
-                bozza, calcolo = ciclo.aggiorna_in_preparazione(request.user, richiesta.anno,
-                                                                richiesta.sezione)  # fmt: skip
+                bozza, calcolo = ciclo.aggiorna_in_preparazione(
+                    request.user, richiesta.anno, richiesta.sezione, togli=True
+                )
                 testo = (f"Richiesta in preparazione: {bozza.quantita} tessere." if bozza
                          else "Non servono altre tessere: richiesta tolta.")  # fmt: skip
                 messages.success(request, testo)

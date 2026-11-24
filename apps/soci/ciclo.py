@@ -790,19 +790,22 @@ def in_preparazione(anno, sezione):
 
 
 @transaction.atomic
-def aggiorna_in_preparazione(utente, anno, sezione):
-    """Porta la richiesta in preparazione dell'anno al fabbisogno calcolato (la crea, o la
-    toglie se non serve più). Non parte mai da sola. Restituisce (richiesta o None, calcolo)."""
+def aggiorna_in_preparazione(utente, anno, sezione, *, togli=False):
+    """Porta la richiesta in preparazione dell'anno al fabbisogno calcolato (la crea se serve).
+    Con fabbisogno zero la toglie solo se richiesto (`togli`, il pulsante «Ricalcola»): una
+    richiesta preparata a mano (sezione che non tiene i soci nel gestionale) resta. Non parte
+    mai da sola. Restituisce (richiesta o None, calcolo)."""
     calcolo = fabbisogno(anno, sezione)
     bozza = in_preparazione(anno, sezione)
     if bozza is not None and email_in_corso(bozza):
         return bozza, calcolo  # l'email è già scritta con questa quantità: non si cambia
     if not calcolo["proposta"]:
-        if bozza:
+        if bozza and togli:
             registra(Azione.ELIMINAZIONE, bozza, utente=utente,
                      descrizione=f"Richiesta in preparazione tolta: {bozza}")  # fmt: skip
             bozza.delete()
-        return None, calcolo
+            return None, calcolo
+        return bozza, calcolo
     if bozza is None:
         bozza = registra_richiesta(utente, anno=anno, sezione=sezione,
                                    quantita=calcolo["proposta"], in_preparazione=True)  # fmt: skip

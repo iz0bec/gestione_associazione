@@ -5,6 +5,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.84] - 2026-11-24
+
+### Corretto
+- **Richiesta di tessere da una sezione senza soci nel gestionale**: il fabbisogno calcolato era zero
+  e non c'era modo di inviarla (il pulsante «Registra» la segnava come già inviata). Ora, nel
+  gestionale di una sezione, «Registra» prepara la richiesta con la quantità scritta a mano, da
+  inviare alla federazione dal riquadro *Richieste in preparazione*; l'aggiornamento dei rinnovi non
+  la toglie più (solo «Ricalcola»).
+
 ## [1.0.83] - 2026-11-24
 
 ### Corretto
