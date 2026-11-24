@@ -5,6 +5,20 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Connettore WordPress 0.1.1**:
+  - **coda degli invii**: una voce per invio; prima una domanda, un contatto o un'adesione
+    accodati mentre il cron svuotava la coda potevano andare persi. Gli errori transitori
+    (collegamento sospeso, orologio, richiesta gemella in corso, pagine d'errore del proxy) si
+    ritentano con attesa crescente per 7 giorni; poi l'invio resta «non consegnato» nelle
+    impostazioni, da rimettere in coda o eliminare, mai scartato in silenzio;
+  - **adesione agli eventi**: dopo un invio riuscito o accodato non compare più un errore (che
+    portava a rimandarla, con adesioni doppie);
+  - **articoli degli eventi**: un articolo cestinato o eliminato dal redattore non viene ricreato
+    (con «Pubblicato subito» tornava online); titolo come testo semplice;
+  - **anti-spam**: il gettone del modulo si rinnova al caricamento della pagina, così i moduli non
+    scadono con la cache di pagina.
+
 ## [1.0.90] - 2026-11-24
 
 ### Aggiunto

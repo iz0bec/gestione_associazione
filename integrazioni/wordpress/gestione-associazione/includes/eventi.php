@@ -7,7 +7,8 @@
  *              cron) e articoli degli eventi da pubblicare sul sito: uno per evento, riconosciuto
  *              dal suo identificativo, in bozza per default, aggiornato quando l'evento cambia
  *              (titolo; data, luogo e adesioni sono sempre quelli correnti tramite lo shortcode),
- *              «ANNULLATO» nel titolo se l'evento è annullato, mai cancellato.
+ *              «ANNULLATO» nel titolo se l'evento è annullato, mai cancellato. Un articolo che il
+ *              redattore ha cestinato o eliminato non si ricrea e non si tocca più.
  * Licenza:     CC0 1.0 Universal (pubblico dominio)
  * SPDX-License-Identifier: CC0-1.0
  */
@@ -22,6 +23,7 @@ final class GA_Eventi {
 	const ORGANIGRAMMA = 'ga_organigramma';
 	const META         = '_ga_evento';
 	const META_VERSIONE = '_ga_evento_versione';
+	const CREATI       = 'ga_articoli_creati';  // [uuid evento => ID articolo]: mai ricreati
 
 	public static function elenco(): array {
 		$dati = get_option( self::CACHE, array() );
@@ -78,7 +80,7 @@ final class GA_Eventi {
 	private static function articolo_di( string $uuid ): ?WP_Post {
 		$trovati = get_posts( array(
 			'post_type'   => 'post',
-			'post_status' => array( 'publish', 'draft', 'pending', 'future', 'private' ),
+			'post_status' => array( 'publish', 'draft', 'pending', 'future', 'private', 'trash' ),
 			'meta_key'    => self::META,
 			'meta_value'  => $uuid,
 			'numberposts' => 1,
@@ -88,7 +90,8 @@ final class GA_Eventi {
 
 	private static function titolo( array $e ): string {
 		$quando = wp_date( 'j F Y', strtotime( $e['inizio'] ) );
-		$titolo = $e['titolo'] . ' – ' . $quando;
+		// testo semplice: con «Aggiorna ora» l'amministratore ha unfiltered_html e kses non filtra
+		$titolo = wp_strip_all_tags( (string) $e['titolo'] ) . ' – ' . $quando;
 		return $e['annullato'] ? __( 'ANNULLATO', 'gestione-associazione' ) . ' – ' . $titolo : $titolo;
 	}
 
@@ -107,13 +110,35 @@ final class GA_Eventi {
 			$nuova     = wp_insert_term( $opz['categoria'], 'category' );
 			$categoria = is_wp_error( $nuova ) ? 0 : (int) $nuova['term_id'];
 		}
-		$creati = 0;
-		$aggiornati = 0;
+		if ( ! GA_Connettore::blocca( 'articoli', 300 ) ) {
+			return array( 0, 0 );  // un altro processo li sta già sincronizzando: niente doppioni
+		}
+		try {
+			return self::sincronizza( $opz, $categoria );
+		} finally {
+			GA_Connettore::sblocca( 'articoli' );
+		}
+	}
+
+	private static function sincronizza( array $opz, int $categoria ): array {
+		$creati_prima = get_option( self::CREATI, array() );
+		$creati_prima = is_array( $creati_prima ) ? $creati_prima : array();
+		$registro     = $creati_prima;
+		$creati       = 0;
+		$aggiornati   = 0;
 		foreach ( self::elenco() as $e ) {
 			if ( empty( $e['sito'] ) ) {
 				continue;
 			}
 			$articolo = self::articolo_di( $e['uuid'] );
+			if ( null !== $articolo ) {
+				$registro[ $e['uuid'] ] = $articolo->ID;  // anche quelli creati dalla 0.1.0
+				if ( 'trash' === $articolo->post_status ) {
+					continue;  // cestinato dal redattore: non si ripubblica
+				}
+			} elseif ( isset( $registro[ $e['uuid'] ] ) ) {
+				continue;  // eliminato definitivamente dal redattore: non si ricrea
+			}
 			if ( null === $articolo ) {
 				$id = wp_insert_post( array(
 					'post_type'    => 'post',
@@ -126,6 +151,7 @@ final class GA_Eventi {
 					'meta_input'   => array( self::META => $e['uuid'], self::META_VERSIONE => (int) $e['versione'] ),
 				), true );
 				if ( ! is_wp_error( $id ) ) {
+					$registro[ $e['uuid'] ] = (int) $id;
 					$creati++;
 				}
 				continue;
@@ -136,6 +162,9 @@ final class GA_Eventi {
 			wp_update_post( array( 'ID' => $articolo->ID, 'post_title' => self::titolo( $e ) ) );
 			update_post_meta( $articolo->ID, self::META_VERSIONE, (int) $e['versione'] );
 			$aggiornati++;
+		}
+		if ( $registro !== $creati_prima ) {
+			update_option( self::CREATI, $registro, false );
 		}
 		return array( $creati, $aggiornati );
 	}

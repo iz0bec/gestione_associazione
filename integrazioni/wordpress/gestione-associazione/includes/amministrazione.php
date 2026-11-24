@@ -69,6 +69,17 @@ final class GA_Amministrazione {
 					), false );
 					self::torna( 'success', __( 'Impostazioni degli articoli salvate.', 'gestione-associazione' ) );
 					break;
+				case 'riprova_coda':
+					$n = GA_Connettore::riprova_coda();
+					$inviati = GA_Connettore::abbinato() ? GA_Connettore::svuota_coda() : 0;
+					self::torna( 'success', sprintf( __( 'Invii rimessi in coda: %1$d; consegnati ora: %2$d.', 'gestione-associazione' ), $n, $inviati ) );
+					break;
+				case 'elimina_voce':
+					$tolta = GA_Connettore::elimina_voce( sanitize_text_field( wp_unslash( $_POST['chiave'] ?? '' ) ) );
+					self::torna( $tolta ? 'warning' : 'error', $tolta
+						? __( 'Invio eliminato: quei dati non arriveranno al gestionale.', 'gestione-associazione' )
+						: __( 'Invio non trovato.', 'gestione-associazione' ) );
+					break;
 				case 'scollega':
 					GA_Connettore::scollega();
 					self::torna( 'warning', __( 'Collegamento tolto da questo sito. Revocate anche la controparte nel gestionale.', 'gestione-associazione' ) );
@@ -130,12 +141,33 @@ final class GA_Amministrazione {
 			. '<tr><th>' . esc_html__( 'Autore', 'gestione-associazione' ) . '</th><td>' . $autori . '</td></tr></table>',
 			__( 'Salva', 'gestione-associazione' ), 'button-secondary' );
 
-		$coda = get_option( GA_Connettore::CODA, array() );
-		echo '<h2>' . esc_html__( 'Invii in coda', 'gestione-associazione' ) . '</h2><p>';
-		echo $coda
-			? esc_html( sprintf( _n( '%d invio in attesa (cifrato, illeggibile per il sito): si riprova ogni 15 minuti.', '%d invii in attesa (cifrati, illeggibili per il sito): si riprova ogni 15 minuti.', count( $coda ), 'gestione-associazione' ), count( $coda ) ) ) . ' ' . esc_html( end( $coda )['errore'] ?? '' )
-			: esc_html__( 'Nessun invio in attesa.', 'gestione-associazione' );
-		echo '</p>';
+		$coda     = GA_Connettore::coda();
+		$sospese  = array_filter( $coda, fn( $v ) => ! empty( $v['sospeso'] ) );
+		$in_corso = count( $coda ) - count( $sospese );
+		echo '<h2>' . esc_html__( 'Invii in coda', 'gestione-associazione' ) . '</h2>';
+		if ( ! $coda ) {
+			echo '<p>' . esc_html__( 'Nessun invio in attesa.', 'gestione-associazione' ) . '</p>';
+		} else {
+			echo '<p>' . esc_html__( 'I dati in coda sono cifrati per il gestionale: il sito non li può leggere.', 'gestione-associazione' ) . '</p>';
+			if ( $in_corso ) {
+				echo '<p>' . esc_html( sprintf( _n( '%d invio in attesa: si riprova da solo, a intervalli crescenti (fino a 6 ore) per 7 giorni.', '%d invii in attesa: si riprova da soli, a intervalli crescenti (fino a 6 ore) per 7 giorni.', $in_corso, 'gestione-associazione' ), $in_corso ) ) . '</p>';
+			}
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Dal', 'gestione-associazione' ) . '</th><th>' . esc_html__( 'Tipo', 'gestione-associazione' ) . '</th><th>' . esc_html__( 'Tentativi', 'gestione-associazione' ) . '</th><th>' . esc_html__( 'Stato e ultimo errore', 'gestione-associazione' ) . '</th><th></th></tr></thead><tbody>';
+			foreach ( $coda as $voce ) {
+				$stato = ! empty( $voce['sospeso'] )
+					? __( 'Non consegnato', 'gestione-associazione' )
+					: sprintf( __( 'Prossimo tentativo: %s', 'gestione-associazione' ), wp_date( 'd/m/Y H:i', max( (int) ( $voce['prossimo'] ?? 0 ), time() ) ) );
+				echo '<tr><td>' . esc_html( wp_date( 'd/m/Y H:i', (int) $voce['dal'] ) ) . '</td><td><code>' . esc_html( $voce['percorso'] ) . '</code></td><td>' . (int) $voce['tentativi'] . '</td>'
+					. '<td>' . esc_html( $stato ) . '<br><small>' . esc_html( $voce['errore'] ?? '' ) . '</small></td><td>'
+					. self::modulo( 'elimina_voce', '<input type="hidden" name="chiave" value="' . esc_attr( $voce['chiave'] ) . '">', __( 'Elimina', 'gestione-associazione' ), 'button-link-delete' )
+					. '</td></tr>';
+			}
+			echo '</tbody></table>';
+			if ( $sospese ) {
+				echo '<div class="notice notice-error inline"><p>' . esc_html( sprintf( _n( '%d invio non consegnato: il gestionale lo ha rifiutato o non ha risposto per 7 giorni. Risolto il problema (collegamento attivo, orologio, dati), rimettetelo in coda; altrimenti eliminatelo.', '%d invii non consegnati: il gestionale li ha rifiutati o non ha risposto per 7 giorni. Risolto il problema (collegamento attivo, orologio, dati), rimetteteli in coda; altrimenti eliminateli.', count( $sospese ), 'gestione-associazione' ), count( $sospese ) ) ) . '</p></div>';
+			}
+			echo self::modulo( 'riprova_coda', '', __( 'Riprova ora tutti gli invii', 'gestione-associazione' ), 'button-secondary' );
+		}
 
 		$cache = get_option( GA_Eventi::CACHE, array() );
 		echo '<h2>' . esc_html__( 'Sul sito', 'gestione-associazione' ) . '</h2><p>' . esc_html( sprintf( __( 'Eventi in cache: %1$d (letti il %2$s). Shortcode: [ga_domanda sezione="codice" statuto="url" informativa="url"], [ga_contatti], [ga_eventi], [ga_organigramma sezione="codice"], [ga_verifica_tessera]; gli stessi sono disponibili come blocchi.', 'gestione-associazione' ),

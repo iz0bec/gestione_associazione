@@ -12,7 +12,13 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
-foreach ( array( 'ga_connettore', 'ga_coda', 'ga_eventi', 'ga_organigramma', 'ga_articoli', 'ga_ultimo_errore' ) as $opzione ) {
+foreach ( array( 'ga_connettore', 'ga_coda', 'ga_eventi', 'ga_organigramma', 'ga_articoli', 'ga_articoli_creati', 'ga_ultimo_errore' ) as $opzione ) {
 	delete_option( $opzione );
 }
+// voci della coda (una per invio) e blocchi fra processi
+global $wpdb;
+foreach ( array( 'ga_coda_', 'ga_blocco_' ) as $prefisso ) {
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $prefisso ) . '%' ) );
+}
+wp_cache_flush();
 wp_clear_scheduled_hook( 'ga_periodico' );

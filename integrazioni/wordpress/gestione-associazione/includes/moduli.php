@@ -6,7 +6,8 @@
  * Descrizione: Moduli sul sito (shortcode e blocchi): domanda di iscrizione, modulo contatti,
  *              eventi con adesione, organigramma, verifica della tessera. I dati personali
  *              partono subito cifrati verso il gestionale e non restano nel sito; anti-spam con
- *              campo nascosto e tempo minimo di compilazione, senza servizi esterni.
+ *              campo nascosto e tempo minimo di compilazione, senza servizi esterni; il gettone
+ *              col tempo si rinnova al caricamento della pagina (REST), così regge la cache di pagina.
  * Licenza:     CC0 1.0 Universal (pubblico dominio)
  * SPDX-License-Identifier: CC0-1.0
  */
@@ -19,6 +20,7 @@ final class GA_Moduli {
 
 	const SECONDI_MINIMI = 4;
 	const ORE_MASSIME    = 3;
+	const MODULI         = array( 'domanda', 'contatti', 'adesione' );
 
 	/** Esito dell'invio in corso (stessa richiesta: i campi restano compilati se c'è un errore). */
 	private static $esito = array();
@@ -30,16 +32,33 @@ final class GA_Moduli {
 		add_action( 'init', array( __CLASS__, 'ricevi' ) );
 		add_action( 'wp_enqueue_scripts', function () {
 			wp_register_style( 'gestione-associazione', GA_URL . 'assets/stile.css', array(), GA_VERSIONE );
+			wp_register_script( 'gestione-associazione-moduli', GA_URL . 'assets/moduli.js', array(), GA_VERSIONE, true );
+		} );
+		add_action( 'rest_api_init', function () {
+			register_rest_route( 'gestione-associazione/v1', '/gettone', array(
+				'methods'             => 'GET',
+				'permission_callback' => '__return_true',
+				'args'                => array( 'modulo' => array( 'required' => true, 'type' => 'string', 'enum' => self::MODULI ) ),
+				'callback'            => function ( WP_REST_Request $richiesta ) {
+					$risposta = new WP_REST_Response( array( 't' => self::gettone( $richiesta['modulo'] ) ) );
+					$risposta->header( 'Cache-Control', 'no-store, max-age=0' );
+					return $risposta;
+				},
+			) );
 		} );
 	}
 
 	// --- anti-spam -----------------------------------------------------------------------------
 
-	private static function campi_controllo( string $modulo ): string {
+	/** Ora di presentazione del modulo, firmata: «ora|firma». */
+	private static function gettone( string $modulo ): string {
 		$t = time();
-		$firma = wp_hash( $modulo . '|' . $t, 'nonce' );
+		return $t . '|' . wp_hash( $modulo . '|' . $t, 'nonce' );
+	}
+
+	private static function campi_controllo( string $modulo ): string {
 		return '<input type="hidden" name="ga_modulo" value="' . esc_attr( $modulo ) . '">'
-			. '<input type="hidden" name="ga_t" value="' . esc_attr( $t . '|' . $firma ) . '">'
+			. '<input type="hidden" name="ga_t" value="' . esc_attr( self::gettone( $modulo ) ) . '">'
 			. '<p class="ga-nascosto" aria-hidden="true"><label>' . esc_html__( 'Lasciare vuoto', 'gestione-associazione' )
 			. ' <input type="text" name="ga_sito_web" value="" tabindex="-1" autocomplete="off"></label></p>';
 	}
@@ -107,7 +126,7 @@ final class GA_Moduli {
 
 	private static function esito_invio( array $risultato, string $ok ): array {
 		if ( 0 === $risultato[0] ) {
-			return array( 'ok' => __( 'Ricevuto. Il gestionale ora non risponde: il messaggio è conservato cifrato e verrà consegnato appena possibile.', 'gestione-associazione' ) );
+			return array( 'ok' => __( 'Ricevuto. Il gestionale ora non può riceverlo: il messaggio è conservato cifrato e verrà consegnato appena possibile.', 'gestione-associazione' ) );
 		}
 		return array( 'ok' => $ok );
 	}
@@ -176,9 +195,15 @@ final class GA_Moduli {
 		if ( empty( $dati['cognome'] ) ) {
 			return array( 'errore' => __( 'Il cognome è obbligatorio.', 'gestione-associazione' ), 'evento' => $evento );
 		}
-		$esito = self::esito_invio( GA_Connettore::invia( '/eventi/' . $evento . '/adesioni', $dati ),
-			__( 'Adesione registrata. Grazie!', 'gestione-associazione' ) );
-		GA_Eventi::aggiorna_cache();  // posti liberi aggiornati
+		$risultato = GA_Connettore::invia( '/eventi/' . $evento . '/adesioni', $dati );
+		$esito     = self::esito_invio( $risultato, __( 'Adesione registrata. Grazie!', 'gestione-associazione' ) );
+		if ( 0 !== $risultato[0] ) {
+			try {
+				GA_Eventi::aggiorna_cache();  // posti liberi aggiornati
+			} catch ( Throwable $e ) {
+				// l'adesione è registrata: i posti si aggiornano al prossimo giro del cron
+			}
+		}
 		return $esito + array( 'evento' => $evento );
 	}
 
@@ -209,7 +234,9 @@ final class GA_Moduli {
 
 	private static function inizio_modulo( string $modulo, string $classe ): string {
 		wp_enqueue_style( 'gestione-associazione' );
-		return '<form class="ga-modulo ' . esc_attr( $classe ) . '" method="post" action="">' . self::campi_controllo( $modulo );
+		wp_enqueue_script( 'gestione-associazione-moduli' );
+		return '<form class="ga-modulo ' . esc_attr( $classe ) . '" method="post" action="" data-ga-gettone="'
+			. esc_url( rest_url( 'gestione-associazione/v1/gettone' ) ) . '">' . self::campi_controllo( $modulo );
 	}
 
 	public static function mostra_domanda( $attributi = array() ): string {

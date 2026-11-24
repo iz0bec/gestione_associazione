@@ -3,7 +3,7 @@
  * Plugin Name:       Gestione Associazione
  * Plugin URI:        https://github.com/iz0bec/gestione_associazione
  * Description:       Collega il sito al gestionale Gestione Associazione (API v1, firmate e cifrate): domanda di iscrizione, modulo contatti, eventi con adesione e articoli, organigramma, verifica della tessera. Nessun dato personale dei soci sul sito.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Bartolomeo Santoro aka IZ0BEC
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GA_VERSIONE', '0.1.0' );
+define( 'GA_VERSIONE', '0.1.1' );
 define( 'GA_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GA_URL', plugin_dir_url( __FILE__ ) );
 

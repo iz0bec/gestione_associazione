@@ -4,7 +4,7 @@ Tags: associazione, iscrizione, eventi, terzo settore, ANCR
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: CC0-1.0
 License URI: https://creativecommons.org/publicdomain/zero/1.0/
 
@@ -34,6 +34,12 @@ Richiede le estensioni PHP sodium e openssl (presenti nelle installazioni comuni
 4. Confrontate l'impronta mostrata dalle due parti e attivate il collegamento nel gestionale.
 
 == Changelog ==
+
+= 0.1.1 =
+* Coda degli invii: una voce per invio (prima un invio arrivato mentre il cron svuotava la coda poteva andare perso); attesa crescente fino a 6 ore per 7 giorni; gli errori transitori (collegamento sospeso, orologio, richiesta gemella in corso, risposte non verificabili del proxy) si ritentano; ciò che non si consegna resta «non consegnato» nelle impostazioni, da rimettere in coda o eliminare, mai scartato in silenzio.
+* Adesione agli eventi: dopo un invio riuscito o messo in coda non compare più un errore (che portava a rimandarla e a doppioni).
+* Articoli degli eventi: un articolo cestinato o eliminato dal redattore non viene ricreato; titolo come testo semplice; niente doppioni se cron e «Aggiorna ora» lavorano insieme.
+* Anti-spam: il gettone del modulo si rinnova al caricamento della pagina, così i moduli funzionano anche con la cache di pagina.
 
 = 0.1.0 =
 * Prima versione: abbinamento, domanda, contatti, eventi e adesioni, articoli degli eventi, organigramma, verifica della tessera, coda cifrata.

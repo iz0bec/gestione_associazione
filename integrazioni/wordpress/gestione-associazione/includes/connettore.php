@@ -6,7 +6,9 @@
  * Descrizione: Collegamento al gestionale tramite le API v1: abbinamento con invito monouso,
  *              chiavi del sito (cifrate nel database con le chiavi segrete di wp-config.php),
  *              richieste firmate, risposte verificate e decifrate, coda cifrata degli invii che
- *              non sono riusciti (ripresa dal cron di WordPress, senza doppioni).
+ *              non sono riusciti (una voce per invio, ripresa dal cron di WordPress con attesa
+ *              crescente e senza doppioni; ciò che non si può consegnare resta «non consegnato»,
+ *              visibile all'amministratore, mai scartato in silenzio).
  * Licenza:     CC0 1.0 Universal (pubblico dominio)
  * SPDX-License-Identifier: CC0-1.0
  */
@@ -30,9 +32,12 @@ class GA_Errore_Connettore extends RuntimeException {
 final class GA_Connettore {
 
 	const OPZIONE = 'ga_connettore';
-	const CODA    = 'ga_coda';
+	const CODA_VECCHIA = 'ga_coda';      // 0.1.0: tutta la coda in una sola opzione
+	const PREFISSO_CODA = 'ga_coda_';     // dalla 0.1.1: un'opzione per invio (ga_coda_<chiave>)
+	const PREFISSO_BLOCCO = 'ga_blocco_';
 	const VERSIONE_API = 'v1';
-	const TENTATIVI = 20;
+	const SCADENZA_CODA = 7 * DAY_IN_SECONDS;  // poi la voce resta, ma «non consegnata»
+	const DURATA_SVUOTA = 600;                 // secondi massimi di un giro della coda
 
 	/** Impostazioni del collegamento (mai la chiave privata in chiaro). */
 	public static function stato(): array {
@@ -101,7 +106,9 @@ final class GA_Connettore {
 			throw new GA_Errore_Connettore( sprintf( __( 'Gestionale non raggiungibile: %s', 'gestione-associazione' ), $risposta->get_error_message() ) );
 		}
 		$intest = array();
-		foreach ( wp_remote_retrieve_headers( $risposta )->getAll() as $nome => $valore ) {
+		$tutte  = wp_remote_retrieve_headers( $risposta );
+		$tutte  = is_object( $tutte ) && method_exists( $tutte, 'getAll' ) ? $tutte->getAll() : (array) $tutte;
+		foreach ( $tutte as $nome => $valore ) {
 			$intest[ strtolower( $nome ) ] = is_array( $valore ) ? implode( ', ', $valore ) : $valore;
 		}
 		return array( (int) wp_remote_retrieve_response_code( $risposta ), $intest, (string) wp_remote_retrieve_body( $risposta ) );
@@ -157,7 +164,7 @@ final class GA_Connettore {
 		try {
 			GA_Firma::verifica_risposta( $stato, $risp, $testo, $membro, $s['jwks'] );
 		} catch ( GA_Errore_Firma $e ) {
-			throw new GA_Errore_Connettore( sprintf( __( 'Risposta del gestionale non verificata: %s', 'gestione-associazione' ), $e->getMessage() ), $stato );
+			throw new GA_Errore_Connettore( sprintf( __( 'Risposta del gestionale non verificata: %s', 'gestione-associazione' ), $e->getMessage() ), $stato, 'non-verificata' );
 		}
 		if ( $stato >= 400 ) {
 			throw self::errore_da( $stato, $risp, $testo );
@@ -234,11 +241,56 @@ final class GA_Connettore {
 		self::salva( $s );
 	}
 
+	// --- blocchi fra processi -----------------------------------------------------------------
+
+	/**
+	 * Blocco atomico fra processi (cron, amministrazione): INSERT IGNORE sulla chiave unica di
+	 * option_name, letto e tolto senza la cache delle opzioni. Scade da solo dopo $durata secondi.
+	 */
+	public static function blocca( string $nome, int $durata ): bool {
+		global $wpdb;
+		$opzione = self::PREFISSO_BLOCCO . $nome;
+		for ( $giro = 0; $giro < 2; $giro++ ) {
+			$preso = $wpdb->query( $wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				$opzione, (string) ( time() + $durata )
+			) );
+			if ( $preso ) {
+				return true;
+			}
+			$scade = (int) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $opzione ) );
+			if ( $scade >= time() ) {
+				return false;
+			}
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $opzione, (string) $scade ) );
+		}
+		return false;
+	}
+
+	public static function sblocca( string $nome ): void {
+		global $wpdb;
+		$wpdb->delete( $wpdb->options, array( 'option_name' => self::PREFISSO_BLOCCO . $nome ) );
+	}
+
 	// --- invii con coda -------------------------------------------------------------------------
 
 	/**
+	 * Errore da ritentare: gestionale irraggiungibile o in errore, risposta non verificabile
+	 * (es. una pagina d'errore del proxy), collegamento sospeso o non ancora attivo, orologio
+	 * sfasato, richiesta gemella in corso, troppe richieste. Gli altri 4xx sono un rifiuto dei dati.
+	 */
+	public static function ritentabile( GA_Errore_Connettore $e ): bool {
+		return 0 === $e->stato || $e->stato >= 500 || 'non-verificata' === $e->codice
+			|| in_array( $e->stato, array( 401, 403, 408, 409, 425, 429 ), true );
+	}
+
+	private static function attesa( int $tentativi ): int {
+		return (int) min( 15 * MINUTE_IN_SECONDS * ( 2 ** min( max( $tentativi - 1, 0 ), 5 ) ), 6 * HOUR_IN_SECONDS );
+	}
+
+	/**
 	 * Invia dati personali (domanda, contatto, adesione): cifrati subito per il gestionale. Se il
-	 * gestionale non risponde, il JWE resta in coda (illeggibile per il sito) e si riprova.
+	 * gestionale non li può ricevere ora, il JWE resta in coda (illeggibile per il sito) e si riprova.
 	 * Restituisce [stato, risposta] oppure [0, null] se messo in coda.
 	 */
 	public static function invia( string $percorso, array $dati ): array {
@@ -248,39 +300,128 @@ final class GA_Connettore {
 			list( $stato, $risposta ) = self::richiesta( 'POST', $percorso, array(), null, true, $idempotenza, $jwe );
 			return array( $stato, $risposta );
 		} catch ( GA_Errore_Connettore $e ) {
-			if ( $e->stato >= 400 && $e->stato < 500 && 429 !== $e->stato ) {
+			if ( ! self::ritentabile( $e ) ) {
 				throw $e;  // dati non validi o operazione rifiutata: lo dice la persona, non si ritenta
 			}
-			$coda   = get_option( self::CODA, array() );
-			$coda[] = array( 'percorso' => $percorso, 'jwe' => $jwe, 'chiave' => $idempotenza, 'tentativi' => 1, 'dal' => time(), 'errore' => $e->getMessage() );
-			update_option( self::CODA, $coda, false );
+			// un'opzione per invio: l'aggiunta non riscrive le altre voci (niente aggiornamenti persi)
+			add_option( self::PREFISSO_CODA . $idempotenza, array(
+				'percorso'  => $percorso,
+				'jwe'       => $jwe,
+				'chiave'    => $idempotenza,
+				'tentativi' => 1,
+				'dal'       => time(),
+				'prossimo'  => time() + self::attesa( 1 ),
+				'errore'    => $e->getMessage(),
+				'sospeso'   => false,
+			), '', 'no' );
 			return array( 0, null );
 		}
 	}
 
-	/** Riprova gli invii in coda (cron di WordPress). */
-	public static function svuota_coda(): int {
-		$coda = get_option( self::CODA, array() );
-		if ( ! $coda || ! self::abbinato() ) {
-			return 0;
-		}
-		$rimasti = array();
-		$fatti   = 0;
-		foreach ( $coda as $voce ) {
-			try {
-				self::richiesta( 'POST', $voce['percorso'], array(), null, true, $voce['chiave'], $voce['jwe'] );
-				$fatti++;
-			} catch ( GA_Errore_Connettore $e ) {
-				$voce['tentativi']++;
-				$voce['errore'] = $e->getMessage();
-				$rifiutato      = $e->stato >= 400 && $e->stato < 500 && 429 !== $e->stato;
-				if ( ! $rifiutato && $voce['tentativi'] < self::TENTATIVI ) {
-					$rimasti[] = $voce;
-				}
+	/** Voci della coda [nome opzione => voce], in ordine di arrivo. */
+	public static function coda(): array {
+		global $wpdb;
+		self::migra_coda();
+		$nomi = $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_id",
+			$wpdb->esc_like( self::PREFISSO_CODA ) . '%' ) );
+		$voci = array();
+		foreach ( $nomi as $nome ) {
+			$voce = get_option( $nome );
+			if ( is_array( $voce ) && ! empty( $voce['jwe'] ) ) {
+				$voci[ $nome ] = $voce;
 			}
 		}
-		update_option( self::CODA, $rimasti, false );
+		return $voci;
+	}
+
+	/** Porta la coda della 0.1.0 (una sola opzione) a una voce per invio. */
+	private static function migra_coda(): void {
+		$vecchia = get_option( self::CODA_VECCHIA, null );
+		if ( null === $vecchia ) {
+			return;
+		}
+		foreach ( is_array( $vecchia ) ? $vecchia : array() as $voce ) {
+			if ( is_array( $voce ) && ! empty( $voce['jwe'] ) && ! empty( $voce['chiave'] ) ) {
+				add_option( self::PREFISSO_CODA . $voce['chiave'], $voce + array( 'prossimo' => 0, 'sospeso' => false ), '', 'no' );
+			}
+		}
+		delete_option( self::CODA_VECCHIA );
+	}
+
+	/** Riprova gli invii in coda (cron di WordPress); un solo giro per volta. */
+	public static function svuota_coda(): int {
+		if ( ! self::abbinato() ) {
+			return 0;
+		}
+		if ( ! self::coda() || ! self::blocca( 'coda', self::DURATA_SVUOTA + 60 ) ) {
+			return 0;
+		}
+		$inizio = time();
+		$fatti  = 0;
+		try {
+			foreach ( self::coda() as $nome => $voce ) {  // riletta sotto il blocco
+				if ( time() - $inizio > self::DURATA_SVUOTA ) {
+					break;  // il resto al prossimo giro, prima che il blocco scada
+				}
+				if ( ! empty( $voce['sospeso'] ) || (int) ( $voce['prossimo'] ?? 0 ) > time() ) {
+					continue;
+				}
+				try {
+					self::richiesta( 'POST', $voce['percorso'], array(), null, true, $voce['chiave'], $voce['jwe'] );
+					delete_option( $nome );
+					$fatti++;
+				} catch ( GA_Errore_Connettore $e ) {
+					$voce['tentativi'] = (int) $voce['tentativi'] + 1;
+					$voce['errore']    = $e->getMessage();
+					if ( ! self::ritentabile( $e ) || time() - (int) $voce['dal'] > self::SCADENZA_CODA ) {
+						$voce['sospeso'] = true;  // resta, visibile nelle impostazioni: mai scartato
+					} else {
+						$voce['prossimo'] = time() + self::attesa( $voce['tentativi'] );
+					}
+					update_option( $nome, $voce, false );
+				}
+			}
+		} finally {
+			self::sblocca( 'coda' );
+		}
 		return $fatti;
+	}
+
+	/** Rimette in coda le voci non consegnate (dopo aver risolto il problema). */
+	public static function riprova_coda(): int {
+		if ( ! self::blocca( 'coda', 60 ) ) {
+			throw new GA_Errore_Connettore( __( 'La coda è in lavorazione: riprovare fra qualche minuto.', 'gestione-associazione' ) );
+		}
+		$n = 0;
+		try {
+			foreach ( self::coda() as $nome => $voce ) {
+				if ( ! empty( $voce['sospeso'] ) || (int) ( $voce['prossimo'] ?? 0 ) > time() ) {
+					$voce['sospeso']  = false;
+					$voce['prossimo'] = 0;
+					$voce['dal']      = time();
+					update_option( $nome, $voce, false );
+					$n++;
+				}
+			}
+		} finally {
+			self::sblocca( 'coda' );
+		}
+		return $n;
+	}
+
+	/** Elimina una voce della coda (decisione dell'amministratore: i dati non arriveranno). */
+	public static function elimina_voce( string $chiave ): bool {
+		if ( ! preg_match( '/^[0-9a-f-]{36}$/', $chiave ) ) {
+			return false;
+		}
+		if ( ! self::blocca( 'coda', 60 ) ) {  // non mentre un giro della coda la sta riscrivendo
+			throw new GA_Errore_Connettore( __( 'La coda è in lavorazione: riprovare fra qualche minuto.', 'gestione-associazione' ) );
+		}
+		try {
+			return delete_option( self::PREFISSO_CODA . $chiave );
+		} finally {
+			self::sblocca( 'coda' );
+		}
 	}
 
 	/** Lettura pubblica (eventi, organigramma, tessere): firmata, non cifrata. */

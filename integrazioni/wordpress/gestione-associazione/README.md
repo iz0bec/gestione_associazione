@@ -24,6 +24,7 @@ gestionale, solo dal contratto (`docs/api/openapi.yaml`).
 | `includes/moduli.php` | shortcode e moduli (domanda, contatti, adesioni, verifica tessera) |
 | `includes/amministrazione.php` | Impostazioni → Gestione Associazione |
 | `assets/blocchi.js` | blocchi dell'editor (senza compilazione) |
+| `assets/moduli.js` | rinnovo del gettone anti-spam al caricamento della pagina |
 
 ## Prove
 

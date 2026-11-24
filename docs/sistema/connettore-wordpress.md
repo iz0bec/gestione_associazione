@@ -26,20 +26,27 @@ Per gli eventi con **«Pubblica sui siti collegati»** (scheda dell'evento, con 
 connettore crea un **articolo**, in bozza per default, che contiene lo shortcode dell'evento: data,
 luogo, posti e adesione sono sempre quelli correnti, il testo aggiunto dal redattore non viene mai
 toccato. Se l'evento cambia, il titolo si aggiorna; se è annullato diventa «ANNULLATO – …»;
-l'articolo non viene mai cancellato. La diffusione sui social resta ai plugin del sito.
+l'articolo non viene mai cancellato. Un articolo che il redattore **cestina o elimina** non viene
+ricreato né aggiornato. La diffusione sui social resta ai plugin del sito.
 
 ## Sicurezza e riservatezza
 
 - Ogni richiesta è **firmata** (RFC 9421, Ed25519) e ogni risposta del gestionale è verificata,
   legata alla richiesta: una risposta alterata o riusata viene scartata.
 - Domande, contatti e adesioni partono **cifrati per il gestionale** (JWE, X25519 + AES-GCM): il
-  sito non li conserva. Se il gestionale non risponde, l'invio resta in una **coda già cifrata**
-  (illeggibile anche per chi amministra il sito) e riparte da solo ogni 15 minuti, senza doppioni
-  (`Idempotency-Key`).
+  sito non li conserva. Se il gestionale non li può ricevere (irraggiungibile, in errore,
+  collegamento sospeso o non ancora attivato, orologio sfasato), l'invio resta in una **coda già
+  cifrata** (illeggibile anche per chi amministra il sito) e riparte da solo, a intervalli crescenti
+  da 15 minuti a 6 ore, senza doppioni (`Idempotency-Key`). Dopo 7 giorni, o se il gestionale
+  rifiuta i dati, l'invio diventa **«non consegnato»**: resta elencato in *Impostazioni → Gestione
+  Associazione*, dove si rimette in coda (**Riprova ora tutti gli invii**) o si elimina; non viene
+  mai scartato in silenzio.
 - Le chiavi del sito stanno nel database di WordPress **cifrate** con le chiavi segrete di
   `wp-config.php`: cambiando quelle chiavi va rifatto l'abbinamento.
-- Anti-spam senza servizi esterni: campo nascosto e tempo minimo di compilazione; la verifica
-  delle tessere è limitata a 10 al minuto per indirizzo.
+- Anti-spam senza servizi esterni: campo nascosto e tempo minimo di compilazione (il gettone si
+  rinnova al caricamento della pagina, quindi i moduli funzionano anche con la cache di pagina;
+  senza JavaScript una pagina in cache da più di 3 ore va ricaricata); la verifica delle tessere è
+  limitata a 10 al minuto per indirizzo.
 - Nessun dato personale dei soci passa al sito: l'integrazione non riceve mai l'ambito
   `soci:lettura`.
 
