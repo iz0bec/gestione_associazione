@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.91] - 2026-11-24
+
 ### Corretto
 - **Connettore WordPress 0.1.1**:
   - **coda degli invii**: una voce per invio; prima una domanda, un contatto o un'adesione
