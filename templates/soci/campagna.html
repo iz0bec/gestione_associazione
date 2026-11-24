@@ -109,11 +109,11 @@
 {% endif %}
 
 {# ======================= VERSO L'ENTE SOVRAORDINATO ======================= #}
-<h2 class="h2 mt-4 mb-2"><i class="ti ti-arrow-up-right me-1"></i>Verso {{ superiore_nome }}</h2>
+<h2 class="h2 mt-4 mb-2"><i class="ti ti-arrow-up-right me-1"></i>Verso la {{ superiore_nome }}</h2>
 {% include "soci/_fasi_campagna.html" with fasi=fasi_superiore %}
 
 <div class="card mb-3" id="invito">
-  <div class="card-header"><h3 class="card-title"><span class="badge bg-blue-lt me-2">1</span>Invito ricevuto da {{ superiore_nome }}</h3></div>
+  <div class="card-header"><h3 class="card-title"><span class="badge bg-blue-lt me-2">1</span>Invito ricevuto dalla {{ superiore_nome }}</h3></div>
   <div class="card-body small">
     {% if invito %}<p class="mb-2"><i class="ti ti-circle-check text-success me-1"></i>{{ invito }}{% if invito.protocollo %} · «{{ invito.protocollo.oggetto|truncatechars:90 }}» · <a href="{{ invito.protocollo.get_absolute_url }}">apri il protocollo</a>{% endif %}{% if invito.note %} · {{ invito.note }}{% endif %}</p>
     {% elif invito_suggerito %}<p class="mb-2">Trovato in protocollo: <strong>{{ invito_suggerito.segnatura }}</strong> del {{ invito_suggerito.registrato_il|date:"d/m/Y" }} · «{{ invito_suggerito.oggetto|truncatechars:90 }}».</p>

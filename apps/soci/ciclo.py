@@ -1036,7 +1036,8 @@ def e_federazione():
 
 
 def nome_superiore():
-    return "la sede nazionale" if e_federazione() else "la Federazione"
+    """Ente sovraordinato, senza articolo (nei testi: «verso la», «dalla», «alla»)."""
+    return "sede nazionale" if e_federazione() else "Federazione"
 
 
 def invito(anno):
@@ -1170,7 +1171,7 @@ def fasi_verso_superiore(anno):
              str(voce) if voce else "da collegare al protocollo in entrata", "invito"),
         richiesta,
         ricevimento,
-        Fase(4, f"Pagamento a {nome_superiore()}",
+        Fase(4, f"Pagamento alla {nome_superiore()}",
              _stato(superiore["pagato"], superiore["dovuto"]) if superiore["dovuto"]
              else "da_fare",
              f"pagati € {superiore['pagato']:.2f} su € {superiore['dovuto']:.2f}", "pagamento"),

@@ -5,6 +5,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.86] - 2026-11-24
+
+### Corretto
+- Campagna delle tessere: articoli nei titoli della direzione verso l'ente sovraordinato («Invito
+  ricevuto dalla Federazione», «Pagamento alla sede nazionale»).
+
 ## [1.0.85] - 2026-11-24
 
 ### Modificato
