@@ -133,6 +133,34 @@ adatto (le risposte partirebbero dal server generale).
 elimina solo una casella che non ha mai scaricato messaggi; se ne ha, i messaggi restano nella posta del
 protocollo e la casella si toglie dalla lettura in *Protocollo → Caselle* (*non usata*).
 
+### Inoltro dei messaggi di una casella
+
+Il pulsante **Inoltro** accanto a una casella fa sì che sia il gestionale, e non più il fornitore della
+posta, a girare i messaggi alle persone giuste: tipicamente la **casella istituzionale della sezione**
+(es. `sezione.pz.sez@…`), finora inoltrata dal pannello del fornitore. Nella pagina si indicano:
+
+- **Inoltra i messaggi**: l'interruttore. Si inoltrano solo i messaggi scaricati **da quel momento**;
+- **Inoltra a**: le persone dall'anagrafica (si cercano per nome e si aggiungono; si tolgono togliendo
+  la spunta), che devono avere un'email;
+- **Altri indirizzi**: uno per riga, per chi non è in anagrafica;
+- **Incaricato della trattazione**: riceve, **da solo**, i messaggi **riservati**: le comunicazioni del
+  gestionale segnate come tali (ad esempio le credenziali inviate «per conto» di chi non ha l'email) e
+  quelli con «per conto di» nell'oggetto. Senza incaricato i riservati non si inoltrano e restano nella
+  casella e nella posta da protocollare;
+- **Inoltra con**: il servizio di invio da usare (vuoto: il server generale).
+
+Il messaggio viene **reindirizzato**: arriva con il mittente e il testo originali, come se fosse stato
+spedito direttamente al destinatario (con le intestazioni `Resent-From`/`Resent-To`). Se il server di
+invio non accetta un mittente diverso dal proprio, parte invece un **«Inoltro: …»** con il testo e il
+**messaggio originale allegato** (`.eml`), con la risposta indirizzata al mittente vero. In fondo alla
+pagina gli **ultimi inoltri** mostrano come è andato ciascuno; quelli non riusciti si ritentano fino a
+cinque volte e, se l'invio dei messaggi è spento, restano in coda.
+
+Perché funzioni, la casella dev'essere **letta** dal programma (abilitata in *Protocollo → Caselle*): i
+messaggi finiscono comunque anche nella posta da protocollare. Attivato l'inoltro qui, va **tolto
+quello impostato presso il fornitore**, altrimenti i messaggi arrivano due volte. Le ricevute PEC che
+si agganciano da sole ai protocolli non si inoltrano. Ogni modifica finisce nel registro attività.
+
 ### Servizi di invio (SMTP)
 
 Ogni **servizio di invio** è un server SMTP con cui il programma spedisce: nome, tipo (**Email** o

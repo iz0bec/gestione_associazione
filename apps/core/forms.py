@@ -262,6 +262,37 @@ class ServizioInvioForm(_FornitoreMixin, StileMixin, forms.ModelForm):
         return super().save(commit)
 
 
+class InoltroCasellaForm(StileMixin, forms.ModelForm):
+    """Inoltro dei messaggi di una casella: persone dall'anagrafica (scelte nella pagina), altri
+    indirizzi, incaricato per i messaggi riservati e servizio con cui inoltrare."""
+
+    class Meta:
+        from apps.protocollo.models import CasellaPosta
+
+        model = CasellaPosta
+        fields = ["inoltro_attivo", "inoltro_indirizzi", "inoltro_servizio"]
+        widgets = {"inoltro_indirizzi": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        from .models import ServizioInvio
+
+        super().__init__(*args, **kwargs)
+        campo = self.fields["inoltro_servizio"]
+        campo.queryset = ServizioInvio.objects.filter(attivo=True, tipo=ServizioInvio.Tipo.EMAIL)
+        campo.empty_label = "— il server generale —"
+
+    def clean_inoltro_indirizzi(self):
+        from apps.protocollo.inoltri import indirizzi_extra
+
+        testo = self.cleaned_data.get("inoltro_indirizzi", "")
+        validi = indirizzi_extra(testo)
+        scritti = [p for p in testo.replace(",", " ").replace(";", " ").split() if p]
+        sbagliati = [p for p in scritti if p.lower() not in {v.lower() for v in validi}]
+        if sbagliati:
+            raise forms.ValidationError(f"Indirizzi non validi: {', '.join(sbagliati[:5])}.")
+        return "\n".join(validi)
+
+
 class FornitorePostaForm(StileMixin, forms.ModelForm):
     """Fornitore di posta personalizzato: almeno il server IMAP o quello SMTP."""
 

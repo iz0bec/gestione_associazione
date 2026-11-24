@@ -597,6 +597,8 @@ def messaggio(invio, destinatario, org=None):
     servizio = servizio_per(invio, destinatario)
     pec = servizio is not None and servizio.pec
     intestazioni = {"X-Gestione-Invio": str(invio.pk)}
+    if invio.riservato:  # chi inoltra la casella di arrivo lo passa solo all'incaricato
+        intestazioni["X-Gestione-Riservato"] = "per-conto"
     mittente = None  # quello del server generale
     if servizio is not None:
         from email.utils import make_msgid

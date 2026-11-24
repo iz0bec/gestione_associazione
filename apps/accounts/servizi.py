@@ -575,6 +575,8 @@ def _bozza_per_conto(attore, utente, password, indirizzo, org):
         )
     else:  # l'ente non ha una casella: la carica più alta dell'organo con un'email
         invio = comunicazioni.crea_invio(attore, soggetti=[ricevente.soggetto], **comuni)
+    invio.riservato = True
+    invio.save(update_fields=["riservato"])
     invio.per_conto = persona
     return invio
 

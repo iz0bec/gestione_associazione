@@ -1,0 +1,6 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Persona scelta per l'inoltro (destinatario o incaricato): si toglie con la spunta
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+<label class="badge bg-blue-lt me-1 mb-1 p-2 fw-normal"><input type="checkbox" class="form-check-input m-0 me-1" name="{{ nome }}" value="{{ s.pk }}" checked> {{ s.nome_completo }}{% if s.email %} <span class="text-secondary">· {{ s.email }}</span>{% else %} <span class="text-orange">· senza email</span>{% endif %}</label>

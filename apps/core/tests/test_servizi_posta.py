@@ -396,3 +396,26 @@ def test_rimozione_del_bot_telegram(client_ruolo, settings, monkeypatch):
     c.post("/sistema/posta/telegram/", {"azione": "rimuovi"})
     canale = CanaleTelegram.corrente()
     assert not canale.token_cifrato and not canale.attivo and not canale.nome_bot
+
+
+def test_inoltro_trasparente_sul_server_vero(smtp_finto, tmp_path):
+    """Reindirizzo: busta dal servizio generale, messaggio originale intatto con Resent-*."""
+    from apps.protocollo import inoltri
+    from apps.protocollo.models import CasellaPosta
+    from apps.protocollo.posta import salva_messaggio
+
+    _imposta(invio_email=True)
+    _servizio(generale=True)
+    casella = CasellaPosta.objects.create(nome="Sezione", server="imap.example.it",
+                                          utente="sezione@example.it",
+                                          inoltro_indirizzi="presidente@example.org")  # fmt: skip
+    inoltri.attiva(casella, True)
+    casella.save()
+    grezzo = (b"From: Federazione <fed@example.org>\r\nTo: sezione@example.it\r\n"
+              b"Subject: Circolare\r\nMessage-ID: <c1@example.org>\r\n\r\nTesto.\r\n")  # fmt: skip
+    salva_messaggio(casella, grezzo)
+    inoltri.prepara(casella)
+    assert inoltri.invia_coda() == 1
+    busta, destinatari, spedito = smtp_finto.ultimo.spediti[0]
+    assert busta == "sez@example.it" and destinatari == ["presidente@example.org"]
+    assert spedito.startswith(b"Resent-From: sez@example.it") and spedito.endswith(grezzo)

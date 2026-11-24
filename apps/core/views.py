@@ -506,6 +506,122 @@ def _verifica_servizio(request, servizio):
                                 f"non riuscito ({dettaglio}).")  # fmt: skip
 
 
+class CasellaInoltroView(PermessoMixin, View):
+    """Inoltro dei messaggi scaricati da una casella alle persone scelte (es. la casella
+    istituzionale della sezione, al posto dell'inoltro impostato presso il fornitore)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+    template_name = "core/casella_inoltro.html"
+
+    def _casella(self, pk):
+        from django.shortcuts import get_object_or_404
+
+        from apps.protocollo.models import CasellaPosta
+
+        return get_object_or_404(CasellaPosta, pk=pk)
+
+    def _pagina(self, request, casella, form, scelti, incaricato):
+        from django.shortcuts import render
+
+        from apps.protocollo.models import InoltroMessaggio
+
+        recenti = InoltroMessaggio.objects.filter(messaggio__casella=casella).select_related(
+            "messaggio"
+        )[:20]
+        return render(request, self.template_name, {
+            "casella": casella, "form": form, "scelti": scelti, "incaricato": incaricato,
+            "recenti": recenti,
+        })  # fmt: skip
+
+    def get(self, request, pk):
+        from .forms import InoltroCasellaForm
+
+        casella = self._casella(pk)
+        return self._pagina(request, casella, InoltroCasellaForm(instance=casella),
+                            list(casella.inoltro_destinatari.all()),
+                            casella.inoltro_incaricato)  # fmt: skip
+
+    def post(self, request, pk):
+        from apps.anagrafica.models import Soggetto
+        from apps.protocollo import inoltri
+
+        from .forms import InoltroCasellaForm
+
+        casella = self._casella(pk)
+        prima = (casella.inoltro_attivo, sorted(casella.inoltro_destinatari.values_list("pk",
+                 flat=True)), casella.inoltro_incaricato_id)  # fmt: skip
+        attivo_prima = casella.inoltro_attivo
+        form = InoltroCasellaForm(request.POST, instance=casella)
+        ids = [i for i in request.POST.getlist("inoltro_destinatari") if i.isdigit()]
+        scelti = list(Soggetto.objects.filter(pk__in=ids))
+        incaricato = Soggetto.objects.filter(pk=request.POST.get("inoltro_incaricato") or 0).first()
+        if form.is_valid() and form.cleaned_data["inoltro_attivo"]:
+            senza = [s for s in scelti if not s.email]
+            if senza:
+                form.add_error(None, "Senza email, non possono ricevere: "
+                               + ", ".join(s.nome_completo for s in senza) + ".")  # fmt: skip
+            if not scelti and not inoltri.indirizzi_extra(form.cleaned_data["inoltro_indirizzi"]):
+                form.add_error(None, "Indicare almeno una persona o un indirizzo a cui inoltrare.")
+            if incaricato is not None and not incaricato.email:
+                form.add_error(None, f"L'incaricato {incaricato.nome_completo} non ha un'email.")
+        if not form.is_valid():
+            return self._pagina(request, casella, form, scelti, incaricato)
+        casella = form.save(commit=False)
+        casella.inoltro_attivo = attivo_prima
+        inoltri.attiva(casella, form.cleaned_data["inoltro_attivo"])
+        casella.inoltro_incaricato = incaricato
+        casella.save()
+        casella.inoltro_destinatari.set(scelti)
+        dopo = (casella.inoltro_attivo, sorted(s.pk for s in scelti), casella.inoltro_incaricato_id)
+        if dopo != prima or form.changed_data:
+            registra(Azione.MODIFICA, casella, descrizione=f"Inoltro della casella {casella}",
+                     attivo=casella.inoltro_attivo, destinatari=[str(s) for s in scelti],
+                     altri_indirizzi=len(inoltri.indirizzi_extra(casella.inoltro_indirizzi)),
+                     incaricato=str(incaricato) if incaricato else "")  # fmt: skip
+        if casella.inoltro_attivo:
+            messages.success(
+                request,
+                f"Inoltro di «{casella}» attivo: {casella.descrizione_inoltro}. Si inoltrano i "
+                "messaggi scaricati da ora in poi; togliere l'inoltro impostato presso il "
+                "fornitore.",
+            )
+        else:
+            messages.success(request, f"Inoltro di «{casella}» spento.")
+        return redirect("core:servizi_posta")
+
+
+class InoltroCercaView(PermessoMixin, View):
+    """Ricerca in anagrafica per l'inoltro (destinatari o incaricato)."""
+
+    permission_required = "core.gestisci_servizi_posta"
+
+    def get(self, request):
+        from django.shortcuts import render
+
+        from apps.anagrafica.models import Soggetto
+
+        q = request.GET.get("cerca", "").strip()
+        nome = "inoltro_incaricato" if request.GET.get("nome") == "inoltro_incaricato" else (
+            "inoltro_destinatari")  # fmt: skip
+        risultati = Soggetto.objects.attivi().ricerca(q)[:10] if len(q) >= 2 else []
+        return render(request, "core/_inoltro_risultati.html",
+                      {"risultati": risultati, "nome": nome, "q": q})  # fmt: skip
+
+
+class InoltroSceltaView(PermessoMixin, View):
+    permission_required = "core.gestisci_servizi_posta"
+
+    def get(self, request):
+        from django.shortcuts import get_object_or_404, render
+
+        from apps.anagrafica.models import Soggetto
+
+        s = get_object_or_404(Soggetto, pk=request.GET.get("id"))
+        nome = "inoltro_incaricato" if request.GET.get("nome") == "inoltro_incaricato" else (
+            "inoltro_destinatari")  # fmt: skip
+        return render(request, "core/_inoltro_scelto.html", {"s": s, "nome": nome})
+
+
 class _FornitorePostaMixin:
     permission_required = "core.gestisci_servizi_posta"
     template_name = "core/fornitore_posta.html"

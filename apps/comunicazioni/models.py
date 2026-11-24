@@ -159,6 +159,12 @@ class Invio(ModelloBase):
     )
     origine = models.CharField(max_length=30, blank=True, editable=False)
     origine_id = models.PositiveBigIntegerField(null=True, blank=True, editable=False)
+    riservato = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="Es. credenziali «per conto»: chi inoltra la casella di arrivo lo passa solo "
+        "all'incaricato della trattazione (intestazione X-Gestione-Riservato).",
+    )
     contesto = models.JSONField(default=dict, blank=True, editable=False)
 
     class Meta:

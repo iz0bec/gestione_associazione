@@ -463,12 +463,22 @@ def scarica_tutte():
         try:
             risultati[casella.nome] = scarica_casella(casella)
             casella.ultimo_errore = ""
+            if casella.inoltro_attivo:
+                from . import inoltri
+
+                inoltri.prepara(casella)
         except Exception as e:  # noqa: BLE001 - una casella in errore non blocca le altre
             log.exception("Casella %s: errore", casella)
             risultati[casella.nome] = str(e)
             casella.ultimo_errore = str(e)[:500]
         casella.ultimo_controllo = timezone.now()
         casella.save(update_fields=["ultimo_controllo", "ultimo_errore"])
+    try:  # inoltri (es. casella della sezione): un errore non ferma lo scaricamento
+        from . import inoltri
+
+        inoltri.invia_coda()
+    except Exception:  # noqa: BLE001
+        log.exception("Inoltri della posta non spediti")
     try:  # avvisi a chi li ha scelti: un errore non ferma lo scaricamento
         from .avvisi import avvisa_nuova_posta
 

@@ -80,6 +80,13 @@ urlpatterns = [
         views.FornitorePostaEliminaView.as_view(),
         name="fornitore_elimina",
     ),
+    path(
+        "sistema/posta/caselle/<int:pk>/inoltro/",
+        views.CasellaInoltroView.as_view(),
+        name="casella_inoltro",
+    ),
+    path("sistema/posta/inoltro/cerca/", views.InoltroCercaView.as_view(), name="inoltro_cerca"),
+    path("sistema/posta/inoltro/scelta/", views.InoltroSceltaView.as_view(), name="inoltro_scelta"),
     path("sistema/posta/caselle/nuova/", views.CasellaNuovaView.as_view(), name="casella_nuova"),
     path(
         "sistema/posta/caselle/<int:pk>/",

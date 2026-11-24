@@ -12,6 +12,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   (password per le app, accesso dalla sola rete TIM…). Gli amministratori aggiungono **fornitori
   personalizzati** (es. la posta del proprio dominio), proposti in cima al menu. Nuova spunta
   **Verifica l'accesso dopo il salvataggio** per provare subito il collegamento.
+- **Inoltro della email di sezione dal gestionale**: in *Sistema → Servizi di posta*, pulsante
+  **Inoltro** di una casella. I messaggi scaricati vanno alle persone scelte dall'anagrafica (più
+  indirizzi liberi) con un reindirizzo trasparente (mittente originale, intestazioni `Resent-*`); se il
+  server lo rifiuta, «Inoltro: …» con l'originale allegato. I messaggi **riservati** (credenziali «per
+  conto», ora segnate con `X-Gestione-Riservato`) vanno solo all'**incaricato della trattazione**.
+  Coda rieseguibile con i tentativi, ultimi inoltri nella pagina, registro attività.
 - **Esenzione dal secondo fattore per singolo utente**: dalla scheda in *Sistema → Utenti*, per chi non
   può attivarlo (niente smartphone né chiave di sicurezza) anche se il ruolo lo richiede; motivo
   obbligatorio e scadenza facoltativa, indicata nell'elenco degli utenti, nel registro attività e

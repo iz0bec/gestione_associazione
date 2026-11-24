@@ -36,3 +36,7 @@ class Command(BaseCommand):
         spediti, non_riusciti = spedisci()
         if spediti or non_riusciti:
             self.stdout.write(f"Protocolli spediti: {spediti}, non riusciti {non_riusciti}")
+        from apps.protocollo import inoltri
+
+        if inoltrati := inoltri.invia_coda():  # ritenta gli inoltri rimasti in coda
+            self.stdout.write(f"Messaggi inoltrati: {inoltrati}")

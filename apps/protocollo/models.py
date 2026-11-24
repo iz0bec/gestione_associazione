@@ -307,6 +307,36 @@ class CasellaPosta(models.Model):
         "Vuoto: quello con lo stesso indirizzo della casella.",
     )
 
+    # inoltro dei messaggi scaricati (apps/protocollo/inoltri.py), al posto di quello del fornitore
+    inoltro_attivo = models.BooleanField("inoltra i messaggi", default=False)
+    inoltro_dal = models.DateTimeField(null=True, blank=True, editable=False)
+    inoltro_destinatari = models.ManyToManyField(
+        "anagrafica.Soggetto", blank=True, related_name="+", verbose_name="inoltra a"
+    )
+    inoltro_indirizzi = models.TextField(
+        "altri indirizzi",
+        blank=True,
+        help_text="Uno per riga, per chi non è in anagrafica.",
+    )
+    inoltro_incaricato = models.ForeignKey(
+        "anagrafica.Soggetto",
+        verbose_name="incaricato della trattazione",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Riceve, da solo, i messaggi riservati (es. credenziali «per conto»).",
+    )
+    inoltro_servizio = models.ForeignKey(
+        "core.ServizioInvio",
+        verbose_name="inoltra con",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Vuoto: il server generale.",
+    )
+
     tutte = models.Manager()
     objects = CaselleReali()
 
@@ -333,6 +363,12 @@ class CasellaPosta(models.Model):
         return ServizioInvio.objects.filter(
             attivo=True, tipo=tipo, indirizzo__iexact=self.indirizzo
         ).first()
+
+    @property
+    def descrizione_inoltro(self):
+        from .inoltri import descrizione
+
+        return descrizione(self)
 
     def servizio_per_risposte(self):
         """«Rispondi con» se attivo, altrimenti il servizio con lo stesso indirizzo."""
@@ -409,6 +445,7 @@ class MessaggioRicevuto(models.Model):
         "(processata, scartata, cestino).",
     )
     errore_server = models.CharField(max_length=300, blank=True, editable=False)
+    inoltro_esaminato = models.BooleanField(default=False, editable=False)
 
     objects = MessaggioQuerySet.as_manager()
 
@@ -435,6 +472,42 @@ class MessaggioRicevuto(models.Model):
 
     def get_absolute_url(self):
         return reverse("protocollo:messaggio", args=[self.pk])
+
+
+class InoltroMessaggio(models.Model):
+    """Inoltro di un messaggio scaricato a un destinatario (coda rieseguibile)."""
+
+    class Stato(models.TextChoices):
+        IN_ATTESA = "in_attesa", "In attesa"
+        INOLTRATO = "inoltrato", "Inoltrato"
+        ERRORE = "errore", "Non riuscito"
+
+    class Modo(models.TextChoices):
+        TRASPARENTE = "trasparente", "Reindirizzato"
+        ALLEGATO = "allegato", "Con l'originale allegato"
+
+    messaggio = models.ForeignKey(
+        MessaggioRicevuto, on_delete=models.CASCADE, related_name="inoltri"
+    )
+    email = models.EmailField()
+    riservato = models.BooleanField(default=False)
+    stato = models.CharField(
+        max_length=10, choices=Stato.choices, default=Stato.IN_ATTESA, db_index=True
+    )
+    modo = models.CharField(max_length=12, choices=Modo.choices, blank=True)
+    tentativi = models.PositiveSmallIntegerField(default=0)
+    errore = models.CharField(max_length=300, blank=True)
+    creato_il = models.DateTimeField(auto_now_add=True)
+    inoltrato_il = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "inoltro di un messaggio"
+        verbose_name_plural = "inoltri dei messaggi"
+        ordering = ["-creato_il"]
+        constraints = [models.UniqueConstraint(fields=["messaggio", "email"], name="inoltro_unico")]
+
+    def __str__(self):
+        return f"{self.messaggio} → {self.email}"
 
 
 class Spedizione(ModelloBase):
