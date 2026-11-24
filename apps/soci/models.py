@@ -830,6 +830,28 @@ class OrdineTessere(ModelloBase):
         return f"Ordine {self.anno}/{self.numero} ({self.quantita} tessere)"
 
 
+class InvitoTessere(ModelloBase):
+    """Invito alla richiesta delle tessere ricevuto dal livello superiore (la federazione per una
+    sezione, la sede nazionale per una federazione), collegato al suo protocollo in entrata:
+    è la prima fase della campagna verso l'ente sovraordinato."""
+
+    anno = models.PositiveIntegerField("anno di tesseramento", unique=True)
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    ricevuto_il = models.DateField("ricevuto il")
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "invito alla richiesta delle tessere"
+        verbose_name_plural = "inviti alla richiesta delle tessere"
+        ordering = ["-anno"]
+
+    def __str__(self):
+        prot = f", prot. {self.protocollo.segnatura}" if self.protocollo_id else ""
+        return f"Invito {self.anno} del {self.ricevuto_il:%d/%m/%Y}{prot}"
+
+
 class PromemoriaArchivio(models.Model):
     """Nuovo socio o rettifica dell'anagrafica da riportare a mano nell'archivio centrale
     (federazione o registro nazionale) quando non è collegato via API. Le rettifiche successive

@@ -79,7 +79,8 @@ class TestRichiestaInPreparazione:
         assert not Cambiamento.objects.filter(soggetto=bozza.uuid).exists()  # non è partita
         assert ciclo.quadratura(ANNO) == [] and ciclo.da_ordinare(ANNO) == []
         pagina = client.get(reverse("soci:campagna", args=[ANNO])).content.decode()
-        assert "Richieste in preparazione" in pagina and "Invia alla federazione" in pagina
+        assert "Richiesta alla Federazione" in pagina and "In preparazione" in pagina
+        assert "Verso le sezioni" not in pagina  # gestionale di una sezione: una sola direzione
 
     def test_invio_via_collegamento(self, client, capo):
         _federazione_collegata()
@@ -104,8 +105,10 @@ class TestRichiestaInPreparazione:
         for s in _soci(capo, 2):
             servizi.rilascia_tessera(s, ANNO, capo)
         bozza, _ = ciclo.aggiorna_in_preparazione(capo, ANNO, sezione)
+        ciclo.registra_invito(capo, anno=ANNO, ricevuto_il=date(ANNO - 1, 11, 24))
         canale, invio = ciclo.invia_richiesta(capo, bozza)
         assert canale == "email" and invio.stato == "bozza" and invio.allegati.count() == 1
+        assert invio.contesto["riferimento_avviso"] == ""  # invito senza protocollo: niente rif.
         bozza.refresh_from_db()
         assert bozza.in_preparazione  # in bozza finché l'email non parte
         with pytest.raises(servizi.OperazioneNonValida, match="già in bozza"):

@@ -1,0 +1,11 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Le quattro fasi di una direzione della campagna tessere, con lo stato di ciascuna
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+<div class="row g-2 mb-3">{% for f in fasi %}
+  <div class="col-6 col-lg-3"><a class="card card-sm card-link h-100" href="#{{ f.ancora }}"><div class="card-body">
+    <div class="d-flex align-items-center mb-1"><span class="badge {% if f.stato == 'fatto' %}bg-green{% elif f.stato == 'in_corso' %}bg-yellow{% else %}bg-secondary{% endif %} text-white me-2">{{ f.numero }}</span><strong class="small">{{ f.titolo }}</strong></div>
+    <div class="small text-secondary">{% if f.stato == "fatto" %}<i class="ti ti-circle-check text-success me-1"></i>{% elif f.stato == "in_corso" %}<i class="ti ti-progress text-warning me-1"></i>{% else %}<i class="ti ti-circle text-secondary me-1"></i>{% endif %}{{ f.sintesi }}</div>
+  </div></a></div>{% endfor %}
+</div>

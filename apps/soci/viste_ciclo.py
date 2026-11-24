@@ -37,8 +37,8 @@ from .forms import (
     RichiestaModificaForm,
     RichiestaTessereForm,
 )
-from .models import ConsegnaTessere, OrdineTessere, RichiestaTessere, Sezione
-from .servizi import OperazioneNonValida
+from .models import ConsegnaTessere, LottoTessere, OrdineTessere, RichiestaTessere, Sezione
+from .servizi import FORNITORE_REGISTRO, OperazioneNonValida
 
 PERMESSO = "soci.gestisci_ciclo_tessere"
 
@@ -106,8 +106,25 @@ class CampagnaView(PermessoMixin, TemplateView):
             ],
         )
         ctx["richieste"] = list(ctx["richieste"].filter(inviata_il__isnull=False))
+        conferme = ciclo.conferme_inviate(ctx["richieste"])
         for r in ctx["richieste"]:
             r.correggibile = ciclo.motivo_non_modificabile(r) is None
+            r.confermata = r.pk in conferme
+        federazione = ciclo.e_federazione()
+        ctx.update(
+            federazione=federazione,
+            superiore_nome=ciclo.nome_superiore(),
+            fasi_sezioni=ciclo.fasi_verso_sezioni(anno) if federazione else [],
+            fasi_superiore=ciclo.fasi_verso_superiore(anno),
+            stato_inviti=ciclo.stato_inviti(anno) if federazione else [],
+            invito=ciclo.invito(anno),
+            invito_suggerito=ciclo.invito_suggerito(anno),
+            lotti_ricevuti=(
+                []
+                if federazione
+                else LottoTessere.objects.filter(anno=anno).exclude(fornitore=FORNITORE_REGISTRO)
+            ),
+        )
         return ctx
 
 
@@ -307,6 +324,33 @@ class RispostaRichiestaView(PermessoMixin, View):
         messages.success(request, "Richiesta preparata in bozza: controllala, modificala se serve "
                          "e confermala per spedirla alla federazione.")  # fmt: skip
         return redirect(invio)
+
+
+class InvitoView(PermessoMixin, View):
+    """Prima fase verso l'ente sovraordinato: l'invito ricevuto, collegato al protocollo."""
+
+    permission_required = PERMESSO
+
+    def post(self, request, anno):
+        from apps.protocollo.models import Protocollo
+
+        segnatura = request.POST.get("segnatura", "").strip()
+        protocollo = None
+        if segnatura:
+            try:
+                a, n = segnatura.split("-")
+                protocollo = Protocollo.objects.get(anno=int(a), numero=int(n), annullato=False)
+            except (ValueError, Protocollo.DoesNotExist):
+                messages.error(request, f"Protocollo «{segnatura}» non trovato (es. 2026-00003).")
+                return _alla_campagna(anno)
+        try:
+            ricevuto = date.fromisoformat(request.POST.get("ricevuto_il", ""))
+        except ValueError:
+            ricevuto = protocollo.registrato_il.date() if protocollo else date.today()
+        ciclo.registra_invito(request.user, anno=anno, ricevuto_il=ricevuto, protocollo=protocollo,
+                              note=request.POST.get("note", "")[:255])  # fmt: skip
+        messages.success(request, "Invito ricevuto registrato.")
+        return _alla_campagna(anno)
 
 
 class ConfermaRichiestaView(PermessoMixin, View):

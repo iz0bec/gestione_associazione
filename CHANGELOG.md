@@ -5,6 +5,17 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.85] - 2026-11-24
+
+### Modificato
+- **Campagna delle tessere divisa per direzione e per fasi**: *verso le sezioni* (solo nella
+  federazione: invito alla richiesta con lo stato di ogni sezione, richieste ricevute con la
+  conferma, consegne, incassi) e *verso l'ente sovraordinato* (sezione → Federazione, federazione →
+  sede nazionale: invito ricevuto, richiesta o ordine, tessere ricevute, pagamento), con lo stato
+  di ogni fase in cima. Il gestionale di una sezione non mostra più avvisi, ordini e magazzino della
+  federazione, né la federazione l'importazione della consegna. Nuovo **invito ricevuto** collegato
+  al protocollo in entrata (proposto in automatico dall'oggetto), citato dalla richiesta per email.
+
 ## [1.0.84] - 2026-11-24
 
 ### Corretto

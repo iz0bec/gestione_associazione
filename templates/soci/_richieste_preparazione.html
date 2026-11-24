@@ -1,0 +1,18 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Richieste di tessere in preparazione (dal fabbisogno dei rinnovi o a mano): quantità,
+               note e invio sul canale previsto (collegamento, email o fabbisogno della federazione)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% for r, f, email in in_preparazione %}<div class="card-body border-bottom small">
+  {% if email %}<div class="d-flex flex-wrap align-items-center gap-2"><strong>{% if federazione %}{{ r.sezione }}{% else %}In preparazione{% endif %}</strong> {{ r.quantita }} tessere{% if r.note %} · {{ r.note }}{% endif %} <span class="badge bg-yellow-lt">Email {{ email.get_stato_display|lower }}</span><a class="btn btn-sm btn-primary" href="{{ email.get_absolute_url }}"><i class="ti ti-mail me-1"></i>Apri l'email</a><span class="text-secondary">risulta inviata quando l'email parte; annullando l'email torna modificabile</span></div>
+  {% else %}<form method="post" action="{% url 'soci:richiesta_preparazione' r.pk %}" class="d-flex flex-wrap align-items-center gap-2">{% csrf_token %}
+    <strong>{% if federazione %}{{ r.sezione }}{% else %}In preparazione{% endif %}</strong>
+    <input class="form-control form-control-sm w-auto" type="number" name="quantita" min="1" value="{{ r.quantita }}" aria-label="Tessere da richiedere"> tessere
+    <input class="form-control form-control-sm w-auto flex-fill" name="note" value="{{ r.note }}" maxlength="255" placeholder="note" aria-label="Note">
+    <button class="btn btn-sm" type="submit" name="azione" value="salva">Salva</button>
+    <button class="btn btn-sm" type="submit" name="azione" value="ricalcola" title="Riporta la quantità al fabbisogno calcolato (con zero la toglie)">Ricalcola</button>
+    <button class="btn btn-sm btn-primary" type="submit" name="azione" value="invia"><i class="ti ti-send me-1"></i>{% if canale == "api" %}Invia alla Federazione (collegamento){% elif canale == "email" %}Prepara l'email alla Federazione{% else %}Registra nel fabbisogno{% endif %}</button>
+  </form>{% endif %}
+  <div class="text-secondary mt-1">Fabbisogno calcolato: rinnovati senza tessera {{ f.senza_numero }} − disponibili {{ f.disponibili }} − già chieste in arrivo {{ f.in_attesa }} = {{ f.proposta }}. Si aggiorna a ogni rinnovo; parte solo quando si invia{% if invito and not federazione %}, in risposta all'invito {{ invito.protocollo.segnatura|default:"" }}{% endif %}.</div>
+</div>{% endfor %}

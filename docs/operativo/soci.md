@@ -94,6 +94,22 @@ La campagna riguarda sempre **l'anno successivo** a quello in corso: nel 2026 si
 tesseramento 2027, e la voce di menu apre direttamente quella. Gli anni precedenti si consultano
 dal selettore in alto.
 
+La pagina è divisa per **direzione**, ciascuna in **quattro fasi** con lo stato in cima (verde fatta,
+giallo in corso, grigio da fare; un clic porta al riquadro):
+
+| | Verso le sezioni (solo nella federazione) | Verso l'ente sovraordinato |
+|---|---|---|
+| 1 | **Invito alla richiesta**: avviso e sollecito, con lo stato di ogni sezione | **Invito ricevuto**: l'avviso della Federazione (o della sede nazionale) collegato al suo protocollo in entrata |
+| 2 | **Richieste ricevute**, ciascuna con la **conferma** di ricezione alla sezione | **Richiesta alla Federazione** (sezione) o **ordine alla sede nazionale** (federazione) |
+| 3 | **Consegna** alle sezioni e avviso di attribuzione | **Tessere ricevute** (dalla Federazione, oppure dal nazionale in magazzino) |
+| 4 | **Incassi** dalle sezioni (quadratura) | **Pagamento** alla Federazione o alla sede nazionale |
+
+La federazione vede entrambe le direzioni (le sezioni sotto, la sede nazionale sopra); il gestionale
+di una sezione solo la seconda, verso la Federazione. L'**invito ricevuto** si protocolla in entrata
+come ogni posta: se l'oggetto contiene «Tesseramento <anno>» la campagna lo propone e basta
+**collegarlo**, altrimenti si indica il numero di protocollo. La richiesta inviata per email lo
+cita come riferimento.
+
 Per chi distribuisce le tessere alle sezioni, come la federazione (o l'ente sovraordinato di
 un'associazione con più sezioni): voce **Campagna delle tessere** del menu (anche da *Tesseramento →
 Tessere fisiche → Campagna con le sezioni*). Tutto il
@@ -201,11 +217,11 @@ preparazione** dell'anno:
 - nella federazione, per una sua sezione: entra nel fabbisogno dell'anno, pronto per l'ordine.
 
 Una sezione che **non tiene i soci nel gestionale** (fabbisogno calcolato zero) prepara la richiesta a
-mano: nella campagna **Registra**, con la quantità; la richiesta compare in *Richieste in
-preparazione* e da lì si invia alla federazione come le altre. L'aggiornamento automatico dei rinnovi
+mano: nella fase 2 **Prepara la richiesta**, con la quantità; da lì si invia alla Federazione
+come le altre. L'aggiornamento automatico dei rinnovi
 non la toglie; la toglie solo *Ricalcola*.
 
-Nella **federazione**, accanto a ogni richiesta delle sezioni, il pulsante con la busta prepara la
+Nella **federazione**, accanto a ogni richiesta delle sezioni, il pulsante **Conferma** prepara la
 **conferma di ricezione** per la sezione (casella della sezione e presidente in carica), in bozza in
 *Comunicazioni* con il riepilogo della richiesta allegato.
 

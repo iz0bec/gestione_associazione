@@ -372,3 +372,52 @@ def test_conferma_della_federazione_alla_sezione(admin, sezione):
 
     email = comunicazioni.messaggio(invio, invio.destinatari.first())
     assert "90 tessere" in email.body and sezione.nome in email.subject
+
+
+def _protocollo_entrata(utente, oggetto):
+    from apps.protocollo import servizi as protocollo
+    from apps.protocollo.models import Corrispondente, Protocollo
+
+    return protocollo.registra_protocollo(
+        {"direzione": Protocollo.Direzione.ENTRATA, "mezzo": Protocollo.Mezzo.EMAIL,
+         "oggetto": oggetto},
+        [{"ruolo": Corrispondente.Ruolo.MITTENTE, "descrizione": "Federazione"}], utente,
+    )  # fmt: skip
+
+
+def test_campagna_federazione_due_direzioni_e_fasi(admin, sezione):
+    from apps.comunicazioni.models import Invio
+
+    Invio.objects.create(oggetto="Avviso", corpo="x", finalita="istituzionale",
+                         origine="tessere_avviso", origine_id=sezione.pk, stato="inviato",
+                         contesto={"anno": ANNO})  # fmt: skip
+    ciclo.registra_richiesta(admin.utente, anno=ANNO, sezione=sezione, quantita=10)
+    pagina = admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
+    assert "Verso le sezioni" in pagina and "Verso la sede nazionale" in pagina
+    assert "Invito alla richiesta" in pagina and "Ordine alla sede nazionale" in pagina
+    assert "Richiesta alla Federazione" not in pagina and "Importa consegna" not in pagina
+    fasi = ciclo.fasi_verso_sezioni(ANNO)
+    attive = Sezione.objects.filter(attiva=True).count()
+    assert fasi[0].sintesi == f"avvisate 1 sezioni su {attive}" and fasi[1].stato == "in_corso"
+    assert "confermate 0 su 1" in fasi[1].sintesi
+    stato = {s["sezione"].pk: s for s in ciclo.stato_inviti(ANNO)}
+    assert stato[sezione.pk]["avviso"] and stato[sezione.pk]["richiesta"]
+
+
+def test_invito_ricevuto_collegato_al_protocollo(admin, sezione):
+    Sezione.objects.exclude(pk=sezione.pk).update(attiva=False)  # gestionale di una sezione
+    prot = _protocollo_entrata(
+        admin.utente, f"Tesseramento {ANNO}: quota e richiesta delle tessere"
+    )
+    _protocollo_entrata(admin.utente, f"Tesseramento {ANNO}: sollecito della richiesta")
+    assert ciclo.invito_suggerito(ANNO) == prot
+    pagina = admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
+    assert "Verso la Federazione" in pagina and "Verso le sezioni" not in pagina
+    assert prot.segnatura in pagina and "collegalo" in pagina
+    assert ciclo.fasi_verso_superiore(ANNO)[0].stato == "da_fare"
+    admin.post(f"/soci/tessere/campagna/{ANNO}/invito/", {"segnatura": prot.segnatura})
+    voce = ciclo.invito(ANNO)
+    assert voce.protocollo == prot and ciclo.fasi_verso_superiore(ANNO)[0].stato == "fatto"
+    r = admin.post(f"/soci/tessere/campagna/{ANNO}/invito/", {"segnatura": "1999-00001"},
+                   follow=True)  # fmt: skip
+    assert "non trovato" in r.content.decode()

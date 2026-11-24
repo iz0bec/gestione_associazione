@@ -28,6 +28,7 @@ from .models import (
     SEQ_ORDINE,
     BloccoTessere,
     ConsegnaTessere,
+    InvitoTessere,
     ListinoTessere,
     LottoTessere,
     OrdineTessere,
@@ -858,7 +859,11 @@ def invia_richiesta(utente, richiesta):
         # resta in preparazione finché l'email non parte davvero (richiesta_spedita)
         if email_in_corso(richiesta):
             raise OperazioneNonValida("L'email della richiesta è già in bozza in Comunicazioni.")
-        invio = prepara_risposta(utente, richiesta)
+        voce = invito(richiesta.anno)  # la richiesta risponde all'invito ricevuto
+        rif = ""
+        if voce is not None and voce.protocollo_id:
+            rif = f"vostra prot. n. {voce.protocollo.segnatura} del {voce.ricevuto_il:%d/%m/%Y}"
+        invio = prepara_risposta(utente, richiesta, riferimento_avviso=rif)
         descrizione = f"Email della richiesta di tessere preparata: {richiesta}"
         registra(Azione.MODIFICA, richiesta, utente=utente, descrizione=descrizione)
         return canale, invio
@@ -1004,3 +1009,169 @@ def quadratura_superiore(anno):
         "quantita": quantita, "dovuto": dovuto, "pagato": pagato, "da_pagare": dovuto - pagato,
         "pagamenti": list(pagamenti.select_related("conto", "ordine_tessere")),
     }  # fmt: skip
+
+
+# --- fasi della campagna: verso le sezioni e verso l'ente sovraordinato ----------------------
+
+
+@dataclass
+class Fase:
+    numero: int
+    titolo: str
+    stato: str  # «fatto», «in_corso», «da_fare»
+    sintesi: str
+    ancora: str
+
+
+def _stato(fatti, totale):
+    if totale and fatti >= totale:
+        return "fatto"
+    return "in_corso" if fatti else "da_fare"
+
+
+def e_federazione():
+    from .sezioni import multisezione
+
+    return multisezione()
+
+
+def nome_superiore():
+    return "la sede nazionale" if e_federazione() else "la Federazione"
+
+
+def invito(anno):
+    return InvitoTessere.objects.filter(anno=anno).select_related("protocollo").first()
+
+
+def invito_suggerito(anno):
+    """Protocollo in entrata che sembra l'invito dell'anno (oggetto «Tesseramento <anno>»), per
+    collegarlo con un clic; i solleciti vengono dopo l'avviso."""
+    from apps.protocollo.models import Protocollo
+
+    candidati = Protocollo.objects.filter(
+        direzione=Protocollo.Direzione.ENTRATA, annullato=False,
+        oggetto__icontains=f"tesseramento {anno}",
+    ).order_by("registrato_il")  # fmt: skip
+    return candidati.exclude(oggetto__icontains="sollecito").first() or candidati.first()
+
+
+@transaction.atomic
+def registra_invito(utente, *, anno, ricevuto_il, protocollo=None, note=""):
+    voce, nuovo = InvitoTessere.objects.update_or_create(
+        anno=anno, defaults={"protocollo": protocollo, "ricevuto_il": ricevuto_il, "note": note,
+                             "modificato_da": utente},
+    )  # fmt: skip
+    if nuovo:
+        voce.creato_da = utente
+        voce.save(update_fields=["creato_da"])
+    registra(Azione.CREAZIONE if nuovo else Azione.MODIFICA, voce, utente=utente,
+             protocollo=protocollo.segnatura if protocollo else "")  # fmt: skip
+    return voce
+
+
+def _avvisate(anno, origine):
+    """Sezioni a cui è partito l'avviso (o il sollecito) dell'anno."""
+    from apps.comunicazioni.models import Invio
+
+    partiti = [Invio.Stato.INVIATO, Invio.Stato.CON_ERRORI, Invio.Stato.IN_CODA]
+    invii = Invio.objects.filter(origine=origine, stato__in=partiti)
+    return {i.origine_id for i in invii if (i.contesto or {}).get("anno") == anno}
+
+
+def stato_inviti(anno):
+    """Per ogni sezione attiva: avviso e sollecito partiti, richiesta arrivata."""
+    avviso, sollecito = _avvisate(anno, "tessere_avviso"), _avvisate(anno, "tessere_sollecito")
+    con_richiesta = set(RichiestaTessere.objects.filter(
+        anno=anno, inviata_il__isnull=False).values_list("sezione_id", flat=True))  # fmt: skip
+    return [
+        {"sezione": s, "avviso": s.pk in avviso, "sollecito": s.pk in sollecito,
+         "richiesta": s.pk in con_richiesta}
+        for s in Sezione.objects.filter(attiva=True)
+    ]  # fmt: skip
+
+
+def conferme_inviate(richieste):
+    from apps.comunicazioni.models import Invio
+
+    return set(Invio.objects.filter(
+        origine=ORIGINE_CONFERMA, origine_id__in=[r.pk for r in richieste],
+    ).exclude(stato=Invio.Stato.ANNULLATO).values_list("origine_id", flat=True))  # fmt: skip
+
+
+def fasi_verso_sezioni(anno):
+    """Federazione: invito alle sezioni, richieste ricevute (con la conferma), consegne, incassi."""
+    stati = stato_inviti(anno)
+    attive = len(stati)
+    avvisate = sum(1 for s in stati if s["avviso"])
+    richieste = list(RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False))
+    con_richiesta = sum(1 for s in stati if s["richiesta"])
+    confermate = len(conferme_inviate(richieste))
+    righe = quadratura(anno)
+    richiesto = sum(r.richieste for r in righe)
+    consegnato = sum(r.consegnate for r in righe)
+    dovuto = sum((r.dovuto for r in righe), Decimal("0"))
+    pagato = sum((r.pagato for r in righe), Decimal("0"))
+    return [
+        Fase(1, "Invito alla richiesta", _stato(avvisate, attive),
+             f"avvisate {avvisate} sezioni su {attive}", "invito-sezioni"),
+        Fase(2, "Richieste ricevute", _stato(con_richiesta, attive),
+             f"{con_richiesta} sezioni su {attive}, {richiesto} tessere; confermate "
+             f"{confermate} su {len(richieste)}", "richieste-sezioni"),
+        Fase(3, "Consegna alle sezioni", _stato(consegnato, richiesto),
+             f"consegnate {consegnato} tessere su {richiesto}", "consegne-sezioni"),
+        Fase(4, "Incassi dalle sezioni", _stato(pagato, dovuto) if dovuto else "da_fare",
+             f"versati € {pagato:.2f} su € {dovuto:.2f}", "incassi-sezioni"),
+    ]  # fmt: skip
+
+
+def fasi_verso_superiore(anno):
+    """Verso l'ente sovraordinato: invito ricevuto, richiesta (sezione) o ordine al nazionale
+    (federazione), ricevimento delle tessere, pagamento."""
+    federazione = e_federazione()
+    voce = invito(anno)
+    superiore = quadratura_superiore(anno)
+    if federazione:
+        ordinato = sum(OrdineTessere.objects.filter(anno=anno).values_list("quantita", flat=True))
+        mancano = sum(r["quantita"] for r in da_ordinare(anno))
+        richiesta = Fase(2, "Ordine alla sede nazionale",
+                         "fatto" if ordinato and not mancano else ("in_corso" if ordinato
+                                                                   else "da_fare"),
+                         f"ordinate {ordinato} tessere" + (f", da ordinare {mancano}" if mancano
+                                                           else ""), "ordini")  # fmt: skip
+        ricevute = riepilogo_magazzino(anno)["ricevute"]
+        ricevimento = Fase(
+            3,
+            "Tessere ricevute dal nazionale",
+            _stato(ricevute, ordinato),
+            f"in magazzino {ricevute} su {ordinato} ordinate",
+            "magazzino",
+        )
+    else:
+        inviate = RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False)
+        chieste = sum(inviate.values_list("quantita", flat=True))
+        bozza = RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=True,
+                                                uuid_origine__isnull=True).first()  # fmt: skip
+        richiesta = Fase(2, "Richiesta alla Federazione",
+                         "fatto" if chieste and not bozza else ("in_corso" if chieste or bozza
+                                                                else "da_fare"),
+                         f"inviate {chieste} tessere"
+                         + (f", in preparazione {bozza.quantita}" if bozza else ""),
+                         "richiesta")  # fmt: skip
+        ricevute = superiore["quantita"]
+        ricevimento = Fase(
+            3,
+            "Tessere ricevute dalla Federazione",
+            _stato(ricevute, chieste),
+            f"ricevute {ricevute} su {chieste} chieste",
+            "ricevimento",
+        )
+    return [
+        Fase(1, "Invito ricevuto", "fatto" if voce else "da_fare",
+             str(voce) if voce else "da collegare al protocollo in entrata", "invito"),
+        richiesta,
+        ricevimento,
+        Fase(4, f"Pagamento a {nome_superiore()}",
+             _stato(superiore["pagato"], superiore["dovuto"]) if superiore["dovuto"]
+             else "da_fare",
+             f"pagati € {superiore['pagato']:.2f} su € {superiore['dovuto']:.2f}", "pagamento"),
+    ]  # fmt: skip
