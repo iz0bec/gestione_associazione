@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.93] - 2026-11-24
+
 ### Aggiunto
 - **Allineamento automatico dei soci fra federazione e sezione** (F4): dopo una prima *Verifica
   soci* applicata si attiva dalla scheda della controparte; ogni 15 minuti (lavoro `allinea_soci`
