@@ -5,6 +5,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.88] - 2026-11-24
+
+### Corretto
+- **Conferma di ricezione della richiesta di tessere**: non si poteva confermare («Segnaposto
+  sconosciuti: data_richiesta, riferimento»). I segnaposto della conferma ora sono registrati
+  (`data_richiesta`, `riferimento_richiesta`).
+
 ## [1.0.87] - 2026-11-24
 
 ### Corretto

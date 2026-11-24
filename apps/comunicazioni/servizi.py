@@ -96,6 +96,8 @@ SEGNAPOSTO = {
     "note_distribuzione": "luogo, date e orari della distribuzione",
     "federazione": "nome della federazione (da Sistema → Organizzazione)",
     "note_richiesta": "note della richiesta di tessere",
+    "data_richiesta": "data della richiesta di tessere",
+    "riferimento_richiesta": "protocollo della richiesta di tessere (conferma alla sezione)",
     "istruzioni_risposta": "come rispondere con il modulo Excel allegato (avvisi del tesseramento)",
     "tessere_anno_precedente": "tessere della sezione nell'anno precedente (per informazione)",
 }

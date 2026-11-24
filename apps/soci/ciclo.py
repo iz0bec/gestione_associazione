@@ -616,7 +616,7 @@ ORIGINE_CONFERMA = "tessere_conferma"
 OGGETTO_CONFERMA = "Tesseramento {{ anno }}: ricevuta la richiesta di tessere – {{ sezione }}"
 TESTO_CONFERMA = """Alla Presidenza della {{ sezione }},
 
-confermiamo di aver ricevuto la richiesta di {{ quantita }} tessere per il tesseramento {{ anno }}, del {{ data_richiesta }}{{ riferimento }}.
+confermiamo di aver ricevuto la richiesta di {{ quantita }} tessere per il tesseramento {{ anno }}, del {{ data_richiesta }}{{ riferimento_richiesta }}.
 
 La richiesta è registrata nel fabbisogno della {{ federazione }}: riceverete l'avviso quando le tessere saranno pronte per la consegna. In allegato il riepilogo della richiesta.
 {{ note_richiesta }}
@@ -640,7 +640,7 @@ def prepara_conferma(utente, richiesta, *, servizio=None, protocolla=True):
     contesto = {
         "anno": richiesta.anno, "sezione": sezione.denominazione,
         "quantita": richiesta.quantita, "data_richiesta": _data(richiesta.data),
-        "riferimento": rif, "federazione": org.denominazione,
+        "riferimento_richiesta": rif, "federazione": org.denominazione,
         "note_richiesta": f"\nNote: {richiesta.note}\n" if richiesta.note else "",
         "organizzazione": org.denominazione,
     }  # fmt: skip
