@@ -39,7 +39,8 @@ class EventoForm(StileMixin, forms.ModelForm):
         model = Evento
         fields = [
             "titolo", "tipo", "inizio", "fine", "luogo", "descrizione", "quota", "posti",
-            "accompagnatori", "adesioni_aperte", "chiusura_adesioni", "pubblico", "annullato",
+            "accompagnatori", "adesioni_aperte", "chiusura_adesioni", "pubblico", "sito",
+            "annullato",
         ]  # fmt: skip
         widgets = {
             "inizio": CampoDataOra, "fine": CampoDataOra, "chiusura_adesioni": CampoDataOra,

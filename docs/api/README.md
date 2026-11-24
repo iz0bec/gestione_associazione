@@ -12,8 +12,11 @@
 # API v1: guida per chi integra
 
 Il contratto è [`openapi.yaml`](openapi.yaml) (OpenAPI 3.1); le scelte sono motivate
-nell'[ADR-030](../architettura/decisioni.md). Gli adattatori, ad esempio un plugin WordPress per gli
-eventi, **non fanno parte del progetto**: si scrivono su questo contratto, in qualsiasi linguaggio.
+nell'[ADR-030](../architettura/decisioni.md). Gli adattatori si scrivono su questo contratto, in
+qualsiasi linguaggio. Un esempio completo, in PHP senza librerie esterne, è il
+[connettore WordPress](../../integrazioni/wordpress/gestione-associazione/) (guida in
+[docs/sistema](../sistema/connettore-wordpress.md)): non dipende dal codice del gestionale e
+diventerà un progetto separato.
 
 Disponibile oggi:
 

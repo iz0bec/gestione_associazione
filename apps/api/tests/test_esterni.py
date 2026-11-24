@@ -241,3 +241,19 @@ def test_limiti_di_frequenza(client, sito, settings):
         assert sito.chiama(client, "POST", "/api/v1/prova").status_code == 200
     r = sito.chiama(client, "POST", "/api/v1/prova")
     assert (r.status_code, r.json()["codice"], r["Retry-After"]) == (429, "troppe-richieste", "60")
+
+
+@pytest.mark.django_db
+def test_evento_da_pubblicare_sui_siti_collegati(client, sito):
+    """«sito» arriva alle integrazioni solo con il modulo pubblico (articolo del connettore)."""
+    con_articolo = _evento(titolo="Commemorazione", sito=True)
+    _evento(titolo="Pranzo", sito=False)
+    r = sito.chiama(client, "GET", "/api/v1/eventi")
+    assert r.status_code == 200, r.content
+    per_titolo = {e["titolo"]: e for e in r.json()["risultati"]}
+    assert per_titolo["Commemorazione"]["sito"] is True and per_titolo["Pranzo"]["sito"] is False
+    con_articolo.pubblico = False
+    con_articolo.save()
+    from apps.api.rappresentazioni import evento
+
+    assert evento(con_articolo)["sito"] is False  # senza modulo pubblico non si pubblica

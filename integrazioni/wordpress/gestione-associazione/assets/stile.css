@@ -1,0 +1,22 @@
+/**
+ * Progetto:    Gestione Associazione - connettore WordPress
+ * Autore:      Bartolomeo Santoro aka IZ0BEC
+ * Email:       info@iz0bec.info
+ * Descrizione: Stile essenziale dei moduli: lascia il resto al tema del sito.
+ * Licenza:     CC0 1.0 Universal (pubblico dominio)
+ * SPDX-License-Identifier: CC0-1.0
+ */
+.ga-modulo label { display: block; font-weight: 600; margin-bottom: .2em; }
+.ga-modulo input[type="text"], .ga-modulo input[type="email"], .ga-modulo input[type="tel"],
+.ga-modulo input[type="date"], .ga-modulo input[type="number"], .ga-modulo textarea { width: 100%; max-width: 36em; }
+.ga-modulo input[type="checkbox"] + * { font-weight: normal; }
+.ga-modulo fieldset { border: 1px solid #ddd; padding: .5em 1em; margin: 0 0 1em; }
+.ga-nascosto { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.ga-avviso { padding: .75em 1em; margin: 1em 0; border-left: 4px solid; }
+.ga-ok { border-color: #2e7d32; background: #edf7ee; }
+.ga-errore { border-color: #c62828; background: #fdecea; }
+.ga-nota, .ga-quando, .ga-posti { font-size: .9em; opacity: .85; }
+.ga-evento { margin: 0 0 2em; }
+.ga-annullato h3 { text-decoration: line-through; }
+.ga-organo ul { list-style: none; padding-left: 0; }
+.ga-ruolo { font-weight: 600; margin-right: .3em; }

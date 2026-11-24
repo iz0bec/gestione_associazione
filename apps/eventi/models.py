@@ -60,6 +60,11 @@ class Evento(RisorsaApi, ModelloBase):
         "modulo pubblico di adesione", default=False,
         help_text="Chiunque abbia il collegamento può aderire (anche i non soci).",
     )  # fmt: skip
+    sito = models.BooleanField(
+        "pubblica sui siti collegati", default=False,
+        help_text="I siti collegati (es. WordPress con il connettore) ne fanno un articolo, in "
+        "bozza da rivedere. Vale solo con il modulo pubblico.",
+    )  # fmt: skip
     token = models.CharField(max_length=32, unique=True, default=_token, editable=False)
     annullato = models.BooleanField(default=False)
 

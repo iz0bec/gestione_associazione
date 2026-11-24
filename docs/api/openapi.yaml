@@ -1044,6 +1044,11 @@ components:
             adesioni_aperte: { type: boolean }
             chiusura_adesioni: { type: [string, "null"], format: date-time }
             pubblico: { type: boolean }
+            sito:
+              type: boolean
+              description: |
+                Da pubblicare come articolo sui siti collegati (scelta dell'evento, solo con il
+                modulo pubblico). Campo aggiunto nella 1.0.90.
             annullato: { type: boolean }
 
     NuovaAdesione:

@@ -38,6 +38,7 @@ def evento(e: Evento) -> dict:
         "adesioni_aperte": e.adesioni_aperte,
         "chiusura_adesioni": data_ora(e.chiusura_adesioni),
         "pubblico": e.pubblico,
+        "sito": e.pubblico and e.sito,
         "annullato": e.annullato,
     }
 

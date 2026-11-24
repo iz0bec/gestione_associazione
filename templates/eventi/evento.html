@@ -53,6 +53,7 @@
       <div class="fw-medium mb-1"><i class="ti ti-world me-1"></i>Modulo pubblico di adesione</div>
       <p class="small text-secondary">Da diffondere (sito, social, email): chiunque abbia il collegamento può aderire.</p>
       <input class="form-control form-control-sm font-monospace" type="text" readonly data-copia value="{{ link_pubblico }}" aria-label="Collegamento al modulo pubblico">
+      {% if evento.sito %}<p class="small text-secondary mt-2 mb-0"><i class="ti ti-brand-wordpress me-1"></i>I siti collegati ne fanno un articolo (in bozza, da rivedere).</p>{% endif %}
     </div></div>{% endif %}
   </div>
 </div>

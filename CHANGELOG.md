@@ -5,6 +5,18 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Connettore WordPress** (`integrazioni/wordpress/gestione-associazione`, plugin 0.1.0, CC0):
+  collega un sito al gestionale come integrazione delle API v1, con richieste firmate (RFC 9421) e
+  dati personali cifrati (JWE). Shortcode e blocchi per **domanda di iscrizione**, **modulo
+  contatti**, **eventi con adesione**, **organigramma** e **verifica della tessera**; **articoli degli
+  eventi** (in bozza per default, aggiornati, «ANNULLATO» se annullati, mai cancellati); **coda
+  cifrata** se il gestionale non risponde; anti-spam senza servizi esterni. PHP puro (sodium e
+  openssl), provato con i vettori ufficiali e con una prova incrociata contro il gestionale. Guida in
+  *docs/sistema/connettore-wordpress.md*.
+- Eventi: nuova scelta **«Pubblica sui siti collegati»**; l'API degli eventi espone il campo `sito`
+  (aggiunta compatibile del contratto v1).
+
 ## [1.0.89] - 2026-11-24
 
 ### Corretto

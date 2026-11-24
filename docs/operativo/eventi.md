@@ -19,7 +19,8 @@
 **Nuovo evento**: titolo, tipo, inizio ed eventuale fine, luogo, descrizione (programma, appuntamento),
 **quota** di partecipazione (solo indicativa: gli incassi si registrano in *Tesoreria → Incassi*),
 **posti disponibili** (vuoto = senza limite), **accompagnatori** che ciascuno può indicare, apertura e
-**chiusura delle adesioni** (vuota = fino all'inizio), **modulo pubblico di adesione** e **annullato**.
+**chiusura delle adesioni** (vuota = fino all'inizio), **modulo pubblico di adesione**,
+**pubblica sui siti collegati** e **annullato**.
 
 ## Adesioni
 
@@ -41,3 +42,12 @@ socio, aderisce indicando nome, cognome, email ed eventuali accompagnatori. Il m
 protezioni dell'iscrizione online (campo trappola, tempo minimo, limite di invii per indirizzo) e si
 chiude da solo alla scadenza o quando i posti finiscono. Togliendo la spunta il collegamento smette di
 funzionare.
+
+### Pubblica sui siti collegati
+
+Con **Pubblica sui siti collegati** (insieme al modulo pubblico) i siti collegati al gestionale,
+come un WordPress con il [connettore](../sistema/connettore-wordpress.md), ne fanno un **articolo**:
+in bozza per default, da rivedere (foto, testo) e pubblicare. L'articolo mostra sempre data, luogo,
+posti liberi e modulo di adesione aggiornati; se l'evento viene annullato il titolo diventa
+«ANNULLATO – …». Le adesioni dal sito arrivano qui con origine «integrazione».
+

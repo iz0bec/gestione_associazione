@@ -17,6 +17,7 @@ Per chi installa, configura e mantiene l'applicazione.
 1b. [HTTPS anche in rete interna](https-rete-interna.md) - guida passo passo: CA interna con step-ca o certificato autofirmato
 2. [Configurazione](configurazione.md) - variabili d'ambiente (`.env`)
 2b. [API di interoperabilità](api.md) - proxy, rete interna, impronte TLS; guida per chi integra in [`docs/api`](../api/README.md)
+2b2. [Connettore WordPress](connettore-wordpress.md) - plugin per il sito: domanda, contatti, eventi e articoli, organigramma, verifica tessera
 2c. [Portale dei servizi](portale-servizi.md) - pagina comune generata dalle schede pubbliche delle installazioni
 2d. [Ambiente dimostrativo](ambiente-dimostrativo.md) - installazione di prova con dati di fantasia, azzerata ogni mese
 3. [Sicurezza](sicurezza.md) - misure adottate e raccomandazioni di esercizio
