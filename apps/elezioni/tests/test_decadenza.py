@@ -50,13 +50,12 @@ def test_commissariamento_e_rinnovo_straordinario(sezione, segretario):
     ordinario = servizi.nuovo_rinnovo(segretario, profilo=servizi.profilo_per(alfa), sezione=alfa)
     commissario = persona("Commissario")
     d = servizi.dichiara_decadenza(
-        segretario, sezione=alfa, giorno=OGGI, motivo="scioglimento",
-        organi_ids=[consiglio.pk], commissario=commissario,
+        segretario, sezione=alfa, giorno=OGGI, motivo="scioglimento", commissario=commissario,
         disposto_da="Consiglio direttivo provinciale", atto="delibera n. 3",
     )  # fmt: skip
-    assert d.cariche_chiuse == 3 and d.termine == servizi._piu_mesi(OGGI, 12)
+    assert d.cariche_chiuse == 4 and d.termine == servizi._piu_mesi(OGGI, 12) and not d.interim
     assert [c.ruolo for c in consiglio.cariche_al(OGGI)] == ["commissario"]
-    assert controllo.cariche_al(OGGI).count() == 1  # l'organo di controllo non era indicato
+    assert not controllo.cariche_al(OGGI).exists()  # decadono sempre anche i sindaci
     # il commissario firma al posto del presidente e rappresenta la sezione
     firma = firme("presidente", giorno=OGGI, sezione=alfa, immagini=False)[0]
     assert firma.qualifica == "Il Commissario" and "Commissario" in firma.nome
@@ -113,17 +112,35 @@ def avvia_esistente(r, utente):
     return r
 
 
-def test_decadenza_senza_commissario(sezione, segretario):
-    alfa, consiglio, controllo, _ = sezione
-    with pytest.raises(servizi.OperazioneNonValida, match="entro quando"):
-        servizi.dichiara_decadenza(segretario, sezione=alfa, giorno=OGGI, motivo="dimissioni",
-                                   organi_ids=[consiglio.pk])  # fmt: skip
-    d = servizi.dichiara_decadenza(segretario, sezione=alfa, giorno=OGGI, motivo="dimissioni",
-                                   organi_ids=[consiglio.pk, controllo.pk],
-                                   termine=OGGI + timedelta(days=90))  # fmt: skip
-    assert d.cariche_chiuse == 4 and not consiglio.cariche_al(OGGI).exists()
-    assert d.rinnovo.chi_indice == "Il Consiglio direttivo uscente"
-    assert firme("presidente", giorno=OGGI, sezione=alfa, immagini=False)[0].nome == ""
+def test_senza_commissario_resta_ad_interim_il_presidente(sezione, segretario):
+    alfa, consiglio, controllo, iscritti = sezione
+    d = servizi.dichiara_decadenza(segretario, sezione=alfa, giorno=OGGI, motivo="dimissioni")
+    presidente = iscritti[0].soggetto
+    assert d.interim and d.commissario == presidente and d.cariche_chiuse == 4
+    carica = consiglio.cariche_al(OGGI).get()
+    assert carica.ruolo == "commissario" and carica.soggetto == presidente
+    assert not controllo.cariche_al(OGGI).exists()
+    firma = firme("presidente", giorno=OGGI, sezione=alfa, immagini=False)[0]
+    assert firma.qualifica == "Il Commissario ad interim" and firma.soggetto_id == presidente.pk
+    assert d.rinnovo.chi_indice == "Il Commissario ad interim"
+    assert d.termine == servizi._piu_mesi(OGGI, 12)
+
+
+def test_senza_presidente_serve_il_commissario(segretario, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    nuova = Sezione.objects.create(codice="N", nome="Nuova")
+    with pytest.raises(servizi.OperazioneNonValida, match="indicare il commissario"):
+        servizi.dichiara_decadenza(segretario, sezione=nuova, giorno=OGGI, motivo="costituzione")
+    d = servizi.dichiara_decadenza(
+        segretario,
+        sezione=nuova,
+        giorno=OGGI,
+        motivo="costituzione",
+        commissario=persona("Fondatore"),
+    )
+    assert d.cariche_chiuse == 0 and Organo.objects.get(sezione=nuova).cariche.get().ruolo == (
+        "commissario"
+    )
 
 
 def test_pagina_decadenza(sezione, segretario, client):
@@ -135,7 +152,7 @@ def test_pagina_decadenza(sezione, segretario, client):
     assert f'value="{commissario.pk}"' in trovati
     r = client.post("/organi/rinnovi/decadenza/", {
         "sezione": alfa.pk, "motivo": "scioglimento", "giorno": OGGI.isoformat(),
-        "consiglio": "on", "commissario": commissario.pk, "atto": "delibera",
+        "commissario": commissario.pk, "atto": "delibera",
     })  # fmt: skip
     d = Decadenza.objects.get()
     assert r.status_code == 302 and r["Location"] == d.rinnovo.get_absolute_url()

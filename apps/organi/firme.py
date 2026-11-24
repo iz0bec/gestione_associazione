@@ -80,6 +80,25 @@ def in_carica_al(ruolo, giorno=None, sezione=None):
     return carica.soggetto if carica else None
 
 
+def commissario_al(giorno=None, sezione=None):
+    """Firma del commissario in carica (organi decaduti), «ad interim» se è il presidente
+    decaduto; None se non c'è."""
+    from .models import Carica
+
+    giorno = _giorno(giorno)
+    carica = (
+        Carica.objects.filter(ruolo="commissario", dal__lte=giorno, organo__sezione=sezione)
+        .filter(Q(al__isnull=True) | Q(al__gt=giorno))
+        .select_related("soggetto")
+        .order_by("-dal")
+        .first()
+    )
+    if carica is None:
+        return None
+    qualifica = QUALIFICHE["commissario"] + (" ad interim" if "interim" in carica.note else "")
+    return Firma(qualifica, carica.soggetto.intestazione, carica.soggetto_id)
+
+
 def rappresentante_legale_al(giorno=None, sezione=None):
     """Nomina del rappresentante legale valida alla data, o None.
 
@@ -117,9 +136,9 @@ def legale_rappresentante(giorno=None, sezione=None):
     presidente = in_carica_al("presidente", giorno, sezione)
     if presidente:
         return Firma(QUALIFICHE["presidente"], presidente.intestazione, presidente.pk)
-    commissario = in_carica_al("commissario", giorno, sezione)
+    commissario = commissario_al(giorno, sezione)
     if commissario:  # organi decaduti: rappresenta l'ente il commissario
-        return Firma(QUALIFICHE["commissario"], commissario.intestazione, commissario.pk)
+        return commissario
     if sezione is not None:  # sezione senza nomina né presidente: vale quello dell'associazione
         return legale_rappresentante(giorno, None)
     return None
@@ -154,9 +173,9 @@ def _firma(ruolo, giorno, sezione):
         return legale_rappresentante(giorno, sezione)
     persona = in_carica_al(ruolo, giorno, sezione)
     if persona is None and ruolo == "presidente":  # commissariamento: firma il commissario
-        commissario = in_carica_al("commissario", giorno, sezione)
+        commissario = commissario_al(giorno, sezione)
         if commissario is not None:
-            return Firma(QUALIFICHE["commissario"], commissario.intestazione, commissario.pk)
+            return commissario
     if persona is None:
         return None
     return Firma(QUALIFICHE.get(ruolo, ruolo.capitalize()), persona.intestazione, persona.pk)

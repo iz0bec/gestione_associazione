@@ -87,16 +87,18 @@ dalla Giunta esecutiva nazionale) o nasce una **nuova sezione** affidata a un co
 **Decadenza o commissariamento** nell'elenco dei rinnovi:
 
 - si indicano sezione (vuota: gli organi dell'ente), motivo, giorno, chi lo ha disposto e il
-  provvedimento, e **quali organi decadono** (il consiglio direttivo; a scelta anche l'organo di
-  controllo e gli altri organi elettivi): le loro cariche si chiudono da quel giorno;
-- l'eventuale **commissario** si sceglie dall'anagrafica: entra nel consiglio con la carica di
-  **Commissario**, firma i documenti al posto del presidente (anche come legale rappresentante) e
-  indice il nuovo congresso; avvisi, moduli delle liste e verbali lo indicano al posto del consiglio
-  uscente;
+  provvedimento. Decadono sempre il **consiglio direttivo** e l'**organo di controllo** (sindaci), a
+  scelta anche gli altri organi elettivi (es. garanti): le loro cariche si chiudono da quel giorno;
+- il **commissario** si sceglie dall'anagrafica; se non lo si indica, la carica la tiene **ad interim
+  il presidente decaduto**. Entra nel consiglio con la carica di **Commissario** («ad interim» se è
+  il presidente decaduto), firma i documenti al posto del presidente (anche come legale
+  rappresentante) e indice il nuovo congresso; avvisi, moduli delle liste e verbali lo indicano al
+  posto del consiglio uscente. Senza un presidente in carica (es. una nuova sezione) il commissario
+  va indicato;
 - si apre il **rinnovo straordinario**, con i termini calcolati sul giorno entro cui tenere il nuovo
   congresso: con il commissario **dodici mesi** dalla nomina (Statuto art. 36), **prorogabili** una
-  volta fino ad altri dodici con il pulsante *Proroga* nella scheda; senza commissario la data si
-  indica a mano. Un rinnovo ordinario in corso viene annullato;
+  volta fino ad altri dodici con il pulsante *Proroga* nella scheda (si può anche indicare una data
+  diversa). Un rinnovo ordinario in corso viene annullato;
 - da lì la procedura è quella di sempre; all'**insediamento** dei nuovi organi il commissario esce
   dalla carica e il commissariamento si chiude da solo.
 

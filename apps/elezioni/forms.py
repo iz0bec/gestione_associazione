@@ -146,15 +146,13 @@ class DecadenzaForm(StileMixin, forms.Form):
     )  # fmt: skip
     atto = forms.CharField(label="Provvedimento", max_length=200, required=False,
                            help_text="Es. delibera n. 3 del 12/03/2027.")  # fmt: skip
-    consiglio = forms.BooleanField(label="Decade il consiglio direttivo", required=False,
-                                   initial=True)  # fmt: skip
-    controllo = forms.BooleanField(label="Decade anche l'organo di controllo (sindaci)",
-                                   required=False)  # fmt: skip
-    altri = forms.BooleanField(label="Decadono anche gli altri organi elettivi (es. garanti)",
-                               required=False)  # fmt: skip
+    altri = forms.BooleanField(
+        label="Decadono anche gli altri organi elettivi (es. garanti)", required=False,
+        help_text="Il consiglio direttivo e l'organo di controllo (sindaci) decadono sempre.",
+    )  # fmt: skip
     termine = forms.DateField(
         label="Nuovo congresso entro", required=False, widget=forms.DateInput(attrs=DATA),
-        help_text="Con il commissario, vuoto: dodici mesi dalla nomina.",
+        help_text="Vuoto: dodici mesi dalla decadenza (prorogabili).",
     )  # fmt: skip
     profilo = forms.ModelChoiceField(
         queryset=ProfiloElettorale.objects.filter(attivo=True), required=False,
@@ -167,9 +165,7 @@ class DecadenzaForm(StileMixin, forms.Form):
         self.fields["sezione"].queryset = sezioni
 
     def tipi(self):
+        """Tipi di organo che decadono oltre al consiglio e ai sindaci."""
         from apps.organi.models import Organo
 
-        d = self.cleaned_data
-        return [t for t, scelto in ((Organo.Tipo.CONSIGLIO, d["consiglio"]),
-                                    (Organo.Tipo.CONTROLLO, d["controllo"]),
-                                    (Organo.Tipo.ALTRO, d["altri"])) if scelto]  # fmt: skip
+        return [Organo.Tipo.ALTRO] if self.cleaned_data["altri"] else []

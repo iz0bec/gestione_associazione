@@ -15,7 +15,7 @@
     {% with d=rinnovo.decadenza %}{% if d %}
     <div class="alert alert-warning">
       <div class="fw-bold">{{ d }}{% if d.chiusa_il %} · concluso il {{ d.chiusa_il|date:"d/m/Y" }}{% endif %}</div>
-      <div class="small">{{ d.get_motivo_display }}{% if d.disposto_da %}, disposto da {{ d.disposto_da }}{% endif %}{% if d.atto %} ({{ d.atto }}){% endif %}. {% if d.organi_sciolti %}Organi decaduti: {{ d.organi_sciolti|join:", " }} ({{ d.cariche_chiuse }} cariche chiuse). {% endif %}{% if d.commissario %}Commissario: <strong>{{ d.commissario.nome_completo }}</strong>. {% endif %}Nuovo congresso entro il <strong>{{ d.scadenza|date:"d/m/Y" }}</strong>{% if d.prorogato_al %} (prorogato{% if d.atto_proroga %}: {{ d.atto_proroga }}{% endif %}){% endif %}.</div>
+      <div class="small">{{ d.get_motivo_display }}{% if d.disposto_da %}, disposto da {{ d.disposto_da }}{% endif %}{% if d.atto %} ({{ d.atto }}){% endif %}. {% if d.organi_sciolti %}Organi decaduti: {{ d.organi_sciolti|join:", " }} ({{ d.cariche_chiuse }} cariche chiuse). {% endif %}{% if d.commissario %}Commissario: <strong>{{ d.commissario.nome_completo }}</strong>{% if d.interim %} (ad interim, presidente decaduto){% endif %}. {% endif %}Nuovo congresso entro il <strong>{{ d.scadenza|date:"d/m/Y" }}</strong>{% if d.prorogato_al %} (prorogato{% if d.atto_proroga %}: {{ d.atto_proroga }}{% endif %}){% endif %}.</div>
       {% if puo_gestire and not d.chiusa_il and d.commissario and not d.prorogato_al %}
       <form method="post" action="{% url 'elezioni:proroga' rinnovo.pk %}" class="row g-2 mt-1 align-items-end">{% csrf_token %}
         <div class="col-md-3"><input class="form-control form-control-sm" type="date" name="fino" aria-label="Proroga fino al"></div>

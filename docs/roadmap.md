@@ -293,7 +293,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     contatto**, su carta intestata e con data di stampa; scelta degli organi e dell'eventuale
     sezione, per l'uso interno (i recapiti sono dati personali: stampa riservata ai ruoli che
     gestiscono gli organi).
-- ✅ **Decadenza anticipata degli organi e commissariamento** (non rilasciato): cariche chiuse, commissario che firma, rinnovo straordinario entro dodici mesi prorogabili.
+- ✅ **Decadenza anticipata degli organi e commissariamento** (non rilasciato): decadono consiglio e sindaci, commissario (o ad interim il presidente decaduto) che firma, rinnovo straordinario entro dodici mesi prorogabili.
 - ✅ **Rinnovo degli organi a scadenza del mandato** (non rilasciato, modulo `apps/elezioni`; sezioni e federazione, compilazione delle liste, esiti senza spoglio guidato, avviso senza blocco del tesseramento): la procedura elettorale guidata, dalla
   scadenza alla proclamazione, con i termini calcolati dal programma.
   - *Fasi e termini dell'ANCR* (Statuto artt. 46-47, Regolamento applicativo art. 22 «Sezioni:

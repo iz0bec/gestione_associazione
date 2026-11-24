@@ -274,7 +274,7 @@ class Rinnovo(ModelloBase):
         """Chi indice e convoca: il commissario se c'è, altrimenti il consiglio uscente."""
         d = self.decadenza
         if d is not None and d.commissario_id:
-            return "Il Commissario"
+            return "Il Commissario ad interim" if d.interim else "Il Commissario"
         return "Il Consiglio direttivo uscente"
 
 
@@ -429,6 +429,10 @@ class Decadenza(ModelloBase):
     termine = models.DateField(
         "nuovo congresso entro", help_text="Commissario: di norma dodici mesi dalla nomina."
     )
+    interim = models.BooleanField(
+        "presidente decaduto ad interim", default=False, editable=False,
+        help_text="Senza un commissario nominato, la carica la tiene il presidente decaduto.",
+    )  # fmt: skip
     prorogato_al = models.DateField("proroga fino al", null=True, blank=True)
     atto_proroga = models.CharField(max_length=200, blank=True)
     chiusa_il = models.DateField("normalità ripristinata il", null=True, blank=True)
@@ -444,7 +448,7 @@ class Decadenza(ModelloBase):
 
     def __str__(self):
         ente = f"Sezione di {self.sezione.nome}" if self.sezione_id else "Organi dell'ente"
-        tipo = "Commissariamento" if self.commissario_id else "Decadenza degli organi"
+        tipo = "Commissariamento ad interim" if self.interim else "Commissariamento"
         return f"{tipo} · {ente} dal {self.giorno:%d/%m/%Y}"
 
     @property
