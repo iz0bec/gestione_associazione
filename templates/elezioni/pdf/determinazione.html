@@ -1,0 +1,16 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Determinazione del commissario (Regolamento art. 19)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% load firme %}
+{% block titolo %}{{ d }}{% endblock %}
+{% block contenuto %}
+<h1 style="font-size:13pt;text-align:center;text-transform:uppercase">Determinazione del commissario n. {{ d.numero }}/{{ d.anno }}</h1>
+<p style="text-align:center">{% if d.decadenza.sezione %}Sezione di {{ d.decadenza.sezione.nome }}{% else %}{{ organizzazione.denominazione }}{% endif %} · {{ d.giorno|date:"j F Y" }}{% if d.protocollo %} · prot. {{ d.protocollo.segnatura }}{% endif %}</p>
+<p><strong>Oggetto:</strong> {{ d.oggetto }}</p>
+<p>Il Commissario {{ d.commissario.nome_completo }}, che durante il commissariamento assume in sé tutte le cariche (Regolamento applicativo, art. 19){% if d.decadenza.atto %}, nominato con {{ d.decadenza.atto }}{% endif %},</p>
+<div>{{ d.testo|linebreaks }}</div>
+{% firme "presidente" giorno=d.giorno sezione=d.decadenza.sezione %}
+{% endblock %}

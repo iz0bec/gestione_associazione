@@ -230,6 +230,20 @@ class Rinnovo(ModelloBase):
     )  # fmt: skip
     consegne_il = models.DateField("passaggio di consegne il", null=True, blank=True)
     motivo_annullamento = models.CharField(max_length=255, blank=True)
+    elenco_inviato_il = models.DateField(
+        "elenco dei soci inviato alla Federazione il", null=True, blank=True,
+        help_text="Regolamento art. 6: prima della votazione.",
+    )  # fmt: skip
+    schede_depositate_il = models.DateField(
+        "schede sigillate e depositate il", null=True, blank=True,
+        help_text="Schede in pacco sigillato, con i verbali, nella segreteria.",
+    )  # fmt: skip
+    vidimato_il = models.DateField(
+        "esiti vidimati dal Presidente di Federazione il", null=True, blank=True
+    )
+    riunione_insediamento = models.ForeignKey(
+        "organi.Riunione", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
     straordinario = models.BooleanField(
         default=False, editable=False,
         help_text="Dopo la decadenza anticipata degli organi o il commissariamento.",
@@ -437,6 +451,15 @@ class Decadenza(ModelloBase):
     prorogato_al = models.DateField("proroga fino al", null=True, blank=True)
     atto_proroga = models.CharField(max_length=200, blank=True)
     chiusa_il = models.DateField("normalità ripristinata il", null=True, blank=True)
+    relazione = models.TextField(
+        "relazione sul proprio operato", blank=True,
+        help_text="Regolamento art. 19: al Presidente di Federazione (sezioni) o al Presidente "
+        "nazionale (federazioni).",
+    )  # fmt: skip
+    relazione_il = models.DateField(null=True, blank=True)
+    relazione_protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
     rinnovo = models.ForeignKey(
         Rinnovo, null=True, blank=True, on_delete=models.SET_NULL, related_name="decadenze"
     )
@@ -455,3 +478,64 @@ class Decadenza(ModelloBase):
     @property
     def scadenza(self):
         return self.prorogato_al or self.termine
+
+
+class Determinazione(ModelloBase):
+    """Provvedimento del commissario, che durante il commissariamento assume in sé tutte le cariche
+    (Regolamento art. 19): sostituisce le delibere del consiglio decaduto. Numero annuale."""
+
+    decadenza = models.ForeignKey(
+        Decadenza, on_delete=models.PROTECT, related_name="determinazioni"
+    )
+    anno = models.PositiveIntegerField(editable=False)
+    numero = models.PositiveIntegerField(editable=False)
+    giorno = models.DateField()
+    oggetto = models.CharField(max_length=300)
+    testo = models.TextField(help_text="Premesse e dispositivo.")
+    commissario = models.ForeignKey(Soggetto, on_delete=models.PROTECT, related_name="+")
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "determinazione del commissario"
+        verbose_name_plural = "determinazioni del commissario"
+        ordering = ["-anno", "-numero"]
+
+    def __str__(self):
+        return f"Determinazione n. {self.numero}/{self.anno} - {self.oggetto}"
+
+
+class CommissarioAmministrativo(ModelloBase):
+    """Commissario amministrativo (Regolamento art. 19, lettere b e d): non sostituisce presidente e
+    consiglio, verifica la correttezza amministrativa e riferisce con una relazione."""
+
+    sezione = models.ForeignKey(
+        "soci.Sezione", null=True, blank=True, on_delete=models.PROTECT, related_name="+",
+        help_text="Vuota: la federazione.",
+    )  # fmt: skip
+    commissario = models.ForeignKey(Soggetto, on_delete=models.PROTECT, related_name="+",
+                                    limit_choices_to={"tipo": "persona"})  # fmt: skip
+    nominato_da = models.CharField(
+        max_length=150, help_text="Consiglio direttivo di Federazione o Giunta esecutiva nazionale."
+    )
+    atto = models.CharField("provvedimento", max_length=200, blank=True)
+    dal = models.DateField()
+    termine = models.DateField(help_text="Al massimo dodici mesi, rinnovabili.")
+    rinnovato_al = models.DateField(null=True, blank=True)
+    relazione = models.TextField(blank=True)
+    relazione_il = models.DateField(null=True, blank=True)
+    chiuso_il = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "commissario amministrativo"
+        verbose_name_plural = "commissari amministrativi"
+        ordering = ["-dal"]
+
+    def __str__(self):
+        ente = f"Sezione di {self.sezione.nome}" if self.sezione_id else "Federazione"
+        return f"Commissario amministrativo · {ente}: {self.commissario.nome_completo}"
+
+    @property
+    def scadenza(self):
+        return self.rinnovato_al or self.termine

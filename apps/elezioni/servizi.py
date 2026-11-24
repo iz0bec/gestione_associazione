@@ -21,7 +21,16 @@ from django.utils import timezone
 
 from apps.core.audit import Azione, registra
 
-from .models import Candidato, Decadenza, Lista, ProfiloElettorale, Ricorso, Rinnovo
+from .models import (
+    Candidato,
+    CommissarioAmministrativo,
+    Decadenza,
+    Determinazione,
+    Lista,
+    ProfiloElettorale,
+    Ricorso,
+    Rinnovo,
+)
 
 ORIGINE = "rinnovo-organi"
 Fase = Rinnovo.Fase
@@ -299,12 +308,15 @@ def calcola_aventi(rinnovo, giorno):
             )
             consiglio = organo_consiglio(sezione)
             presidente = None
-            if consiglio is not None:
-                presidente = consiglio.cariche_al(giorno).filter(ruolo="presidente").first()
+            if consiglio is not None:  # sezione commissariata: la rappresenta il commissario
+                cariche = consiglio.cariche_al(giorno)
+                presidente = (cariche.filter(ruolo="presidente").first()
+                              or cariche.filter(ruolo="commissario").first())  # fmt: skip
             righe.append({
                 "sezione": sezione.pk, "nome": sezione.nome, "voti": voti,
                 "delegato": presidente.soggetto.nome_completo if presidente else "",
                 "soggetto": presidente.soggetto_id if presidente else None, "presente": False,
+                "schede": descrivi_schede(voti),
             })  # fmt: skip
         return righe, sum(r["voti"] for r in righe)
     soci = _soci(rinnovo).filter(data_ammissione__lte=giorno).in_regola(anno)
@@ -314,6 +326,23 @@ def calcola_aventi(rinnovo, giorno):
         for s in soci.select_related("soggetto").order_by("soggetto__cognome", "soggetto__nome")
     ]  # fmt: skip
     return righe, len(righe)
+
+
+PESI_SCHEDE = (100, 50, 10, 5, 1)
+
+
+def schede_per_peso(voti):
+    """Schede di diverso peso elettorale fino ai voti spettanti (Regolamento art. 21)."""
+    schede = []
+    for peso in PESI_SCHEDE:
+        n, voti = divmod(voti, peso)
+        if n:
+            schede.append((peso, n))
+    return schede
+
+
+def descrivi_schede(voti):
+    return ", ".join(f"{n} da {peso}" for peso, n in schede_per_peso(voti)) or "-"
 
 
 def voti_totali(rinnovo):
@@ -659,6 +688,15 @@ def registra_esiti(rinnovo, utente, dati, voti):
     p = rinnovo.profilo
     if not rinnovo.votato_il:
         raise OperazioneNonValida("Indicare il giorno del voto.")
+    if modalita_voto(rinnovo) == "scrutinio" and not (
+        rinnovo.commissione_presidente.strip() and rinnovo.commissione_segretario.strip()
+    ):
+        raise OperazioneNonValida(
+            "Con più liste si vota a scrutinio segreto davanti alla "
+            "commissione elettorale: indicarne presidente e segretario."
+        )
+    if registro_usato(rinnovo):
+        rinnovo.presenti, rinnovo.deleghe = conteggi_registro(rinnovo)
     if not p.voto_ponderato and rinnovo.deleghe > rinnovo.presenti * p.max_deleghe:
         raise OperazioneNonValida(f"Voti per delega oltre il massimo ({p.max_deleghe} per "
                                   "votante presente).")  # fmt: skip
@@ -675,9 +713,18 @@ def registra_esiti(rinnovo, utente, dati, voti):
     if scrutinio and rinnovo.schede_votate and rinnovo.schede_votate != espressi:
         raise OperazioneNonValida(f"Le schede votate ({rinnovo.schede_votate}) non tornano con "
                                   f"voti, bianche e nulle ({espressi}).")  # fmt: skip
+    if registro_usato(rinnovo) and espressi > rinnovo.presenti + rinnovo.deleghe:
+        raise OperazioneNonValida(f"Più voti ({espressi}) dei votanti del registro "
+                                  f"({rinnovo.presenti + rinnovo.deleghe}).")  # fmt: skip
     massimo = max(lista.voti for lista in ammesse)
     prime = [lista for lista in ammesse if lista.voti == massimo]
     avvisi = []
+    if rinnovo.voto_aperto and rinnovo.voto_chiuso:
+        durata = (rinnovo.voto_chiuso.hour * 60 + rinnovo.voto_chiuso.minute
+                  - rinnovo.voto_aperto.hour * 60 - rinnovo.voto_aperto.minute)  # fmt: skip
+        if durata > p.ore_votazione * 60:
+            avvisi.append(f"La votazione è durata più di {p.ore_votazione} ore: va chiusa dopo "
+                          "tre ore o quando tutti hanno votato.")  # fmt: skip
     if massimo == 0:
         rinnovo.lista_eletta = None
         avvisi.append("Nessun voto alle liste: non c'è una lista eletta.")
@@ -771,8 +818,10 @@ def _organo(sezione, tipo, nome, sigla, durata):
 
 @transaction.atomic
 def insedia(rinnovo, utente, *, giorno=None):
-    """Chiude le cariche uscenti degli organi rinnovati e nomina gli eletti (esclusi quelli che
-    non accettano: i supplenti si cooptano con una delibera del nuovo consiglio)."""
+    """Chiude le cariche uscenti degli organi rinnovati e nomina gli eletti. Chi non accetta non è
+    nominato: nel consiglio lo sostituiscono i supplenti, nell'ordine della lista, come consiglieri
+    (Regolamento artt. 21-22); gli incarichi rimasti vacanti (vicepresidente, segretario) li
+    attribuisce il nuovo consiglio. Se non accetta il presidente eletto, ci si ferma."""
     from apps.organi import servizi as organi
     from apps.organi.models import Carica, Organo
 
@@ -782,6 +831,11 @@ def insedia(rinnovo, utente, *, giorno=None):
     pendenti = rinnovo.ricorsi.filter(esito=Ricorso.Esito.PENDENTE).count()
     if pendenti:
         raise OperazioneNonValida(f"Ci sono {pendenti} ricorsi da decidere.")
+    if any(c.rinuncia and c.incarico == Incarico.PRESIDENTE for c in eletti(rinnovo)):
+        raise OperazioneNonValida(
+            "Il presidente eletto non accetta la carica: va deciso secondo "
+            "lo statuto (es. nuova elezione) prima dell'insediamento."
+        )
     giorno = giorno or timezone.localdate()
     durata, sezione = rinnovo.profilo.durata_mandato, rinnovo.sezione
     nome = "Consiglio direttivo" + (" sezionale" if sezione else "")
@@ -790,7 +844,7 @@ def insedia(rinnovo, utente, *, giorno=None):
                                                            "CD", durata),
         "controllo": _organo(sezione, Organo.Tipo.CONTROLLO, "Collegio dei sindaci", "CS", durata),
     }  # fmt: skip
-    candidati = [c for c in eletti(rinnovo) if not c.rinuncia]
+    candidati, subentri = sostituzioni(rinnovo)
     if any(c.incarico == Incarico.GARANTE for c in candidati):
         organi_["garanti"] = _organo(sezione, Organo.Tipo.ALTRO, "Collegio dei garanti", "CG",
                                      durata)  # fmt: skip
@@ -810,13 +864,45 @@ def insedia(rinnovo, utente, *, giorno=None):
             organo, ruolo = organi_["garanti"], Carica.Ruolo.COMPONENTE
         else:
             organo, ruolo = organi_["consiglio"], c.incarico
-        organi.nomina(organo, c.soggetto, ruolo, giorno, utente, atto=atto)
+        nota = ""
+        if c.pk in subentri:
+            ruolo, nota = Carica.Ruolo.CONSIGLIERE, f"supplente subentrato a {subentri[c.pk]}"
+        organi.nomina(organo, c.soggetto, ruolo, giorno, utente, atto=atto, note=nota)
         nominati += 1
     rinnovo.insediato_il, rinnovo.fase, rinnovo.modificato_da = giorno, Fase.INSEDIATO, utente
     rinnovo.save()
     Decadenza.objects.filter(rinnovo=rinnovo, chiusa_il__isnull=True).update(chiusa_il=giorno)
     registra(Azione.MODIFICA, rinnovo, utente=utente, fase="insediato", nominati=nominati)
     return nominati
+
+
+CONSIGLIO = (Incarico.VICEPRESIDENTE, Incarico.SEGRETARIO, Incarico.CONSIGLIERE)
+
+
+def sostituzioni(rinnovo):
+    """(eletti da nominare, {candidato supplente: chi sostituisce}): per ogni eletto del consiglio
+    che non accetta subentra il primo supplente disponibile, come consigliere."""
+    tutti = eletti(rinnovo)
+    rinunce = [c for c in tutti if c.rinuncia and c.incarico in CONSIGLIO]
+    supplenti = [c for c in tutti if c.incarico == Incarico.SUPPLENTE and not c.rinuncia]
+    subentri = {s.pk: r.soggetto.nome_completo for s, r in zip(supplenti, rinunce, strict=False)}
+    return [c for c in tutti if not c.rinuncia], subentri
+
+
+def vacanze(rinnovo):
+    """Avvisi dopo l'insediamento: incarichi rimasti senza titolare e rinunce non coperte."""
+    tutti = eletti(rinnovo)
+    _, subentri = sostituzioni(rinnovo)
+    avvisi = []
+    for c in tutti:
+        if c.rinuncia and c.incarico in (Incarico.VICEPRESIDENTE, Incarico.SEGRETARIO):
+            avvisi.append(f"{c.get_incarico_display()} vacante: lo attribuisce il nuovo consiglio.")
+    scoperte = sum(1 for c in tutti if c.rinuncia and c.incarico in CONSIGLIO) - len(subentri)
+    if scoperte > 0:
+        avvisi.append(f"{scoperte} rinunce nel consiglio senza supplenti che subentrino.")
+    if any(c.rinuncia and c.incarico in (Incarico.SINDACO, Incarico.GARANTE) for c in tutti):
+        avvisi.append("Rinunce tra sindaci o garanti: integrare l'organo secondo lo statuto.")
+    return avvisi
 
 
 @transaction.atomic
@@ -1166,3 +1252,265 @@ def decadenze_aperte():
     return Decadenza.objects.filter(chiusa_il__isnull=True).select_related(
         "sezione", "commissario", "rinnovo"
     )
+
+
+# --- registro dei votanti (seggio) ---------------------------------------------------------
+
+
+def registro_usato(rinnovo):
+    return not rinnovo.federazione and any(r.get("presenza") for r in rinnovo.aventi_diritto)
+
+
+def conteggi_registro(rinnovo):
+    righe = rinnovo.aventi_diritto
+    presenti = sum(1 for r in righe if r.get("presenza") == "presente")
+    deleghe = sum(1 for r in righe if r.get("presenza") == "delega")
+    return presenti, deleghe
+
+
+@transaction.atomic
+def registra_votanti(rinnovo, utente, scelte):
+    """Registro del seggio: `scelte` {socio: (presenza, socio_delegato)} con presenza «presente»,
+    «delega» o «» (assente). Chi riceve la delega dev'essere presente; al massimo le deleghe del
+    profilo per ciascuno (Regolamento art. 22: due oltre il proprio voto)."""
+    _controlla_aperto(rinnovo)
+    if rinnovo.federazione:
+        raise OperazioneNonValida("Al congresso provinciale votano le sezioni (verifica poteri).")
+    if rinnovo.fase not in (Fase.CONVOCATO, Fase.LISTE, Fase.VOTATO):
+        raise OperazioneNonValida("Il registro dei votanti si usa al seggio, dopo la convocazione.")
+    righe = [dict(r) for r in rinnovo.aventi_diritto]
+    per_socio = {r["socio"]: r for r in righe}
+    for socio, (presenza, delegato) in scelte.items():
+        riga = per_socio.get(socio)
+        if riga is None:
+            raise OperazioneNonValida("Votante non compreso tra gli aventi diritto.")
+        riga["presenza"] = presenza if presenza in ("presente", "delega") else ""
+        riga["delegato"] = delegato if riga["presenza"] == "delega" else None
+    ricevute = {}
+    for r in righe:
+        if r.get("presenza") != "delega":
+            continue
+        tit = per_socio.get(r.get("delegato"))
+        if tit is None or tit is r:
+            raise OperazioneNonValida(f"{r['nome']}: indicare a quale altro socio dà la delega.")
+        if tit.get("presenza") != "presente":
+            raise OperazioneNonValida(f"{r['nome']} delega {tit['nome']}, che non è presente.")
+        ricevute[tit["socio"]] = ricevute.get(tit["socio"], 0) + 1
+    massimo = rinnovo.profilo.max_deleghe
+    troppe = [per_socio[s]["nome"] for s, n in ricevute.items() if n > massimo]
+    if troppe:
+        raise OperazioneNonValida(f"Più di {massimo} deleghe a: {', '.join(troppe)}.")
+    rinnovo.aventi_diritto = righe
+    rinnovo.presenti, rinnovo.deleghe = conteggi_registro(rinnovo)
+    rinnovo.modificato_da = utente
+    rinnovo.save()
+    registra(Azione.MODIFICA, rinnovo, utente=utente, registro_votanti=True,
+             presenti=rinnovo.presenti, deleghe=rinnovo.deleghe)  # fmt: skip
+    return rinnovo.presenti, rinnovo.deleghe
+
+
+ADEMPIMENTI = {
+    "elenco_inviato_il": "Elenco dei soci inviato alla Federazione",
+    "schede_depositate_il": "Schede sigillate e depositate",
+    "vidimato_il": "Esiti vidimati dal Presidente di Federazione",
+    "ratificato_il": "Esiti ratificati dalla Commissione nazionale verifica soci",
+}
+
+
+@transaction.atomic
+def segna_adempimento(rinnovo, utente, campo, giorno):
+    if campo not in ADEMPIMENTI:
+        raise OperazioneNonValida("Adempimento sconosciuto.")
+    setattr(rinnovo, campo, giorno)
+    rinnovo.modificato_da = utente
+    rinnovo.save()
+    registra(Azione.MODIFICA, rinnovo, utente=utente, adempimento=ADEMPIMENTI[campo],
+             giorno=str(giorno or ""))  # fmt: skip
+
+
+def adempimenti(rinnovo):
+    """Adempimenti del Regolamento con la data in cui sono stati fatti (federazione: niente
+    elenco né vidimazione, che riguardano le sezioni)."""
+    campi = list(ADEMPIMENTI)
+    if rinnovo.federazione or rinnovo.profilo.modelli == "generico":
+        campi = [c for c in campi if c not in ("elenco_inviato_il", "vidimato_il")]
+    if rinnovo.profilo.modelli == "generico":
+        campi = [c for c in campi if c != "ratificato_il"]
+    return [(c, ADEMPIMENTI[c], getattr(rinnovo, c)) for c in campi]
+
+
+# --- nuovo consiglio: prima riunione e cooptazioni -----------------------------------------
+
+
+def odg_prima_riunione(rinnovo):
+    return [
+        f"Insediamento del Consiglio direttivo eletto dal {rinnovo.profilo.nome_assemblea} del "
+        f"{rinnovo.votato_il:%d/%m/%Y}",
+        "Presa d'atto delle accettazioni e delle eventuali rinunce degli eletti; cooptazione dei "
+        "supplenti",
+        "Attribuzione degli incarichi (es. tesoriere) e delle deleghe",
+        "Varie ed eventuali",
+    ]
+
+
+@transaction.atomic
+def prepara_prima_riunione(rinnovo, utente, *, quando, luogo):
+    """Prima riunione del nuovo consiglio (in bozza negli Organi sociali): entro questa gli eletti
+    che non accettano lo dichiarano per iscritto e i supplenti li sostituiscono."""
+    from apps.organi.models import Riunione
+    from apps.organi.servizi import _salva_punti
+
+    if rinnovo.fase not in (Fase.INSEDIATO, Fase.CONCLUSO):
+        raise OperazioneNonValida("La prima riunione segue l'insediamento dei nuovi organi.")
+    if rinnovo.riunione_insediamento_id:
+        raise OperazioneNonValida("La prima riunione è già stata preparata.")
+    consiglio = organo_consiglio(rinnovo.sezione)
+    riunione = Riunione.objects.create(
+        organo=consiglio, prima_convocazione=quando, luogo=luogo,
+        anno=timezone.localtime(quando).year, creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    _salva_punti(riunione, odg_prima_riunione(rinnovo))
+    rinnovo.riunione_insediamento = riunione
+    rinnovo.save(update_fields=["riunione_insediamento"])
+    registra(Azione.CREAZIONE, riunione, utente=utente, origine=str(rinnovo))
+    return riunione
+
+
+def supplenti_in_carica(rinnovo):
+    organo = organo_consiglio(rinnovo.sezione)
+    if organo is None:
+        return []
+    return list(organo.cariche_al().filter(ruolo="supplente").select_related("soggetto"))
+
+
+@transaction.atomic
+def coopta(carica, utente, *, giorno, atto):
+    """Il supplente entra nel consiglio come consigliere (cooptazione, da ratificare alla prima
+    riunione): chiude la carica di supplente e lo nomina consigliere dal giorno indicato."""
+    from apps.organi import servizi as organi
+
+    if carica.ruolo != "supplente":
+        raise OperazioneNonValida("Si coopta un supplente.")
+    if not atto.strip():
+        raise OperazioneNonValida("Indicare la delibera di cooptazione.")
+    organi.termina_carica(carica, giorno, utente, motivo="Cooptato consigliere")
+    nuova = organi.nomina(carica.organo, carica.soggetto, "consigliere", giorno, utente,
+                          atto=atto, note="cooptato (supplente)")  # fmt: skip
+    return nuova
+
+
+# --- determinazioni e relazione del commissario --------------------------------------------
+
+
+@transaction.atomic
+def nuova_determinazione(decadenza, utente, *, giorno, oggetto, testo, protocolla=False):
+    from apps.core.numerazione import prossimo_numero
+
+    if decadenza.chiusa_il:
+        raise OperazioneNonValida("Il commissariamento è concluso.")
+    if decadenza.commissario_id is None:
+        raise OperazioneNonValida("Non c'è un commissario.")
+    if not oggetto.strip() or not testo.strip():
+        raise OperazioneNonValida("Oggetto e testo sono obbligatori.")
+    numero = prossimo_numero(f"determinazione_{decadenza.sezione_id or 0}", giorno.year)
+    det = Determinazione.objects.create(
+        decadenza=decadenza, anno=giorno.year, numero=numero, giorno=giorno,
+        oggetto=oggetto.strip()[:300], testo=testo, commissario=decadenza.commissario,
+        creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    if protocolla:
+        det.protocollo = _protocolla_interno(
+            f"Determinazione del commissario n. {numero}/{giorno.year}: {det.oggetto}",
+            pdf_determinazione(det), "determinazione.pdf", utente)  # fmt: skip
+        det.save(update_fields=["protocollo"])
+    registra(Azione.CREAZIONE, det, utente=utente, numero=f"{numero}/{giorno.year}")
+    return det
+
+
+def pdf_determinazione(det):
+    from apps.core.models import Organizzazione
+    from apps.core.pdf import genera_pdf
+
+    return genera_pdf("elezioni/pdf/determinazione.html",
+                      {"d": det, "organizzazione": Organizzazione.corrente(), "titolo":
+                       "Determinazione del commissario"})  # fmt: skip
+
+
+def _protocolla_interno(oggetto, contenuto, nome, utente):
+    from django.core.files.base import ContentFile
+
+    from apps.protocollo import servizi as protocollo
+    from apps.protocollo.models import Protocollo
+
+    pr = protocollo.registra_protocollo(
+        {"direzione": Protocollo.Direzione.INTERNO, "mezzo": Protocollo.Mezzo.MANO,
+         "oggetto": oggetto[:500]}, [], utente)  # fmt: skip
+    protocollo.aggiungi_allegato(pr, ContentFile(contenuto, name=nome), utente, principale=True,
+                                 controlla=False)  # fmt: skip
+    return pr
+
+
+def destinatario_relazione(decadenza):
+    return "Presidente di Federazione" if decadenza.sezione_id else "Presidente nazionale"
+
+
+@transaction.atomic
+def salva_relazione(decadenza, utente, *, testo, giorno, protocolla=False):
+    """Relazione del commissario sul proprio operato (Regolamento art. 19)."""
+    if not testo.strip():
+        raise OperazioneNonValida("La relazione è vuota.")
+    decadenza.relazione, decadenza.relazione_il = testo, giorno
+    decadenza.modificato_da = utente
+    if protocolla and not decadenza.relazione_protocollo_id:
+        from apps.core.models import Organizzazione
+        from apps.core.pdf import genera_pdf
+
+        contenuto = genera_pdf("elezioni/pdf/relazione.html", {
+            "d": decadenza, "organizzazione": Organizzazione.corrente(),
+            "titolo": "Relazione del commissario",
+            "destinatario": destinatario_relazione(decadenza),
+        })  # fmt: skip
+        decadenza.relazione_protocollo = _protocolla_interno(
+            f"Relazione del commissario: {decadenza}", contenuto, "relazione.pdf", utente
+        )
+    decadenza.save()
+    registra(Azione.MODIFICA, decadenza, utente=utente, relazione=str(giorno))
+
+
+# --- commissario amministrativo -------------------------------------------------------------
+
+
+@transaction.atomic
+def nomina_commissario_amministrativo(utente, *, sezione, commissario, dal, nominato_da, atto="",
+                                      termine=None):  # fmt: skip
+    if not commissario.is_persona:
+        raise OperazioneNonValida("Il commissario è una persona.")
+    if CommissarioAmministrativo.objects.filter(sezione=sezione, chiuso_il__isnull=True).exists():
+        raise OperazioneNonValida("C'è già un commissario amministrativo in carica.")
+    termine = termine or _piu_mesi(dal, MESI_COMMISSARIO)
+    if termine > _piu_mesi(dal, MESI_COMMISSARIO):
+        raise OperazioneNonValida("L'incarico dura al massimo dodici mesi (rinnovabili).")
+    ca = CommissarioAmministrativo.objects.create(
+        sezione=sezione, commissario=commissario, dal=dal, nominato_da=nominato_da, atto=atto,
+        termine=termine, creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    registra(Azione.CREAZIONE, ca, utente=utente)
+    return ca
+
+
+@transaction.atomic
+def aggiorna_commissario_amministrativo(ca, utente, *, rinnova_al=None, relazione=None,
+                                        giorno=None, chiudi=False):  # fmt: skip
+    if ca.chiuso_il:
+        raise OperazioneNonValida("L'incarico è concluso.")
+    if rinnova_al:
+        if rinnova_al <= ca.scadenza or rinnova_al > _piu_mesi(ca.scadenza, MESI_COMMISSARIO):
+            raise OperazioneNonValida("Il rinnovo è di dodici mesi al massimo dalla scadenza.")
+        ca.rinnovato_al = rinnova_al
+    if relazione is not None:
+        ca.relazione, ca.relazione_il = relazione, giorno or timezone.localdate()
+    if chiudi:
+        ca.chiuso_il = giorno or timezone.localdate()
+    ca.modificato_da = utente
+    ca.save()
+    registra(Azione.MODIFICA, ca, utente=utente, rinnovo=str(rinnova_al or ""), chiuso=chiudi)

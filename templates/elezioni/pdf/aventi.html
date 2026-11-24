@@ -8,12 +8,13 @@
 <h1>{{ titolo }}</h1>
 <div class="sotto">{{ profilo.nome_assemblea }} · {{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }}<br>Aventi diritto fissati alla data dell'avviso{% if rinnovo.avviso_il %} del {{ rinnovo.avviso_il|date:"d/m/Y" }}{% endif %}</div>
 {% if rinnovo.federazione %}
-<table class="dati"><tr><th>Sezione</th><th>Rappresentante (presidente o delegato)</th><th class="num">Voti spettanti</th><th>Firma</th></tr>
-{% for r in rinnovo.aventi_diritto %}<tr><td>{{ r.nome }}</td><td>{{ r.delegato }}</td><td class="num">{{ r.voti }}</td><td style="width:30%"></td></tr>{% endfor %}
-<tr><th colspan="2">Totale</th><th class="num">{{ voti_totali }}</th><th></th></tr></table>
+<table class="dati"><tr><th>Sezione</th><th>Rappresentante (presidente, commissario o delegato)</th><th class="num">Voti spettanti</th><th>Schede da consegnare</th><th>Firma</th></tr>
+{% for r in rinnovo.aventi_diritto %}<tr><td>{{ r.nome }}</td><td>{{ r.delegato }}</td><td class="num">{{ r.voti }}</td><td>{{ r.schede }}</td><td style="width:24%"></td></tr>{% endfor %}
+<tr><th colspan="2">Totale</th><th class="num">{{ voti_totali }}</th><th></th><th></th></tr></table>
+<p class="piccolo">Schede di diverso peso elettorale (100, 50, 10, 5, 1 voti) fino ai voti spettanti a ciascuna sezione (Regolamento art. 21).</p>
 {% else %}
 <table class="dati"><tr><th>#</th><th>N. socio</th><th>Cognome e nome</th><th>Firma</th><th>Delega a</th></tr>
-{% for r in rinnovo.aventi_diritto %}<tr><td>{{ forloop.counter }}</td><td>{{ r.numero }}</td><td>{{ r.nome }}</td><td style="width:28%"></td><td style="width:22%"></td></tr>{% endfor %}</table>
+{% for r in rinnovo.aventi_diritto %}<tr><td>{{ forloop.counter }}</td><td>{{ r.numero }}</td><td>{{ r.nome }}</td><td style="width:28%">{% if r.presenza == "presente" %}presente{% endif %}</td><td style="width:22%">{% if r.presenza == "delega" %}{% for p in rinnovo.aventi_diritto %}{% if p.socio == r.delegato %}{{ p.nome }}{% endif %}{% endfor %}{% endif %}</td></tr>{% endfor %}</table>
 <p class="piccolo">Totale aventi diritto: {{ voti_totali }}. Al massimo {{ profilo.max_deleghe }} deleghe per socio votante.</p>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Registro dei votanti al seggio: presenza, deleghe (al massimo due per votante)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Registro dei votanti · {{ rinnovo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ rinnovo.get_absolute_url }}">{{ rinnovo }}</a></div>{% endblock %}
+{% block titolo_pagina %}Registro dei votanti{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'elezioni:documento' rinnovo.pk 'aventi' %}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>Elenco per le firme</a>{% endblock %}
+{% block contenuto %}
+{% if errore %}<div class="alert alert-danger">{{ errore }}</div>{% endif %}
+<form method="post">{% csrf_token %}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">Aventi diritto al {{ rinnovo.avviso_il|date:"d/m/Y" }}</h2><div class="card-actions small text-secondary">Al massimo {{ rinnovo.profilo.max_deleghe }} deleghe per votante presente, oltre al proprio voto.</div></div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead><tr><th>N. socio</th><th>Socio</th><th>Vota</th><th>Delega a (presente)</th></tr></thead>
+      <tbody>{% for r in righe %}<tr>
+        <td>{{ r.numero }}</td><td>{{ r.nome }}</td>
+        <td><select class="form-select form-select-sm" name="presenza_{{ r.socio }}" aria-label="Voto di {{ r.nome }}">
+          <option value="">assente</option>
+          <option value="presente"{% if r.presenza == "presente" %} selected{% endif %}>di persona</option>
+          <option value="delega"{% if r.presenza == "delega" %} selected{% endif %}>per delega</option>
+        </select></td>
+        <td><select class="form-select form-select-sm" name="delegato_{{ r.socio }}" aria-label="Delegato di {{ r.nome }}">
+          <option value="">—</option>
+          {% for p in righe %}{% if p.socio != r.socio %}<option value="{{ p.socio }}"{% if r.delegato == p.socio %} selected{% endif %}>{{ p.nome }}</option>{% endif %}{% endfor %}
+        </select></td>
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  <div class="card-footer d-flex"><span class="small text-secondary">Presenti {{ presenti|length }} · per delega {{ rinnovo.deleghe }}. I conteggi passano negli esiti.</span><button class="btn btn-primary ms-auto" type="submit">Salva il registro</button></div>
+</div>
+</form>
+{% endblock %}

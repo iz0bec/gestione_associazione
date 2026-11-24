@@ -23,6 +23,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   sindaci (cariche chiuse) e subentra il **commissario** (nuova carica degli organi sociali, che firma
   al posto del presidente) o, finché l'ente sovraordinato non lo nomina, il presidente decaduto come **commissario provvisorio**; si apre il **rinnovo straordinario** entro dodici mesi (prorogabili), chiuso
   all'insediamento dei nuovi organi.
+- **Conformità al Regolamento ANCR nel rinnovo**: registro dei votanti al seggio con le deleghe (al
+  massimo due, al socio presente), commissione elettorale obbligatoria con più liste, avviso oltre
+  le tre ore di voto, schede di peso diverso per il congresso provinciale (commissario come
+  rappresentante delle sezioni commissariate), adempimenti (elenco soci alla Federazione, schede
+  depositate, vidimazione, ratifica), subentro dei supplenti a chi non accetta, prima riunione del
+  nuovo consiglio, cooptazione dei supplenti, determinazioni numerate e relazione del commissario,
+  commissario amministrativo.
 - **Fornitori di posta**: in *Sistema → Servizi di posta*, creando una casella (IMAP) o un servizio di
   invio (SMTP), il menu **Fornitore** compila server, porta, cifratura e PEC: Aruba (email e PEC),
   Legalmail, Poste PEC, Libero, Virgilio, Tiscali, TIM, Gmail e Microsoft 365, con le note utili

@@ -60,13 +60,25 @@ La scheda del rinnovo mostra sempre a destra **Fasi e termini**, con la data ent
 4. **Liste** - si compilano e si presentano (vedi sotto); il consiglio uscente le **ammette** o le
    **esclude** indicando i motivi. Esaminate tutte, il rinnovo passa alla votazione.
 5. **Votazione** - con una sola lista si vota per alzata di mano, con più liste a scrutinio segreto
-   (dipende dal profilo). Dalla scheda si stampano le **schede** e l'**elenco degli aventi diritto**;
-   dopo il voto **Registra gli esiti**: presidente e segretario dell'assemblea, commissione elettorale,
-   orari, presenti, voti per delega, schede votate, bianche e nulle e i **voti di ogni lista** (per il
-   congresso provinciale anche le sezioni presenti e i loro rappresentanti). Il programma controlla i
-   totali (deleghe, schede, aventi diritto) e calcola la lista eletta; con la **parità** non proclama.
-6. **Proclamazione** - **Proclama gli eletti**. Chi non accetta la carica si segna con **Non accetta**
-   negli eletti: non viene nominato e il nuovo consiglio coopta i supplenti con una delibera.
+   (dipende dal profilo); per acclamazione mai. Dalla scheda si stampano le **schede** e l'**elenco
+   degli aventi diritto**. Al seggio si tiene il **registro dei votanti** (sezioni): per ogni socio
+   *di persona*, *per delega* (a quale altro socio, che dev'essere presente) o assente; il programma
+   blocca più di due deleghe per votante e porta presenti e deleghe negli esiti. Al congresso
+   provinciale ogni sezione vota con il presidente, il **commissario** se è commissariata, o un
+   delegato (D3), e riceve **schede di peso diverso** (100, 50, 10, 5, 1 voti) fino ai voti
+   spettanti: il conto è nell'elenco degli aventi diritto e nel verbale B1. Dopo il voto **Registra
+   gli esiti**: presidente e segretario dell'assemblea, **commissione elettorale** (obbligatoria con
+   più liste: presidente e due componenti, uno segretario), orari (avviso se il voto dura più di tre
+   ore), schede votate, bianche e nulle e i **voti di ogni lista** (per il congresso provinciale
+   anche le sezioni presenti e i loro rappresentanti). Il programma controlla i totali (deleghe,
+   schede, aventi diritto, votanti del registro) e calcola la lista eletta; con la **parità** non
+   proclama.
+6. **Proclamazione** - **Proclama gli eletti**. Chi non accetta la carica (dichiarazione scritta entro
+   la prima riunione del nuovo consiglio) si segna con **Non accetta** negli eletti: non viene
+   nominato e al suo posto **subentra un supplente** come consigliere, nell'ordine della lista (la
+   scheda mostra chi subentrerà). Gli incarichi rimasti vacanti (vicepresidente, segretario) li
+   attribuisce il nuovo consiglio; se non accetta il presidente eletto, il programma si ferma: si
+   decide secondo lo statuto.
 7. **Ricorsi** - si registrano con data, chi li presenta e i motivi, e poi la decisione. Finché c'è un
    ricorso da decidere non si insediano i nuovi organi.
 8. **Insediamento** - **Insedia i nuovi organi** chiude le cariche uscenti e registra le nuove negli
@@ -77,7 +89,15 @@ La scheda del rinnovo mostra sempre a destra **Fasi e termini**, con la data ent
    presidente, testimoni, bilancio, documenti, liquidità, materiale) e la **trasmissione dei verbali**,
    protocollata in uscita con i PDF allegati. Per i beni dell'inventario c'è anche *Patrimonio →
    Passaggio di consegne*.
-10. **Conclusione** - con la data della ratifica nazionale, se arriva.
+10. **Nuovo consiglio** - **Prepara** la prima riunione del nuovo consiglio (in bozza negli Organi
+    sociali, con l'ordine del giorno: insediamento, presa d'atto di accettazioni e rinunce,
+    cooptazioni, attribuzione degli incarichi come il tesoriere). Nel corso del mandato i
+    **supplenti** si **cooptano** consiglieri in caso di dimissioni, con la delibera (da ratificare
+    alla prima riunione utile).
+11. **Adempimenti** - nel riquadro *Adempimenti del Regolamento* si segnano le date: elenco dei soci
+    inviato alla Federazione prima del voto (art. 6), schede sigillate e depositate in segreteria,
+    esiti vidimati dal Presidente di Federazione, ratifica della Commissione nazionale verifica soci.
+12. **Conclusione** - con la data della ratifica nazionale, se arriva.
 
 ## Decadenza anticipata e commissariamento
 
@@ -104,6 +124,26 @@ dalla Giunta esecutiva nazionale) o nasce una **nuova sezione** affidata a un co
   diversa). Un rinnovo ordinario in corso viene annullato;
 - da lì la procedura è quella di sempre; all'**insediamento** dei nuovi organi il commissario esce
   dalla carica e il commissariamento si chiude da solo.
+
+### Durante il commissariamento
+
+Il commissario *assume temporaneamente in sé tutte le cariche* (Regolamento art. 19): non ci sono
+consiglieri né riunioni del consiglio. Nella scheda del rinnovo:
+
+- le **determinazioni del commissario** si registrano al posto delle delibere: numero annuale,
+  data, oggetto e testo, stampa in PDF firmata dal commissario, protocollo facoltativo;
+- la **relazione sul proprio operato**, da inviare al Presidente di Federazione (sezioni) o al
+  Presidente nazionale (federazioni), si scrive, si stampa e si protocolla da *Relazione*; riporta
+  anche l'elenco delle determinazioni;
+- al congresso provinciale la sezione commissariata è rappresentata dal commissario.
+
+### Commissario amministrativo
+
+Diverso dal commissario organizzativo, il **commissario amministrativo** (Regolamento art. 19,
+lettere b e d) *non si sostituisce* al presidente e al consiglio: verifica la correttezza
+amministrativa e riferisce. Si registra in *Commissari amministrativi* (elenco dei rinnovi): chi,
+presso quale sezione o la federazione, chi lo ha nominato e con quale provvedimento, la durata
+(dodici mesi, rinnovabili) e la relazione; gli organi restano in carica.
 
 ## Compilare le liste
 

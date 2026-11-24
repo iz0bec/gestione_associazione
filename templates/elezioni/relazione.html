@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Relazione del commissario sul proprio operato (Regolamento art. 19)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Relazione del commissario · {{ rinnovo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{{ rinnovo.get_absolute_url }}">{{ rinnovo }}</a></div>{% endblock %}
+{% block titolo_pagina %}Relazione del commissario{% endblock %}
+{% block azioni %}{% if d.relazione %}<a class="btn" href="?pdf=1" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-1"></i>PDF</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card">{% csrf_token %}
+  <div class="card-body">
+    <p class="small text-secondary">Il commissario stende una relazione sul proprio operato da inviare al {{ destinatario }} (Regolamento art. 19).</p>
+    <div class="row g-2 mb-2"><div class="col-md-3"><label class="form-label" for="giorno">Data</label><input class="form-control" id="giorno" type="date" name="giorno" value="{{ d.relazione_il|default:''|date:'Y-m-d' }}"></div></div>
+    <label class="form-label" for="testo">Relazione</label>
+    <textarea class="form-control" id="testo" name="testo" rows="16">{{ d.relazione }}</textarea>
+    {% if perms.protocollo.add_protocollo and not d.relazione_protocollo %}<label class="form-check mt-2"><input class="form-check-input" type="checkbox" name="protocolla"> <span class="form-check-label">Protocolla (registro interno, con il PDF)</span></label>{% elif d.relazione_protocollo %}<div class="small mt-2">Protocollata: {{ d.relazione_protocollo.segnatura }}</div>{% endif %}
+  </div>
+  <div class="card-footer d-flex"><a class="btn btn-link" href="{{ rinnovo.get_absolute_url }}">Annulla</a><button class="btn btn-primary ms-auto" type="submit">Salva</button></div>
+</form>
+{% endblock %}

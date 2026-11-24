@@ -12,8 +12,8 @@
 <p>la quale ha esaminato le liste dei candidati a Presidente {% if rinnovo.federazione %}di Federazione{% else %}di Sezione{% endif %} rilevando quanto segue: {% for l in liste %}lista n. {{ l.numero }} ({{ l.capolista.soggetto.nome_completo }}) {{ l.get_stato_display|lower }}{% if l.motivo_esclusione %} per: {{ l.motivo_esclusione }}{% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>
 {% if rinnovo.federazione %}
 <p>Inoltre la Commissione ha esaminato la posizione delle singole Sezioni che hanno diritto a partecipare al Congresso con voto deliberativo. Dall'operazione di verifica dei poteri risultano validi voti n. {{ voti_totali }}, in rappresentanza di n. {{ rinnovo.aventi_diritto|length }} Sezioni.</p>
-<table class="dati"><tr><th>Sezione</th><th>Nome del delegato</th><th class="num">Voti spettanti</th><th>Presente</th></tr>
-{% for r in rinnovo.aventi_diritto %}<tr><td>{{ r.nome }}</td><td>{{ r.delegato }}</td><td class="num">{{ r.voti }}</td><td>{% if r.presente %}sì{% else %}no{% endif %}</td></tr>{% endfor %}</table>
+<table class="dati"><tr><th>Sezione</th><th>Nome del delegato</th><th class="num">Voti spettanti</th><th>Schede</th><th>Presente</th></tr>
+{% for r in rinnovo.aventi_diritto %}<tr><td>{{ r.nome }}</td><td>{{ r.delegato }}</td><td class="num">{{ r.voti }}</td><td>{{ r.schede }}</td><td>{% if r.presente %}sì{% else %}no{% endif %}</td></tr>{% endfor %}</table>
 {% else %}
 <p>Inoltre ha esaminato la posizione dei singoli soci che hanno diritto a partecipare al Congresso con voto deliberativo. Dall'operazione di verifica risultano avere diritto al voto n. {{ voti_totali }} soci; presenti o votanti {{ rinnovo.presenti }}, voti per delega {{ rinnovo.deleghe }} (elenco degli aventi diritto allegato).</p>
 {% endif %}

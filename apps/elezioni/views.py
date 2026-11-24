@@ -143,7 +143,14 @@ class RinnovoView(_RinnovoMixin, PermessoMixin, TemplateView):
             modalita=servizi.modalita_voto(r) if r.fase in ("liste", "votato") else "",
             voti_totali=servizi.voti_totali(r), oggi=timezone.localdate(),
             puo_gestire=self.request.user.has_perm(GESTIONE),
+            adempimenti=servizi.adempimenti(r),
+            supplenti=servizi.supplenti_in_carica(r) if r.insediato_il else [],
+            sostituzioni=servizi.sostituzioni(r)[1] if r.fase == "proclamato" else {},
+            registro=servizi.registro_usato(r),
         )  # fmt: skip
+        d = r.decadenza
+        if d is not None:
+            ctx["determinazioni"] = list(d.determinazioni.all())
         return ctx
 
 
@@ -422,6 +429,7 @@ class InsediaView(_AzioneRinnovo):
         )
         messages.success(request, f"Nuovi organi insediati: {n} cariche registrate negli organi "
                                   "sociali, quelle uscenti chiuse.")  # fmt: skip
+        return servizi.vacanze(r)
 
 
 class ConsegneView(_RinnovoMixin, PermessoMixin, View):
@@ -623,3 +631,189 @@ class ProrogaView(_AzioneRinnovo):
             raise servizi.OperazioneNonValida("Indicare la data della proroga.")
         servizi.proroga(decadenza, request.user, fino=fino, atto=request.POST.get("atto", ""))
         messages.success(request, "Commissariamento prorogato.")
+
+
+class RegistroVotantiView(_RinnovoMixin, PermessoMixin, View):
+    """Registro del seggio: chi vota di persona, chi per delega e a chi (al massimo due)."""
+
+    permission_required = GESTIONE
+    template_name = "elezioni/votanti.html"
+
+    def _pagina(self, request, r, errore=""):
+        return render(request, self.template_name, {
+            "rinnovo": r, "righe": r.aventi_diritto, "errore": errore,
+            "presenti": [x for x in r.aventi_diritto if x.get("presenza") == "presente"],
+        })  # fmt: skip
+
+    def get(self, request, pk):
+        return self._pagina(request, self.rinnovo(pk))
+
+    def post(self, request, pk):
+        r = self.rinnovo(pk)
+        scelte = {}
+        for riga in r.aventi_diritto:
+            chiave = riga["socio"]
+            delegato = request.POST.get(f"delegato_{chiave}", "")
+            scelte[chiave] = (request.POST.get(f"presenza_{chiave}", ""),
+                              int(delegato) if delegato.isdigit() else None)  # fmt: skip
+        try:
+            presenti, deleghe = servizi.registra_votanti(r, request.user, scelte)
+        except servizi.OperazioneNonValida as e:
+            r.refresh_from_db()
+            return self._pagina(request, r, " ".join(e.messages))
+        messages.success(request, f"Registro salvato: {presenti} presenti, {deleghe} per delega.")
+        return redirect(reverse("elezioni:votanti", args=[r.pk]))
+
+
+class AdempimentoView(_AzioneRinnovo):
+    ancora = "#adempimenti"
+
+    def azione(self, request, r):
+        servizi.segna_adempimento(r, request.user, request.POST.get("campo", ""),
+                                  _data(request.POST.get("giorno")))  # fmt: skip
+
+
+class PrimaRiunioneView(_AzioneRinnovo):
+    def azione(self, request, r):
+        from datetime import datetime
+
+        try:
+            quando = timezone.make_aware(datetime.fromisoformat(request.POST.get("quando", "")))
+        except ValueError:
+            raise servizi.OperazioneNonValida("Indicare data e ora della riunione.") from None
+        riunione = servizi.prepara_prima_riunione(
+            r, request.user, quando=quando, luogo=request.POST.get("luogo", "")[:200]
+        )
+        messages.success(request, "Prima riunione del nuovo consiglio preparata in bozza: si "
+                                  "completa e si convoca dagli Organi sociali.")  # fmt: skip
+        return redirect(riunione)
+
+
+class CooptaView(_AzioneRinnovo):
+    ancora = "#nuovo-consiglio"
+
+    def azione(self, request, r):
+        from apps.organi.models import Carica
+
+        carica = get_object_or_404(Carica, pk=request.POST.get("carica") or 0, ruolo="supplente")
+        if carica.organo_id != getattr(servizi.organo_consiglio(r.sezione), "pk", None):
+            raise Http404
+        servizi.coopta(
+            carica,
+            request.user,
+            atto=request.POST.get("atto", ""),
+            giorno=_data(request.POST.get("giorno"), timezone.localdate()),
+        )
+        messages.success(request, f"{carica.soggetto.nome_completo} cooptato consigliere.")
+
+
+class DeterminazioneView(_AzioneRinnovo):
+    ancora = "#determinazioni"
+
+    def azione(self, request, r):
+        decadenza = get_object_or_404(Decadenza, rinnovo=r)
+        det = servizi.nuova_determinazione(
+            decadenza, request.user, giorno=_data(request.POST.get("giorno"), timezone.localdate()),
+            oggetto=request.POST.get("oggetto", ""), testo=request.POST.get("testo", ""),
+            protocolla=bool(request.POST.get("protocolla")),
+        )  # fmt: skip
+        messages.success(request, f"{det} registrata.")
+
+
+class DeterminazionePdfView(PermessoMixin, View):
+    permission_required = LETTURA
+
+    def get(self, request, pk):
+        from apps.elezioni.models import Determinazione
+
+        det = get_object_or_404(Determinazione.objects.filter(
+            decadenza__rinnovo__in=_rinnovi(request.user)), pk=pk)  # fmt: skip
+        risposta = HttpResponse(servizi.pdf_determinazione(det), content_type="application/pdf")
+        nome = f"determinazione-{det.numero}-{det.anno}.pdf"
+        risposta["Content-Disposition"] = f'inline; filename="{nome}"'
+        return risposta
+
+
+class RelazioneView(_RinnovoMixin, PermessoMixin, View):
+    permission_required = GESTIONE
+    template_name = "elezioni/relazione.html"
+
+    def get(self, request, pk):
+        r = self.rinnovo(pk)
+        d = get_object_or_404(Decadenza, rinnovo=r)
+        if request.GET.get("pdf"):
+            from apps.core.models import Organizzazione
+            from apps.core.pdf import risposta_pdf
+
+            return risposta_pdf("elezioni/pdf/relazione.html", {
+                "d": d, "organizzazione": Organizzazione.corrente(),
+                "titolo": "Relazione del commissario",
+                "destinatario": servizi.destinatario_relazione(d),
+            }, "relazione-commissario.pdf")  # fmt: skip
+        return render(request, self.template_name, {"rinnovo": r, "d": d,
+                      "destinatario": servizi.destinatario_relazione(d)})  # fmt: skip
+
+    def post(self, request, pk):
+        r = self.rinnovo(pk)
+        d = get_object_or_404(Decadenza, rinnovo=r)
+        try:
+            servizi.salva_relazione(d, request.user, testo=request.POST.get("testo", ""),
+                                    giorno=_data(request.POST.get("giorno"), timezone.localdate()),
+                                    protocolla=bool(request.POST.get("protocolla")))  # fmt: skip
+        except servizi.OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+            return redirect(reverse("elezioni:relazione", args=[r.pk]))
+        messages.success(request, "Relazione salvata.")
+        return redirect(r)
+
+
+class AmministrativiView(PermessoMixin, View):
+    """Commissari amministrativi: verificano senza sostituire gli organi (Regolamento art. 19)."""
+
+    permission_required = GESTIONE
+    template_name = "elezioni/amministrativi.html"
+
+    def _sezioni(self):
+        from apps.soci import sezioni
+        from apps.soci.models import Sezione
+
+        return sezioni.filtra(Sezione.objects.filter(attiva=True), self.request.user, campo="pk")
+
+    def _elenco(self):
+        from apps.elezioni.models import CommissarioAmministrativo
+        from apps.soci import sezioni
+
+        qs = CommissarioAmministrativo.objects.select_related("sezione", "commissario")
+        ids = sezioni.id_sezioni(self.request.user)
+        return qs if ids is None else qs.filter(sezione_id__in=ids)
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            "elenco": self._elenco(), "sezioni": self._sezioni(), "oggi": timezone.localdate(),
+        })  # fmt: skip
+
+    def post(self, request):
+        try:
+            if request.POST.get("incarico"):
+                ca = get_object_or_404(self._elenco(), pk=request.POST["incarico"])
+                servizi.aggiorna_commissario_amministrativo(
+                    ca, request.user, rinnova_al=_data(request.POST.get("rinnova_al")),
+                    relazione=request.POST.get("relazione") if "relazione" in request.POST
+                    else None, giorno=timezone.localdate(), chiudi=bool(request.POST.get("chiudi")),
+                )  # fmt: skip
+            else:
+                sezione = None
+                if request.POST.get("sezione", "").isdigit():
+                    sezione = get_object_or_404(self._sezioni(), pk=request.POST["sezione"])
+                commissario = get_object_or_404(Soggetto, pk=request.POST.get("commissario") or 0)
+                servizi.nomina_commissario_amministrativo(
+                    request.user, sezione=sezione, commissario=commissario,
+                    dal=_data(request.POST.get("dal"), timezone.localdate()),
+                    nominato_da=request.POST.get("nominato_da", "")[:150],
+                    atto=request.POST.get("atto", "")[:200],
+                )  # fmt: skip
+        except servizi.OperazioneNonValida as e:
+            messages.error(request, " ".join(e.messages))
+        else:
+            messages.success(request, "Commissario amministrativo aggiornato.")
+        return redirect("elezioni:amministrativi")

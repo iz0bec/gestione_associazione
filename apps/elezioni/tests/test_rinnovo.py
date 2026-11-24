@@ -150,13 +150,17 @@ def test_procedura_completa_della_sezione(ambiente, segretario, sezionale):
     servizi.proclama(r, segretario)
     vice = lista.candidati.get(incarico="vicepresidente")
     servizi.registra_rinuncia(vice, segretario)
+    assert servizi.sostituzioni(r)[1] == {
+        lista.candidati.get(incarico="supplente").pk: vice.soggetto.nome_completo
+    }
     nominati = servizi.insedia(r, segretario, giorno=OGGI)
-    assert nominati == 4  # presidente, segretario, sindaco, supplente (il vice non accetta)
+    assert nominati == 4  # presidente, segretario, sindaco e il supplente al posto del vice
+    assert "Vicepresidente vacante" in servizi.vacanze(r)[0]
     presidente_uscente.refresh_from_db()
     assert presidente_uscente.al == OGGI
     in_carica = {c.ruolo: c.soggetto for c in consiglio.cariche_al(OGGI)}
     assert in_carica["presidente"] == iscritti[0].soggetto and "vicepresidente" not in in_carica
-    assert in_carica["supplente"] == iscritti[5].soggetto
+    assert in_carica["consigliere"] == iscritti[5].soggetto  # il supplente subentra
     controllo = Organo.objects.get(tipo="controllo", sezione=None)
     assert controllo.cariche_al(OGGI).get().soggetto == iscritti[3].soggetto
     # documenti e trasmissione protocollata con i verbali
@@ -188,22 +192,26 @@ def test_scrutinio_parita_e_controlli(ambiente, segretario, sezionale):
     servizi.esamina_lista(b, segretario, ammessa=True)
     r.refresh_from_db()
     assert servizi.modalita_voto(r) == "scrutinio"
+    with pytest.raises(servizi.OperazioneNonValida, match="commissione elettorale"):
+        servizi.registra_esiti(r, segretario, {"votato_il": OGGI}, {a.pk: 3, b.pk: 3})
+    commissione = {"commissione_presidente": "Bianchi", "commissione_segretario": "Neri"}
     with pytest.raises(servizi.OperazioneNonValida, match="schede votate"):
-        servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "schede_votate": 5},
-                               {a.pk: 3, b.pk: 3})  # fmt: skip
+        servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "schede_votate": 5,
+                                               **commissione}, {a.pk: 3, b.pk: 3})  # fmt: skip
     with pytest.raises(servizi.OperazioneNonValida, match="aventi diritto"):
-        servizi.registra_esiti(r, segretario, {"votato_il": OGGI}, {a.pk: 5, b.pk: 5})
+        servizi.registra_esiti(r, segretario, {"votato_il": OGGI, **commissione},
+                               {a.pk: 5, b.pk: 5})  # fmt: skip
     with pytest.raises(servizi.OperazioneNonValida, match="delega"):
-        servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "presenti": 1, "deleghe": 3},
-                               {a.pk: 1, b.pk: 0})  # fmt: skip
+        servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "presenti": 1, "deleghe": 3,
+                                               **commissione}, {a.pk: 1, b.pk: 0})  # fmt: skip
     r = Rinnovo.objects.get(pk=r.pk)
-    avvisi = servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "schede_votate": 6},
-                                    {a.pk: 3, b.pk: 3})  # fmt: skip
+    avvisi = servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "schede_votate": 6,
+                                                    **commissione}, {a.pk: 3, b.pk: 3})  # fmt: skip
     assert "Parità" in avvisi[0]
     with pytest.raises(servizi.OperazioneNonValida):
         servizi.proclama(Rinnovo.objects.get(pk=r.pk), segretario)
     r = Rinnovo.objects.get(pk=r.pk)
-    servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "schede_votate": 6},
+    servizi.registra_esiti(r, segretario, {"votato_il": OGGI, "schede_votate": 6, **commissione},
                            {a.pk: 4, b.pk: 2})  # fmt: skip
     r.refresh_from_db()
     assert r.lista_eletta == a and servizi.sigla_modello(r, "elezione") == "C2"

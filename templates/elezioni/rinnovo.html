@@ -32,6 +32,20 @@
         <div class="col-md-6"><input class="form-control form-control-sm" name="atto" placeholder="Provvedimento di proroga" aria-label="Provvedimento di proroga"></div>
         <div class="col-md-3"><button class="btn btn-sm w-100" type="submit">Proroga</button></div>
       </form>{% endif %}
+      {% if d.commissario %}
+      <div class="mt-2 pt-2 border-top" id="determinazioni">
+        <div class="d-flex align-items-center gap-2 mb-1"><strong class="flex-fill small">Determinazioni del commissario</strong>{% if puo_gestire %}<a class="btn btn-sm" href="{% url 'elezioni:relazione' rinnovo.pk %}"><i class="ti ti-report me-1"></i>Relazione{% if d.relazione_il %} del {{ d.relazione_il|date:"d/m/Y" }}{% endif %}</a>{% endif %}</div>
+        {% for x in determinazioni %}<div class="small"><a href="{% url 'elezioni:determinazione_pdf' x.pk %}" target="_blank" rel="noopener">n. {{ x.numero }}/{{ x.anno }}</a> del {{ x.giorno|date:"d/m/Y" }}: {{ x.oggetto }}{% if x.protocollo %} · prot. {{ x.protocollo.segnatura }}{% endif %}</div>{% empty %}<div class="small text-secondary">Il commissario assume in sé tutte le cariche: i suoi provvedimenti si registrano qui al posto delle delibere del consiglio.</div>{% endfor %}
+        {% if puo_gestire and not d.chiusa_il %}
+        <form method="post" action="{% url 'elezioni:determinazione' rinnovo.pk %}" class="row g-2 mt-1">{% csrf_token %}
+          <div class="col-md-3"><input class="form-control form-control-sm" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}" aria-label="Data"></div>
+          <div class="col-md-9"><input class="form-control form-control-sm" name="oggetto" placeholder="Oggetto" aria-label="Oggetto" maxlength="300"></div>
+          <div class="col-12"><textarea class="form-control form-control-sm" name="testo" rows="3" placeholder="Premesse e dispositivo (es. «Visto… determina…»)" aria-label="Testo"></textarea></div>
+          <div class="col-md-8">{% if perms.protocollo.add_protocollo %}<label class="form-check mb-0"><input class="form-check-input" type="checkbox" name="protocolla"> <span class="form-check-label small">Protocolla</span></label>{% endif %}</div>
+          <div class="col-md-4"><button class="btn btn-sm w-100" type="submit">Registra la determinazione</button></div>
+        </form>{% endif %}
+      </div>
+      {% endif %}
     </div>
     {% endif %}{% endwith %}
     {# --- fase corrente --- #}
@@ -65,7 +79,7 @@
         <p class="mt-2 mb-0">Convocato il {{ rinnovo.avviso_il|date:"d/m/Y" }}: {{ voti_totali }} {% if rinnovo.federazione %}voti di {{ rinnovo.aventi_diritto|length }} sezioni{% else %}aventi diritto{% endif %}{% if rinnovo.invio_avviso_id %} · <a href="{% url 'comunicazioni:invio' rinnovo.invio_avviso_id %}">avviso in Comunicazioni</a>{% endif %}. Ora si compilano e presentano le <a href="#liste">liste</a>; il consiglio uscente le esamina.</p>
         {% endif %}
         {% elif rinnovo.fase == "liste" %}
-        <p>Liste esaminate: si vota {% if modalita == "alzata" %}per <strong>alzata di mano</strong> (una sola lista){% else %}a <strong>scrutinio segreto</strong>{% endif %}. Stampare le <a href="{% url 'elezioni:documento' rinnovo.pk 'scheda' %}" target="_blank" rel="noopener">schede</a> e l'<a href="{% url 'elezioni:documento' rinnovo.pk 'aventi' %}" target="_blank" rel="noopener">elenco degli aventi diritto</a>; dopo il voto:</p>
+        <p>Liste esaminate: si vota {% if modalita == "alzata" %}per <strong>alzata di mano</strong> (una sola lista){% else %}a <strong>scrutinio segreto</strong>{% endif %}. Stampare le <a href="{% url 'elezioni:documento' rinnovo.pk 'scheda' %}" target="_blank" rel="noopener">schede</a> e l'<a href="{% url 'elezioni:documento' rinnovo.pk 'aventi' %}" target="_blank" rel="noopener">elenco degli aventi diritto</a>{% if not rinnovo.federazione %}; al seggio si tiene il <a href="{% url 'elezioni:votanti' rinnovo.pk %}">registro dei votanti</a> (presenze e deleghe){% endif %}. Con più liste serve la commissione elettorale (presidente e due componenti, uno segretario). Dopo il voto:</p>
         <a class="btn btn-primary" href="{% url 'elezioni:esiti' rinnovo.pk %}"><i class="ti ti-checkbox me-1"></i>Registra gli esiti</a>
         {% elif rinnovo.fase == "votato" %}
         {% if rinnovo.lista_eletta %}
@@ -74,6 +88,7 @@
         {% else %}<p class="text-warning">Non c'è una lista eletta (parità o nessun voto): correggere gli esiti o decidere secondo lo statuto.</p>{% endif %}
         <a class="btn ms-2" href="{% url 'elezioni:esiti' rinnovo.pk %}">Correggi gli esiti</a>
         {% elif rinnovo.fase == "proclamato" %}
+        {% if sostituzioni %}<div class="alert alert-info small">All'insediamento subentrano come consiglieri: {% for nome in sostituzioni.values %}un supplente a {{ nome }}{% if not forloop.last %}; {% endif %}{% endfor %}.</div>{% endif %}
         <p>Proclamati il {{ rinnovo.proclamato_il|date:"d/m/Y H:i" }}. Chi non accetta la carica lo dichiara per iscritto entro la prima riunione del nuovo consiglio (segnalarlo negli <a href="#eletti">eletti</a>). Poi l'<strong>insediamento</strong> registra le nuove cariche negli organi sociali e chiude quelle uscenti.</p>
         <form method="post" action="{% url 'elezioni:insedia' rinnovo.pk %}" class="row g-2 align-items-end" data-conferma="Registrare le nuove cariche e chiudere quelle uscenti?">{% csrf_token %}
           <div class="col-md-4"><label class="form-label" for="insedia-giorno">Insediamento dal</label><input class="form-control" id="insedia-giorno" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}"></div>
@@ -175,6 +190,43 @@
     </div>
     {% endif %}
 
+    {% if rinnovo.avviso_il and rinnovo.fase != "annullato" %}
+    <div class="card mb-3" id="adempimenti">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-list-check me-2"></i>Adempimenti del Regolamento</h2></div>
+      <div class="list-group list-group-flush">
+        {% for campo, nome, giorno in adempimenti %}
+        <form method="post" action="{% url 'elezioni:adempimento' rinnovo.pk %}" class="list-group-item d-flex align-items-center gap-2 flex-wrap">{% csrf_token %}<input type="hidden" name="campo" value="{{ campo }}">
+          <span class="flex-fill small">{% if giorno %}<i class="ti ti-circle-check text-success me-1"></i>{% else %}<i class="ti ti-circle text-secondary me-1"></i>{% endif %}{{ nome }}</span>
+          {% if puo_gestire %}<input class="form-control form-control-sm w-auto" type="date" name="giorno" value="{{ giorno|date:'Y-m-d' }}" aria-label="{{ nome }}"><button class="btn btn-sm" type="submit">Salva</button>{% else %}<span class="small">{{ giorno|date:"d/m/Y"|default:"-" }}</span>{% endif %}
+        </form>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if rinnovo.insediato_il %}
+    <div class="card mb-3" id="nuovo-consiglio">
+      <div class="card-header"><h2 class="card-title"><i class="ti ti-users-group me-2"></i>Nuovo consiglio</h2></div>
+      <div class="card-body">
+        {% if rinnovo.riunione_insediamento %}<p class="mb-2">Prima riunione: <a href="{{ rinnovo.riunione_insediamento.get_absolute_url }}">{{ rinnovo.riunione_insediamento.prima_convocazione|date:"d/m/Y H:i" }}</a> ({{ rinnovo.riunione_insediamento.get_stato_display|lower }}).</p>
+        {% elif puo_gestire %}
+        <form method="post" action="{% url 'elezioni:prima_riunione' rinnovo.pk %}" class="row g-2 align-items-end mb-2">{% csrf_token %}
+          <div class="col-12 small">Prima riunione del nuovo consiglio: insediamento, presa d'atto delle accettazioni e rinunce (entro questa data), cooptazioni, attribuzione degli incarichi.</div>
+          <div class="col-md-4"><input class="form-control form-control-sm" type="datetime-local" name="quando" aria-label="Data e ora"></div>
+          <div class="col-md-5"><input class="form-control form-control-sm" name="luogo" value="{{ rinnovo.luogo }}" aria-label="Luogo"></div>
+          <div class="col-md-3"><button class="btn btn-sm btn-primary w-100" type="submit">Prepara</button></div>
+        </form>{% endif %}
+        {% if supplenti %}<div class="small fw-bold mt-2">Supplenti da cooptare in caso di dimissioni</div>
+        {% for c in supplenti %}
+        <form method="post" action="{% url 'elezioni:coopta' rinnovo.pk %}" class="row g-2 align-items-end mt-1">{% csrf_token %}<input type="hidden" name="carica" value="{{ c.pk }}">
+          <div class="col-md-3 small">{{ c.soggetto.nome_completo }}</div>
+          {% if puo_gestire %}<div class="col-md-3"><input class="form-control form-control-sm" type="date" name="giorno" value="{{ oggi|date:'Y-m-d' }}" aria-label="Dal"></div>
+          <div class="col-md-4"><input class="form-control form-control-sm" name="atto" placeholder="Delibera di cooptazione" aria-label="Delibera di cooptazione"></div>
+          <div class="col-md-2"><button class="btn btn-sm w-100" type="submit">Coopta</button></div>{% endif %}
+        </form>
+        {% endfor %}{% endif %}
+      </div>
+    </div>
+    {% endif %}
     {# --- dopo la proclamazione --- #}
     {% if rinnovo.proclamato_il and rinnovo.fase != "annullato" %}
     <div class="card mb-3">

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Commissari amministrativi (Regolamento art. 19 lettere b e d): verifica senza
+               sostituire gli organi, dodici mesi rinnovabili, relazione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Commissari amministrativi{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'elezioni:rinnovi' %}">Rinnovo degli organi</a></div>{% endblock %}
+{% block titolo_pagina %}Commissari amministrativi{% endblock %}
+{% block contenuto %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    {% for ca in elenco %}
+    <div class="card mb-3">
+      <div class="card-header"><h2 class="card-title">{{ ca }}</h2>{% if ca.chiuso_il %}<span class="badge bg-secondary-lt ms-2">concluso il {{ ca.chiuso_il|date:"d/m/Y" }}</span>{% endif %}</div>
+      <div class="card-body small">
+        <div>Nominato da {{ ca.nominato_da }}{% if ca.atto %} ({{ ca.atto }}){% endif %} dal {{ ca.dal|date:"d/m/Y" }}, scadenza {{ ca.scadenza|date:"d/m/Y" }}{% if ca.rinnovato_al %} (rinnovato){% endif %}.</div>
+        {% if not ca.chiuso_il %}
+        <form method="post" class="mt-2">{% csrf_token %}<input type="hidden" name="incarico" value="{{ ca.pk }}">
+          <label class="form-label" for="rel-{{ ca.pk }}">Relazione al Presidente</label>
+          <textarea class="form-control mb-2" id="rel-{{ ca.pk }}" name="relazione" rows="4">{{ ca.relazione }}</textarea>
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4"><label class="form-label" for="rin-{{ ca.pk }}">Rinnova fino al</label><input class="form-control form-control-sm" id="rin-{{ ca.pk }}" type="date" name="rinnova_al"></div>
+            <div class="col-md-4"><label class="form-check mb-1"><input class="form-check-input" type="checkbox" name="chiudi"> <span class="form-check-label">Incarico concluso</span></label></div>
+            <div class="col-md-4"><button class="btn btn-sm btn-primary w-100" type="submit">Salva</button></div>
+          </div>
+        </form>
+        {% elif ca.relazione %}<div class="mt-2">{{ ca.relazione|linebreaksbr }}</div>{% endif %}
+      </div>
+    </div>
+    {% empty %}<div class="card card-body text-secondary">Nessun commissario amministrativo.</div>{% endfor %}
+  </div>
+  <div class="col-lg-4">
+    <form method="post" class="card">{% csrf_token %}
+      <div class="card-header"><h2 class="card-title">Nomina</h2></div>
+      <div class="card-body">
+        <label class="form-label" for="ca-sezione">Presso</label>
+        <select class="form-select mb-2" id="ca-sezione" name="sezione"><option value="">la federazione</option>{% for s in sezioni %}<option value="{{ s.pk }}">Sezione di {{ s.nome }}</option>{% endfor %}</select>
+        <label class="form-label">Commissario</label>
+        <input type="search" class="form-control mb-1" name="cerca" placeholder="Cerca in anagrafica" autocomplete="off" aria-label="Cerca il commissario" data-ricerca-scelta hx-get="{% url 'elezioni:cerca_persona' %}" hx-trigger="input changed delay:300ms" hx-target="#persone-trovate">
+        <div class="list-group list-group-flush mb-2" id="persone-trovate"></div>
+        <label class="form-label" for="ca-dal">Dal</label><input class="form-control mb-2" id="ca-dal" type="date" name="dal" value="{{ oggi|date:'Y-m-d' }}">
+        <label class="form-label" for="ca-da">Nominato da</label><input class="form-control mb-2" id="ca-da" name="nominato_da" placeholder="Consiglio direttivo di Federazione / Giunta esecutiva nazionale">
+        <label class="form-label" for="ca-atto">Provvedimento</label><input class="form-control" id="ca-atto" name="atto">
+      </div>
+      <div class="card-footer small text-secondary">Non sostituisce presidente e consiglio: verifica la correttezza amministrativa e riferisce. Dodici mesi, rinnovabili.<button class="btn btn-primary w-100 mt-2" type="submit">Nomina</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

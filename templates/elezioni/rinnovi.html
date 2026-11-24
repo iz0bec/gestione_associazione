@@ -10,6 +10,7 @@
 {% block azioni %}
 <div class="btn-list">
   {% if perms.elezioni.view_profiloelettorale %}<a class="btn" href="{% url 'elezioni:profili' %}"><i class="ti ti-adjustments me-1"></i>Profili elettorali</a>{% endif %}
+  {% if perms.elezioni.gestisci_rinnovi %}<a class="btn" href="{% url 'elezioni:amministrativi' %}"><i class="ti ti-zoom-money me-1"></i>Commissari amministrativi</a>{% endif %}
   {% if perms.elezioni.gestisci_rinnovi %}<a class="btn" href="{% url 'elezioni:decadenza' %}"><i class="ti ti-gavel me-1"></i>Decadenza o commissariamento</a>{% endif %}
   {% if perms.elezioni.gestisci_rinnovi %}<a class="btn btn-primary" href="{% url 'elezioni:nuovo' %}"><i class="ti ti-plus me-1"></i>Avvia un rinnovo</a>{% endif %}
 </div>

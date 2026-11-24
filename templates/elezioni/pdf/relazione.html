@@ -1,0 +1,17 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Relazione del commissario sul proprio operato (Regolamento art. 19)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% load firme %}
+{% block titolo %}{{ titolo }}{% endblock %}
+{% block contenuto %}
+<p style="text-align:right">{{ organizzazione.comune }}{% if organizzazione.comune %}, {% endif %}{{ d.relazione_il|date:"j F Y" }}</p>
+<p>Al {{ destinatario }}</p>
+<p><strong>Oggetto: relazione del commissario sul proprio operato – {% if d.sezione %}Sezione di {{ d.sezione.nome }}{% else %}{{ organizzazione.denominazione }}{% endif %}</strong></p>
+<p class="piccolo">Commissariamento dal {{ d.giorno|date:"d/m/Y" }}{% if d.disposto_da %}, disposto da {{ d.disposto_da }}{% endif %}{% if d.atto %} ({{ d.atto }}){% endif %}; nuovo congresso entro il {{ d.scadenza|date:"d/m/Y" }}{% if d.rinnovo.votato_il %}, svolto il {{ d.rinnovo.votato_il|date:"d/m/Y" }}{% endif %}.</p>
+<div>{{ d.relazione|linebreaks }}</div>
+{% if d.determinazioni.exists %}<p><strong>Determinazioni adottate</strong></p><ul>{% for x in d.determinazioni.all %}<li>n. {{ x.numero }}/{{ x.anno }} del {{ x.giorno|date:"d/m/Y" }}: {{ x.oggetto }}</li>{% endfor %}</ul>{% endif %}
+{% firme "presidente" giorno=d.relazione_il sezione=d.sezione %}
+{% endblock %}
