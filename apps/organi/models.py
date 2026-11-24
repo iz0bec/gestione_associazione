@@ -122,6 +122,7 @@ class Carica(ModelloBase):
         PRESIDENTE_CONTROLLO = "presidente_controllo", "Presidente dell'organo di controllo"
         COMPONENTE = "componente", "Componente"
         SUPPLENTE = "supplente", "Supplente"
+        COMMISSARIO = "commissario", "Commissario"
 
     organo = models.ForeignKey(Organo, on_delete=models.PROTECT, related_name="cariche")
     soggetto = models.ForeignKey(

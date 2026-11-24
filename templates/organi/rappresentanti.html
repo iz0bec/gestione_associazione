@@ -28,7 +28,7 @@
         <tbody>{% for r in situazione %}<tr>
           <td>{% if r.sezione %}Sezione di {{ r.sezione.nome }}{% else %}<strong>Associazione</strong>{% endif %}</td>
           <td>{% if r.firma %}{{ r.firma.qualifica }} · <span class="fw-medium">{{ r.firma.nome }}</span>{% else %}<span class="text-secondary">nessuno</span>{% endif %}</td>
-          <td class="text-secondary">{% if r.origine == "nomina" %}nomina propria{% elif r.origine == "struttura" %}nomina dell'associazione per tutta la struttura{% elif r.origine == "presidente" %}presidente in carica{% elif r.origine == "associazione" %}nessuna nomina né presidente: vale l'associazione{% else %}<span class="text-warning">da indicare</span>{% endif %}</td>
+          <td class="text-secondary">{% if r.origine == "nomina" %}nomina propria{% elif r.origine == "struttura" %}nomina dell'associazione per tutta la struttura{% elif r.origine == "presidente" %}presidente in carica{% elif r.origine == "commissario" %}commissario (organi decaduti){% elif r.origine == "associazione" %}nessuna nomina né presidente: vale l'associazione{% else %}<span class="text-warning">da indicare</span>{% endif %}</td>
         </tr>{% endfor %}</tbody>
       </table></div>
     </div>

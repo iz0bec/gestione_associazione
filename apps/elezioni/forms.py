@@ -12,7 +12,7 @@ from django import forms
 
 from apps.core.forms import StileMixin
 
-from .models import ProfiloElettorale, Rinnovo
+from .models import Decadenza, ProfiloElettorale, Rinnovo
 
 DATA = {"type": "date"}
 ORA = {"type": "time"}
@@ -130,3 +130,46 @@ class ProfiloForm(StileMixin, forms.ModelForm):
         fields = [
             f.name for f in ProfiloElettorale._meta.get_fields() if f.concrete and not f.primary_key
         ]
+
+
+class DecadenzaForm(StileMixin, forms.Form):
+    sezione = forms.ModelChoiceField(
+        queryset=None, required=False, label="Sezione",
+        empty_label="— organi dell'ente (federazione) —",
+    )  # fmt: skip
+    motivo = forms.ChoiceField(choices=Decadenza.Motivo.choices)
+    giorno = forms.DateField(label="Dal giorno", widget=forms.DateInput(attrs=DATA))
+    disposto_da = forms.CharField(
+        label="Disposto da", max_length=150, required=False,
+        help_text="Es. Consiglio direttivo provinciale (sezioni), Giunta esecutiva nazionale "
+        "(federazione).",
+    )  # fmt: skip
+    atto = forms.CharField(label="Provvedimento", max_length=200, required=False,
+                           help_text="Es. delibera n. 3 del 12/03/2027.")  # fmt: skip
+    consiglio = forms.BooleanField(label="Decade il consiglio direttivo", required=False,
+                                   initial=True)  # fmt: skip
+    controllo = forms.BooleanField(label="Decade anche l'organo di controllo (sindaci)",
+                                   required=False)  # fmt: skip
+    altri = forms.BooleanField(label="Decadono anche gli altri organi elettivi (es. garanti)",
+                               required=False)  # fmt: skip
+    termine = forms.DateField(
+        label="Nuovo congresso entro", required=False, widget=forms.DateInput(attrs=DATA),
+        help_text="Con il commissario, vuoto: dodici mesi dalla nomina.",
+    )  # fmt: skip
+    profilo = forms.ModelChoiceField(
+        queryset=ProfiloElettorale.objects.filter(attivo=True), required=False,
+        label="Profilo elettorale", empty_label="— quello del livello (sezione o federazione) —",
+    )  # fmt: skip
+    note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, sezioni=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sezione"].queryset = sezioni
+
+    def tipi(self):
+        from apps.organi.models import Organo
+
+        d = self.cleaned_data
+        return [t for t, scelto in ((Organo.Tipo.CONSIGLIO, d["consiglio"]),
+                                    (Organo.Tipo.CONTROLLO, d["controllo"]),
+                                    (Organo.Tipo.ALTRO, d["altri"])) if scelto]  # fmt: skip

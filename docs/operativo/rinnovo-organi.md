@@ -79,6 +79,27 @@ La scheda del rinnovo mostra sempre a destra **Fasi e termini**, con la data ent
    Passaggio di consegne*.
 10. **Conclusione** - con la data della ratifica nazionale, se arriva.
 
+## Decadenza anticipata e commissariamento
+
+Quando un consiglio **decade prima della scadenza** (dimissioni della maggioranza, scioglimento con
+provvedimento motivato: per una sezione dal Consiglio direttivo provinciale, per una federazione
+dalla Giunta esecutiva nazionale) o nasce una **nuova sezione** affidata a un commissario, si usa
+**Decadenza o commissariamento** nell'elenco dei rinnovi:
+
+- si indicano sezione (vuota: gli organi dell'ente), motivo, giorno, chi lo ha disposto e il
+  provvedimento, e **quali organi decadono** (il consiglio direttivo; a scelta anche l'organo di
+  controllo e gli altri organi elettivi): le loro cariche si chiudono da quel giorno;
+- l'eventuale **commissario** si sceglie dall'anagrafica: entra nel consiglio con la carica di
+  **Commissario**, firma i documenti al posto del presidente (anche come legale rappresentante) e
+  indice il nuovo congresso; avvisi, moduli delle liste e verbali lo indicano al posto del consiglio
+  uscente;
+- si apre il **rinnovo straordinario**, con i termini calcolati sul giorno entro cui tenere il nuovo
+  congresso: con il commissario **dodici mesi** dalla nomina (Statuto art. 36), **prorogabili** una
+  volta fino ad altri dodici con il pulsante *Proroga* nella scheda; senza commissario la data si
+  indica a mano. Un rinnovo ordinario in corso viene annullato;
+- da lì la procedura è quella di sempre; all'**insediamento** dei nuovi organi il commissario esce
+  dalla carica e il commissariamento si chiude da solo.
+
 ## Compilare le liste
 
 Dalla scheda del rinnovo, **Compila una lista** apre la lista in compilazione:

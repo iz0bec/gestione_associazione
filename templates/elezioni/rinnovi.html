@@ -10,6 +10,7 @@
 {% block azioni %}
 <div class="btn-list">
   {% if perms.elezioni.view_profiloelettorale %}<a class="btn" href="{% url 'elezioni:profili' %}"><i class="ti ti-adjustments me-1"></i>Profili elettorali</a>{% endif %}
+  {% if perms.elezioni.gestisci_rinnovi %}<a class="btn" href="{% url 'elezioni:decadenza' %}"><i class="ti ti-gavel me-1"></i>Decadenza o commissariamento</a>{% endif %}
   {% if perms.elezioni.gestisci_rinnovi %}<a class="btn btn-primary" href="{% url 'elezioni:nuovo' %}"><i class="ti ti-plus me-1"></i>Avvia un rinnovo</a>{% endif %}
 </div>
 {% endblock %}
@@ -27,7 +28,7 @@
       <tbody>
         {% for r in rinnovi %}
         <tr>
-          <td><a href="{{ r.get_absolute_url }}">{{ r.ente }}</a><div class="small text-secondary">{{ r.profilo }}</div></td>
+          <td><a href="{{ r.get_absolute_url }}">{{ r.ente }}</a>{% if r.straordinario %} <span class="badge bg-orange-lt">straordinario</span>{% endif %}<div class="small text-secondary">{{ r.profilo }}</div></td>
           <td>{{ r.quadriennio }}</td>
           <td><span class="badge {% if r.fase == 'concluso' %}bg-green-lt{% elif r.fase == 'annullato' %}bg-secondary-lt{% else %}bg-blue-lt{% endif %}">{{ r.get_fase_display }}</span></td>
           <td>{% with t=r.prossimo %}{% if t %}{{ t.titolo }} <span class="small {% if t.stato == 'scaduto' %}text-danger{% elif t.stato == 'vicino' %}text-warning{% else %}text-secondary{% endif %}">entro il {{ t.entro|date:"d/m/Y" }}</span>{% else %}<span class="text-secondary">-</span>{% endif %}{% endwith %}</td>

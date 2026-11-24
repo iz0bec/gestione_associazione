@@ -230,6 +230,10 @@ class Rinnovo(ModelloBase):
     )  # fmt: skip
     consegne_il = models.DateField("passaggio di consegne il", null=True, blank=True)
     motivo_annullamento = models.CharField(max_length=255, blank=True)
+    straordinario = models.BooleanField(
+        default=False, editable=False,
+        help_text="Dopo la decadenza anticipata degli organi o il commissariamento.",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "rinnovo degli organi"
@@ -260,6 +264,18 @@ class Rinnovo(ModelloBase):
     @property
     def aperto(self):
         return self.fase not in (self.Fase.CONCLUSO, self.Fase.ANNULLATO)
+
+    @property
+    def decadenza(self):
+        return self.decadenze.first() if self.straordinario else None
+
+    @property
+    def chi_indice(self):
+        """Chi indice e convoca: il commissario se c'è, altrimenti il consiglio uscente."""
+        d = self.decadenza
+        if d is not None and d.commissario_id:
+            return "Il Commissario"
+        return "Il Consiglio direttivo uscente"
 
 
 class Lista(ModelloBase):
@@ -380,3 +396,57 @@ class Ricorso(ModelloBase):
 
     def __str__(self):
         return f"Ricorso di {self.presentato_da} del {self.presentato_il:%d/%m/%Y}"
+
+
+class Decadenza(ModelloBase):
+    """Fine anticipata degli organi (scioglimento, dimissioni della maggioranza, nuova sezione…),
+    con l'eventuale commissario incaricato di riportare l'ente a normalità con un congresso
+    straordinario entro il termine (di norma dodici mesi, prorogabili)."""
+
+    class Motivo(models.TextChoices):
+        SCIOGLIMENTO = "scioglimento", "Scioglimento del consiglio con provvedimento motivato"
+        DIMISSIONI = "dimissioni", "Dimissioni o decadenza della maggioranza del consiglio"
+        COSTITUZIONE = "costituzione", "Costituzione di una nuova sezione"
+        ALTRO = "altro", "Altro motivo"
+
+    sezione = models.ForeignKey(
+        "soci.Sezione", null=True, blank=True, on_delete=models.PROTECT, related_name="decadenze",
+        help_text="Vuota: gli organi dell'ente (federazione).",
+    )  # fmt: skip
+    motivo = models.CharField(max_length=15, choices=Motivo.choices)
+    giorno = models.DateField("dal")
+    disposto_da = models.CharField(
+        "disposto da", max_length=150, blank=True,
+        help_text="Es. Consiglio direttivo provinciale, Giunta esecutiva nazionale.",
+    )  # fmt: skip
+    atto = models.CharField("provvedimento", max_length=200, blank=True)
+    organi_sciolti = models.JSONField(default=list, blank=True, editable=False)
+    cariche_chiuse = models.PositiveIntegerField(default=0, editable=False)
+    commissario = models.ForeignKey(
+        Soggetto, null=True, blank=True, on_delete=models.PROTECT, related_name="+",
+        limit_choices_to={"tipo": "persona"},
+    )  # fmt: skip
+    termine = models.DateField(
+        "nuovo congresso entro", help_text="Commissario: di norma dodici mesi dalla nomina."
+    )
+    prorogato_al = models.DateField("proroga fino al", null=True, blank=True)
+    atto_proroga = models.CharField(max_length=200, blank=True)
+    chiusa_il = models.DateField("normalità ripristinata il", null=True, blank=True)
+    rinnovo = models.ForeignKey(
+        Rinnovo, null=True, blank=True, on_delete=models.SET_NULL, related_name="decadenze"
+    )
+    note = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "decadenza o commissariamento"
+        verbose_name_plural = "decadenze e commissariamenti"
+        ordering = ["-giorno"]
+
+    def __str__(self):
+        ente = f"Sezione di {self.sezione.nome}" if self.sezione_id else "Organi dell'ente"
+        tipo = "Commissariamento" if self.commissario_id else "Decadenza degli organi"
+        return f"{tipo} · {ente} dal {self.giorno:%d/%m/%Y}"
+
+    @property
+    def scadenza(self):
+        return self.prorogato_al or self.termine

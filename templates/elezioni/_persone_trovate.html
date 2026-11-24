@@ -1,0 +1,8 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Persone trovate per la scelta del commissario
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% for s in risultati %}
+<label class="list-group-item d-flex align-items-center gap-2"><input type="radio" class="form-check-input m-0" name="commissario" value="{{ s.pk }}"> <span class="flex-fill">{{ s.nome_completo }}</span><span class="small text-secondary">{{ s.email }}</span></label>
+{% empty %}{% if q|length > 1 %}<div class="list-group-item text-secondary small">Nessuna persona trovata.</div>{% endif %}{% endfor %}

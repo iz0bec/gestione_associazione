@@ -8,7 +8,7 @@
 {% block documento %}
 <h1>Verbale di verifica e ammissione delle liste</h1>
 <div class="sotto">{{ profilo.nome_assemblea }} · {{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }}</div>
-<p>Il Consiglio direttivo uscente, ai sensi dello Statuto e del Regolamento applicativo ({{ profilo.riferimento }}), ha verificato le liste presentate entro il termine del {{ rinnovo.termine_liste|date:"j F Y" }} per l'elezione del Presidente e delle cariche sociali, con il seguente esito:</p>
+<p>{{ rinnovo.chi_indice }}, ai sensi dello Statuto e del Regolamento applicativo ({{ profilo.riferimento }}), ha verificato le liste presentate entro il termine del {{ rinnovo.termine_liste|date:"j F Y" }} per l'elezione del Presidente e delle cariche sociali, con il seguente esito:</p>
 <table class="dati"><tr><th>Lista</th><th>Candidato presidente</th><th>Presentata il</th><th>Esito</th></tr>
 {% for l in liste %}<tr><td>n. {{ l.numero }}{% if l.motto %} «{{ l.motto }}»{% endif %}</td><td>{{ l.capolista.soggetto.nome_completo }}</td><td>{{ l.presentata_il|date:"d/m/Y H:i" }}</td><td>{{ l.get_stato_display }}{% if l.motivo_esclusione %}<br><span class="piccolo">Motivi: {{ l.motivo_esclusione }}</span>{% endif %}</td></tr>{% endfor %}</table>
 {% for l in ammesse %}<p class="gruppo">Lista n. {{ l.numero }}</p><p>{% for c in l.candidati.all %}{{ c.get_incarico_display }}: {{ c.soggetto.nome_completo }}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>{% endfor %}

@@ -5,6 +5,7 @@
 # * Descrizione: Firme in calce alle stampe: chi ricopriva una carica alla data del documento,
 # *              dalle cariche degli Organi sociali (dell'associazione o di una sezione).
 # *              Una carica vacante lascia lo spazio per la firma senza nome: mai nomi inventati.
+# *              Durante un commissariamento il commissario firma al posto del presidente.
 # *              «rappresentante_legale»: quello indicato (anche esterno), altrimenti il presidente.
 # *              Immagini: firma della persona e timbro dell'ente se caricati e attivi; altrimenti,
 # *              se richiesto in Organizzazione, firma generica (nome in corsivo) e timbro tondo.
@@ -24,6 +25,7 @@ QUALIFICHE = {
     "tesoriere": "Il Tesoriere",
     "presidente_controllo": "Il Presidente dell'organo di controllo",
     "rappresentante_legale": "Il Legale rappresentante",
+    "commissario": "Il Commissario",
 }
 RAPPRESENTANTE = "rappresentante_legale"
 
@@ -115,6 +117,9 @@ def legale_rappresentante(giorno=None, sezione=None):
     presidente = in_carica_al("presidente", giorno, sezione)
     if presidente:
         return Firma(QUALIFICHE["presidente"], presidente.intestazione, presidente.pk)
+    commissario = in_carica_al("commissario", giorno, sezione)
+    if commissario:  # organi decaduti: rappresenta l'ente il commissario
+        return Firma(QUALIFICHE["commissario"], commissario.intestazione, commissario.pk)
     if sezione is not None:  # sezione senza nomina né presidente: vale quello dell'associazione
         return legale_rappresentante(giorno, None)
     return None
@@ -133,6 +138,8 @@ def situazione_rappresentanza(giorno=None):
             origine = "nomina" if propria else "struttura"
         elif in_carica_al("presidente", giorno, sezione):
             origine = "presidente"
+        elif in_carica_al("commissario", giorno, sezione):
+            origine = "commissario"
         else:
             origine = "associazione" if sezione is not None else "vacante"
         firma = legale_rappresentante(giorno, sezione)
@@ -146,6 +153,10 @@ def _firma(ruolo, giorno, sezione):
     if ruolo == RAPPRESENTANTE:
         return legale_rappresentante(giorno, sezione)
     persona = in_carica_al(ruolo, giorno, sezione)
+    if persona is None and ruolo == "presidente":  # commissariamento: firma il commissario
+        commissario = in_carica_al("commissario", giorno, sezione)
+        if commissario is not None:
+            return Firma(QUALIFICHE["commissario"], commissario.intestazione, commissario.pk)
     if persona is None:
         return None
     return Firma(QUALIFICHE.get(ruolo, ruolo.capitalize()), persona.intestazione, persona.pk)

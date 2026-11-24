@@ -22,8 +22,15 @@ from apps.anagrafica.models import Soggetto
 from apps.core.views import PermessoMixin
 
 from . import servizi
-from .forms import AssembleaForm, ConsegneForm, EsitiForm, NuovoRinnovoForm, ProfiloForm
-from .models import Candidato, Lista, ProfiloElettorale, Ricorso, Rinnovo
+from .forms import (
+    AssembleaForm,
+    ConsegneForm,
+    DecadenzaForm,
+    EsitiForm,
+    NuovoRinnovoForm,
+    ProfiloForm,
+)
+from .models import Candidato, Decadenza, Lista, ProfiloElettorale, Ricorso, Rinnovo
 
 LETTURA = "elezioni.view_rinnovo"
 GESTIONE = "elezioni.gestisci_rinnovi"
@@ -530,3 +537,76 @@ class ProfiloNuovoView(_ProfiloMixin, PermessoMixin, CreateView):
 
 class ProfiloModificaView(_ProfiloMixin, PermessoMixin, UpdateView):
     permission_required = "elezioni.change_profiloelettorale"
+
+
+class DecadenzaView(PermessoMixin, View):
+    """Decadenza anticipata degli organi o commissariamento: apre il rinnovo straordinario."""
+
+    permission_required = GESTIONE
+    template_name = "elezioni/decadenza.html"
+
+    def _sezioni(self):
+        from apps.soci import sezioni
+        from apps.soci.models import Sezione
+
+        return sezioni.filtra(Sezione.objects.filter(attiva=True), self.request.user, campo="pk")
+
+    def _pagina(self, request, form, commissario=None):
+        return render(request, self.template_name, {"form": form, "commissario": commissario})
+
+    def get(self, request):
+        iniziale = {"giorno": timezone.localdate()}
+        if request.GET.get("sezione", "").isdigit():
+            iniziale["sezione"] = int(request.GET["sezione"])
+        return self._pagina(request, DecadenzaForm(initial=iniziale, sezioni=self._sezioni()))
+
+    def post(self, request):
+        from apps.soci import sezioni
+
+        form = DecadenzaForm(request.POST, sezioni=self._sezioni())
+        commissario = Soggetto.objects.filter(pk=request.POST.get("commissario") or 0).first()
+        if form.is_valid():
+            d = form.cleaned_data
+            if d["sezione"] is None and sezioni.id_sezioni(request.user) is not None:
+                form.add_error("sezione", "Indicare la sezione.")
+            else:
+                organi = servizi.organi_da_sciogliere(d["sezione"]).filter(tipo__in=form.tipi())
+                try:
+                    decadenza = servizi.dichiara_decadenza(
+                        request.user, sezione=d["sezione"], giorno=d["giorno"],
+                        motivo=d["motivo"], organi_ids=list(organi.values_list("pk", flat=True)),
+                        commissario=commissario, termine=d["termine"],
+                        disposto_da=d["disposto_da"], atto=d["atto"], profilo=d["profilo"],
+                        note=d["note"],
+                    )  # fmt: skip
+                except servizi.OperazioneNonValida as e:
+                    form.add_error(None, e)
+                else:
+                    messages.success(request, f"{decadenza}: {decadenza.cariche_chiuse} cariche "
+                                              "chiuse, rinnovo straordinario aperto entro il "
+                                              f"{decadenza.termine:%d/%m/%Y}.")  # fmt: skip
+                    return redirect(decadenza.rinnovo)
+        return self._pagina(request, form, commissario)
+
+
+class CercaPersonaView(PermessoMixin, View):
+    """Ricerca in anagrafica per scegliere il commissario."""
+
+    permission_required = GESTIONE
+
+    def get(self, request):
+        q = request.GET.get("cerca", "").strip()
+        risultati = []
+        if len(q) >= 2:
+            risultati = list(Soggetto.objects.attivi().ricerca(q).filter(tipo="persona")[:10])
+        return render(request, "elezioni/_persone_trovate.html", {"risultati": risultati, "q": q})
+
+
+class ProrogaView(_AzioneRinnovo):
+    def azione(self, request, r):
+        decadenza = get_object_or_404(Decadenza, rinnovo=r, chiusa_il__isnull=True)
+        fino = _data(request.POST.get("fino"))
+        if fino is None:
+            raise servizi.OperazioneNonValida("Indicare la data della proroga.")
+        servizi.proroga(decadenza, request.user, fino=fino, atto=request.POST.get("atto", ""))
+        messages.success(request, "Commissariamento prorogato.")

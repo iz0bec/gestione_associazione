@@ -7,7 +7,7 @@
 {% block documento %}
 <h1>Presentazione di una lista di candidati</h1>
 <div class="sotto">{{ profilo.nome_assemblea }} · {{ rinnovo.ente }} · mandato {{ rinnovo.quadriennio }}</div>
-<p>Al Consiglio direttivo uscente{% if rinnovo.sezione %} della {{ rinnovo.ente }}{% endif %}.</p>
+<p>{% if rinnovo.decadenza.commissario %}Al Commissario{% else %}Al Consiglio direttivo uscente{% endif %}{% if rinnovo.sezione %} della {{ rinnovo.ente }}{% endif %}.</p>
 <p>Il sottoscritto <strong>{{ lista.capolista.soggetto.nome_completo }}</strong>, candidato alla carica di Presidente, presenta la seguente lista{% if lista.motto %} «{{ lista.motto }}»{% endif %} per l'elezione delle cariche sociali, indicando accanto a ciascun nome l'incarico che andrà ad assumere.</p>
 <table class="dati"><tr><th>Incarico</th><th>Cognome e nome</th><th>Nato/a il</th><th>Firma per accettazione della carica{% if profilo.dichiarazione_requisiti %} e dichiarazione dei requisiti{% endif %}</th></tr>
 {% for c in lista.candidati.all %}<tr><td>{{ c.get_incarico_display }}</td><td>{{ c.soggetto.nome_completo }}</td><td>{{ c.soggetto.data_nascita|date:"d/m/Y" }}</td><td style="width:38%"></td></tr>{% endfor %}</table>

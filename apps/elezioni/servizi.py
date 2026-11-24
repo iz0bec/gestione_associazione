@@ -21,7 +21,7 @@ from django.utils import timezone
 
 from apps.core.audit import Azione, registra
 
-from .models import Candidato, Lista, ProfiloElettorale, Ricorso, Rinnovo
+from .models import Candidato, Decadenza, Lista, ProfiloElettorale, Ricorso, Rinnovo
 
 ORIGINE = "rinnovo-organi"
 Fase = Rinnovo.Fase
@@ -150,7 +150,9 @@ def termini(rinnovo):
     return [
         Termine("indizione", f"Indizione ({p.nome_assemblea.lower()})",
                 meno(rinnovo.scadenza, p.giorni_indizione), rinnovo.indetto_il,
-                f"almeno {p.giorni_indizione} giorni prima della scadenza del mandato"),
+                f"almeno {p.giorni_indizione} giorni prima " + (
+                    "del termine del commissariamento" if rinnovo.straordinario
+                    else "della scadenza del mandato")),
         Termine("avviso", "Avviso di convocazione", meno(assemblea, p.giorni_avviso),
                 rinnovo.avviso_il, f"almeno {p.giorni_avviso} giorni prima; fissa gli aventi "
                 "diritto al voto"),
@@ -812,6 +814,7 @@ def insedia(rinnovo, utente, *, giorno=None):
         nominati += 1
     rinnovo.insediato_il, rinnovo.fase, rinnovo.modificato_da = giorno, Fase.INSEDIATO, utente
     rinnovo.save()
+    Decadenza.objects.filter(rinnovo=rinnovo, chiusa_il__isnull=True).update(chiusa_il=giorno)
     registra(Azione.MODIFICA, rinnovo, utente=utente, fase="insediato", nominati=nominati)
     return nominati
 
@@ -989,3 +992,112 @@ def filtra_per_utente(queryset, utente):
     if ids is None:
         return queryset
     return queryset.filter(Q(sezione_id__in=ids))
+
+
+# --- decadenza anticipata e commissariamento ------------------------------------------------
+
+MESI_COMMISSARIO = 12
+
+
+def _piu_mesi(giorno, mesi):
+    anno, mese = divmod(giorno.month - 1 + mesi, 12)
+    try:
+        return giorno.replace(year=giorno.year + anno, month=mese + 1)
+    except ValueError:  # es. 31 del mese: ultimo giorno utile
+        return (giorno.replace(day=1, year=giorno.year + anno, month=mese + 1)
+                + timedelta(days=31)).replace(day=1) - timedelta(days=1)  # fmt: skip
+
+
+def organi_da_sciogliere(sezione):
+    """Organi elettivi della sezione (o dell'ente) che possono decadere: consiglio, controllo,
+    garanti. L'assemblea dei soci non decade."""
+    from apps.organi.models import Organo
+
+    return Organo.objects.filter(sezione=sezione, attivo=True).exclude(tipo=Organo.Tipo.ASSEMBLEA)
+
+
+def profilo_per(sezione):
+    livelli = ProfiloElettorale.Livello
+    livello = livelli.SEZIONE if sezione else livelli.FEDERAZIONE
+    profilo = ProfiloElettorale.objects.filter(livello=livello, attivo=True).first()
+    return profilo or ProfiloElettorale.objects.filter(attivo=True).first()
+
+
+@transaction.atomic
+def dichiara_decadenza(utente, *, sezione, giorno, motivo, organi_ids=(), commissario=None,
+                       termine=None, disposto_da="", atto="", profilo=None, note=""):  # fmt: skip
+    """Fine anticipata degli organi: chiude le cariche degli organi indicati, nomina l'eventuale
+    commissario (carica «commissario» nel consiglio: firma al posto del presidente) e apre il
+    rinnovo straordinario da concludere entro il termine. Un rinnovo in corso si annulla."""
+    from apps.organi import servizi as organi
+    from apps.organi.models import Organo
+
+    if motivo not in Decadenza.Motivo.values:
+        raise OperazioneNonValida("Motivo non valido.")
+    if Decadenza.objects.filter(sezione=sezione, chiusa_il__isnull=True).exists():
+        raise OperazioneNonValida("C'è già una decadenza o un commissariamento in corso.")
+    if commissario is not None and not commissario.is_persona:
+        raise OperazioneNonValida("Il commissario è una persona.")
+    if commissario is not None and termine is None:
+        termine = _piu_mesi(giorno, MESI_COMMISSARIO)
+    if termine is None:
+        raise OperazioneNonValida("Indicare entro quando si terrà il nuovo congresso.")
+    if termine <= giorno:
+        raise OperazioneNonValida("Il termine deve seguire la decadenza.")
+    profilo = profilo or profilo_per(sezione)
+    if profilo is None:
+        raise OperazioneNonValida("Manca un profilo elettorale attivo.")
+    sciolti = list(organi_da_sciogliere(sezione).filter(pk__in=organi_ids))
+    motivazione = f"Decadenza degli organi dal {giorno:%d/%m/%Y}" + (f" ({atto})" if atto else "")
+    chiuse = 0
+    for organo in sciolti:
+        for carica in organo.cariche_al(giorno):
+            organi.termina_carica(carica, giorno, utente, motivo=motivazione)
+            chiuse += 1
+    if commissario is not None:
+        nome = "Consiglio direttivo" + (" sezionale" if sezione else "")
+        consiglio = organo_consiglio(sezione) or _organo(
+            sezione, Organo.Tipo.CONSIGLIO, nome, "CD", profilo.durata_mandato)  # fmt: skip
+        organi.nomina(consiglio, commissario, "commissario", giorno, utente,
+                      atto=atto or f"Commissariamento dal {giorno:%d/%m/%Y}")  # fmt: skip
+    for vecchio in Rinnovo.objects.filter(sezione=sezione).exclude(
+        fase__in=[Fase.CONCLUSO, Fase.ANNULLATO]
+    ):
+        annulla(vecchio, utente, "Sostituito dal rinnovo straordinario dopo la decadenza")
+    inizio = termine.year
+    rinnovo = Rinnovo.objects.create(
+        profilo=profilo, sezione=sezione,
+        quadriennio=f"{inizio}-{inizio + profilo.durata_mandato}",
+        scadenza=termine, straordinario=True, creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    decadenza = Decadenza.objects.create(
+        sezione=sezione, motivo=motivo, giorno=giorno, disposto_da=disposto_da, atto=atto,
+        organi_sciolti=[str(o) for o in sciolti], cariche_chiuse=chiuse, commissario=commissario,
+        termine=termine, rinnovo=rinnovo, note=note, creato_da=utente, modificato_da=utente,
+    )  # fmt: skip
+    registra(Azione.CREAZIONE, decadenza, utente=utente, motivo=motivo, cariche_chiuse=chiuse,
+             commissario=str(commissario or ""), termine=str(termine))  # fmt: skip
+    return decadenza
+
+
+@transaction.atomic
+def proroga(decadenza, utente, *, fino, atto=""):
+    """Proroga del commissariamento, al massimo di altri dodici mesi oltre il termine."""
+    if decadenza.chiusa_il:
+        raise OperazioneNonValida("Il commissariamento è già concluso.")
+    massimo = _piu_mesi(decadenza.termine, MESI_COMMISSARIO)
+    if fino <= decadenza.termine or fino > massimo:
+        raise OperazioneNonValida(f"La proroga va dal {decadenza.termine:%d/%m/%Y} al "
+                                  f"{massimo:%d/%m/%Y} al massimo.")  # fmt: skip
+    decadenza.prorogato_al, decadenza.atto_proroga = fino, atto
+    decadenza.modificato_da = utente
+    decadenza.save()
+    if decadenza.rinnovo_id:
+        Rinnovo.objects.filter(pk=decadenza.rinnovo_id).update(scadenza=fino)
+    registra(Azione.MODIFICA, decadenza, utente=utente, proroga=str(fino), atto=atto)
+
+
+def decadenze_aperte():
+    return Decadenza.objects.filter(chiusa_il__isnull=True).select_related(
+        "sezione", "commissario", "rinnovo"
+    )

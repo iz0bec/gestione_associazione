@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Decadenza anticipata degli organi o commissariamento (apre il rinnovo straordinario)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Decadenza o commissariamento{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'elezioni:rinnovi' %}">Rinnovo degli organi</a></div>{% endblock %}
+{% block titolo_pagina %}Decadenza degli organi o commissariamento{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card" novalidate data-conferma="Chiudere le cariche degli organi indicati e aprire il rinnovo straordinario?">{% csrf_token %}
+      <div class="card-body">
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+        {% for campo in form %}{% if campo.name == "termine" %}
+        <div class="mb-3">
+          <label class="form-label">Commissario (facoltativo)</label>
+          <div class="mb-2" id="commissario-scelto">{% if commissario %}<label class="badge bg-blue-lt p-2 fw-normal"><input type="radio" class="form-check-input m-0 me-1" name="commissario" value="{{ commissario.pk }}" checked> {{ commissario.nome_completo }}</label>{% endif %}</div>
+          <div class="input-icon mb-1"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+            <input type="search" class="form-control" name="cerca" placeholder="Cerca in anagrafica" autocomplete="off" aria-label="Cerca il commissario" data-ricerca-scelta hx-get="{% url 'elezioni:cerca_persona' %}" hx-trigger="input changed delay:300ms" hx-target="#persone-trovate">
+          </div>
+          <div class="list-group list-group-flush" id="persone-trovate"></div>
+          <div class="form-hint">Nominato con la carica di <strong>Commissario</strong> nel consiglio: firma i documenti al posto del presidente e indice il nuovo congresso.</div>
+        </div>
+        {% endif %}{{ campo.as_field_group }}{% endfor %}
+      </div>
+      <div class="card-footer d-flex"><a class="btn btn-link" href="{% url 'elezioni:rinnovi' %}">Annulla</a><button class="btn btn-danger ms-auto" type="submit">Registra e apri il rinnovo straordinario</button></div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body small">
+      <p>Quando un consiglio <strong>decade prima della scadenza</strong> (dimissioni della maggioranza, scioglimento con provvedimento motivato del Consiglio direttivo provinciale per una sezione, della Giunta esecutiva nazionale per una federazione) o nasce una <strong>nuova sezione</strong>, si registra qui:</p>
+      <ul>
+        <li>le cariche degli organi indicati si chiudono dal giorno della decadenza;</li>
+        <li>l'eventuale <strong>commissario</strong> entra in carica e firma al posto del presidente;</li>
+        <li>si apre il <strong>rinnovo straordinario</strong>, con i termini calcolati sul giorno entro cui tenere il nuovo congresso (per il commissario dodici mesi, prorogabili di altri dodici).</li>
+      </ul>
+      <p class="mb-0">All'insediamento dei nuovi organi il commissariamento si chiude da solo. Un rinnovo ordinario in corso viene annullato.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

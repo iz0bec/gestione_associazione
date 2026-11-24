@@ -18,6 +18,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   negli organi sociali, passaggio di consegne, trasmissione dei verbali protocollata. Verbali dai
   modelli del Regolamento ANCR (B1/B2, C1/C2/C3, D1/D2, D3/D4, G/G1), scheda e aventi diritto in PDF;
   scadenze nel calendario e nel cruscotto.
+- **Decadenza anticipata degli organi e commissariamento**: dall'elenco dei rinnovi si registra la
+  fine anticipata del consiglio (dimissioni, scioglimento, nuova sezione) con gli organi che decadono
+  (cariche chiuse) e l'eventuale **commissario**, nuova carica degli organi sociali che firma al posto
+  del presidente; si apre il **rinnovo straordinario** entro dodici mesi (prorogabili), chiuso
+  all'insediamento dei nuovi organi.
 - **Fornitori di posta**: in *Sistema → Servizi di posta*, creando una casella (IMAP) o un servizio di
   invio (SMTP), il menu **Fornitore** compila server, porta, cifratura e PEC: Aruba (email e PEC),
   Legalmail, Poste PEC, Libero, Virgilio, Tiscali, TIM, Gmail e Microsoft 365, con le note utili
