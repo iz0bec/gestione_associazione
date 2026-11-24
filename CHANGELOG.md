@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.90] - 2026-11-24
+
 ### Aggiunto
 - **Connettore WordPress** (`integrazioni/wordpress/gestione-associazione`, plugin 0.1.0, CC0):
   collega un sito al gestionale come integrazione delle API v1, con richieste firmate (RFC 9421) e

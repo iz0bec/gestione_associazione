@@ -277,7 +277,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   smartphone né chiave di sicurezza), dalla sua scheda in *Sistema → Utenti*: con motivo e scadenza
   facoltativa, registrata nel registro attività e indicata nell'elenco degli utenti; l'esenzione non
   vale per l'Amministratore di sistema.
-- ✅ **Connettore per WordPress via API** (non rilasciato; nel repository in `integrazioni/wordpress`, da separare in seguito). Un plugin WordPress (licenza compatibile, CC0 o
+- ✅ **Connettore per WordPress via API** (1.0.90; nel repository in `integrazioni/wordpress`, da separare in seguito). Un plugin WordPress (licenza compatibile, CC0 o
   GPL per il solo plugin) che usa le API di interoperabilità v1 come controparte abbinata: modulo
   di domanda di iscrizione e modulo contatti sul sito che arrivano nel gestionale (`/domande`,
   `/contatti`), calendario degli eventi pubblici con adesioni (`/eventi`), organigramma e recapiti
