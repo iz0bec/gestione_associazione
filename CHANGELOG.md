@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.87] - 2026-11-24
+
+### Corretto
+- Campagna delle tessere nella federazione: le **richieste arrivate dal collegamento** e ancora da
+  registrare compaiono nella **fase 2** («da registrare», con il pulsante «Registra la richiesta»),
+  nel riepilogo della fase e, nella fase 1, come «arrivata, da registrare»; prima stavano solo nel
+  riquadro dei documenti in arrivo in cima alla pagina.
+
 ## [1.0.86] - 2026-11-24
 
 ### Corretto

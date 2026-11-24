@@ -421,3 +421,33 @@ def test_invito_ricevuto_collegato_al_protocollo(admin, sezione):
     r = admin.post(f"/soci/tessere/campagna/{ANNO}/invito/", {"segnatura": "1999-00001"},
                    follow=True)  # fmt: skip
     assert "non trovato" in r.content.decode()
+
+
+def test_richiesta_dal_collegamento_si_registra_nella_fase_2(admin, sezione):
+    """Nella federazione la richiesta arrivata dal collegamento compare nella fase 2 (e la
+    sezione risulta «arrivata, da registrare»), non solo fra i documenti in arrivo."""
+    import uuid as uuid_mod
+
+    from apps.api.models import ClienteApi, DocumentoRicevuto
+
+    cliente = ClienteApi.objects.create(nome="Pisticci", tipo="installazione",
+                                        origine="invito_nostro", ruolo="sezione", sezione=sezione,
+                                        stato="attiva")  # fmt: skip
+    DocumentoRicevuto.objects.create(
+        cliente=cliente,
+        tipo="richiesta",
+        uuid_origine=uuid_mod.uuid4(),
+        dati={
+            "anno": ANNO,
+            "quantita": 90,
+            "data": "2026-11-24",
+            "uuid": str(uuid_mod.uuid4()),
+            "note": "telefono",
+        },
+    )
+    pagina = admin.get(f"/soci/tessere/campagna/{ANNO}/").content.decode()
+    fase2 = pagina[pagina.index('id="richieste-sezioni"') : pagina.index('id="consegne-sezioni"')]
+    assert "1 da registrare" in fase2 and "Registra la richiesta" in fase2 and "90 tessere" in fase2
+    assert "arrivata, da registrare" in pagina
+    fase = ciclo.fasi_verso_sezioni(ANNO)[1]
+    assert fase.stato == "in_corso" and "da registrare 1" in fase.sintesi

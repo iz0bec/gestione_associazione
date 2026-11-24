@@ -119,6 +119,7 @@
 | **1.0.84** ✅ | richiesta di tessere preparata a mano dalle sezioni senza soci nel gestionale, da inviare alla federazione | GitHub, GitLab |
 | **1.0.85** ✅ | campagna delle tessere divisa per direzione (verso le sezioni, verso l'ente sovraordinato) e per fasi; invito ricevuto collegato al protocollo | GitHub, GitLab |
 | **1.0.86** ✅ | campagna delle tessere: titoli corretti verso l'ente sovraordinato | GitHub, GitLab |
+| **1.0.87** ✅ | campagna: le richieste arrivate dal collegamento si registrano nella fase 2 | GitHub, GitLab |
 | 1.x | Django 6.2 LTS appena disponibile (aprile 2027), verifica della build Docker, termini di conservazione e collaudi | GitHub, GitLab |
 
 ## Fase 0 - Fondamenta ✅ (questa versione)

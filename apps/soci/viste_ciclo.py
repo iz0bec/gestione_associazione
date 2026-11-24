@@ -111,6 +111,9 @@ class CampagnaView(PermessoMixin, TemplateView):
             r.correggibile = ciclo.motivo_non_modificabile(r) is None
             r.confermata = r.pk in conferme
         federazione = ciclo.e_federazione()
+        if federazione:  # le richieste dal collegamento si registrano nella fase 2
+            ctx["richieste_arrivo"] = [d for d in ctx["in_arrivo"] if d.tipo == "richiesta"]
+            ctx["in_arrivo"] = [d for d in ctx["in_arrivo"] if d.tipo != "richiesta"]
         ctx.update(
             federazione=federazione,
             superiore_nome=ciclo.nome_superiore(),

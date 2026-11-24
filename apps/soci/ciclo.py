@@ -1079,14 +1079,26 @@ def _avvisate(anno, origine):
     return {i.origine_id for i in invii if (i.contesto or {}).get("anno") == anno}
 
 
+def richieste_in_arrivo(anno=None):
+    """Richieste arrivate dal collegamento e non ancora registrate (da confermare)."""
+    from apps.api.models import DocumentoRicevuto
+
+    documenti = DocumentoRicevuto.objects.filter(
+        tipo=DocumentoRicevuto.Tipo.RICHIESTA, stato=DocumentoRicevuto.Stato.DA_ESAMINARE
+    ).select_related("cliente__sezione")
+    return [d for d in documenti if anno is None or d.dati.get("anno") == anno]
+
+
 def stato_inviti(anno):
-    """Per ogni sezione attiva: avviso e sollecito partiti, richiesta arrivata."""
+    """Per ogni sezione attiva: avviso e sollecito partiti, richiesta registrata o arrivata dal
+    collegamento e ancora da registrare."""
     avviso, sollecito = _avvisate(anno, "tessere_avviso"), _avvisate(anno, "tessere_sollecito")
+    in_arrivo = {d.cliente.sezione_id for d in richieste_in_arrivo(anno)}
     con_richiesta = set(RichiestaTessere.objects.filter(
         anno=anno, inviata_il__isnull=False).values_list("sezione_id", flat=True))  # fmt: skip
     return [
         {"sezione": s, "avviso": s.pk in avviso, "sollecito": s.pk in sollecito,
-         "richiesta": s.pk in con_richiesta}
+         "richiesta": s.pk in con_richiesta, "in_arrivo": s.pk in in_arrivo}
         for s in Sezione.objects.filter(attiva=True)
     ]  # fmt: skip
 
@@ -1107,6 +1119,7 @@ def fasi_verso_sezioni(anno):
     richieste = list(RichiestaTessere.objects.filter(anno=anno, inviata_il__isnull=False))
     con_richiesta = sum(1 for s in stati if s["richiesta"])
     confermate = len(conferme_inviate(richieste))
+    da_registrare = len(richieste_in_arrivo(anno))
     righe = quadratura(anno)
     richiesto = sum(r.richieste for r in righe)
     consegnato = sum(r.consegnate for r in righe)
@@ -1115,9 +1128,12 @@ def fasi_verso_sezioni(anno):
     return [
         Fase(1, "Invito alla richiesta", _stato(avvisate, attive),
              f"avvisate {avvisate} sezioni su {attive}", "invito-sezioni"),
-        Fase(2, "Richieste ricevute", _stato(con_richiesta, attive),
+        Fase(2, "Richieste ricevute",
+             "in_corso" if da_registrare else _stato(con_richiesta, attive),
              f"{con_richiesta} sezioni su {attive}, {richiesto} tessere; confermate "
-             f"{confermate} su {len(richieste)}", "richieste-sezioni"),
+             f"{confermate} su {len(richieste)}"
+             + (f"; da registrare {da_registrare}" if da_registrare else ""),
+             "richieste-sezioni"),
         Fase(3, "Consegna alle sezioni", _stato(consegnato, richiesto),
              f"consegnate {consegnato} tessere su {richiesto}", "consegne-sezioni"),
         Fase(4, "Incassi dalle sezioni", _stato(pagato, dovuto) if dovuto else "da_fare",
