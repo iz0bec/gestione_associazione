@@ -16,6 +16,7 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 1. [Configurazione iniziale](configurazione-iniziale.md) - il wizard del primo accesso e **cosa preparare prima**
 2. [Primi passi](primi-passi.md) - accesso, verifica in due passaggi, come è fatta l'interfaccia
 3. [Ruoli e permessi](ruoli.md) - chi può fare cosa
+   - [Guide rapide per ruolo](guide-rapide.md) - i lavori essenziali di ogni ruolo per passaggi chiave, con le schermate: [amministratore](guida-amministratore.md), [presidente](guida-presidente.md), [segretario](guida-segretario.md), [tesoriere](guida-tesoriere.md), [presidente di sezione](guida-presidente-sezione.md), [addetto al protocollo](guida-protocollo.md), [consigliere](guida-consigliere.md), [revisore](guida-revisore.md)
 4. [Anagrafica](anagrafica.md) - persone ed enti, foto, categorie, consensi privacy, esportazione, rubrica del telefono (vCard)
 5. [Soci e tesseramento](soci.md) - libro soci, sezioni, listino, tessere, quote e ricevute, rinnovo, domande di iscrizione, importazione dal registro nazionale
 6. [Protocollo](protocollo.md) - registrazioni, documenti, annullamento, posta e PEC, registri giornalieri

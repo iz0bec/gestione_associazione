@@ -44,6 +44,19 @@ SCHERMATE = {
     "documenti-pubblici": ("/sistema/documenti-pubblici/", None, False),
     "cerca": ("/cerca/?q=rossi", None, False),
     "conservazione": ("/anagrafica/conservazione/", None, False),
+    # guide rapide per ruolo
+    "domande": ("/soci/domande/", None, False),
+    "rinnovo-annuale": ("/soci/tessere/rinnovo/", None, False),
+    "campagna-tessere": ("/soci/tessere/campagna/", None, False),
+    "protocollo-nuovo": ("/protocollo/nuovo/", None, False),
+    "prima-nota": ("/tesoreria/prima-nota/", None, False),
+    "riunioni": ("/organi/riunioni/", None, False),
+    "riunione-nuova": ("/organi/riunioni/nuova/", None, False),
+    "comunicazione-nuova": ("/comunicazioni/nuova/", None, False),
+    "eventi": ("/eventi/", None, False),
+    "registro-attivita": ("/registro-attivita/", None, False),
+    "rinnovi-organi": ("/organi/rinnovi/", None, False),
+    "collegamenti": ("/sistema/api/", None, False),
 }
 
 

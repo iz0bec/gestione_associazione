@@ -292,7 +292,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   e foto del redattore, bozza per default; filtro WordPress per chi vuole riversarli altrove; ripiego
   su «articolo normale» per i temi che non mostrano bene un tipo nuovo. Ad Avigliano da decidere se
   affiancarlo a The Events Calendar o sostituirlo.
-- **Guide rapide per ruolo** (da fare, deciso il 24/11/2026): una guida breve per ogni ruolo
+- ✅ **Guide rapide per ruolo** (fatte il 24/11/2026, non rilasciate): una guida breve per ogni ruolo
   (`apps/accounts/ruoli.py`: segreteria, tesoreria, presidenza, protocollo, consiglieri, revisori,
   amministratore…) con i **flussi di lavoro** essenziali spiegati per passaggi chiave (es. accogliere una
   domanda, rinnovare una tessera, protocollare la posta, convocare una riunione, chiudere l'esercizio),
