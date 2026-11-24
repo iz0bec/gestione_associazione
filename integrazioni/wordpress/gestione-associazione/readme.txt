@@ -4,7 +4,7 @@ Tags: associazione, iscrizione, eventi, terzo settore, ANCR
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: CC0-1.0
 License URI: https://creativecommons.org/publicdomain/zero/1.0/
 
@@ -34,6 +34,9 @@ Richiede le estensioni PHP sodium e openssl (presenti nelle installazioni comuni
 4. Confrontate l'impronta mostrata dalle due parti e attivate il collegamento nel gestionale.
 
 == Changelog ==
+
+= 0.1.2 =
+* Articoli degli eventi: aggiornando il titolo dal cron non si tolgono più dal testo del redattore video incorporati, iframe e altro HTML consentito solo agli amministratori.
 
 = 0.1.1 =
 * Coda degli invii: una voce per invio (prima un invio arrivato mentre il cron svuotava la coda poteva andare perso); attesa crescente fino a 6 ore per 7 giorni; gli errori transitori (collegamento sospeso, orologio, richiesta gemella in corso, risposte non verificabili del proxy) si ritentano; ciò che non si consegna resta «non consegnato» nelle impostazioni, da rimettere in coda o eliminare, mai scartato in silenzio.

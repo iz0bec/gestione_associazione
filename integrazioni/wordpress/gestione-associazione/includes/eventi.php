@@ -8,7 +8,8 @@
  *              dal suo identificativo, in bozza per default, aggiornato quando l'evento cambia
  *              (titolo; data, luogo e adesioni sono sempre quelli correnti tramite lo shortcode),
  *              «ANNULLATO» nel titolo se l'evento è annullato, mai cancellato. Un articolo che il
- *              redattore ha cestinato o eliminato non si ricrea e non si tocca più.
+ *              redattore ha cestinato o eliminato non si ricrea e non si tocca più; aggiornando il
+ *              titolo il testo del redattore resta com'è (niente kses dal cron).
  * Licenza:     CC0 1.0 Universal (pubblico dominio)
  * SPDX-License-Identifier: CC0-1.0
  */
@@ -159,7 +160,7 @@ final class GA_Eventi {
 			if ( (int) get_post_meta( $articolo->ID, self::META_VERSIONE, true ) >= (int) $e['versione'] ) {
 				continue;
 			}
-			wp_update_post( array( 'ID' => $articolo->ID, 'post_title' => self::titolo( $e ) ) );
+			self::aggiorna_titolo( $articolo->ID, self::titolo( $e ) );
 			update_post_meta( $articolo->ID, self::META_VERSIONE, (int) $e['versione'] );
 			$aggiornati++;
 		}
@@ -167,6 +168,26 @@ final class GA_Eventi {
 			update_option( self::CREATI, $registro, false );
 		}
 		return array( $creati, $aggiornati );
+	}
+
+	/**
+	 * Aggiorna solo il titolo. wp_update_post risalva tutto l'articolo e, dal cron (nessun utente,
+	 * quindi kses attivo), toglierebbe dal testo del redattore iframe, video incorporati e altro HTML
+	 * consentito solo a chi ha unfiltered_html: kses si sospende per questo salvataggio (il titolo
+	 * è già testo semplice) e si rimette com'era.
+	 */
+	private static function aggiorna_titolo( int $id, string $titolo ): void {
+		$kses = false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' );
+		if ( $kses ) {
+			kses_remove_filters();
+		}
+		try {
+			wp_update_post( array( 'ID' => $id, 'post_title' => $titolo ) );
+		} finally {
+			if ( $kses ) {
+				kses_init_filters();
+			}
+		}
 	}
 
 	/** Lavoro periodico: coda degli invii, eventi, organigramma, articoli. */

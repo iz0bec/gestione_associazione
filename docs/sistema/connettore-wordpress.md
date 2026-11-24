@@ -25,7 +25,7 @@ esterna» delle [API di interoperabilità](api.md). Sul sito mette:
 Per gli eventi con **«Pubblica sui siti collegati»** (scheda dell'evento, con il modulo pubblico) il
 connettore crea un **articolo**, in bozza per default, che contiene lo shortcode dell'evento: data,
 luogo, posti e adesione sono sempre quelli correnti, il testo aggiunto dal redattore non viene mai
-toccato. Se l'evento cambia, il titolo si aggiorna; se è annullato diventa «ANNULLATO – …»;
+toccato (nemmeno video incorporati o iframe). Se l'evento cambia, il titolo si aggiorna; se è annullato diventa «ANNULLATO – …»;
 l'articolo non viene mai cancellato. Un articolo che il redattore **cestina o elimina** non viene
 ricreato né aggiornato. La diffusione sui social resta ai plugin del sito.
 
