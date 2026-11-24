@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.94] - 2026-11-24
+
 ### Aggiunto
 - **Guide rapide per ruolo** nel manuale operativo (e nell'aiuto in linea): amministratore,
   presidente, segretario, tesoriere, presidente di sezione, addetto al protocollo, consigliere e
