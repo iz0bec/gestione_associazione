@@ -21,24 +21,30 @@ from apps.core.views import PermessoMixin
 
 from . import servizi
 from .forms import (
+    ESITI,
     AllegatoForm,
     AvvioForm,
+    BandoForm,
+    CandidaForm,
     CriterioForm,
     FinalitaForm,
     IdeaForm,
     MembroForm,
     PrioritaForm,
     ProgettoForm,
+    RequisitoForm,
     ScadenzaForm,
     StatoForm,
 )
 from .models import (
     Allegato,
+    Bando,
     CriterioValutazione,
     FinalitaStatutaria,
     Idea,
     Membro,
     Progetto,
+    Requisito,
     Scadenza,
 )
 from .servizi import OperazioneNonValida
@@ -368,6 +374,7 @@ class ProgettoView(PermessoMixin, View):
                 "membro_form": MembroForm(),
                 "scadenza_form": ScadenzaForm(),
                 "allegato_form": AllegatoForm(),
+                "candida_form": CandidaForm(progetto=progetto),
                 "oggi": timezone.localdate(),
             },
         )
@@ -424,6 +431,13 @@ class ProgettoAzioneView(PermessoMixin, View):
                 servizi.segna_scadenza(s, request.user, fatta=p.get("fatta") == "1")
             elif azione == "commenta":
                 servizi.commenta(progetto, request.user, p.get("testo", ""))
+            elif azione == "candida":
+                form = CandidaForm(p, progetto=progetto)
+                if not form.is_valid():
+                    raise OperazioneNonValida("Scegliere un bando aperto.")
+                servizi.candida(progetto, form.cleaned_data["bando"], request.user,
+                                delibera=form.cleaned_data["delibera"])  # fmt: skip
+                messages.success(request, f"Progetto candidato al bando «{progetto.bando}».")
             elif azione == "allega":
                 form = AllegatoForm(p, request.FILES)
                 if not form.is_valid():
@@ -440,6 +454,142 @@ class ProgettoAzioneView(PermessoMixin, View):
         except OperazioneNonValida as e:
             messages.error(request, str(e))
         return redirect(progetto)
+
+
+# --- bandi ---------------------------------------------------------------------------------------
+
+
+class BandiView(PermessoMixin, ListView):
+    permission_required = "progetti.view_bando"
+    template_name = "progetti/bandi.html"
+    context_object_name = "bandi"
+    paginate_by = 30
+
+    def get_queryset(self):
+        g = self.request.GET
+        oggi = timezone.localdate()
+        qs = Bando.objects.select_related("finanziatore").prefetch_related("finalita", "progetti")
+        stato = g.get("stato", "aperti")
+        if stato == "aperti":
+            qs = qs.exclude(stato=Bando.Stato.SCARTATO).filter(
+                Q(scadenza__gte=oggi) | Q(scadenza__isnull=True)
+            )
+        elif stato == "scaduti":
+            qs = qs.filter(scadenza__lt=oggi)
+        elif stato in Bando.Stato.values:
+            qs = qs.filter(stato=stato)
+        if g.get("finalita"):
+            qs = qs.filter(finalita=g["finalita"])
+        if g.get("q"):
+            qs = qs.filter(
+                Q(titolo__icontains=g["q"])
+                | Q(descrizione__icontains=g["q"])
+                | Q(finanziatore_testo__icontains=g["q"])
+                | Q(finanziatore__denominazione__icontains=g["q"])
+            )
+        return qs.distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        oggi = timezone.localdate()
+        for b in ctx["bandi"]:
+            b.giorni = b.giorni_alla_scadenza(oggi)
+        ctx.update(
+            stati=Bando.Stato.choices,
+            finalita=FinalitaStatutaria.objects.filter(attiva=True),
+            filtri=self.request.GET,
+        )
+        return ctx
+
+
+class BandoNuovoView(PermessoMixin, View):
+    permission_required = "progetti.add_bando"
+
+    def get(self, request):
+        return render(request, "progetti/bando_modulo.html", {"form": BandoForm()})
+
+    def post(self, request):
+        form = BandoForm(request.POST)
+        if form.is_valid():
+            bando = servizi.crea_bando(form, request.user)
+            messages.success(request, "Bando registrato: ora si aggiungono i requisiti.")
+            return redirect(bando)
+        return render(request, "progetti/bando_modulo.html", {"form": form})
+
+
+class BandoModificaView(PermessoMixin, View):
+    permission_required = "progetti.change_bando"
+
+    def get(self, request, pk):
+        bando = get_object_or_404(Bando, pk=pk)
+        return render(request, "progetti/bando_modulo.html",
+                      {"form": BandoForm(instance=bando), "bando": bando})  # fmt: skip
+
+    def post(self, request, pk):
+        bando = get_object_or_404(Bando, pk=pk)
+        form = BandoForm(request.POST, instance=bando)
+        if form.is_valid():
+            servizi.modifica_bando(form, request.user)
+            messages.success(request, "Bando aggiornato.")
+            return redirect(bando)
+        return render(request, "progetti/bando_modulo.html", {"form": form, "bando": bando})
+
+
+class BandoView(PermessoMixin, View):
+    permission_required = "progetti.view_bando"
+
+    def get(self, request, pk):
+        from . import requisiti
+
+        bando = get_object_or_404(Bando.objects.select_related("finanziatore"), pk=pk)
+        return render(request, "progetti/bando.html", {
+            "bando": bando, "giorni": bando.giorni_alla_scadenza(),
+            "riepilogo": requisiti.riepilogo(bando),
+            "progetti": bando.progetti.select_related("responsabile"),
+            "requisito_form": RequisitoForm(), "candida_form": CandidaForm(bando=bando),
+            "stati": Bando.Stato.choices, "esiti": ESITI,
+        })  # fmt: skip
+
+
+class BandoAzioneView(PermessoMixin, View):
+    """Azioni sul bando: stato, requisiti ed esiti, candidatura di un progetto."""
+
+    permission_required = "progetti.gestisci_bandi"
+
+    def post(self, request, pk, azione):
+        bando = get_object_or_404(Bando, pk=pk)
+        p = request.POST
+        try:
+            if azione == "stato":
+                servizi.cambia_stato_bando(bando, p.get("stato", ""), request.user,
+                                           p.get("motivo", ""))  # fmt: skip
+                messages.success(request, f"Stato: {bando.get_stato_display()}.")
+            elif azione == "requisito":
+                form = RequisitoForm(p)
+                if not form.is_valid():
+                    raise OperazioneNonValida("Requisito non valido.")
+                servizi.aggiungi_requisito(bando, request.user, **form.cleaned_data)
+            elif azione == "esito":
+                r = get_object_or_404(Requisito, pk=p.get("requisito"), bando=bando)
+                servizi.indica_esito(r, request.user, esito=p.get("esito", ""),
+                                     nota=p.get("nota", ""))  # fmt: skip
+            elif azione == "togli_requisito":
+                r = get_object_or_404(Requisito, pk=p.get("requisito"), bando=bando)
+                servizi.togli_requisito(r, request.user)
+            elif azione == "candida":
+                if not request.user.has_perm("progetti.gestisci_progetti"):
+                    raise Http404
+                form = CandidaForm(p, bando=bando)
+                if not form.is_valid():
+                    raise OperazioneNonValida("Scegliere un progetto in progettazione.")
+                progetto = servizi.candida(form.cleaned_data["progetto"], bando, request.user,
+                                           delibera=form.cleaned_data["delibera"])  # fmt: skip
+                messages.success(request, f"{progetto.codice} candidato al bando.")
+            else:
+                raise Http404
+        except OperazioneNonValida as e:
+            messages.error(request, str(e))
+        return redirect(bando)
 
 
 class AllegatoView(PermessoMixin, View):

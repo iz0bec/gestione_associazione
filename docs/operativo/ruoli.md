@@ -144,7 +144,7 @@ poter scrivere comunicazioni.
 
 ### Progetti
 
-| Ruolo | Consulta idee e progetti, propone e valuta idee, commenta | Priorità e stato delle idee, avvia e gestisce i progetti, finalità e criteri |
+| Ruolo | Consulta idee, progetti e bandi, propone e valuta idee, commenta | Priorità e stato delle idee, avvia e gestisce i progetti, registra i bandi, requisiti e candidature, finalità e criteri |
 |---|---|---|
 | Amministratore di sistema, Presidente, Segretario, **Progettista** | sì | sì |
 | Tesoriere, Presidente di sezione, Addetto protocollo, Consigliere, Revisore | sì | - |

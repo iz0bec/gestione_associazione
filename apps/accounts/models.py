@@ -56,6 +56,11 @@ class Utente(AbstractUser):
         choices=SCELTE_AUTOMATICO,
         help_text="Vuoto: su Telegram, se collegato. Per chi valuta le domande.",
     )  # fmt: skip
+    avvisi_bandi = models.CharField(
+        "avvisi delle scadenze dei bandi", max_length=10, blank=True,
+        choices=SCELTE_AUTOMATICO,
+        help_text="Vuoto: su Telegram, se collegato. Per chi gestisce i bandi.",
+    )  # fmt: skip
     avvisi_sicurezza = models.CharField(
         "avvisi di sicurezza", max_length=10, blank=True, choices=SCELTE_A_RICHIESTA,
         help_text="Solo su richiesta. Per gli amministratori.",

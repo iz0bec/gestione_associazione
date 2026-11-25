@@ -84,9 +84,51 @@ finanziato* chiedono il motivo. Un progetto chiuso o accantonato non si modifica
 - **Documenti**: si allegano file (fino a 20 MB), scaricabili solo da chi ha il permesso.
 - **Discussione**: commenti di chi consulta il progetto.
 
+## Bandi e finanziamenti
+
+In *Bandi* si registrano i bandi e gli avvisi di finanziamento: titolo, **finanziatore** (dall'anagrafica
+o scritto a mano), indirizzo del testo, descrizione, **finalità statutarie** a cui risponde, contributo
+massimo, **cofinanziamento** richiesto (la quota a carico dell'associazione), apertura, **scadenza della
+domanda** ed esito previsto. Gli stati sono: *da valutare*, *interessante*, *partecipato*, *scartato*
+(con il motivo). L'elenco mostra di norma i bandi aperti, con i giorni che mancano alla scadenza.
+
+### Requisiti
+
+Nella scheda del bando si elencano i **requisiti di partecipazione**. Ognuno può avere una **verifica
+automatica** sui dati del gestionale:
+
+| Verifica | Cosa controlla |
+|---|---|
+| Coerenza con le finalità statutarie | che il bando sia collegato ad almeno una finalità |
+| Iscrizione al RUNTS | il numero di iscrizione nei dati dell'organizzazione |
+| Codice fiscale dell'ente, Casella PEC | i dati dell'organizzazione |
+| Sede in una provincia / in un comune | la sede dell'organizzazione (parametro: sigle o comuni, separati da virgole) |
+| Numero minimo di soci attivi / in regola con la quota | i soci del gestionale (parametro: il numero) |
+| Rendiconto dell'anno precedente approvato | l'esercizio chiuso in tesoreria con l'approvazione indicata |
+
+Senza verifica, il requisito si **controlla a mano**. L'esito è *soddisfatto*, *mancante* o *da
+verificare*: se un dato non c'è, il gestionale non lo presume e il requisito resta da verificare. Chi
+gestisce i bandi può sempre **indicare l'esito a mano** con una nota (per esempio il documento che lo
+prova): prevale sulla verifica automatica, e togliendolo si torna a quella.
+
+### Candidatura
+
+Un progetto **in progettazione** si candida dalla sua scheda (*Candida a un bando*) o da quella del
+bando (*Candida il progetto*), con l'eventuale delibera: il progetto passa a **Candidato** con il bando
+nello storico, e il bando a **Partecipato**. Un bando scaduto o scartato non accetta candidature.
+
+### Scadenze e promemoria
+
+La scadenza della domanda compare nel **Calendario** e, nei 14 giorni precedenti, nel **cruscotto**. Per
+i bandi *da valutare* o *interessanti* il gestionale manda un promemoria **7 e 2 giorni prima** (una
+volta per soglia; cambiando la scadenza i promemoria ripartono) a chi gestisce i bandi, sul canale
+scelto nella pagina **Avvisi** (tipo *Scadenze dei bandi*). Il controllo è nel lavoro giornaliero del
+pianificatore; a mano: `manage.py promemoria_bandi`.
+
 ## Chi può fare cosa
 
-Tutti gli organi consultano idee e progetti, propongono idee, le valutano e commentano. Presidente,
-Segretario e Amministratore decidono priorità e stati, avviano e gestiscono i progetti. Il ruolo
+Tutti gli organi consultano idee, progetti e bandi, propongono idee, le valutano e commentano.
+Presidente, Segretario e Amministratore decidono priorità e stati, avviano e gestiscono i progetti e
+i bandi (requisiti, stato, candidature). Il ruolo
 **Progettista** dà le stesse possibilità e si **abbina** al ruolo di chi segue i progetti (per esempio
 un consigliere incaricato). Dettagli in [Ruoli](ruoli.md).

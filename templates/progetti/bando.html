@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di un bando: dati, requisiti con la verifica, progetti candidati
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ bando }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:bandi' %}">Bandi</a></div>{% endblock %}
+{% block titolo_pagina %}{{ bando.titolo }}{% endblock %}
+{% block azioni %}<div class="btn-list">
+  {% if bando.link %}<a class="btn" href="{{ bando.link }}" target="_blank" rel="noopener noreferrer"><i class="ti ti-external-link me-1"></i>Testo del bando</a>{% endif %}
+  {% if perms.progetti.change_bando %}<a class="btn" href="{% url 'progetti:bando_modifica' bando.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+</div>{% endblock %}
+{% block contenuto %}
+{% with b=bando %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-body">
+      <div class="mb-2"><span class="badge {% if b.stato == 'partecipato' %}bg-green-lt{% elif b.stato == 'scartato' %}bg-secondary-lt{% elif b.stato == 'interessante' %}bg-orange-lt{% else %}bg-azure-lt{% endif %}">{{ b.get_stato_display }}</span>{% if bando.scaduto %} <span class="badge bg-secondary-lt">scaduto</span>{% elif giorni is not None and giorni <= 7 %} <span class="badge bg-red-lt">{% if giorni == 0 %}scade oggi{% else %}scade fra {{ giorni }} giorn{{ giorni|pluralize:"o,i" }}{% endif %}</span>{% endif %}{% if bando.motivo %} <span class="small text-secondary">{{ bando.motivo }}</span>{% endif %}</div>
+      {% if bando.descrizione %}<div class="mb-3">{{ bando.descrizione|linebreaksbr }}</div>{% endif %}
+      <dl class="row mb-0">
+        <dt class="col-4">Finanziatore</dt><dd class="col-8">{% if bando.finanziatore %}<a href="{{ bando.finanziatore.get_absolute_url }}">{{ bando.finanziatore }}</a>{% else %}{{ bando.finanziatore_testo|default:"—" }}{% endif %}</dd>
+        <dt class="col-4">Finalità statutarie</dt><dd class="col-8">{% for f in bando.finalita.all %}<div>{{ f }}</div>{% empty %}<span class="text-secondary">non indicate</span>{% endfor %}</dd>
+        <dt class="col-4">Contributo massimo</dt><dd class="col-8">{% if bando.importo_massimo %}€ {{ bando.importo_massimo|floatformat:"2g" }}{% else %}—{% endif %}</dd>
+        <dt class="col-4">Cofinanziamento</dt><dd class="col-8">{% if bando.cofinanziamento is not None %}{{ bando.cofinanziamento|floatformat:"-2" }}% a carico dell'associazione{% else %}—{% endif %}</dd>
+        <dt class="col-4">Apertura</dt><dd class="col-8">{{ bando.apertura|date:"d/m/Y"|default:"—" }}</dd>
+        <dt class="col-4">Scadenza della domanda</dt><dd class="col-8">{{ bando.scadenza|date:"d/m/Y"|default:"—" }}</dd>
+        <dt class="col-4">Esito previsto</dt><dd class="col-8">{{ bando.esito_previsto|date:"d/m/Y"|default:"—" }}</dd>
+      </dl>
+    </div></div>
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title">Requisiti</h3>{% if riepilogo.esiti %}<div class="card-actions small"><span class="text-green">{{ riepilogo.soddisfatti }} soddisfatt{{ riepilogo.soddisfatti|pluralize:"o,i" }}</span> · <span class="text-red">{{ riepilogo.mancanti }} mancant{{ riepilogo.mancanti|pluralize:"e,i" }}</span> · <span class="text-orange">{{ riepilogo.da_verificare }} da verificare</span></div>{% endif %}</div>
+      <div class="list-group list-group-flush">
+        {% for e in riepilogo.esiti %}<div class="list-group-item">
+          <div class="d-flex align-items-start gap-2">
+            <i class="ti {% if e.esito == 'si' %}ti-circle-check text-green{% elif e.esito == 'no' %}ti-circle-x text-red{% else %}ti-help-circle text-orange{% endif %} fs-2" aria-hidden="true"></i>
+            <div class="flex-fill"><div class="fw-medium">{{ e.requisito.descrizione }}{% if e.requisito.parametro %} <span class="text-secondary">({{ e.requisito.parametro }})</span>{% endif %}</div>
+              <div class="small text-secondary">{{ e.etichetta }}{% if e.automatico %} · verificato sui dati del gestionale{% elif e.requisito.esito_manuale %} · indicato a mano{% endif %}: {{ e.spiegazione }}</div></div>
+          </div>
+          {% if perms.progetti.gestisci_bandi %}<div class="d-flex flex-wrap gap-2 mt-2">
+            <form method="post" action="{% url 'progetti:bando_azione' bando.pk 'esito' %}" class="d-flex flex-wrap gap-2 flex-fill">{% csrf_token %}<input type="hidden" name="requisito" value="{{ e.requisito.pk }}">
+              <select class="form-select form-select-sm w-auto" name="esito" aria-label="Esito">{% for v, t in esiti %}<option value="{{ v }}"{% if e.requisito.esito_manuale == v %} selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+              <input class="form-control form-control-sm w-auto flex-fill" name="nota" value="{{ e.requisito.nota }}" maxlength="255" placeholder="Nota (es. documento che lo prova)" aria-label="Nota">
+              <button class="btn btn-sm" type="submit">Salva</button></form>
+            <form method="post" action="{% url 'progetti:bando_azione' bando.pk 'togli_requisito' %}" data-conferma="Togliere il requisito?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" name="requisito" value="{{ e.requisito.pk }}">Togli</button></form>
+          </div>{% endif %}
+        </div>{% empty %}<div class="list-group-item text-secondary">Nessun requisito inserito.</div>{% endfor %}
+      </div>
+      {% if perms.progetti.gestisci_bandi %}<div class="card-body border-top"><form method="post" action="{% url 'progetti:bando_azione' bando.pk 'requisito' %}">{% csrf_token %}{{ requisito_form }}<button class="btn" type="submit"><i class="ti ti-plus me-1"></i>Aggiungi il requisito</button></form>
+        <p class="small text-secondary mt-2 mb-0">Le verifiche automatiche usano i dati dell'organizzazione, dei soci e della tesoreria: se un dato manca il requisito resta da verificare. L'esito indicato a mano prevale.</p></div>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if perms.progetti.gestisci_bandi %}<div class="card mb-3"><div class="card-header"><h3 class="card-title">Stato</h3></div><div class="card-body">
+      <form method="post" action="{% url 'progetti:bando_azione' bando.pk 'stato' %}">{% csrf_token %}
+        <select class="form-select mb-2" name="stato" aria-label="Stato">{% for v, t in stati %}<option value="{{ v }}"{% if bando.stato == v %} selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+        <input class="form-control mb-2" name="motivo" maxlength="255" placeholder="Motivo (obbligatorio per scartare)" aria-label="Motivo">
+        <button class="btn" type="submit">Cambia stato</button>
+      </form></div></div>{% endif %}
+    <div class="card"><div class="card-header"><h3 class="card-title">Progetti candidati</h3></div>
+      <div class="list-group list-group-flush">{% for p in progetti %}<a class="list-group-item list-group-item-action" href="{{ p.get_absolute_url }}"><span class="text-secondary">{{ p.codice }}</span> {{ p.titolo }} <span class="badge bg-azure-lt">{{ p.get_stato_display }}</span></a>{% empty %}<div class="list-group-item text-secondary">Nessuno.</div>{% endfor %}</div>
+      {% if perms.progetti.gestisci_progetti and bando.candidabile %}<div class="card-body border-top">
+        {% if candida_form.fields.progetto.queryset.exists %}<form method="post" action="{% url 'progetti:bando_azione' bando.pk 'candida' %}">{% csrf_token %}{{ candida_form }}<button class="btn btn-primary" type="submit">Candida il progetto</button></form>
+        {% else %}<p class="text-secondary mb-0">Nessun progetto in progettazione da candidare.</p>{% endif %}</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

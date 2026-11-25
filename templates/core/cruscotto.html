@@ -51,6 +51,16 @@
     </div>
   </div>
   {% endif %}
+  {% if bandi_in_scadenza %}
+  <div class="col-sm-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="subheader"><a class="text-reset" href="{% url 'progetti:bandi' %}">Bandi in scadenza</a></div>
+        {% for b in bandi_in_scadenza %}<div class="text-truncate"><a href="{{ b.get_absolute_url }}">{{ b.titolo }}</a> <span class="small text-secondary">{{ b.scadenza|date:"d/m" }}</span></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
   {% if idee_da_valutare %}
   <div class="col-sm-4">
     <div class="card card-link">

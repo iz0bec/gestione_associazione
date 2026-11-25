@@ -51,7 +51,7 @@ def backup_di_oggi(oggi):
 class Command(BaseCommand):
     help = (
         "Lavori periodici: invia_coda, scarica_posta, registro_giornaliero, conservazione_dati, "
-        "backup notturno."
+        "promemoria dei bandi, backup notturno."
     )
 
     def add_arguments(self, parser):
@@ -87,6 +87,7 @@ class Command(BaseCommand):
                 self._esegui("conservazione_dati")  # una volta al giorno, insieme al registro
                 self._esegui("aggiorna_collegamenti")
                 self._esegui("promemoria_archivio")
+                self._esegui("promemoria_bandi")
                 if settings.DEMO and not opzioni["una_volta"]:
                     self._esegui("demo", se_dovuto=True)  # ambiente dimostrativo: il 1° del mese
                 ultimo_registro = adesso.date()

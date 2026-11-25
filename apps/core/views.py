@@ -100,6 +100,16 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
             ctx["rinnovi_in_corso"] = rinnovi
         if self.request.user.has_perm("protocollo.view_protocollo"):
             ctx["protocollo"] = _riepilogo_protocollo(self.request.user)
+        if self.request.user.has_perm("progetti.view_bando"):
+            from datetime import timedelta
+
+            from apps.progetti.models import Bando
+
+            oggi = date.today()
+            ctx["bandi_in_scadenza"] = Bando.objects.filter(
+                stato__in=[Bando.Stato.SEGNALATO, Bando.Stato.INTERESSANTE],
+                scadenza__range=(oggi, oggi + timedelta(days=14)),
+            ).order_by("scadenza")[:5]
         if self.request.user.has_perm("progetti.valuta_idea"):
             from apps.progetti.models import Idea
 
@@ -963,6 +973,7 @@ class AvvisiView(PermessoMixin, TemplateView):
     permission_required = (
         "protocollo.gestisci_posta",
         "soci.valuta_domanda",
+        "progetti.gestisci_bandi",
         "accounts.change_utente",
     )
     template_name = "core/avvisi.html"

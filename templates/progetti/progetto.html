@@ -18,6 +18,7 @@
         <dt class="col-4">Finalità statutarie</dt><dd class="col-8">{% for f in progetto.finalita.all %}<div>{{ f }}</div>{% empty %}<span class="text-secondary">non indicate</span>{% endfor %}</dd>
         <dt class="col-4">Responsabile</dt><dd class="col-8">{{ progetto.responsabile|default:"—" }}</dd>
         <dt class="col-4">Periodo previsto</dt><dd class="col-8">{{ progetto.inizio_previsto|date:"d/m/Y"|default:"—" }}{% if progetto.fine_prevista %} – {{ progetto.fine_prevista|date:"d/m/Y" }}{% endif %}</dd>
+        {% if progetto.bando %}<dt class="col-4">Bando</dt><dd class="col-8"><a href="{{ progetto.bando.get_absolute_url }}">{{ progetto.bando }}</a>{% if progetto.bando.scadenza %} <span class="small text-secondary">(domanda entro il {{ progetto.bando.scadenza|date:"d/m/Y" }})</span>{% endif %}</dd>{% endif %}
         {% if progetto.idea %}<dt class="col-4">Dall'idea</dt><dd class="col-8"><a href="{{ progetto.idea.get_absolute_url }}">{{ progetto.idea }}</a>{% if progetto.idea.proposta_da %} <span class="small text-secondary">(proposta da {{ progetto.idea.proposta_da }})</span>{% endif %}</dd>{% endif %}
       </dl>
     </div></div>
@@ -35,6 +36,12 @@
     {% if perms.progetti.gestisci_progetti and progetto.stati_successivi %}
     <div class="card mb-3"><div class="card-header"><h3 class="card-title">Cambia stato</h3></div><div class="card-body">
       <form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'stato' %}">{% csrf_token %}{{ stato_form }}<button class="btn btn-primary" type="submit">Conferma</button></form>
+    </div></div>{% endif %}
+    {% if perms.progetti.gestisci_progetti and progetto.stato == "progettazione" %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Candida a un bando</h3></div><div class="card-body">
+      {% if candida_form.fields.bando.queryset.exists %}<form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'candida' %}">{% csrf_token %}{{ candida_form }}<button class="btn btn-primary" type="submit">Candida</button></form>
+      <p class="small text-secondary mt-2 mb-0">Il progetto passa a «Candidato» e il bando a «Partecipato».</p>
+      {% else %}<p class="text-secondary mb-0">Nessun bando aperto: si registrano in <a href="{% url 'progetti:bandi' %}">Bandi</a>.</p>{% endif %}
     </div></div>{% endif %}
     <div class="card mb-3"><div class="card-header"><h3 class="card-title">Scadenze</h3></div>
       <div class="list-group list-group-flush">{% for s in scadenze %}<div class="list-group-item d-flex align-items-center gap-2"><div class="flex-fill{% if s.fatta %} text-secondary text-decoration-line-through{% elif s.data < oggi %} text-danger{% endif %}">{{ s.data|date:"d/m/Y" }} · {{ s.titolo }}</div>

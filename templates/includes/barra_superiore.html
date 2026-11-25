@@ -34,7 +34,7 @@
         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
           {% if user.puo_cambiare_password %}<a href="{% url 'account_change_password' %}" class="dropdown-item"><i class="ti ti-key me-2"></i>Cambia password</a>{% endif %}
           <a href="{% url 'mfa_index' %}" class="dropdown-item"><i class="ti ti-shield-lock me-2"></i>Verifica in due passaggi</a>
-          {% if perms.protocollo.gestisci_posta or perms.soci.valuta_domanda or perms.accounts.change_utente %}<a href="{% url 'core:avvisi' %}" class="dropdown-item"><i class="ti ti-bell me-2"></i>Avvisi</a>{% endif %}
+          {% if perms.protocollo.gestisci_posta or perms.soci.valuta_domanda or perms.progetti.gestisci_bandi or perms.accounts.change_utente %}<a href="{% url 'core:avvisi' %}" class="dropdown-item"><i class="ti ti-bell me-2"></i>Avvisi</a>{% endif %}
           <div class="dropdown-divider"></div>
           <a href="{% url 'core:aiuto' %}" class="dropdown-item"><i class="ti ti-book me-2"></i>Manuale</a>
           {% if documenti_pubblici %}<a href="{% url 'documenti_pubblici' %}" class="dropdown-item" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf me-2"></i>Statuto e regolamento</a>{% endif %}

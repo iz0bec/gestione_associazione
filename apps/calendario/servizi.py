@@ -223,6 +223,18 @@ def _scadenze_progetti(dal, al):
         )  # fmt: skip
 
 
+def _bandi(dal, al):
+    from apps.progetti.models import Bando
+
+    qs = Bando.objects.filter(scadenza__range=(dal, al)).exclude(stato=Bando.Stato.SCARTATO)
+    for b in qs:
+        yield Evento(
+            uid=f"bando-{b.pk}", titolo=f"Scadenza bando: {b}", inizio=b.scadenza,
+            percorso=b.get_absolute_url(), categoria="Bandi", icona="speakerphone",
+            stato="fatto" if b.stato == Bando.Stato.PARTECIPATO else "",
+        )  # fmt: skip
+
+
 def _momento(giorno, ora):
     return timezone.make_aware(datetime.combine(giorno, ora))
 
@@ -272,6 +284,8 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _rinnovi(dal, al)
     if utente.has_perm("progetti.view_progetto"):
         elenco += _scadenze_progetti(dal, al)
+    if utente.has_perm("progetti.view_bando"):
+        elenco += _bandi(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):
         elenco += _appuntamenti(dal, al)
     return elenco

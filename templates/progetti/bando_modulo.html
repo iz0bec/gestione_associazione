@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modulo di un bando
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{% if bando %}{{ bando }}{% else %}Nuovo bando{% endif %}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:bandi' %}">Bandi</a></div>{% endblock %}
+{% block titolo_pagina %}{% if bando %}Modifica del bando{% else %}Nuovo bando{% endif %}{% endblock %}
+{% block contenuto %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  <div class="card-body">{{ form }}</div>
+  <div class="card-footer d-flex justify-content-between"><a class="btn" href="{% if bando %}{{ bando.get_absolute_url }}{% else %}{% url 'progetti:bandi' %}{% endif %}">Annulla</a><button class="btn btn-primary" type="submit">Salva</button></div>
+</form>
+{% endblock %}

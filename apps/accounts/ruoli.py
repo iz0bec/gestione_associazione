@@ -208,6 +208,7 @@ PROGETTI_LETTURA = [  # tutti gli organi consultano, propongono idee e le valuta
     "progetti.view_progetto",
     "progetti.view_finalitastatutaria",
     "progetti.view_criteriovalutazione",
+    "progetti.view_bando",
 ]
 PROGETTI_GESTIONE = [
     *PROGETTI_LETTURA,
@@ -220,6 +221,9 @@ PROGETTI_GESTIONE = [
     "progetti.change_finalitastatutaria",
     "progetti.add_criteriovalutazione",
     "progetti.change_criteriovalutazione",
+    "progetti.add_bando",
+    "progetti.change_bando",
+    "progetti.gestisci_bandi",
 ]
 
 RUOLI = {

@@ -203,6 +203,115 @@ class Valutazione(models.Model):
         return f"Valutazione di {self.utente} su {self.idea.codice}"
 
 
+class Bando(ModelloBase):
+    """Bando o avviso di finanziamento: registrato a mano (in P3 anche raccolto da fonti)."""
+
+    class Stato(models.TextChoices):
+        SEGNALATO = "segnalato", "Da valutare"
+        INTERESSANTE = "interessante", "Interessante"
+        PARTECIPATO = "partecipato", "Partecipato"
+        SCARTATO = "scartato", "Scartato"
+
+    titolo = models.CharField(max_length=255)
+    finanziatore = models.ForeignKey(
+        "anagrafica.Soggetto",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="bandi_finanziati",
+        help_text="L'ente che finanzia, se è in anagrafica.",
+    )
+    finanziatore_testo = models.CharField(
+        "finanziatore (testo)", max_length=200, blank=True, help_text="Se non è in anagrafica."
+    )
+    link = models.URLField("indirizzo del bando", max_length=500, blank=True)
+    descrizione = models.TextField(blank=True, help_text="Cosa finanzia, a chi si rivolge.")
+    finalita = models.ManyToManyField(
+        FinalitaStatutaria, blank=True, related_name="bandi", verbose_name="finalità statutarie"
+    )
+    importo_massimo = models.DecimalField(
+        "contributo massimo (€)", max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    cofinanziamento = models.DecimalField(
+        "cofinanziamento richiesto (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Quota del costo a carico dell'associazione.",
+    )
+    apertura = models.DateField(null=True, blank=True)
+    scadenza = models.DateField("scadenza della domanda", null=True, blank=True)
+    esito_previsto = models.DateField("esito previsto", null=True, blank=True)
+    stato = models.CharField(
+        max_length=12, choices=Stato.choices, default=Stato.SEGNALATO, editable=False
+    )
+    motivo = models.CharField("motivo", max_length=255, blank=True, editable=False)
+    promemoria = models.JSONField(default=list, editable=False)  # giorni già avvisati
+
+    class Meta:
+        verbose_name = "bando"
+        verbose_name_plural = "bandi"
+        ordering = ["scadenza", "titolo"]
+        permissions = [("gestisci_bandi", "Gestire i bandi: stato, requisiti, candidature")]
+
+    def __str__(self):
+        return self.titolo
+
+    def get_absolute_url(self):
+        return reverse("progetti:bando", args=[self.pk])
+
+    @property
+    def ente(self):
+        return str(self.finanziatore) if self.finanziatore_id else self.finanziatore_testo
+
+    def giorni_alla_scadenza(self, oggi=None):
+        from django.utils import timezone
+
+        if not self.scadenza:
+            return None
+        return (self.scadenza - (oggi or timezone.localdate())).days
+
+    @property
+    def scaduto(self):
+        giorni = self.giorni_alla_scadenza()
+        return giorni is not None and giorni < 0
+
+    @property
+    def candidabile(self):
+        return self.stato != self.Stato.SCARTATO and not self.scaduto
+
+
+class Requisito(models.Model):
+    """Requisito di partecipazione: verificato sui dati del gestionale o a mano."""
+
+    class Esito(models.TextChoices):
+        SI = "si", "Soddisfatto"
+        NO = "no", "Mancante"
+        VERIFICARE = "verificare", "Da verificare"
+
+    bando = models.ForeignKey(Bando, on_delete=models.CASCADE, related_name="requisiti")
+    descrizione = models.CharField(max_length=255)
+    verifica = models.CharField(
+        "verifica automatica", max_length=30, blank=True, help_text="Vuoto: si controlla a mano."
+    )
+    parametro = models.CharField(max_length=100, blank=True)
+    esito_manuale = models.CharField(
+        "esito indicato", max_length=10, choices=Esito.choices, blank=True
+    )
+    nota = models.CharField(max_length=255, blank=True)
+    ordine = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "requisito"
+        verbose_name_plural = "requisiti"
+        ordering = ["ordine", "pk"]
+
+    def __str__(self):
+        return self.descrizione
+
+
 class Progetto(ModelloBase):
     """Progetto finalizzato agli scopi statutari, dall'idea alla chiusura."""
 
@@ -254,6 +363,14 @@ class Progetto(ModelloBase):
     fine_prevista = models.DateField("fine prevista", null=True, blank=True)
     stato = models.CharField(
         max_length=13, choices=Stato.choices, default=Stato.PROGETTAZIONE, editable=False
+    )
+    bando = models.ForeignKey(
+        Bando,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="progetti",
+        editable=False,
     )
 
     class Meta:

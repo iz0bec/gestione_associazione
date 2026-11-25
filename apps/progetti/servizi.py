@@ -10,9 +10,10 @@
 # ******************************************************
 
 import re
+from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
 from apps.core.audit import Azione, registra
@@ -22,6 +23,7 @@ from .models import (
     SEQ_IDEA,
     SEQ_PROGETTO,
     Allegato,
+    Bando,
     Commento,
     CriterioValutazione,
     FinalitaStatutaria,
@@ -29,6 +31,7 @@ from .models import (
     Membro,
     PassaggioStato,
     Progetto,
+    Requisito,
     Scadenza,
     Valutazione,
 )
@@ -384,7 +387,9 @@ def carica_finalita(testo, *, sostituisci=False):
         raise OperazioneNonValida("Nessuna finalità riconosciuta (formato: «a) testo»).")
     with transaction.atomic():
         if sostituisci:
-            FinalitaStatutaria.objects.filter(idee__isnull=True, progetti__isnull=True).delete()
+            FinalitaStatutaria.objects.filter(
+                idee__isnull=True, progetti__isnull=True, bandi__isnull=True
+            ).delete()
         creati = 0
         for i, m in enumerate(righe, 1):
             codice, testo_f = m.group(1).lower(), m.group(2).strip().rstrip(";.")
@@ -394,3 +399,137 @@ def carica_finalita(testo, *, sostituisci=False):
             )
             creati += nuovo
     return creati
+
+
+# --- bandi (P2) ----------------------------------------------------------------------------------
+
+GIORNI_PROMEMORIA = (7, 2)  # avvisi prima della scadenza della domanda
+
+
+@transaction.atomic
+def crea_bando(form, utente):
+    bando = form.save(commit=False)
+    bando.creato_da = bando.modificato_da = utente
+    bando.save()
+    form.save_m2m()
+    registra(Azione.CREAZIONE, bando, utente=utente, ente=bando.ente)
+    return bando
+
+
+@transaction.atomic
+def modifica_bando(form, utente):
+    bando = form.save(commit=False)
+    if "scadenza" in form.changed_data:
+        bando.promemoria = []  # nuova scadenza: i promemoria ripartono
+    bando.modificato_da = utente
+    bando.save()
+    form.save_m2m()
+    registra(Azione.MODIFICA, bando, utente=utente, campi=", ".join(form.changed_data))
+    return bando
+
+
+@transaction.atomic
+def cambia_stato_bando(bando, stato, utente, motivo=""):
+    if stato not in Bando.Stato.values:
+        raise OperazioneNonValida("Stato non valido.")
+    if stato == Bando.Stato.SCARTATO and not motivo.strip():
+        raise OperazioneNonValida("Indicare perché il bando si scarta.")
+    prima = bando.get_stato_display()
+    bando.stato, bando.motivo, bando.modificato_da = stato, motivo.strip()[:255], utente
+    bando.save(update_fields=["stato", "motivo", "modificato_da", "modificato_il"])
+    registra(Azione.MODIFICA, bando, utente=utente, stato=f"{prima} → {bando.get_stato_display()}")
+    return bando
+
+
+@transaction.atomic
+def aggiungi_requisito(bando, utente, *, descrizione, verifica="", parametro=""):
+    from . import requisiti
+
+    if verifica and verifica not in requisiti.VERIFICHE:
+        raise OperazioneNonValida("Verifica non prevista.")
+    if errore := requisiti.controlla_parametro(verifica, parametro):
+        raise OperazioneNonValida(errore)
+    descrizione = descrizione.strip() or (requisiti.VERIFICHE[verifica].nome if verifica else "")
+    if not descrizione:
+        raise OperazioneNonValida("Descrivere il requisito.")
+    ordine = (bando.requisiti.aggregate(m=models.Max("ordine"))["m"] or 0) + 1
+    r = Requisito.objects.create(bando=bando, descrizione=descrizione[:255], verifica=verifica,
+                                 parametro=parametro.strip()[:100], ordine=ordine)  # fmt: skip
+    registra(Azione.MODIFICA, bando, utente=utente, requisito=f"aggiunto {r}")
+    return r
+
+
+@transaction.atomic
+def indica_esito(requisito, utente, *, esito="", nota=""):
+    """Esito indicato a mano (prevale sulla verifica automatica); vuoto = torna automatico."""
+    if esito and esito not in Requisito.Esito.values:
+        raise OperazioneNonValida("Esito non valido.")
+    requisito.esito_manuale, requisito.nota = esito, nota.strip()[:255]
+    requisito.save(update_fields=["esito_manuale", "nota"])
+    indicato = requisito.get_esito_manuale_display() or "automatico"
+    registra(Azione.MODIFICA, requisito.bando, utente=utente, requisito=f"{requisito}: {indicato}")
+    return requisito
+
+
+@transaction.atomic
+def togli_requisito(requisito, utente):
+    bando, descrizione = requisito.bando, str(requisito)
+    requisito.delete()
+    registra(Azione.MODIFICA, bando, utente=utente, requisito=f"tolto {descrizione}")
+
+
+@transaction.atomic
+def candida(progetto, bando, utente, *, delibera=None):
+    """Candida il progetto al bando: lo collega e lo porta allo stato «Candidato»."""
+    if progetto.stato != Progetto.Stato.PROGETTAZIONE:
+        raise OperazioneNonValida("Si candida un progetto in progettazione.")
+    if bando.stato == Bando.Stato.SCARTATO:
+        raise OperazioneNonValida("Il bando è stato scartato.")
+    if bando.scaduto:
+        raise OperazioneNonValida("Il termine per la domanda è già scaduto.")
+    progetto.bando = bando
+    progetto.save(update_fields=["bando"])
+    cambia_stato(progetto, Progetto.Stato.CANDIDATO, utente,
+                 motivo=f"Candidato al bando «{bando}»", delibera=delibera)  # fmt: skip
+    if bando.stato != Bando.Stato.PARTECIPATO:
+        cambia_stato_bando(bando, Bando.Stato.PARTECIPATO, utente)
+    progetto.refresh_from_db()
+    return progetto
+
+
+def testo_promemoria(bando, giorni):
+    from django.conf import settings
+    from django.urls import reverse
+
+    quando = "oggi" if giorni == 0 else "domani" if giorni == 1 else f"fra {giorni} giorni"
+    righe = [f"Bando in scadenza {quando}: {bando}"]
+    if bando.ente:
+        righe.append(f"Finanziatore: {bando.ente}")
+    righe.append(f"Domanda entro il {bando.scadenza:%d/%m/%Y}")
+    if settings.URL_PUBBLICO:
+        righe.append(f"{settings.URL_PUBBLICO}{reverse('progetti:bando', args=[bando.pk])}")
+    return "\n".join(righe)
+
+
+def promemoria_bandi(oggi=None):
+    """Avvisa delle domande in scadenza (bandi da valutare o interessanti). Rieseguibile: ogni
+    soglia di GIORNI_PROMEMORIA si avvisa una volta sola. Restituisce i bandi avvisati."""
+    from apps.core import avvisi
+
+    oggi = oggi or timezone.localdate()
+    avvisati = 0
+    bandi = Bando.objects.filter(
+        stato__in=[Bando.Stato.SEGNALATO, Bando.Stato.INTERESSANTE],
+        scadenza__gte=oggi,
+        scadenza__lte=oggi + timedelta(days=max(GIORNI_PROMEMORIA)),
+    )
+    for bando in bandi:
+        giorni = bando.giorni_alla_scadenza(oggi)
+        dovute = [g for g in GIORNI_PROMEMORIA if giorni <= g and g not in bando.promemoria]
+        if not dovute:
+            continue
+        avvisi.avvisa("bandi", testo_promemoria(bando, giorni))
+        bando.promemoria = sorted({*bando.promemoria, *dovute})
+        bando.save(update_fields=["promemoria"])
+        avvisati += 1
+    return avvisati

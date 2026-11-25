@@ -12,6 +12,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   valutazione con media pesata, priorità e delibera; progetti con stati e storico, gruppo di lavoro
   con i volontari, scadenze nel calendario, documenti e discussione; ruolo combinabile «Progettista»;
   comando `importa_finalita`.
+- **Bandi e finanziamenti** (Progetti P2, ramo `progetti`): registro dei bandi con finanziatore,
+  finalità, contributo, cofinanziamento e scadenze; requisiti con verifica automatica sui dati del
+  gestionale (RUNTS, codice fiscale, PEC, sede, soci, rendiconto, finalità) o a mano, con l'esito
+  indicato che prevale; candidatura di un progetto (stato «Candidato», bando «Partecipato»); scadenze
+  nel calendario e nel cruscotto; promemoria 7 e 2 giorni prima con il nuovo tipo di avviso «Scadenze
+  dei bandi» (comando `promemoria_bandi`, nel pianificatore).
 
 ## [1.0.99] - 2026-11-25
 

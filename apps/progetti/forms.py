@@ -15,7 +15,7 @@ from apps.anagrafica.forms import CampoData
 from apps.anagrafica.models import Soggetto
 from apps.core.forms import StileMixin
 
-from .models import CriterioValutazione, FinalitaStatutaria, Idea, Progetto
+from .models import Bando, CriterioValutazione, FinalitaStatutaria, Idea, Progetto, Requisito
 
 
 def _delibere():
@@ -185,3 +185,94 @@ class CriterioForm(StileMixin, forms.ModelForm):
     class Meta:
         model = CriterioValutazione
         fields = ["nome", "descrizione", "peso", "ordine", "attivo"]
+
+
+# --- bandi (P2) ----------------------------------------------------------------------------------
+
+
+class BandoForm(StileMixin, _ConFinalita, forms.ModelForm):
+    class Meta:
+        model = Bando
+        fields = [
+            "titolo",
+            "finanziatore",
+            "finanziatore_testo",
+            "link",
+            "descrizione",
+            "finalita",
+            "importo_massimo",
+            "cofinanziamento",
+            "apertura",
+            "scadenza",
+            "esito_previsto",
+        ]
+        widgets = {
+            "descrizione": forms.Textarea(attrs={"rows": 4}),
+            "apertura": CampoData,
+            "scadenza": CampoData,
+            "esito_previsto": CampoData,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._finalita()
+        self.fields["finanziatore"].queryset = Soggetto.objects.attivi().order_by(
+            "denominazione", "cognome", "nome"
+        )
+
+    def clean(self):
+        dati = super().clean()
+        apertura, scadenza = dati.get("apertura"), dati.get("scadenza")
+        if apertura and scadenza and scadenza < apertura:
+            self.add_error("scadenza", "La scadenza non può precedere l'apertura.")
+        return dati
+
+
+class RequisitoForm(StileMixin, forms.Form):
+    verifica = forms.ChoiceField(label="Verifica", required=False)
+    parametro = forms.CharField(
+        max_length=100,
+        required=False,
+        help_text="Per le verifiche che lo chiedono: numero, sigle, comuni.",
+    )
+    descrizione = forms.CharField(
+        max_length=255, required=False, help_text="Vuota: il nome della verifica."
+    )
+
+    def __init__(self, *args, **kwargs):
+        from .requisiti import SCELTE
+
+        super().__init__(*args, **kwargs)
+        self.fields["verifica"].choices = SCELTE
+
+
+class CandidaForm(StileMixin, forms.Form):
+    """Dal progetto: il bando a cui candidarlo. Dal bando: il progetto da candidare."""
+
+    bando = forms.ModelChoiceField(queryset=None, required=False)
+    progetto = forms.ModelChoiceField(queryset=None, required=False)
+    delibera = forms.ModelChoiceField(label="Delibera", required=False, queryset=None)
+
+    def __init__(self, *args, progetto=None, bando=None, **kwargs):
+        from django.utils import timezone
+
+        super().__init__(*args, **kwargs)
+        oggi = timezone.localdate()
+        self.fields["delibera"].queryset = _delibere()
+        if progetto is not None:
+            del self.fields["progetto"]
+            self.fields["bando"].required = True
+            self.fields["bando"].queryset = (
+                Bando.objects.exclude(stato=Bando.Stato.SCARTATO)
+                .exclude(scadenza__lt=oggi)
+                .order_by("scadenza")
+            )
+        if bando is not None:
+            del self.fields["bando"]
+            self.fields["progetto"].required = True
+            self.fields["progetto"].queryset = Progetto.objects.filter(
+                stato=Progetto.Stato.PROGETTAZIONE
+            )
+
+
+ESITI = [("", "Automatico (dai dati del gestionale)"), *Requisito.Esito.choices]

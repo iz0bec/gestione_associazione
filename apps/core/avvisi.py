@@ -3,9 +3,10 @@
 # * Autore:      Bartolomeo Santoro aka IZ0BEC
 # * Email:       info@iz0bec.info
 # * Descrizione: Avvisi personali agli utenti per messaggistica istantanea (Telegram, SMS,
-# *              WhatsApp): posta da protocollare, domande di iscrizione, sicurezza. Ognuno sceglie
-# *              il canale per tipo nella pagina Avvisi; posta e domande arrivano su Telegram da
-# *              sole a chi l'ha collegato, la sicurezza solo a chi la sceglie.
+# *              WhatsApp): posta da protocollare, domande di iscrizione, bandi, sicurezza.
+# *              Ognuno sceglie il canale per tipo nella pagina Avvisi; posta, domande e bandi
+# *              arrivano su Telegram da sole a chi l'ha collegato, la sicurezza solo a chi la
+# *              sceglie.
 # * Licenza:     CC0 1.0 Universal (pubblico dominio)
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
@@ -40,6 +41,8 @@ TIPI = {
              "Messaggi nuovi da protocollare (email e PEC): un riepilogo per ogni scaricamento."),
         Tipo("domande", "Domande di iscrizione", "soci.valuta_domanda", "avvisi_domande", True,
              "Ogni nuova domanda di iscrizione da valutare (modulo, email, collegamenti)."),
+        Tipo("bandi", "Scadenze dei bandi", "progetti.gestisci_bandi", "avvisi_bandi", True,
+             "Domande dei bandi da valutare o interessanti in scadenza (7 e 2 giorni prima)."),
         Tipo("sicurezza", "Sicurezza", "accounts.change_utente", "avvisi_sicurezza", False,
              "Accessi falliti ripetuti, accessi degli amministratori da indirizzi nuovi, "
              "modifiche agli utenti, lavori periodici e backup non riusciti."),

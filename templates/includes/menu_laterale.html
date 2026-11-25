@@ -112,7 +112,7 @@
           <a class="nav-link" href="{% url 'patrimonio:inventario' %}"><span class="nav-link-icon"><i class="ti ti-building-warehouse"></i></span><span class="nav-link-title">Patrimonio</span></a>
         </li>
         {% endif %}
-        {% if perms.progetti.view_idea or perms.progetti.view_progetto %}
+        {% if perms.progetti.view_idea or perms.progetti.view_progetto or perms.progetti.view_bando %}
         <li class="nav-item menu-gruppo"><button class="menu-gruppo-titolo" type="button" data-menu-gruppo="progetti" aria-expanded="true"><span>Progetti</span><i class="ti ti-chevron-down" aria-hidden="true"></i></button></li>
         {% endif %}
         {% if perms.progetti.view_idea %}
@@ -121,8 +121,13 @@
         </li>
         {% endif %}
         {% if perms.progetti.view_progetto %}
-        <li data-gruppo-voce="progetti" class="nav-item{% if nome == 'progetti' and 'idea' not in request.resolver_match.url_name %} active{% endif %}">
+        <li data-gruppo-voce="progetti" class="nav-item{% if nome == 'progetti' and 'idea' not in request.resolver_match.url_name and 'band' not in request.resolver_match.url_name %} active{% endif %}">
           <a class="nav-link" href="{% url 'progetti:progetti' %}"><span class="nav-link-icon"><i class="ti ti-target-arrow"></i></span><span class="nav-link-title">Progetti</span></a>
+        </li>
+        {% endif %}
+        {% if perms.progetti.view_bando %}
+        <li data-gruppo-voce="progetti" class="nav-item{% if nome == 'progetti' and 'band' in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link" href="{% url 'progetti:bandi' %}"><span class="nav-link-icon"><i class="ti ti-speakerphone"></i></span><span class="nav-link-title">Bandi</span></a>
         </li>
         {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
