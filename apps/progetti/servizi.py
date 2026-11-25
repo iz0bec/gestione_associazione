@@ -545,7 +545,13 @@ SEZIONI_BLOCCATE = {"quadro", "partner", "piano"}  # dopo la candidatura le vari
 def modificabile(progetto, sezione):
     """Quadro, partner e piano si cambiano in progettazione; il cronoprogramma finché è aperto."""
     if sezione in SEZIONI_BLOCCATE:
-        return progetto.stato == Progetto.Stato.PROGETTAZIONE
+        if progetto.stato == Progetto.Stato.PROGETTAZIONE:
+            return True
+        if sezione == "piano":  # in esecuzione: solo con una variante aperta (con la delibera)
+            from . import esecuzione
+
+            return esecuzione.in_esecuzione(progetto) and bool(esecuzione.variante_aperta(progetto))
+        return False
     return progetto.aperto
 
 
@@ -553,8 +559,8 @@ def _controlla(progetto, sezione):
     if not modificabile(progetto, sezione):
         if sezione in SEZIONI_BLOCCATE:
             raise OperazioneNonValida(
-                "Si modifica solo in progettazione: dopo la candidatura le varianti si registrano "
-                "con la loro delibera."
+                "Si modifica solo in progettazione; in esecuzione il piano economico si cambia "
+                "aprendo una variante con la sua delibera (scheda Esecuzione)."
             )
         raise OperazioneNonValida("Il progetto è chiuso.")
 

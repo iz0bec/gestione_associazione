@@ -158,6 +158,28 @@ Il percorso: con la verifica a posto si **candida** il progetto dalla sua scheda
 proposta, il piano e i documenti scelti, e apre la **spedizione** del protocollo per PEC o email, con le
 ricevute agganciate come per ogni altro protocollo. Serve anche il permesso di protocollare.
 
+## Esecuzione
+
+Quando il progetto è **finanziato**, **in corso** o **in rendicontazione**, la scheda **Esecuzione**
+segue la realizzazione. In alto: attività completate, media degli indicatori raggiunti, costi sostenuti
+sui previsti, contributo incassato e da incassare.
+
+- **Centro di costo**: i movimenti di **prima nota** (entrate e uscite) si **imputano** al progetto,
+  per intero o in parte; le uscite a una **voce del piano**, le entrate come **contributo del
+  finanziatore** (anticipi e saldo) o altra entrata. Il movimento in tesoreria non cambia: l'imputazione
+  lo collega soltanto (serve il permesso di consultare la prima nota). Un movimento va a un solo
+  progetto.
+- **Preventivo e consuntivo** per voce, con la percentuale spesa e lo **scostamento**; i costi senza voce
+  a parte.
+- **Volontariato**: il registro delle **ore** per persona (dall'anagrafica), data e attività; la
+  **tariffa oraria** si indica nel progetto (o vale quella del bando) e valorizza le ore come
+  **cofinanziamento in natura**, confrontato con il preventivo.
+- **Avanzamento**: attività **completate**, **valore raggiunto** degli indicatori, **eventi** collegati
+  (dal modulo Eventi).
+- **Varianti**: in esecuzione il piano economico non si modifica liberamente: si **apre una variante**
+  (cosa cambia e perché, con la **delibera**), si modifica il piano, si **chiude** la variante. Restano
+  il piano prima e dopo.
+
 ## Bandi e finanziamenti
 
 In *Bandi* si registrano i bandi e gli avvisi di finanziamento: titolo, **finanziatore** (dall'anagrafica

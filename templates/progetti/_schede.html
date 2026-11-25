@@ -11,5 +11,6 @@
   <li class="nav-item"><a class="nav-link{% if sezione == 'piano' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'piano' %}">Piano economico</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'proposta' %} active{% endif %}" href="{% url 'progetti:proposta' progetto.pk %}">Proposta</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'candidatura' %} active{% endif %}" href="{% url 'progetti:candidatura' progetto.pk %}">Candidatura</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'esecuzione' %} active{% endif %}" href="{% url 'progetti:esecuzione' progetto.pk %}">Esecuzione</a></li>
 </ul>
-{% if sezione and sezione != "candidatura" and not modificabile and perms.progetti.gestisci_progetti %}<div class="alert alert-info">{% if sezione == "cronoprogramma" %}Il progetto è chiuso: il cronoprogramma non si modifica più.{% else %}Questa parte si modifica solo in progettazione: dopo la candidatura le varianti si registreranno con la loro delibera.{% endif %}</div>{% endif %}
+{% if sezione and sezione != "candidatura" and sezione != "esecuzione" and not modificabile and perms.progetti.gestisci_progetti %}<div class="alert alert-info">{% if sezione == "cronoprogramma" %}Il progetto è chiuso: il cronoprogramma non si modifica più.{% else %}Questa parte si modifica solo in progettazione{% if sezione == "piano" %}; in esecuzione si apre una variante con la sua delibera nella scheda <a href="{% url 'progetti:esecuzione' progetto.pk %}">Esecuzione</a>{% endif %}.{% endif %}</div>{% endif %}

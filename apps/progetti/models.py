@@ -10,6 +10,7 @@
 # ******************************************************
 
 import secrets
+from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
@@ -263,15 +264,31 @@ class Bando(ModelloBase):
     motivo = models.CharField("motivo", max_length=255, blank=True, editable=False)
     promemoria = models.JSONField(default=list, editable=False)  # giorni già avvisati
     spese_generali_massime = models.DecimalField(
-        "spese generali massime (%)", max_digits=5, decimal_places=2, null=True, blank=True,
+        "spese generali massime (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Sul totale dei costi diretti.",
-    )  # fmt: skip
+    )
+    tariffa_volontariato = models.DecimalField(
+        "tariffa oraria del volontariato (€)",
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Se il bando la fissa: valorizza le ore come cofinanziamento in natura.",
+    )
     natura_massima = models.DecimalField(
-        "cofinanziamento in natura massimo (%)", max_digits=5, decimal_places=2, null=True,
-        blank=True, validators=[MinValueValidator(0), MaxValueValidator(100)],
+        "cofinanziamento in natura massimo (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Quota del cofinanziamento che può essere in natura (volontariato valorizzato).",
-    )  # fmt: skip
+    )
 
     class Meta:
         verbose_name = "bando"
@@ -312,9 +329,11 @@ class LimiteCategoria(models.Model):
     bando = models.ForeignKey(Bando, on_delete=models.CASCADE, related_name="limiti")
     categoria = models.CharField(max_length=15, choices=Categoria.choices)
     percentuale_massima = models.DecimalField(
-        "percentuale massima", max_digits=5, decimal_places=2,
+        "percentuale massima",
+        max_digits=5,
+        decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-    )  # fmt: skip
+    )
 
     class Meta:
         verbose_name = "limite di categoria"
@@ -525,15 +544,32 @@ class Progetto(ModelloBase):
     obiettivo_generale = models.TextField("obiettivo generale", blank=True)
     destinatari = models.TextField(blank=True, help_text="Chi ne beneficia e quanti.")
     territorio = models.CharField(max_length=255, blank=True)
+    tariffa_volontariato = models.DecimalField(
+        "tariffa oraria del volontariato (€)",
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Dal bando o fissata dal consiglio.",
+    )
+    eventi = models.ManyToManyField("eventi.Evento", blank=True, related_name="progetti")
     protocollo_candidatura = models.ForeignKey(
-        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL,
-        related_name="+", editable=False,
-    )  # fmt: skip
+        "protocollo.Protocollo",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        editable=False,
+    )
     spese_generali = models.DecimalField(
-        "spese generali (%)", max_digits=5, decimal_places=2, null=True, blank=True,
+        "spese generali (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Forfettarie, in percentuale sui costi diretti (se il bando le ammette).",
-    )  # fmt: skip
+    )
 
     class Meta:
         verbose_name = "progetto"
@@ -683,15 +719,23 @@ class Attivita(models.Model):
         Obiettivo, null=True, blank=True, on_delete=models.SET_NULL, related_name="attivita"
     )
     responsabile = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
         related_name="attivita_progetti",
-    )  # fmt: skip
+    )
     inizio = models.DateField()
     fine = models.DateField()
     dopo = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="successive",
-        verbose_name="dopo l'attività", help_text="Inizia quando questa è finita.",
-    )  # fmt: skip
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="successive",
+        verbose_name="dopo l'attività",
+        help_text="Inizia quando questa è finita.",
+    )
     completata = models.BooleanField(default=False, editable=False)
 
     class Meta:
@@ -870,6 +914,105 @@ class Allegato(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class Imputazione(models.Model):
+    """Movimento di prima nota attribuito al progetto (centro di costo); il movimento non cambia."""
+
+    class Tipo(models.TextChoices):
+        COSTO = "costo", "Costo del progetto"
+        CONTRIBUTO = "contributo", "Contributo del finanziatore (anticipo o saldo)"
+        ENTRATA = "entrata", "Altra entrata del progetto"
+
+    movimento = models.OneToOneField(
+        "tesoreria.Movimento", on_delete=models.PROTECT, related_name="imputazione_progetto"
+    )
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="imputazioni")
+    tipo = models.CharField(max_length=10, choices=Tipo.choices)
+    voce = models.ForeignKey(
+        VoceCosto, null=True, blank=True, on_delete=models.SET_NULL, related_name="imputazioni"
+    )
+    importo = models.DecimalField("importo imputato (€)", max_digits=12, decimal_places=2)
+    nota = models.CharField(max_length=255, blank=True)
+    creato_il = models.DateTimeField(auto_now_add=True)
+    creato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "imputazione al progetto"
+        verbose_name_plural = "imputazioni al progetto"
+        ordering = ["movimento__data", "pk"]
+
+    def __str__(self):
+        return f"{self.movimento} → {self.progetto.codice}"
+
+
+class OreVolontariato(models.Model):
+    """Ore di volontariato prestate per il progetto (valorizzate con la tariffa del progetto)."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="ore")
+    attivita = models.ForeignKey(
+        Attivita,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="ore",
+        verbose_name="attività",
+    )
+    soggetto = models.ForeignKey(
+        "anagrafica.Soggetto",
+        on_delete=models.PROTECT,
+        related_name="ore_volontariato",
+        verbose_name="volontario",
+    )
+    data = models.DateField()
+    ore = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.25")), MaxValueValidator(24)],
+    )
+    descrizione = models.CharField(max_length=255, blank=True)
+    creato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "ore di volontariato"
+        verbose_name_plural = "ore di volontariato"
+        ordering = ["-data", "pk"]
+
+    def __str__(self):
+        return f"{self.soggetto}: {self.ore} ore il {self.data:%d/%m/%Y}"
+
+
+class Variante(models.Model):
+    """Variante al piano economico in esecuzione, con la delibera e i piani prima e dopo."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="varianti")
+    descrizione = models.TextField()
+    delibera = models.ForeignKey(
+        "organi.Delibera", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    aperta_il = models.DateTimeField(auto_now_add=True)
+    chiusa_il = models.DateTimeField(null=True, blank=True)
+    utente = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    piano_prima = models.JSONField(default=dict)
+    piano_dopo = models.JSONField(default=dict)
+
+    class Meta:
+        verbose_name = "variante"
+        verbose_name_plural = "varianti"
+        ordering = ["-aperta_il"]
+
+    def __str__(self):
+        return f"Variante del {self.aperta_il:%d/%m/%Y}"
+
+    @property
+    def aperta(self):
+        return self.chiusa_il is None
 
 
 class ConnettoreMCP(models.Model):

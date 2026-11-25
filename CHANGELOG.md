@@ -41,6 +41,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   impronta nel database, revoca e scadenza), strumenti in sola lettura su idee, bandi, progetti,
   finalità e criteri, nessun dato personale dei soci, commenti «[Assistente]» solo con doppio consenso,
   ogni chiamata nel registro attività.
+- **Esecuzione dei progetti** (Progetti P5, ramo `progetti`): scheda Esecuzione con il centro di costo
+  (movimenti di prima nota imputati a progetto e voce, contributo incassato), preventivo/consuntivo
+  per voce con gli scostamenti, registro delle ore di volontariato valorizzate con la tariffa del
+  progetto o del bando, avanzamento (attività completate, indicatori raggiunti, eventi collegati) e
+  varianti al piano economico con la delibera e i piani prima e dopo; riepilogo nel connettore MCP.
 
 ## [1.0.100] - 2026-11-25
 

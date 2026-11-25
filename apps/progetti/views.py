@@ -39,6 +39,7 @@ from .forms import (
     LimiteForm,
     MembroForm,
     ObiettivoForm,
+    OreForm,
     ParolaForm,
     PartnerForm,
     PrioritaForm,
@@ -48,6 +49,8 @@ from .forms import (
     ScadenzaForm,
     SpeseGeneraliForm,
     StatoForm,
+    TariffaForm,
+    VarianteForm,
     VoceForm,
 )
 from .models import (
@@ -62,10 +65,12 @@ from .models import (
     FonteBandi,
     FonteFinanziamento,
     Idea,
+    Imputazione,
     Indicatore,
     LimiteCategoria,
     Membro,
     Obiettivo,
+    OreVolontariato,
     ParolaChiave,
     Partner,
     Progetto,
@@ -1274,3 +1279,122 @@ class AssistenteView(PermessoMixin, View):
             mcp.revoca(token, request.user)
             messages.success(request, f"Token «{token.nome}» revocato.")
         return redirect("progetti:assistente")
+
+
+# --- esecuzione (P5) -----------------------------------------------------------------------------
+
+
+class EsecuzioneView(PermessoMixin, View):
+    """Centro di costo, consuntivo, volontariato, avanzamento, varianti ed eventi del progetto."""
+
+    permission_required = "progetti.view_progetto"
+
+    def _render(self, request, progetto, ore_form=None, variante_form=None):
+        from apps.eventi.models import Evento
+
+        from . import esecuzione
+
+        gestione = request.user.has_perm("progetti.gestisci_progetti")
+        attivo = esecuzione.in_esecuzione(progetto)
+        imputabili = []
+        if gestione and attivo and request.user.has_perm("tesoreria.view_movimento"):
+            imputabili = esecuzione.movimenti_imputabili(progetto, request.GET.get("q", ""))
+        return render(request, "progetti/progettazione_esecuzione.html", {
+            "progetto": progetto, "sezione": "esecuzione", "titolo": "Esecuzione",
+            "attivo": attivo, "gestione": gestione and attivo,
+            "avanzamento": esecuzione.avanzamento(progetto),
+            "consuntivo": esecuzione.consuntivo(progetto),
+            "imputazioni": progetto.imputazioni.select_related("movimento", "voce"),
+            "imputabili": imputabili, "q": request.GET.get("q", ""),
+            "voci": progetto.voci.exclude(categoria=Categoria.VOLONTARIATO),
+            "attivita": progetto.attivita.all(), "indicatori": progetto.indicatori.all(),
+            "ore": progetto.ore.select_related("soggetto", "attivita")[:200],
+            "ore_form": ore_form or OreForm(progetto=progetto, prefix="ore"),
+            "tariffa_form": TariffaForm(instance=progetto, prefix="tariffa"),
+            "varianti": progetto.varianti.select_related("delibera", "utente"),
+            "variante_aperta": esecuzione.variante_aperta(progetto),
+            "variante_form": variante_form or VarianteForm(prefix="variante"),
+            "eventi": progetto.eventi.all(),
+            "eventi_scelta": Evento.objects.exclude(progetti=progetto).order_by("-inizio")[:50],
+        })  # fmt: skip
+
+    def get(self, request, pk):
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        return self._render(request, progetto)
+
+    def post(self, request, pk):
+        from apps.eventi.models import Evento
+        from apps.tesoreria.models import Movimento
+
+        from . import esecuzione
+
+        if not request.user.has_perm("progetti.gestisci_progetti"):
+            raise Http404
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        p, azione = request.POST, request.POST.get("azione")
+        try:
+            if azione == "imputa":
+                if not request.user.has_perm("tesoreria.view_movimento"):
+                    raise Http404
+                voce = (
+                    get_object_or_404(VoceCosto, pk=p["voce"], progetto=progetto)
+                    if p.get("voce")
+                    else None
+                )
+                esecuzione.imputa(
+                    progetto,
+                    get_object_or_404(Movimento, pk=p.get("movimento")),
+                    request.user,
+                    voce=voce,
+                    importo=p.get("importo") or None,
+                    contributo=p.get("contributo") == "1",
+                    nota=p.get("nota", ""),
+                )
+                messages.success(request, "Movimento imputato al progetto.")
+            elif azione == "togli_imputazione":
+                esecuzione.togli_imputazione(
+                    get_object_or_404(Imputazione, pk=p.get("imputazione"), progetto=progetto),
+                    request.user,
+                )
+            elif azione == "ore":
+                form = OreForm(p, progetto=progetto, prefix="ore")
+                if not form.is_valid():
+                    return self._render(request, progetto, ore_form=form)
+                esecuzione.registra_ore(progetto, request.user, **form.cleaned_data)
+                messages.success(request, "Ore registrate.")
+            elif azione == "togli_ore":
+                esecuzione.togli_ore(
+                    get_object_or_404(OreVolontariato, pk=p.get("ore"), progetto=progetto),
+                    request.user,
+                )
+            elif azione == "tariffa":
+                form = TariffaForm(p, instance=progetto, prefix="tariffa")
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, "Tariffa del volontariato salvata.")
+            elif azione == "attivita":
+                a = get_object_or_404(Attivita, pk=p.get("attivita"), progetto=progetto)
+                esecuzione.segna_attivita(a, request.user, completata=p.get("completata") == "1")
+            elif azione == "indicatore":
+                x = get_object_or_404(Indicatore, pk=p.get("indicatore"), progetto=progetto)
+                esecuzione.aggiorna_indicatore(x, request.user, valore=p.get("valore", ""))
+            elif azione == "apri_variante":
+                form = VarianteForm(p, prefix="variante")
+                if not form.is_valid():
+                    return self._render(request, progetto, variante_form=form)
+                esecuzione.apri_variante(progetto, request.user, **form.cleaned_data)
+                messages.success(request, "Variante aperta: il piano economico è modificabile.")
+                return redirect("progetti:progettazione", pk=progetto.pk, sezione="piano")
+            elif azione == "chiudi_variante":
+                esecuzione.chiudi_variante(progetto, request.user)
+                messages.success(request, "Variante chiusa.")
+            elif azione in ("collega_evento", "scollega_evento"):
+                evento = get_object_or_404(Evento, pk=p.get("evento"))
+                esecuzione.collega_evento(
+                    progetto, evento, request.user, collega=azione == "collega_evento"
+                )
+            else:
+                raise Http404
+        except (esecuzione.ErroreEsecuzione, ArithmeticError, ValueError) as e:
+            messages.error(request, str(e) or "Valore non valido.")
+        return redirect("progetti:esecuzione", pk=progetto.pk)

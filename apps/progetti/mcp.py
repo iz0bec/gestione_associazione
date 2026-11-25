@@ -392,6 +392,33 @@ def scheda_progetto(utente, id, **_):
         "verifica_candidatura": [
             {"esito": v.esito, "controllo": v.testo} for v in proposta.verifica(p)
         ],
+        "esecuzione": _esecuzione(p),
+    }
+
+
+def _esecuzione(p):
+    from . import esecuzione
+
+    if not esecuzione.in_esecuzione(p) and p.stato != "chiuso":
+        return None
+    c, av = esecuzione.consuntivo(p), esecuzione.avanzamento(p)
+    return {
+        "avanzamento": av,
+        "preventivo_consuntivo": [
+            {
+                "voce": r.voce.descrizione,
+                "preventivo": _num(r.preventivo),
+                "consuntivo": _num(r.consuntivo),
+                "scostamento": _num(r.scostamento),
+            }
+            for r in c.righe
+        ],
+        "costi_senza_voce": _num(c.non_attribuiti),
+        "contributo_previsto": _num(c.contributo_previsto),
+        "contributo_incassato": _num(c.contributo_incassato),
+        "ore_di_volontariato": _num(c.ore),
+        "volontariato_valorizzato": _num(c.natura_consuntivo),
+        "varianti": p.varianti.count(),
     }
 
 

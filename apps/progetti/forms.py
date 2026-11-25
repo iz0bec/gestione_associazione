@@ -26,10 +26,12 @@ from .models import (
     Indicatore,
     LimiteCategoria,
     Obiettivo,
+    OreVolontariato,
     ParolaChiave,
     Partner,
     Progetto,
     Requisito,
+    Variante,
     VoceCosto,
 )
 
@@ -220,6 +222,7 @@ class BandoForm(StileMixin, _ConFinalita, forms.ModelForm):
             "cofinanziamento",
             "spese_generali_massime",
             "natura_massima",
+            "tariffa_volontariato",
             "apertura",
             "scadenza",
             "esito_previsto",
@@ -437,3 +440,37 @@ class LimiteForm(StileMixin, forms.ModelForm):
     class Meta:
         model = LimiteCategoria
         fields = ["categoria", "percentuale_massima"]
+
+
+# --- esecuzione (P5) -----------------------------------------------------------------------------
+
+
+class OreForm(StileMixin, _DelProgetto, forms.ModelForm):
+    class Meta:
+        model = OreVolontariato
+        fields = ["soggetto", "data", "ore", "attivita", "descrizione"]
+        widgets = {"data": CampoData}
+
+    def __init__(self, *args, progetto, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._limita(progetto, "attivita")
+        self.fields["soggetto"].queryset = (
+            Soggetto.objects.attivi().filter(tipo=Soggetto.Tipo.PERSONA).order_by("cognome", "nome")
+        )
+
+
+class VarianteForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Variante
+        fields = ["descrizione", "delibera"]
+        widgets = {"descrizione": forms.Textarea(attrs={"rows": 2})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["delibera"].queryset = _delibere()
+
+
+class TariffaForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Progetto
+        fields = ["tariffa_volontariato"]

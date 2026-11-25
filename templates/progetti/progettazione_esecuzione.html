@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Esecuzione del progetto: avanzamento, consuntivo, centro di costo, volontariato,
+               varianti al piano ed eventi collegati
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+{% if not attivo %}<div class="alert alert-info">L'esecuzione si gestisce quando il progetto è finanziato, in corso o in rendicontazione (ora: {{ progetto.get_stato_display|lower }}).</div>{% endif %}
+<div class="row row-cards mb-3">
+  <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Attività completate</div><div class="h1 mb-0">{{ avanzamento.completate }}/{{ avanzamento.attivita }}</div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Indicatori (media raggiunta)</div><div class="h1 mb-0">{% if avanzamento.media_indicatori is not None %}{{ avanzamento.media_indicatori }}%{% else %}—{% endif %}</div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Costi sostenuti / previsti</div><div class="h1 mb-0">€ {{ consuntivo.costi_consuntivo|floatformat:"0g" }}</div><div class="small text-secondary">su € {{ consuntivo.costi_preventivo|floatformat:"0g" }}</div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Contributo incassato</div><div class="h1 mb-0">€ {{ consuntivo.contributo_incassato|floatformat:"0g" }}</div><div class="small text-secondary">su € {{ consuntivo.contributo_previsto|floatformat:"0g" }}{% if consuntivo.contributo_da_incassare > 0 %} · da incassare € {{ consuntivo.contributo_da_incassare|floatformat:"0g" }}{% endif %}</div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Preventivo e consuntivo</h3></div>
+      <div class="table-responsive"><table class="table table-vcenter card-table">
+        <thead><tr><th>Voce</th><th class="text-end">Preventivo</th><th class="text-end">Consuntivo</th><th class="text-end">Scostamento</th></tr></thead>
+        <tbody>{% for r in consuntivo.righe %}<tr><td>{{ r.voce.descrizione }} <span class="small text-secondary">{{ r.voce.get_categoria_display }}</span></td><td class="text-end">€ {{ r.preventivo|floatformat:"2g" }}</td><td class="text-end">€ {{ r.consuntivo|floatformat:"2g" }}{% if r.percentuale is not None %} <span class="small text-secondary">({{ r.percentuale }}%)</span>{% endif %}</td><td class="text-end {% if r.scostamento > 0 %}text-danger{% endif %}">€ {{ r.scostamento|floatformat:"2g" }}</td></tr>{% empty %}<tr><td colspan="4" class="text-secondary">Nessuna voce in denaro nel piano.</td></tr>{% endfor %}
+        {% if consuntivo.non_attribuiti %}<tr><td>Costi senza voce</td><td></td><td class="text-end">€ {{ consuntivo.non_attribuiti|floatformat:"2g" }}</td><td></td></tr>{% endif %}
+        <tr><td>Volontariato valorizzato <span class="small text-secondary">{{ consuntivo.ore|floatformat:"-2" }} ore{% if consuntivo.tariffa %} × € {{ consuntivo.tariffa|floatformat:"2g" }}{% else %} (tariffa non indicata){% endif %}</span></td><td class="text-end">€ {{ consuntivo.natura_preventivo|floatformat:"2g" }}</td><td class="text-end">€ {{ consuntivo.natura_consuntivo|floatformat:"2g" }}</td><td></td></tr>
+        {% if consuntivo.altre_entrate %}<tr><td>Altre entrate del progetto</td><td></td><td class="text-end">€ {{ consuntivo.altre_entrate|floatformat:"2g" }}</td><td></td></tr>{% endif %}</tbody>
+      </table></div>
+    </div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Movimenti imputati (centro di costo)</h3></div>
+      <div class="list-group list-group-flush">{% for i in imputazioni %}<div class="list-group-item d-flex gap-2 align-items-center"><div class="flex-fill">
+        <a href="{{ i.movimento.get_absolute_url }}">{{ i.movimento.data|date:"d/m/Y" }} · {{ i.movimento.descrizione }}</a>
+        <div class="small text-secondary">{{ i.get_tipo_display }}{% if i.voce %} · {{ i.voce.descrizione }}{% endif %}{% if i.importo != i.movimento.importo %} · parte di € {{ i.movimento.importo|floatformat:"2g" }}{% endif %}{% if i.nota %} · {{ i.nota }}{% endif %}</div></div>
+        <div class="text-nowrap {% if i.tipo == 'costo' %}text-danger{% else %}text-green{% endif %}">€ {{ i.importo|floatformat:"2g" }}</div>
+        {% if gestione %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="togli_imputazione"><button class="btn btn-sm btn-ghost-danger" type="submit" name="imputazione" value="{{ i.pk }}" data-conferma="Togliere l'imputazione? Il movimento in prima nota non cambia.">Togli</button></form>{% endif %}
+      </div>{% empty %}<div class="list-group-item text-secondary">Nessun movimento imputato.</div>{% endfor %}</div>
+      {% if gestione and perms.tesoreria.view_movimento %}<div class="card-body border-top">
+        <form method="get" class="d-flex gap-2 mb-2"><input class="form-control" name="q" value="{{ q }}" placeholder="Cerca nei movimenti non imputati" aria-label="Cerca"><button class="btn" type="submit">Cerca</button></form>
+        {% if imputabili %}<form method="post" class="row g-2">{% csrf_token %}<input type="hidden" name="azione" value="imputa">
+          <div class="col-12"><select class="form-select" name="movimento" aria-label="Movimento" required>{% for m in imputabili %}<option value="{{ m.pk }}">{{ m.data|date:"d/m/Y" }} · {{ m.get_tipo_display }} € {{ m.importo|floatformat:"2g" }} · {{ m.descrizione|truncatechars:60 }}</option>{% endfor %}</select></div>
+          <div class="col-md-5"><select class="form-select" name="voce" aria-label="Voce del piano"><option value="">Voce del piano (per le uscite)</option>{% for v in voci %}<option value="{{ v.pk }}">{{ v.descrizione }}</option>{% endfor %}</select></div>
+          <div class="col-md-3"><input class="form-control" name="importo" type="number" min="0.01" step="0.01" placeholder="Importo (tutto)" aria-label="Importo"></div>
+          <div class="col-md-4"><label class="form-check mt-2"><input class="form-check-input" type="checkbox" name="contributo" value="1"><span class="form-check-label">Entrata: contributo del finanziatore</span></label></div>
+          <div class="col-md-9"><input class="form-control" name="nota" maxlength="255" placeholder="Nota (facoltativa)" aria-label="Nota"></div>
+          <div class="col-md-3"><button class="btn btn-primary w-100" type="submit">Imputa</button></div>
+        </form>{% else %}<p class="text-secondary mb-0 small">Nessun movimento da imputare{% if q %} per «{{ q }}»{% endif %}. I movimenti si registrano in Tesoreria.</p>{% endif %}
+      </div>{% endif %}
+    </div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Volontariato</h3><div class="card-actions small">{{ consuntivo.ore|floatformat:"-2" }} ore</div></div>
+      <div class="list-group list-group-flush">{% for r in ore %}<div class="list-group-item d-flex gap-2 align-items-center"><div class="flex-fill">{{ r.data|date:"d/m/Y" }} · {{ r.soggetto }} · <strong>{{ r.ore|floatformat:"-2" }} ore</strong>{% if r.attivita %} <span class="small text-secondary">{{ r.attivita }}</span>{% endif %}{% if r.descrizione %}<div class="small text-secondary">{{ r.descrizione }}</div>{% endif %}</div>
+        {% if gestione %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="togli_ore"><button class="btn btn-sm btn-ghost-danger" type="submit" name="ore" value="{{ r.pk }}">Togli</button></form>{% endif %}</div>{% empty %}<div class="list-group-item text-secondary">Nessuna ora registrata.</div>{% endfor %}</div>
+      {% if gestione %}<div class="card-body border-top"><div class="row g-3">
+        <div class="col-md-7"><form method="post" novalidate>{% csrf_token %}<input type="hidden" name="azione" value="ore">{{ ore_form }}<button class="btn btn-primary" type="submit">Registra le ore</button></form></div>
+        <div class="col-md-5"><form method="post" novalidate>{% csrf_token %}<input type="hidden" name="azione" value="tariffa">{{ tariffa_form }}<button class="btn" type="submit">Salva la tariffa</button></form>{% if progetto.bando.tariffa_volontariato is not None and progetto.tariffa_volontariato is None %}<p class="small text-secondary mt-2 mb-0">Si usa quella del bando: € {{ progetto.bando.tariffa_volontariato|floatformat:"2g" }}/ora.</p>{% endif %}</div>
+      </div></div>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Attività</h3></div><div class="list-group list-group-flush">
+      {% for a in attivita %}<div class="list-group-item d-flex gap-2 align-items-center"><div class="flex-fill{% if a.completata %} text-secondary text-decoration-line-through{% endif %}">{{ a.titolo }}<div class="small text-secondary">{{ a.inizio|date:"d/m/Y" }} – {{ a.fine|date:"d/m/Y" }}</div></div>
+        {% if gestione %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="attivita"><input type="hidden" name="completata" value="{% if a.completata %}0{% else %}1{% endif %}"><button class="btn btn-sm" type="submit" name="attivita" value="{{ a.pk }}">{% if a.completata %}Riapri{% else %}Completata{% endif %}</button></form>{% endif %}</div>{% empty %}<div class="list-group-item text-secondary">Nessuna attività nel cronoprogramma.</div>{% endfor %}
+    </div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Indicatori</h3></div><div class="list-group list-group-flush">
+      {% for x in indicatori %}<div class="list-group-item"><div>{{ x.descrizione }}</div><div class="small text-secondary">atteso {{ x.valore_atteso|floatformat:"-2" }} {{ x.unita }}{% if x.valore_raggiunto is not None %} · raggiunto <strong>{{ x.valore_raggiunto|floatformat:"-2" }}</strong>{% endif %}</div>
+        {% if gestione %}<form method="post" class="d-flex gap-2 mt-1">{% csrf_token %}<input type="hidden" name="azione" value="indicatore"><input type="hidden" name="indicatore" value="{{ x.pk }}"><input class="form-control form-control-sm" name="valore" type="number" step="0.01" value="{{ x.valore_raggiunto|default_if_none:''|stringformat:'s' }}" placeholder="Valore raggiunto" aria-label="Valore raggiunto"><button class="btn btn-sm" type="submit">Aggiorna</button></form>{% endif %}</div>{% empty %}<div class="list-group-item text-secondary">Nessun indicatore nel quadro.</div>{% endfor %}
+    </div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Varianti al piano</h3></div>
+      <div class="list-group list-group-flush">{% for v in varianti %}<div class="list-group-item"><div class="fw-medium">{{ v }}{% if v.aperta %} <span class="badge bg-orange-lt">aperta</span>{% endif %}</div><div class="small">{{ v.descrizione|linebreaksbr }}</div>
+        <div class="small text-secondary">{% if v.delibera %}Delibera: {{ v.delibera }} · {% endif %}totale € {{ v.piano_prima.totale_costi }}{% if not v.aperta %} → € {{ v.piano_dopo.totale_costi }}{% endif %}</div></div>{% empty %}<div class="list-group-item text-secondary">Nessuna variante.</div>{% endfor %}</div>
+      {% if gestione %}<div class="card-body border-top">{% if variante_aperta %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="chiudi_variante"><a class="btn" href="{% url 'progetti:progettazione' progetto.pk 'piano' %}">Modifica il piano</a> <button class="btn btn-primary" type="submit">Chiudi la variante</button></form>
+        {% else %}<form method="post" novalidate>{% csrf_token %}<input type="hidden" name="azione" value="apri_variante">{{ variante_form }}<button class="btn" type="submit">Apri una variante</button><p class="small text-secondary mt-2 mb-0">Con la variante aperta il piano economico si modifica; alla chiusura si conservano il piano prima e dopo.</p></form>{% endif %}</div>{% endif %}
+    </div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Eventi collegati</h3></div>
+      <div class="list-group list-group-flush">{% for e in eventi %}<div class="list-group-item d-flex gap-2 align-items-center"><a class="flex-fill" href="{{ e.get_absolute_url }}">{{ e }}</a>{% if perms.progetti.gestisci_progetti %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="scollega_evento"><button class="btn btn-sm btn-ghost-danger" type="submit" name="evento" value="{{ e.pk }}">Scollega</button></form>{% endif %}</div>{% empty %}<div class="list-group-item text-secondary">Nessun evento.</div>{% endfor %}</div>
+      {% if perms.progetti.gestisci_progetti and eventi_scelta %}<div class="card-body border-top"><form method="post" class="d-flex gap-2">{% csrf_token %}<input type="hidden" name="azione" value="collega_evento"><select class="form-select" name="evento" aria-label="Evento">{% for e in eventi_scelta %}<option value="{{ e.pk }}">{{ e }}</option>{% endfor %}</select><button class="btn" type="submit">Collega</button></form></div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
