@@ -327,6 +327,24 @@ class LimiteCategoria(models.Model):
         return f"{self.get_categoria_display()} ≤ {self.percentuale_massima}%"
 
 
+class SezioneBando(models.Model):
+    """Sezione del formulario richiesta da un bando (sostituisce lo schema predefinito)."""
+
+    bando = models.ForeignKey(Bando, on_delete=models.CASCADE, related_name="sezioni")
+    titolo = models.CharField(max_length=200)
+    domande = models.TextField("domande guida", blank=True, help_text="Una per riga.")
+    massimo_caratteri = models.PositiveIntegerField("massimo di caratteri", null=True, blank=True)
+    ordine = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "sezione del formulario"
+        verbose_name_plural = "sezioni del formulario"
+        ordering = ["ordine", "pk"]
+
+    def __str__(self):
+        return self.titolo
+
+
 class Requisito(models.Model):
     """Requisito di partecipazione: verificato sui dati del gestionale o a mano."""
 
@@ -507,6 +525,10 @@ class Progetto(ModelloBase):
     obiettivo_generale = models.TextField("obiettivo generale", blank=True)
     destinatari = models.TextField(blank=True, help_text="Chi ne beneficia e quanti.")
     territorio = models.CharField(max_length=255, blank=True)
+    protocollo_candidatura = models.ForeignKey(
+        "protocollo.Protocollo", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="+", editable=False,
+    )  # fmt: skip
     spese_generali = models.DecimalField(
         "spese generali (%)", max_digits=5, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
@@ -765,6 +787,39 @@ class FonteFinanziamento(models.Model):
 
     def __str__(self):
         return self.descrizione or self.get_tipo_display()
+
+
+class TestoSezione(models.Model):
+    """Testo di una sezione della proposta (scrittura guidata, senza IA)."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="sezioni")
+    chiave = models.CharField(max_length=30, blank=True)  # sezione predefinita, se lo è
+    titolo = models.CharField(max_length=200)
+    domande = models.TextField("domande guida", blank=True)
+    massimo_caratteri = models.PositiveIntegerField(null=True, blank=True)
+    testo = models.TextField(blank=True)
+    ordine = models.PositiveSmallIntegerField(default=0)
+    modificato_il = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "sezione della proposta"
+        verbose_name_plural = "sezioni della proposta"
+        ordering = ["ordine", "pk"]
+
+    def __str__(self):
+        return self.titolo
+
+    @property
+    def caratteri(self):
+        return len(self.testo)
+
+    @property
+    def troppo_lungo(self):
+        return bool(self.massimo_caratteri) and self.caratteri > self.massimo_caratteri
+
+    @property
+    def elenco_domande(self):
+        return [d.strip() for d in self.domande.splitlines() if d.strip()]
 
 
 class Commento(models.Model):

@@ -59,6 +59,8 @@ PAGINE_PER_SEZIONE = {
     "progetti:bando_nuovo": "progetti#bandi-e-finanziamenti",
     "progetti:bando_modifica": "progetti#bandi-e-finanziamenti",
     "progetti:progettazione": "progetti#progettazione",
+    "progetti:proposta": "progetti#proposta-scrittura-guidata",
+    "progetti:candidatura": "progetti#candidatura",
     "progetti:proposte": "progetti#raccolta-automatica-dei-bandi",
     "progetti:fonti": "progetti#raccolta-automatica-dei-bandi",
     "utenti": "utenti",

@@ -59,6 +59,20 @@
     try { localStorage.setItem("menu-gruppi-chiusi", JSON.stringify(chiusi)); } catch (e) { /* ignorato */ }
   });
 
+  // Contatore dei caratteri per i testi con un massimo (data-massimo, data-contatore="#id")
+  function contaCaratteri(area) {
+    var uscita = document.querySelector(area.getAttribute("data-contatore"));
+    if (!uscita) return;
+    var massimo = parseInt(area.getAttribute("data-massimo"), 10);
+    var n = area.value.length;
+    uscita.textContent = n + " / " + massimo + " caratteri";
+    uscita.classList.toggle("text-danger", n > massimo);
+  }
+  document.addEventListener("input", function (ev) {
+    if (ev.target.matches && ev.target.matches("textarea[data-massimo]")) contaCaratteri(ev.target);
+  });
+  document.querySelectorAll("textarea[data-massimo]").forEach(contaCaratteri);
+
   // Conferma per i moduli (o i singoli pulsanti di invio) con data-conferma="testo"
   document.addEventListener("submit", function (ev) {
     var pulsante = ev.submitter && ev.submitter.closest("[data-conferma]");

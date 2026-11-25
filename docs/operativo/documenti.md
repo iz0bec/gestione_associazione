@@ -37,7 +37,9 @@ Nel testo:
   `{{ nome_completo }}` (Rossi Mario), `{{ intestazione }}` (Cav. Mario Rossi), `{{ saluto }}` («Caro», «Cara» o «Gentile»), `{{ numero_socio }}`,
   `{{ anni_socio }}`, `{{ organizzazione }}`, `{{ luogo }}`, `{{ data_estesa }}`; per gli atti
   della privacy anche `{{ rappresentante_legale }}`, `{{ qualifica_rappresentante }}`, `{{ sede }}`,
-  `{{ codice_fiscale_ente }}`, `{{ email_ente }}`, `{{ pec_ente }}`. L'elenco
+  `{{ codice_fiscale_ente }}`, `{{ email_ente }}`, `{{ pec_ente }}`; stampando dalla candidatura
+  di un progetto anche `{{ progetto }}`, `{{ codice_progetto }}`, `{{ bando }}`, `{{ finanziatore }}`
+  e `{{ ruolo_partner }}` (vedi [Progetti](progetti.md#candidatura)). L'elenco
   completo è a destra nella pagina del modello. Un segnaposto scritto male viene segnalato al
   salvataggio.
 

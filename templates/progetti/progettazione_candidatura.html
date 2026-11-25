@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Candidatura: verifica, documenti, lettere, protocollo e spedizione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Verifica prima dell'invio</h3></div><div class="list-group list-group-flush">
+      {% for v in verifica %}<div class="list-group-item d-flex gap-2"><i class="ti {% if v.esito == 'ok' %}ti-circle-check text-green{% elif v.esito == 'errore' %}ti-circle-x text-red{% else %}ti-info-circle text-orange{% endif %} fs-2" aria-hidden="true"></i><div class="flex-fill">{{ v.testo }}</div>
+        {% if v.sezione == "proposta" %}<a class="small" href="{% url 'progetti:proposta' progetto.pk %}">Proposta</a>{% elif v.sezione %}<a class="small" href="{% url 'progetti:progettazione' progetto.pk v.sezione %}">Apri</a>{% endif %}</div>{% endfor %}
+    </div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Documenti</h3></div><div class="card-body">
+      <div class="btn-list mb-3"><a class="btn" href="{% url 'progetti:documento_candidatura' progetto.pk 'proposta.pdf' %}"><i class="ti ti-file-type-pdf me-1"></i>Proposta (PDF)</a><a class="btn" href="{% url 'progetti:documento_candidatura' progetto.pk 'piano.xlsx' %}"><i class="ti ti-file-spreadsheet me-1"></i>Piano economico (Excel)</a></div>
+      {% if perms.progetti.gestisci_progetti and perms.documenti.stampa_documento %}
+      <h4>Lettere e dichiarazioni</h4>
+      {% if modelli %}<form method="post" action="{% url 'progetti:azione_candidatura' progetto.pk 'lettera' %}" class="row g-2">{% csrf_token %}
+        <div class="col-md-6"><select class="form-select" name="modello" aria-label="Modello">{% for m in modelli %}<option value="{{ m.pk }}">{{ m.nome }}</option>{% endfor %}</select></div>
+        <div class="col-md-4"><select class="form-select" name="partner" aria-label="Destinatario"><option value="">Senza destinatario (dichiarazione)</option>{% for x in partner %}<option value="{{ x.pk }}">{{ x.soggetto }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn w-100" type="submit">Stampa</button></div></form>
+      <p class="small text-secondary mt-2 mb-0">Dai <a href="{% url 'documenti:modelli' %}">modelli di stampa</a>, con in più i segnaposto {% verbatim %}<code>{{ progetto }}</code>, <code>{{ codice_progetto }}</code>, <code>{{ bando }}</code>, <code>{{ finanziatore }}</code>, <code>{{ ruolo_partner }}</code>{% endverbatim %}: per esempio la lettera di partenariato o la dichiarazione del legale rappresentante.</p>
+      {% else %}<p class="text-secondary mb-0">Nessun modello di stampa attivo: si creano in <a href="{% url 'documenti:modelli' %}">Documenti</a>.</p>{% endif %}
+      {% endif %}
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Stato della candidatura</h3></div><div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-5">Bando</dt><dd class="col-7">{% if progetto.bando %}<a href="{{ progetto.bando.get_absolute_url }}">{{ progetto.bando }}</a>{% if progetto.bando.scadenza %}<div class="small text-secondary">domanda entro il {{ progetto.bando.scadenza|date:"d/m/Y" }}</div>{% endif %}{% else %}<span class="text-secondary">nessuno</span>{% endif %}</dd>
+        <dt class="col-5">Stato</dt><dd class="col-7">{{ progetto.get_stato_display }}</dd>
+        <dt class="col-5">Delibera</dt><dd class="col-7">{{ delibera|default:"—" }}</dd>
+        <dt class="col-5">Protocollo</dt><dd class="col-7">{% if progetto.protocollo_candidatura %}<a href="{{ progetto.protocollo_candidatura.get_absolute_url }}">{{ progetto.protocollo_candidatura.segnatura }}</a>{% else %}—{% endif %}</dd>
+      </dl>
+      {% if progetto.stato == "progettazione" %}<p class="small text-secondary mt-3 mb-0">Quando la verifica è a posto, si candida il progetto dalla <a href="{{ progetto.get_absolute_url }}">scheda</a> (con la delibera di approvazione): il progetto passa a «Candidato» e la proposta non si modifica più.</p>{% endif %}
+    </div></div>
+    {% if progetto.stato == "candidato" and progetto.bando and not progetto.protocollo_candidatura and puo_protocollare %}
+    <div class="card"><div class="card-header"><h3 class="card-title">Protocolla e spedisci</h3></div><div class="card-body">
+      {% if not progetto.bando.finanziatore %}<div class="alert alert-warning">Nel bando manca il finanziatore scelto dall'anagrafica: serve il suo indirizzo (PEC). <a href="{% url 'progetti:bando_modifica' progetto.bando.pk %}">Completa il bando</a>.</div>{% endif %}
+      <form method="post" action="{% url 'progetti:azione_candidatura' progetto.pk 'protocolla' %}">{% csrf_token %}
+        <div class="mb-2"><label class="form-label" for="mezzo">Mezzo</label><select class="form-select" id="mezzo" name="mezzo">{% for v, e in mezzi %}<option value="{{ v }}">{{ e }}</option>{% endfor %}</select></div>
+        <div class="mb-2"><label class="form-check"><input class="form-check-input" type="checkbox" name="proposta" value="1" checked><span class="form-check-label">Proposta (PDF)</span></label>
+          <label class="form-check"><input class="form-check-input" type="checkbox" name="excel" value="1" checked><span class="form-check-label">Piano economico (Excel)</span></label>
+          {% for a in allegati %}<label class="form-check"><input class="form-check-input" type="checkbox" name="allegato" value="{{ a.pk }}"><span class="form-check-label">{{ a.nome }}</span></label>{% endfor %}</div>
+        <button class="btn btn-primary" type="submit" data-conferma="Registrare il protocollo in uscita della candidatura?">Protocolla la candidatura</button>
+        <p class="small text-secondary mt-2 mb-0">Protocollo in uscita verso {{ progetto.bando.ente|default:"il finanziatore" }} con i documenti scelti; poi si apre la spedizione (PEC o email) del protocollo, con le ricevute agganciate.</p>
+      </form>
+    </div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

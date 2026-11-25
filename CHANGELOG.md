@@ -29,6 +29,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   Piano economico (voci per categoria, spese generali, coperture, natura e partner calcolati; controlli
   di bilanciamento e dei limiti del bando: contributo massimo, cofinanziamento minimo, spese generali,
   limiti per categoria, quota in natura). Quadro, partner e piano si modificano in progettazione.
+- **Candidatura** (Progetti P4b, ramo `progetti`): scheda Proposta con scrittura guidata senza IA
+  (sezioni del formulario del bando o schema predefinito, domande guida, testi composti dai dati del
+  progetto, riuso dei testi di altri progetti, contatore dei caratteri); scheda Candidatura con la
+  verifica prima dell'invio, proposta in PDF, piano economico in Excel, lettere e dichiarazioni dai
+  modelli di stampa (nuovi segnaposto `progetto`, `codice_progetto`, `bando`, `finanziatore`,
+  `ruolo_partner`), protocollo in uscita della candidatura verso il finanziatore e spedizione PEC.
 
 ## [1.0.99] - 2026-11-25
 

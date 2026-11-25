@@ -121,6 +121,43 @@ contributo al progetto, l'eventuale **cofinanziamento** e se la **lettera di par
   categoria** e la quota massima **in natura**. I limiti si inseriscono nella scheda del bando
   (spese generali e in natura nel modulo, limiti per categoria nell'elenco dei dati).
 
+### Proposta (scrittura guidata)
+
+La scheda **Proposta** raccoglie i testi da presentare, sezione per sezione. Le sezioni sono quelle del
+**formulario del bando**, se nella scheda del bando sono state inserite (titolo, domande o istruzioni,
+massimo di caratteri), altrimenti uno **schema predefinito**: contesto e bisogni, coerenza con le
+finalità statutarie, obiettivi e risultati, destinatari e territorio, attività e metodologia,
+partenariato, esperienza dell'associazione, monitoraggio e valutazione, comunicazione, impatto e
+sostenibilità.
+
+Il gestionale **non scrive al posto vostro** (niente IA): per ogni sezione mostra le **domande guida**;
+**Proponi dal progetto** compone un testo di partenza dai dati già inseriti (finalità statutarie citate,
+obiettivi e risultati, destinatari, attività del cronoprogramma, partner, indicatori), da rivedere; i
+**testi della stessa sezione** scritti per altri progetti si possono riusare. Il contatore segnala quando
+si supera il **limite di caratteri** del bando. La proposta si modifica finché il progetto è in
+progettazione.
+
+### Candidatura
+
+La scheda **Candidatura** riunisce:
+
+- la **verifica prima dell'invio**: sezioni da scrivere o troppo lunghe, quadro incompleto, attività
+  oltre la fine prevista, lettere di partenariato mancanti, errori del piano economico, requisiti del
+  bando mancanti o da verificare, termine scaduto;
+- i **documenti**: la **proposta in PDF** (testi, obiettivi e indicatori, cronoprogramma, partner, piano
+  economico) e il **piano economico in Excel**;
+- **lettere e dichiarazioni** dai **modelli di stampa** (*Documenti*), indirizzate a un partner o senza
+  destinatario, con in più i segnaposto `{{ progetto }}`, `{{ codice_progetto }}`, `{{ bando }}`,
+  `{{ finanziatore }}` e `{{ ruolo_partner }}` (per esempio la lettera di partenariato o la dichiarazione
+  del legale rappresentante);
+- lo **stato**: bando, delibera di approvazione (quella indicata candidando il progetto) e protocollo.
+
+Il percorso: con la verifica a posto si **candida** il progetto dalla sua scheda, con la **delibera**
+(il progetto passa a «Candidato» e la proposta si blocca); poi **Protocolla la candidatura** registra un
+**protocollo in uscita** verso il finanziatore del bando (scelto dall'anagrafica, con la sua PEC) con la
+proposta, il piano e i documenti scelti, e apre la **spedizione** del protocollo per PEC o email, con le
+ricevute agganciate come per ogni altro protocollo. Serve anche il permesso di protocollare.
+
 ## Bandi e finanziamenti
 
 In *Bandi* si registrano i bandi e gli avvisi di finanziamento: titolo, **finanziatore** (dall'anagrafica

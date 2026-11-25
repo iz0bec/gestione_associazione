@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Proposta: scrittura guidata delle sezioni (senza IA)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+<div class="alert alert-secondary small">{% if schema_bando %}Le sezioni sono quelle del formulario del bando <a href="{{ progetto.bando.get_absolute_url }}">{{ progetto.bando }}</a>.{% else %}Sezioni dello schema predefinito{% if progetto.bando %}: il bando collegato non indica un proprio formulario (si aggiunge nella scheda del bando){% endif %}.{% endif %} Per ogni sezione ci sono le domande guida; dove i dati ci sono, <strong>Proponi dal progetto</strong> compone un testo di partenza da rivedere.</div>
+{% for s in sezioni %}<div class="card mb-3" id="sezione-{{ s.pk }}">
+  <div class="card-header"><h3 class="card-title">{{ forloop.counter }}. {{ s.titolo }}</h3><div class="card-actions small {% if s.troppo_lungo %}text-danger{% else %}text-secondary{% endif %}">{{ s.caratteri }}{% if s.massimo_caratteri %} / {{ s.massimo_caratteri }}{% endif %} caratteri</div></div>
+  <div class="card-body">
+    {% if s.elenco_domande %}<ul class="small text-secondary mb-2">{% for d in s.elenco_domande %}<li>{{ d }}</li>{% endfor %}</ul>{% endif %}
+    {% if modificabile %}
+    <form method="post">{% csrf_token %}<input type="hidden" name="sezione" value="{{ s.pk }}">
+      <textarea class="form-control mb-2" name="testo" rows="7" aria-label="{{ s.titolo }}"{% if s.massimo_caratteri %} data-massimo="{{ s.massimo_caratteri }}" data-contatore="#contatore-{{ s.pk }}"{% endif %}>{{ s.testo }}</textarea>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-primary" type="submit" name="azione" value="salva">Salva</button>
+        {% if s.componibile %}<button class="btn" type="submit" name="azione" value="componi"{% if s.testo %} data-conferma="Sostituire il testo con quello composto dai dati del progetto?"{% endif %}><i class="ti ti-wand me-1"></i>Proponi dal progetto</button>{% endif %}
+        {% if s.massimo_caratteri %}<span class="small text-secondary ms-auto" id="contatore-{{ s.pk }}"></span>{% endif %}
+      </div>
+    </form>
+    {% if s.simili %}<details class="mt-3"><summary class="small">Testi della stessa sezione in altri progetti ({{ s.simili|length }})</summary>
+      {% for t in s.simili %}<div class="border rounded p-2 mt-2 small"><div class="text-secondary mb-1">{{ t.progetto }}</div>{{ t.testo|truncatechars:600|linebreaksbr }}
+        <form method="post" class="mt-1">{% csrf_token %}<input type="hidden" name="sezione" value="{{ s.pk }}"><input type="hidden" name="da" value="{{ t.pk }}"><button class="btn btn-sm" type="submit" name="azione" value="riusa"{% if s.testo %} data-conferma="Sostituire il testo con questo?"{% endif %}>Usa questo testo</button></form></div>{% endfor %}
+    </details>{% endif %}
+    {% elif s.testo %}<div>{{ s.testo|linebreaksbr }}</div>{% else %}<div class="text-secondary">Non scritta.</div>{% endif %}
+  </div>
+</div>{% empty %}<div class="card"><div class="card-body text-secondary">La proposta non è ancora stata scritta.</div></div>{% endfor %}
+{% endblock %}

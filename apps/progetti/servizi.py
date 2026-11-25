@@ -34,6 +34,7 @@ from .models import (
     Progetto,
     Requisito,
     Scadenza,
+    SezioneBando,
     Valutazione,
 )
 
@@ -602,3 +603,30 @@ def togli_limite(limite, utente):
     bando, descrizione = limite.bando, str(limite)
     limite.delete()
     registra(Azione.MODIFICA, bando, utente=utente, limite=f"tolto {descrizione}")
+
+
+@transaction.atomic
+def aggiungi_sezione_bando(bando, utente, *, titolo, domande="", massimo=""):
+    titolo = " ".join(titolo.split())
+    if not titolo:
+        raise OperazioneNonValida("Indicare il titolo della sezione.")
+    massimo = str(massimo).strip()
+    if massimo and not massimo.isdigit():
+        raise OperazioneNonValida("Il massimo di caratteri deve essere un numero.")
+    ordine = (bando.sezioni.aggregate(m=models.Max("ordine"))["m"] or 0) + 1
+    s = SezioneBando.objects.create(
+        bando=bando,
+        titolo=titolo[:200],
+        domande=domande.strip(),
+        massimo_caratteri=int(massimo) if massimo else None,
+        ordine=ordine,
+    )
+    registra(Azione.MODIFICA, bando, utente=utente, formulario=f"aggiunta «{s}»")
+    return s
+
+
+@transaction.atomic
+def togli_sezione_bando(sezione, utente):
+    bando, titolo = sezione.bando, str(sezione)
+    sezione.delete()
+    registra(Azione.MODIFICA, bando, utente=utente, formulario=f"tolta «{titolo}»")

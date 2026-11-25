@@ -186,11 +186,12 @@ def testo_html(testo, contesto):
     return markdown.markdown(composto, extensions=["sane_lists"])
 
 
-def pagine(modello, soggetti):
+def pagine(modello, soggetti, extra=None):
+    """`extra`: segnaposto aggiuntivi (es. del progetto), uguali per tutte le pagine."""
     firma = firmatario(modello)
     risultato = []
     for s in soggetti or [None]:
-        c = _contesto(s, firma)
+        c = _contesto(s, firma) | (extra or {})
         risultato.append(
             {
                 "destinatario": s,
@@ -209,8 +210,8 @@ def destinatari_validi(soggetti):
     return validi, esclusi
 
 
-def _contesto_pdf(modello, soggetti, protocollo=None):
-    elenco, firma = pagine(modello, soggetti)
+def _contesto_pdf(modello, soggetti, protocollo=None, extra=None):
+    elenco, firma = pagine(modello, soggetti, extra)
     org = Organizzazione.corrente()
     return {
         "organizzazione": org,
@@ -251,7 +252,7 @@ def anteprima(modello, soggetto=None):
 
 
 @transaction.atomic
-def stampa(modello, soggetti, utente, *, protocolla=False, mezzo="posta"):
+def stampa(modello, soggetti, utente, *, protocolla=False, mezzo="posta", extra=None):
     """PDF con una pagina per destinatario. Con `protocolla` registra un protocollo in uscita
     (numero stampato sul documento) e vi allega il PDF. Restituisce (pdf, protocollo)."""
     if not modello.attivo:
@@ -264,7 +265,7 @@ def stampa(modello, soggetti, utente, *, protocolla=False, mezzo="posta"):
 
     protocollo = None
     if protocolla:
-        oggetto = componi(modello.titolo, _contesto(None, "")) or modello.nome
+        oggetto = componi(modello.titolo, _contesto(None, "") | (extra or {})) or modello.nome
         from apps.protocollo.buste import MEZZI_POSTALI
 
         corrispondenti = [
@@ -283,7 +284,7 @@ def stampa(modello, soggetti, utente, *, protocolla=False, mezzo="posta"):
             corrispondenti,
             utente,
         )
-    pdf = genera_pdf(template_di(modello), _contesto_pdf(modello, soggetti, protocollo))
+    pdf = genera_pdf(template_di(modello), _contesto_pdf(modello, soggetti, protocollo, extra))
     if protocollo:
         prot.aggiungi_allegato(
             protocollo, ContentFile(pdf, name=nome_file(modello)), utente, principale=True,

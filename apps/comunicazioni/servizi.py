@@ -74,6 +74,12 @@ SEGNAPOSTO = {
     "esito": "esito della domanda di iscrizione",
     "richiedente": "nome e cognome di chi chiede l'iscrizione",
     "protocollo": "numero di protocollo",
+    # progetti (lettere di partenariato, dichiarazioni per i bandi)
+    "progetto": "titolo del progetto",
+    "codice_progetto": "codice del progetto (es. P-2026-001)",
+    "bando": "titolo del bando",
+    "finanziatore": "ente finanziatore del bando",
+    "ruolo_partner": "ruolo del partner nel progetto",
     "data_protocollo": "data della registrazione di protocollo",
     # ciclo delle tessere (avvisi alle sezioni)
     "anno": "anno di tesseramento",

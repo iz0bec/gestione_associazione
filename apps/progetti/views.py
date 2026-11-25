@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import localize
 from django.views import View
@@ -69,6 +70,8 @@ from .models import (
     Progetto,
     Requisito,
     Scadenza,
+    SezioneBando,
+    TestoSezione,
     VoceCosto,
 )
 from .servizi import OperazioneNonValida
@@ -459,8 +462,12 @@ class ProgettoAzioneView(PermessoMixin, View):
                 form = CandidaForm(p, progetto=progetto)
                 if not form.is_valid():
                     raise OperazioneNonValida("Scegliere un bando aperto.")
-                servizi.candida(progetto, form.cleaned_data["bando"], request.user,
-                                delibera=form.cleaned_data["delibera"])  # fmt: skip
+                servizi.candida(
+                    progetto,
+                    form.cleaned_data["bando"],
+                    request.user,
+                    delibera=form.cleaned_data["delibera"],
+                )
                 messages.success(request, f"Progetto candidato al bando «{progetto.bando}».")
             elif azione == "allega":
                 form = AllegatoForm(p, request.FILES)
@@ -547,8 +554,11 @@ class BandoModificaView(PermessoMixin, View):
 
     def get(self, request, pk):
         bando = get_object_or_404(Bando, pk=pk)
-        return render(request, "progetti/bando_modulo.html",
-                      {"form": BandoForm(instance=bando), "bando": bando})  # fmt: skip
+        return render(
+            request,
+            "progetti/bando_modulo.html",
+            {"form": BandoForm(instance=bando), "bando": bando},
+        )
 
     def post(self, request, pk):
         bando = get_object_or_404(Bando, pk=pk)
@@ -567,13 +577,21 @@ class BandoView(PermessoMixin, View):
         from . import requisiti
 
         bando = get_object_or_404(Bando.objects.select_related("finanziatore"), pk=pk)
-        return render(request, "progetti/bando.html", {
-            "bando": bando, "giorni": bando.giorni_alla_scadenza(),
-            "riepilogo": requisiti.riepilogo(bando),
-            "progetti": bando.progetti.select_related("responsabile"),
-            "requisito_form": RequisitoForm(), "candida_form": CandidaForm(bando=bando),
-            "stati": Bando.Stato.choices, "esiti": ESITI, "categorie": Categoria.choices,
-        })  # fmt: skip
+        return render(
+            request,
+            "progetti/bando.html",
+            {
+                "bando": bando,
+                "giorni": bando.giorni_alla_scadenza(),
+                "riepilogo": requisiti.riepilogo(bando),
+                "progetti": bando.progetti.select_related("responsabile"),
+                "requisito_form": RequisitoForm(),
+                "candida_form": CandidaForm(bando=bando),
+                "stati": Bando.Stato.choices,
+                "esiti": ESITI,
+                "categorie": Categoria.choices,
+            },
+        )
 
 
 class BandoAzioneView(PermessoMixin, View):
@@ -586,8 +604,9 @@ class BandoAzioneView(PermessoMixin, View):
         p = request.POST
         try:
             if azione == "stato":
-                servizi.cambia_stato_bando(bando, p.get("stato", ""), request.user,
-                                           p.get("motivo", ""))  # fmt: skip
+                servizi.cambia_stato_bando(
+                    bando, p.get("stato", ""), request.user, p.get("motivo", "")
+                )
                 messages.success(request, f"Stato: {bando.get_stato_display()}.")
             elif azione == "requisito":
                 form = RequisitoForm(p)
@@ -596,13 +615,25 @@ class BandoAzioneView(PermessoMixin, View):
                 servizi.aggiungi_requisito(bando, request.user, **form.cleaned_data)
             elif azione == "esito":
                 r = get_object_or_404(Requisito, pk=p.get("requisito"), bando=bando)
-                servizi.indica_esito(r, request.user, esito=p.get("esito", ""),
-                                     nota=p.get("nota", ""))  # fmt: skip
+                servizi.indica_esito(
+                    r, request.user, esito=p.get("esito", ""), nota=p.get("nota", "")
+                )
             elif azione == "limite":
                 form = LimiteForm(p)
                 if not form.is_valid():
                     raise OperazioneNonValida("Indicare categoria e percentuale (0-100).")
                 servizi.imposta_limite(bando, request.user, **form.cleaned_data)
+            elif azione == "sezione":
+                servizi.aggiungi_sezione_bando(
+                    bando,
+                    request.user,
+                    titolo=p.get("titolo", ""),
+                    domande=p.get("domande", ""),
+                    massimo=p.get("massimo_caratteri", ""),
+                )
+            elif azione == "togli_sezione":
+                s = get_object_or_404(SezioneBando, pk=p.get("sezione"), bando=bando)
+                servizi.togli_sezione_bando(s, request.user)
             elif azione == "togli_limite":
                 limite = get_object_or_404(LimiteCategoria, pk=p.get("limite"), bando=bando)
                 servizi.togli_limite(limite, request.user)
@@ -615,8 +646,12 @@ class BandoAzioneView(PermessoMixin, View):
                 form = CandidaForm(p, bando=bando)
                 if not form.is_valid():
                     raise OperazioneNonValida("Scegliere un progetto in progettazione.")
-                progetto = servizi.candida(form.cleaned_data["progetto"], bando, request.user,
-                                           delibera=form.cleaned_data["delibera"])  # fmt: skip
+                progetto = servizi.candida(
+                    form.cleaned_data["progetto"],
+                    bando,
+                    request.user,
+                    delibera=form.cleaned_data["delibera"],
+                )
                 messages.success(request, f"{progetto.codice} candidato al bando.")
             else:
                 raise Http404
@@ -711,10 +746,16 @@ class ProposteView(PermessoMixin, View):
         if stato not in BandoProposto.Stato.values:
             stato = BandoProposto.Stato.NUOVO
         proposte = BandoProposto.objects.filter(stato=stato).select_related("fonte", "bando")
-        return render(request, "progetti/proposte.html", {
-            "proposte": proposte[:200], "stato": stato, "stati": BandoProposto.Stato.choices,
-            "fonti": FonteBandi.objects.count(),
-        })  # fmt: skip
+        return render(
+            request,
+            "progetti/proposte.html",
+            {
+                "proposte": proposte[:200],
+                "stato": stato,
+                "stati": BandoProposto.Stato.choices,
+                "fonti": FonteBandi.objects.count(),
+            },
+        )
 
     def post(self, request):
         from . import raccolta
@@ -745,17 +786,28 @@ class FontiView(PermessoMixin, View):
 
         presenti = set(FonteBandi.objects.values_list("indirizzo", flat=True))
         portali = [
-            {"chiave": k, "nome": v[0], "indirizzo": v[1], "descrizione": v[3],
-             "presente": v[1] in presenti}
+            {
+                "chiave": k,
+                "nome": v[0],
+                "indirizzo": v[1],
+                "descrizione": v[3],
+                "presente": v[1] in presenti,
+            }
             for k, v in raccolta.PORTALI.items()
-        ]  # fmt: skip
-        return render(request, "progetti/fonti.html", {
-            "fonti": FonteBandi.objects.all(), "portali": portali, "modifica": modifica,
-            "form": form or FonteForm(instance=modifica),
-            "parola_form": parola_form or ParolaForm(),
-            "incluse": ParolaChiave.objects.filter(esclusa=False),
-            "escluse": ParolaChiave.objects.filter(esclusa=True),
-        })  # fmt: skip
+        ]
+        return render(
+            request,
+            "progetti/fonti.html",
+            {
+                "fonti": FonteBandi.objects.all(),
+                "portali": portali,
+                "modifica": modifica,
+                "form": form or FonteForm(instance=modifica),
+                "parola_form": parola_form or ParolaForm(),
+                "incluse": ParolaChiave.objects.filter(esclusa=False),
+                "escluse": ParolaChiave.objects.filter(esclusa=True),
+            },
+        )
 
     def get(self, request):
         modifica = None
@@ -857,11 +909,15 @@ class ProgettazioneView(PermessoMixin, View):
                 istanza = modifica[1] if modifica and modifica[0] == tipo else None
                 moduli[tipo] = self._modulo(tipo, progetto, istanza=istanza)
         ctx = {
-            "progetto": progetto, "sezione": sezione, "titolo": titolo, "moduli": moduli,
-            "modifica": modifica, "sezioni": [(k, v[0]) for k, v in self.SEZIONI.items()],
+            "progetto": progetto,
+            "sezione": sezione,
+            "titolo": titolo,
+            "moduli": moduli,
+            "modifica": modifica,
+            "sezioni": [(k, v[0]) for k, v in self.SEZIONI.items()],
             "modificabile": request.user.has_perm("progetti.gestisci_progetti")
             and servizi.modificabile(progetto, sezione),
-        }  # fmt: skip
+        }
         if sezione == "quadro":
             ctx["obiettivi"] = progetto.obiettivi.prefetch_related("indicatori")
             ctx["senza_obiettivo"] = progetto.indicatori.filter(obiettivo__isnull=True)
@@ -925,10 +981,14 @@ def gantt(attivita, larghezza=1000, riga=28):
 
     righe = []
     for i, a in enumerate(attivita):
-        righe.append({
-            "a": a, "y": i * riga + 24, "x": x(a.inizio),
-            "w": max(round(((a.fine - a.inizio).days + 1) * larghezza / giorni, 1), 3),
-        })  # fmt: skip
+        righe.append(
+            {
+                "a": a,
+                "y": i * riga + 24,
+                "x": x(a.inizio),
+                "w": max(round(((a.fine - a.inizio).days + 1) * larghezza / giorni, 1), 3),
+            }
+        )
     mesi, giorno = [], inizio.replace(day=1)
     while giorno <= fine:
         if giorno >= inizio:
@@ -939,7 +999,217 @@ def gantt(attivita, larghezza=1000, riga=28):
     for r in righe:
         if r["a"].dopo_id in posizioni:
             p = posizioni[r["a"].dopo_id]
-            collegamenti.append({"x1": p["x"] + p["w"], "y1": p["y"] + 9, "x2": r["x"],
-                                 "y2": r["y"] + 9})  # fmt: skip
-    return {"righe": righe, "mesi": mesi, "collegamenti": collegamenti, "larghezza": larghezza,
-            "altezza": len(righe) * riga + 30}  # fmt: skip
+            collegamenti.append(
+                {"x1": p["x"] + p["w"], "y1": p["y"] + 9, "x2": r["x"], "y2": r["y"] + 9}
+            )
+    return {
+        "righe": righe,
+        "mesi": mesi,
+        "collegamenti": collegamenti,
+        "larghezza": larghezza,
+        "altezza": len(righe) * riga + 30,
+    }
+
+
+# --- candidatura (P4b) ---------------------------------------------------------------------------
+
+
+def _scarica(contenuto, nome, tipo):
+    from django.http import HttpResponse
+
+    r = HttpResponse(contenuto, content_type=tipo)
+    r["Content-Disposition"] = f'attachment; filename="{nome}"'
+    r["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    return r
+
+
+class PropostaView(PermessoMixin, View):
+    """Scrittura guidata della proposta: sezioni con domande guida, testi composti dai dati del
+    progetto, riuso dei testi di altri progetti, limite di caratteri."""
+
+    permission_required = "progetti.view_progetto"
+
+    def _puo(self, request, progetto):
+        return (
+            request.user.has_perm("progetti.gestisci_progetti")
+            and progetto.stato == Progetto.Stato.PROGETTAZIONE
+        )
+
+    def get(self, request, pk):
+        from . import proposta
+
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        modificabile = self._puo(request, progetto)
+        sezioni = proposta.prepara_sezioni(progetto) if modificabile else progetto.sezioni.all()
+        for s in sezioni:
+            s.simili = proposta.testi_simili(s) if modificabile else []
+            s.componibile = s.chiave in proposta.COMPONIBILI
+        return render(
+            request,
+            "progetti/progettazione_proposta.html",
+            {
+                "progetto": progetto,
+                "sezione": "proposta",
+                "titolo": "Proposta",
+                "sezioni": sezioni,
+                "modificabile": modificabile,
+                "schema_bando": bool(progetto.bando_id and progetto.bando.sezioni.exists()),
+            },
+        )
+
+    def post(self, request, pk):
+        from . import proposta
+
+        progetto = get_object_or_404(Progetto, pk=pk)
+        if not self._puo(request, progetto):
+            raise Http404
+        p = request.POST
+        sezione = get_object_or_404(TestoSezione, pk=p.get("sezione"), progetto=progetto)
+        try:
+            if p.get("azione") == "componi":
+                testo = proposta.componi(progetto, sezione.chiave)
+            elif p.get("azione") == "riusa":
+                testo = get_object_or_404(TestoSezione, pk=p.get("da")).testo
+            else:
+                testo = p.get("testo", "")
+            proposta.salva_testo(sezione, testo, request.user)
+            messages.success(request, f"Sezione «{sezione}» salvata.")
+        except proposta.ErroreProposta as e:
+            messages.error(request, str(e))
+        url = reverse("progetti:proposta", args=[progetto.pk])
+        return redirect(f"{url}#sezione-{sezione.pk}")
+
+
+class CandidaturaView(PermessoMixin, View):
+    """Verifica prima dell'invio, documenti (proposta, piano, lettere), protocollo e spedizione."""
+
+    permission_required = "progetti.view_progetto"
+
+    def get(self, request, pk):
+        from apps.documenti.models import ModelloStampa
+        from apps.protocollo.models import Protocollo
+
+        from . import proposta
+
+        progetto = get_object_or_404(
+            Progetto.objects.select_related("bando__finanziatore", "protocollo_candidatura"),
+            pk=pk,
+        )
+        delibera = (
+            progetto.passaggi.filter(a=Progetto.Stato.CANDIDATO, delibera__isnull=False)
+            .select_related("delibera")
+            .last()
+        )
+        return render(
+            request,
+            "progetti/progettazione_candidatura.html",
+            {
+                "progetto": progetto,
+                "sezione": "candidatura",
+                "titolo": "Candidatura",
+                "verifica": proposta.verifica(progetto),
+                "delibera": delibera.delibera if delibera else None,
+                "partner": progetto.partner.select_related("soggetto"),
+                "modelli": ModelloStampa.objects.filter(attivo=True).order_by("nome"),
+                "allegati": proposta.allegati_progetto(progetto),
+                "mezzi": [
+                    (m, e)
+                    for m, e in Protocollo.Mezzo.choices
+                    if m in ("pec", "email", "raccomandata", "posta", "mano")
+                ],
+                "puo_protocollare": request.user.has_perm("protocollo.add_protocollo")
+                and request.user.has_perm("progetti.gestisci_progetti"),
+            },
+        )
+
+
+class DocumentoCandidaturaView(PermessoMixin, View):
+    """Proposta in PDF e piano economico in Excel."""
+
+    permission_required = "progetti.view_progetto"
+
+    def get(self, request, pk, tipo):
+        from . import proposta
+
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        if tipo == "proposta.pdf":
+            r = _scarica(
+                proposta.proposta_pdf(progetto),
+                proposta.nome_file(progetto, "proposta", "pdf"),
+                "application/pdf",
+            )
+        elif tipo == "piano.xlsx":
+            r = _scarica(
+                proposta.piano_excel(progetto),
+                proposta.nome_file(progetto, "piano-economico", "xlsx"),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        else:
+            raise Http404
+        from apps.core.audit import Azione, registra
+
+        registra(Azione.ESPORTAZIONE, progetto, utente=request.user, documento=tipo)
+        return r
+
+
+class AzioneCandidaturaView(PermessoMixin, View):
+    """Lettera o dichiarazione da un modello di stampa; protocollo in uscita della candidatura."""
+
+    permission_required = "progetti.gestisci_progetti"
+
+    def post(self, request, pk, azione):
+        from apps.documenti import servizi as documenti
+        from apps.documenti.models import ModelloStampa
+        from apps.protocollo import servizi as prot
+
+        from . import proposta
+
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        p = request.POST
+        try:
+            if azione == "lettera":
+                if not request.user.has_perm("documenti.stampa_documento"):
+                    raise Http404
+                modello = get_object_or_404(ModelloStampa, pk=p.get("modello"), attivo=True)
+                partner = (
+                    get_object_or_404(Partner, pk=p["partner"], progetto=progetto)
+                    if p.get("partner")
+                    else None
+                )
+                bando = progetto.bando
+                extra = {
+                    "progetto": progetto.titolo,
+                    "codice_progetto": progetto.codice,
+                    "bando": str(bando) if bando else "",
+                    "finanziatore": bando.ente if bando else "",
+                    "ruolo_partner": partner.get_ruolo_display().lower() if partner else "",
+                }
+                soggetti = [partner.soggetto] if partner else []
+                pdf, _ = documenti.stampa(modello, soggetti, request.user, extra=extra)
+                return _scarica(
+                    pdf, f"{progetto.codice}-{documenti.nome_file(modello)}", "application/pdf"
+                )
+            if azione == "protocolla":
+                if not request.user.has_perm("protocollo.add_protocollo"):
+                    raise Http404
+                scelti = proposta.allegati_progetto(progetto).filter(pk__in=p.getlist("allegato"))
+                protocollo = proposta.protocolla(
+                    progetto,
+                    request.user,
+                    mezzo=p.get("mezzo", "pec"),
+                    allegati=scelti,
+                    proposta=p.get("proposta") == "1",
+                    excel=p.get("excel") == "1",
+                )
+                messages.success(
+                    request, f"Candidatura protocollata ({protocollo.segnatura}): ora si spedisce."
+                )
+                return redirect("protocollo:spedisci", pk=protocollo.pk)
+            raise Http404
+        except (
+            proposta.ErroreProposta,
+            prot.OperazioneNonValida,
+            documenti.OperazioneNonValida,
+        ) as e:
+            messages.error(request, " ".join(getattr(e, "messages", None) or [str(e)]))
+        return redirect("progetti:candidatura", pk=progetto.pk)

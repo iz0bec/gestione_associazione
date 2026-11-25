@@ -1,0 +1,44 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Proposta di progetto in PDF: quadro, sezioni, cronoprogramma, partner, piano economico
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% load l10n %}
+{% block titolo %}{{ progetto.codice }} {{ progetto.titolo }}{% endblock %}
+{% block stile %}
+  h2 { font-size: 12pt; margin: 14pt 0 5pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .sezione { page-break-inside: auto; white-space: pre-line; }
+  .totale td { font-weight: bold; border-top: 1pt solid #333; }
+  .gantt rect { fill: {{ organizzazione.colore_primario|default:"#1d4e89" }}; opacity: .35; }
+  .gantt text { font-size: 7pt; fill: #111; }
+  .gantt line { stroke: #ccc; stroke-width: .5; }
+{% endblock %}
+{% block contenuto %}
+<h1>{{ progetto.titolo }}</h1>
+<p class="piccolo">{{ progetto.codice }}{% if progetto.bando %} · Bando: {{ progetto.bando }}{% if progetto.bando.ente %} ({{ progetto.bando.ente }}){% endif %}{% endif %}{% if progetto.inizio_previsto %} · dal {{ progetto.inizio_previsto|date:"d/m/Y" }}{% endif %}{% if progetto.fine_prevista %} al {{ progetto.fine_prevista|date:"d/m/Y" }}{% endif %}</p>
+<p>{{ progetto.sintesi|linebreaksbr }}</p>
+{% for s in sezioni %}<h2>{{ forloop.counter }}. {{ s.titolo }}</h2><div class="sezione">{{ s.testo }}</div>{% endfor %}
+{% if obiettivi %}<h2>Obiettivi e indicatori</h2>
+<table><thead><tr><th>Obiettivo specifico</th><th>Indicatore</th><th class="destra">Atteso</th><th>Verifica</th></tr></thead><tbody>
+{% for o in obiettivi %}{% for x in o.indicatori.all %}<tr><td>{% if forloop.first %}{{ o.testo }}{% endif %}</td><td>{{ x.descrizione }}</td><td class="destra">{{ x.valore_atteso|floatformat:"-2" }} {{ x.unita }}</td><td>{{ x.fonte_verifica }}</td></tr>{% empty %}<tr><td>{{ o.testo }}</td><td colspan="3"></td></tr>{% endfor %}{% endfor %}
+</tbody></table>{% endif %}
+{% if attivita %}<h2>Cronoprogramma</h2>
+{% if gantt %}{% localize off %}<svg class="gantt" width="180mm" viewBox="0 0 {{ gantt.larghezza }} {{ gantt.altezza }}">{% for m in gantt.mesi %}<line x1="{{ m.x }}" y1="12" x2="{{ m.x }}" y2="{{ gantt.altezza }}"/><text x="{{ m.x }}" y="10">{{ m.etichetta }}</text>{% endfor %}{% for r in gantt.righe %}<rect x="{{ r.x }}" y="{{ r.y }}" width="{{ r.w }}" height="13"/><text x="{{ r.x }}" y="{{ r.y|add:10 }}" dx="3">{{ r.a.titolo|truncatechars:50 }}</text>{% endfor %}</svg>{% endlocalize %}{% endif %}
+<table><thead><tr><th>Attività</th><th>Periodo</th><th>Responsabile</th></tr></thead><tbody>{% for a in attivita %}<tr><td>{{ a.titolo }}</td><td>{{ a.inizio|date:"d/m/Y" }} – {{ a.fine|date:"d/m/Y" }}</td><td>{{ a.responsabile.get_full_name|default:a.responsabile|default:"" }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+{% if partner %}<h2>Partner</h2>
+<table><thead><tr><th>Partner</th><th>Ruolo</th><th>Contributo</th></tr></thead><tbody>{% for x in partner %}<tr><td>{{ x.soggetto }}</td><td>{{ x.get_ruolo_display }}</td><td>{{ x.contributo }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+<h2>Piano economico</h2>
+<table><thead><tr><th>Voce</th><th class="destra">Quantità</th><th class="destra">Unitario</th><th class="destra">Importo</th></tr></thead><tbody>
+{% for cat, etichetta, voci, totale in piano.categorie %}<tr><td colspan="3"><strong>{{ etichetta }}</strong></td><td class="destra"><strong>€ {{ totale|floatformat:"2g" }}</strong></td></tr>{% for v in voci %}<tr><td>{{ v.descrizione }}</td><td class="destra">{{ v.quantita|floatformat:"-2" }} {{ v.unita }}</td><td class="destra">€ {{ v.costo_unitario|floatformat:"2g" }}</td><td class="destra">€ {{ v.importo|floatformat:"2g" }}</td></tr>{% endfor %}{% endfor %}
+{% if piano.spese_generali %}<tr><td colspan="3">Spese generali ({{ progetto.spese_generali|floatformat:"-2" }}%)</td><td class="destra">€ {{ piano.spese_generali|floatformat:"2g" }}</td></tr>{% endif %}
+<tr class="totale"><td colspan="3">Totale costi</td><td class="destra">€ {{ piano.totale_costi|floatformat:"2g" }}</td></tr>
+</tbody></table>
+<table><thead><tr><th>Coperture</th><th class="destra">Importo</th></tr></thead><tbody>
+{% for f in piano.fonti %}<tr><td>{{ f.get_tipo_display }}{% if f.descrizione %} – {{ f.descrizione }}{% endif %}</td><td class="destra">€ {{ f.importo|floatformat:"2g" }}</td></tr>{% endfor %}
+{% if piano.partner %}<tr><td>Cofinanziamento dei partner</td><td class="destra">€ {{ piano.partner|floatformat:"2g" }}</td></tr>{% endif %}
+{% if piano.natura %}<tr><td>Cofinanziamento in natura (volontariato valorizzato)</td><td class="destra">€ {{ piano.natura|floatformat:"2g" }}</td></tr>{% endif %}
+<tr class="totale"><td>Totale coperture</td><td class="destra">€ {{ piano.totale_fonti|floatformat:"2g" }}</td></tr>
+</tbody></table>
+<p class="piccolo">Documento prodotto il {{ oggi|date:"d/m/Y" }}.</p>
+{% endblock %}

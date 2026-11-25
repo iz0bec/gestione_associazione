@@ -33,6 +33,16 @@
       </dl>
     </div></div>
     <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title">Formulario</h3></div>
+      <div class="list-group list-group-flush">{% for s in bando.sezioni.all %}<div class="list-group-item d-flex gap-2"><div class="flex-fill"><div class="fw-medium">{{ forloop.counter }}. {{ s.titolo }}{% if s.massimo_caratteri %} <span class="small text-secondary">(max {{ s.massimo_caratteri }} caratteri)</span>{% endif %}</div>{% if s.domande %}<div class="small text-secondary">{{ s.domande|linebreaksbr }}</div>{% endif %}</div>
+        {% if perms.progetti.gestisci_bandi %}<form method="post" action="{% url 'progetti:bando_azione' bando.pk 'togli_sezione' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" name="sezione" value="{{ s.pk }}">Togli</button></form>{% endif %}</div>
+      {% empty %}<div class="list-group-item text-secondary small">Il bando non indica un proprio formulario: le proposte usano lo schema predefinito (contesto, finalità, obiettivi, destinatari, attività, partenariato, esperienza, monitoraggio, comunicazione, sostenibilità).</div>{% endfor %}</div>
+      {% if perms.progetti.gestisci_bandi %}<div class="card-body border-top"><form method="post" action="{% url 'progetti:bando_azione' bando.pk 'sezione' %}">{% csrf_token %}
+        <div class="row g-2"><div class="col-md-8"><input class="form-control" name="titolo" maxlength="200" placeholder="Titolo della sezione del formulario" aria-label="Titolo" required></div><div class="col-md-4"><input class="form-control" name="massimo_caratteri" type="number" min="1" placeholder="Max caratteri" aria-label="Massimo di caratteri"></div>
+        <div class="col-12"><textarea class="form-control" name="domande" rows="2" placeholder="Domande guida o istruzioni del bando, una per riga" aria-label="Domande guida"></textarea></div>
+        <div class="col-12"><button class="btn" type="submit"><i class="ti ti-plus me-1"></i>Aggiungi la sezione</button></div></div></form></div>{% endif %}
+    </div>
+    <div class="card mb-3">
       <div class="card-header"><h3 class="card-title">Requisiti</h3>{% if riepilogo.esiti %}<div class="card-actions small"><span class="text-green">{{ riepilogo.soddisfatti }} soddisfatt{{ riepilogo.soddisfatti|pluralize:"o,i" }}</span> · <span class="text-red">{{ riepilogo.mancanti }} mancant{{ riepilogo.mancanti|pluralize:"e,i" }}</span> · <span class="text-orange">{{ riepilogo.da_verificare }} da verificare</span></div>{% endif %}</div>
       <div class="list-group list-group-flush">
         {% for e in riepilogo.esiti %}<div class="list-group-item">
