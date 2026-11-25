@@ -28,6 +28,7 @@ from .models import (
     CriterioValutazione,
     FinalitaStatutaria,
     Idea,
+    LimiteCategoria,
     Membro,
     PassaggioStato,
     Progetto,
@@ -533,3 +534,71 @@ def promemoria_bandi(oggi=None):
         bando.save(update_fields=["promemoria"])
         avvisati += 1
     return avvisati
+
+
+# --- progettazione (P4) --------------------------------------------------------------------------
+
+SEZIONI_BLOCCATE = {"quadro", "partner", "piano"}  # dopo la candidatura le varianti sono in P5
+
+
+def modificabile(progetto, sezione):
+    """Quadro, partner e piano si cambiano in progettazione; il cronoprogramma finché è aperto."""
+    if sezione in SEZIONI_BLOCCATE:
+        return progetto.stato == Progetto.Stato.PROGETTAZIONE
+    return progetto.aperto
+
+
+def _controlla(progetto, sezione):
+    if not modificabile(progetto, sezione):
+        if sezione in SEZIONI_BLOCCATE:
+            raise OperazioneNonValida(
+                "Si modifica solo in progettazione: dopo la candidatura le varianti si registrano "
+                "con la loro delibera."
+            )
+        raise OperazioneNonValida("Il progetto è chiuso.")
+
+
+@transaction.atomic
+def salva_in_progetto(progetto, form, utente, sezione):
+    """Salva un elemento della progettazione (obiettivo, indicatore, attività, partner, voce,
+    fonte) o i campi del progetto stesso (quadro, spese generali)."""
+    from django.db import IntegrityError
+
+    _controlla(progetto, sezione)
+    oggetto = form.save(commit=False)
+    if isinstance(oggetto, Progetto):
+        oggetto.modificato_da = utente
+    else:
+        oggetto.progetto = progetto
+    try:
+        with transaction.atomic():
+            oggetto.save()
+    except IntegrityError as e:
+        raise OperazioneNonValida("È già presente nel progetto.") from e
+    registra(Azione.MODIFICA, progetto, utente=utente, **{sezione: f"salvato {oggetto}"[:200]})
+    return oggetto
+
+
+@transaction.atomic
+def togli_da_progetto(oggetto, utente, sezione):
+    progetto = oggetto.progetto
+    _controlla(progetto, sezione)
+    descrizione = str(oggetto)
+    oggetto.delete()
+    registra(Azione.MODIFICA, progetto, utente=utente, **{sezione: f"tolto {descrizione}"[:200]})
+
+
+@transaction.atomic
+def imposta_limite(bando, utente, *, categoria, percentuale_massima):
+    limite, _ = LimiteCategoria.objects.update_or_create(
+        bando=bando, categoria=categoria, defaults={"percentuale_massima": percentuale_massima}
+    )
+    registra(Azione.MODIFICA, bando, utente=utente, limite=str(limite))
+    return limite
+
+
+@transaction.atomic
+def togli_limite(limite, utente):
+    bando, descrizione = limite.bando, str(limite)
+    limite.delete()
+    registra(Azione.MODIFICA, bando, utente=utente, limite=f"tolto {descrizione}")

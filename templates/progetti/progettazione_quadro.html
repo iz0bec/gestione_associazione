@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Quadro del progetto: obiettivo generale, obiettivi specifici, risultati, indicatori
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Obiettivo generale, destinatari, territorio</h3></div><div class="card-body">
+      {% if modificabile %}{% with f=moduli.quadro %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_quadro">{% if modifica and modifica.0 == "quadro" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "quadro" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}{% else %}<dl class="mb-0"><dt>Obiettivo generale</dt><dd>{{ progetto.obiettivo_generale|linebreaksbr|default:"—" }}</dd><dt>Destinatari</dt><dd>{{ progetto.destinatari|linebreaksbr|default:"—" }}</dd><dt>Territorio</dt><dd>{{ progetto.territorio|default:"—" }}</dd></dl>{% endif %}
+    </div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Obiettivi specifici, risultati e indicatori</h3></div>
+      <div class="list-group list-group-flush">{% for o in obiettivi %}<div class="list-group-item">
+        <div class="d-flex gap-2"><div class="flex-fill"><div class="fw-medium">{{ forloop.counter }}. {{ o.testo }}</div>{% if o.risultati %}<div class="small text-secondary">Risultati attesi: {{ o.risultati|linebreaksbr }}</div>{% endif %}</div>
+          {% if modificabile %}{% with x=o %}<a class="btn btn-sm" href="?modifica=obiettivo:{{ o.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_obiettivo"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere l&#x27;obiettivo? Gli indicatori restano senza obiettivo.">Togli</button></form>{% endwith %}{% endif %}</div>
+        {% if o.indicatori.all %}<table class="table table-sm mt-2 mb-0"><thead><tr><th>Indicatore</th><th class="text-end">Iniziale</th><th class="text-end">Atteso</th><th>Fonte di verifica</th><th></th></tr></thead><tbody>{% for x in o.indicatori.all %}<tr><td>{{ x.descrizione }}{% if x.unita %} <span class="text-secondary">({{ x.unita }})</span>{% endif %}</td><td class="text-end">{{ x.valore_iniziale|floatformat:"-2"|default:"—" }}</td><td class="text-end">{{ x.valore_atteso|floatformat:"-2" }}</td><td class="small">{{ x.fonte_verifica }}</td><td class="text-end text-nowrap">{% if modificabile %}<a class="btn btn-sm" href="?modifica=indicatore:{{ x.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_indicatore"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere l&#x27;indicatore?">Togli</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>{% endif %}
+      </div>{% empty %}<div class="list-group-item text-secondary">Nessun obiettivo specifico.</div>{% endfor %}
+      {% if senza_obiettivo %}<div class="list-group-item"><div class="fw-medium">Indicatori generali</div>{% for x in senza_obiettivo %}<div class="d-flex small gap-2"><div class="flex-fill">{{ x.descrizione }}: atteso {{ x.valore_atteso|floatformat:"-2" }} {{ x.unita }}</div>{% if modificabile %}<a href="?modifica=indicatore:{{ x.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_indicatore"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere l&#x27;indicatore?">Togli</button></form>{% endif %}</div>{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% if modificabile %}<div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Obiettivo specifico</h3></div><div class="card-body">{% with f=moduli.obiettivo %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_obiettivo">{% if modifica and modifica.0 == "obiettivo" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "obiettivo" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}</div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Indicatore</h3></div><div class="card-body">{% with f=moduli.indicatore %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_indicatore">{% if modifica and modifica.0 == "indicatore" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "indicatore" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}<p class="small text-secondary mt-2 mb-0">Misurabile: un numero atteso (es. 300 studenti, 12 incontri) e dove si verifica (registri presenze, questionari). Il valore raggiunto si aggiorna durante l'esecuzione.</p></div></div>
+  </div>{% endif %}
+</div>
+{% endblock %}

@@ -84,6 +84,43 @@ finanziato* chiedono il motivo. Un progetto chiuso o accantonato non si modifica
 - **Documenti**: si allegano file (fino a 20 MB), scaricabili solo da chi ha il permesso.
 - **Discussione**: commenti di chi consulta il progetto.
 
+## Progettazione
+
+La scheda del progetto ha cinque schede: **Scheda**, **Quadro**, **Cronoprogramma**, **Partner**,
+**Piano economico**. Quadro, partner e piano si modificano finché il progetto è **in progettazione**:
+dopo la candidatura restano quelli presentati (le varianti si registreranno con la loro delibera nella
+fase di esecuzione). Il cronoprogramma si aggiorna finché il progetto è aperto.
+
+### Quadro
+
+**Obiettivo generale**, **destinatari** e **territorio**; gli **obiettivi specifici** con i **risultati
+attesi**; per ciascuno gli **indicatori** misurabili: descrizione, unità di misura, valore iniziale,
+**valore atteso** e fonte di verifica (il valore raggiunto si aggiornerà durante l'esecuzione).
+
+### Cronoprogramma
+
+Le **attività** con obiettivo, responsabile, inizio e fine e, se dipende da un'altra, **«dopo
+l'attività»** (deve iniziare dopo la sua fine). Il **diagramma a barre** mostra il periodo di ciascuna,
+i mesi e le dipendenze tratteggiate; le attività compaiono anche nel **Calendario**.
+
+### Partner
+
+Enti, sezioni e persone dall'**anagrafica**, con il ruolo (capofila, partner, sostenitore, rete), il
+contributo al progetto, l'eventuale **cofinanziamento** e se la **lettera di partenariato** è arrivata.
+
+### Piano economico
+
+- **Costi**: voci per categoria (personale, beni, servizi, viaggi, comunicazione, volontariato
+  valorizzato, altre spese) come quantità × costo unitario; **spese generali** forfettarie in
+  percentuale sui costi diretti.
+- **Coperture**: contributo richiesto al bando, cofinanziamento proprio in denaro, altri finanziatori;
+  il **cofinanziamento dei partner** viene dalle loro schede e quello **in natura** dal volontariato
+  valorizzato.
+- **Controlli**: costi e coperture devono equivalersi; con un bando collegato si controllano anche il
+  **contributo massimo**, il **cofinanziamento minimo**, le **spese generali** ammesse, i **limiti per
+  categoria** e la quota massima **in natura**. I limiti si inseriscono nella scheda del bando
+  (spese generali e in natura nel modulo, limiti per categoria nell'elenco dei dati).
+
 ## Bandi e finanziamenti
 
 In *Bandi* si registrano i bandi e gli avvisi di finanziamento: titolo, **finanziatore** (dall'anagrafica

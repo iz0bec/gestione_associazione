@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Partner del progetto, dall'anagrafica
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+<div class="row g-3">
+  <div class="col-lg-7"><div class="card"><div class="list-group list-group-flush">
+    {% for x in partner %}<div class="list-group-item"><div class="d-flex gap-2 align-items-start"><div class="flex-fill">
+      <a href="{{ x.soggetto.get_absolute_url }}" class="fw-medium">{{ x.soggetto }}</a> <span class="badge bg-blue-lt">{{ x.get_ruolo_display }}</span>{% if x.lettera_ricevuta %} <span class="badge bg-green-lt">lettera ricevuta</span>{% else %} <span class="badge bg-orange-lt">lettera da ricevere</span>{% endif %}
+      {% if x.contributo %}<div class="small">{{ x.contributo|linebreaksbr }}</div>{% endif %}{% if x.cofinanziamento %}<div class="small text-secondary">Cofinanziamento € {{ x.cofinanziamento|floatformat:"2g" }}</div>{% endif %}</div>
+      {% if modificabile %}<a class="btn btn-sm" href="?modifica=partner:{{ x.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_partner"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere il partner?">Togli</button></form>{% endif %}</div></div>
+    {% empty %}<div class="list-group-item text-secondary">Nessun partner.</div>{% endfor %}
+  </div></div></div>
+  {% if modificabile %}<div class="col-lg-5"><div class="card"><div class="card-header"><h3 class="card-title">Partner</h3></div><div class="card-body">{% with f=moduli.partner %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_partner">{% if modifica and modifica.0 == "partner" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "partner" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}<p class="small text-secondary mt-2 mb-0">Enti, sezioni e persone si scelgono dall'anagrafica. Il cofinanziamento dei partner entra nel piano economico.</p></div></div></div>{% endif %}
+</div>
+{% endblock %}

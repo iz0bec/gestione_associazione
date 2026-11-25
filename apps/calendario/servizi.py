@@ -223,6 +223,22 @@ def _scadenze_progetti(dal, al):
         )  # fmt: skip
 
 
+def _attivita_progetti(dal, al):
+    from apps.progetti.models import Attivita
+
+    aperti = ["progettazione", "candidato", "finanziato", "in_corso", "rendiconto"]
+    qs = Attivita.objects.select_related("progetto").filter(
+        inizio__lte=al, fine__gte=dal, progetto__stato__in=aperti
+    )
+    for a in qs:
+        yield Evento(
+            uid=f"progetto-attivita-{a.pk}", titolo=f"{a.titolo} ({a.progetto.codice})",
+            inizio=a.inizio, fine=a.fine,
+            percorso=reverse("progetti:progettazione", args=[a.progetto_id, "cronoprogramma"]),
+            categoria="Progetti", icona="timeline", stato="fatto" if a.completata else "",
+        )  # fmt: skip
+
+
 def _bandi(dal, al):
     from apps.progetti.models import Bando
 
@@ -284,6 +300,7 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _rinnovi(dal, al)
     if utente.has_perm("progetti.view_progetto"):
         elenco += _scadenze_progetti(dal, al)
+        elenco += _attivita_progetti(dal, al)
     if utente.has_perm("progetti.view_bando"):
         elenco += _bandi(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):

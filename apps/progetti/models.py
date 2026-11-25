@@ -19,6 +19,19 @@ from django.urls import reverse
 
 from apps.core.models import ModelloBase
 
+
+class Categoria(models.TextChoices):
+    """Categorie delle voci di costo del piano economico."""
+
+    PERSONALE = "personale", "Personale"
+    BENI = "beni", "Beni e attrezzature"
+    SERVIZI = "servizi", "Servizi"
+    VIAGGI = "viaggi", "Viaggi e trasferte"
+    COMUNICAZIONE = "comunicazione", "Comunicazione e promozione"
+    VOLONTARIATO = "volontariato", "Volontariato valorizzato"
+    ALTRO = "altro", "Altre spese"
+
+
 SEQ_IDEA = "idea"
 SEQ_PROGETTO = "progetto"
 
@@ -249,6 +262,16 @@ class Bando(ModelloBase):
     )
     motivo = models.CharField("motivo", max_length=255, blank=True, editable=False)
     promemoria = models.JSONField(default=list, editable=False)  # giorni già avvisati
+    spese_generali_massime = models.DecimalField(
+        "spese generali massime (%)", max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Sul totale dei costi diretti.",
+    )  # fmt: skip
+    natura_massima = models.DecimalField(
+        "cofinanziamento in natura massimo (%)", max_digits=5, decimal_places=2, null=True,
+        blank=True, validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Quota del cofinanziamento che può essere in natura (volontariato valorizzato).",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "bando"
@@ -281,6 +304,27 @@ class Bando(ModelloBase):
     @property
     def candidabile(self):
         return self.stato != self.Stato.SCARTATO and not self.scaduto
+
+
+class LimiteCategoria(models.Model):
+    """Percentuale massima di una categoria di costo sul totale del progetto, fissata dal bando."""
+
+    bando = models.ForeignKey(Bando, on_delete=models.CASCADE, related_name="limiti")
+    categoria = models.CharField(max_length=15, choices=Categoria.choices)
+    percentuale_massima = models.DecimalField(
+        "percentuale massima", max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )  # fmt: skip
+
+    class Meta:
+        verbose_name = "limite di categoria"
+        verbose_name_plural = "limiti di categoria"
+        constraints = [
+            models.UniqueConstraint(fields=["bando", "categoria"], name="un_limite_per_categoria")
+        ]
+
+    def __str__(self):
+        return f"{self.get_categoria_display()} ≤ {self.percentuale_massima}%"
 
 
 class Requisito(models.Model):
@@ -459,6 +503,15 @@ class Progetto(ModelloBase):
         related_name="progetti",
         editable=False,
     )
+    # quadro del progetto (P4)
+    obiettivo_generale = models.TextField("obiettivo generale", blank=True)
+    destinatari = models.TextField(blank=True, help_text="Chi ne beneficia e quanti.")
+    territorio = models.CharField(max_length=255, blank=True)
+    spese_generali = models.DecimalField(
+        "spese generali (%)", max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Forfettarie, in percentuale sui costi diretti (se il bando le ammette).",
+    )  # fmt: skip
 
     class Meta:
         verbose_name = "progetto"
@@ -552,6 +605,166 @@ class Scadenza(models.Model):
 
     def __str__(self):
         return f"{self.titolo} ({self.data:%d/%m/%Y})"
+
+
+class Obiettivo(models.Model):
+    """Obiettivo specifico del progetto, con i risultati attesi."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="obiettivi")
+    testo = models.CharField("obiettivo specifico", max_length=500)
+    risultati = models.TextField("risultati attesi", blank=True)
+    ordine = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "obiettivo specifico"
+        verbose_name_plural = "obiettivi specifici"
+        ordering = ["ordine", "pk"]
+
+    def __str__(self):
+        return self.testo
+
+
+class Indicatore(models.Model):
+    """Indicatore misurabile di un risultato (valore raggiunto aggiornato nell'esecuzione)."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="indicatori")
+    obiettivo = models.ForeignKey(
+        Obiettivo, null=True, blank=True, on_delete=models.SET_NULL, related_name="indicatori"
+    )
+    descrizione = models.CharField(max_length=255)
+    unita = models.CharField("unità di misura", max_length=50, blank=True)
+    valore_iniziale = models.DecimalField(
+        "valore iniziale", max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    valore_atteso = models.DecimalField("valore atteso", max_digits=12, decimal_places=2)
+    valore_raggiunto = models.DecimalField(
+        "valore raggiunto", max_digits=12, decimal_places=2, null=True, blank=True, editable=False
+    )
+    fonte_verifica = models.CharField("fonte di verifica", max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "indicatore"
+        verbose_name_plural = "indicatori"
+        ordering = ["obiettivo__ordine", "pk"]
+
+    def __str__(self):
+        return self.descrizione
+
+
+class Attivita(models.Model):
+    """Attività del cronoprogramma."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="attivita")
+    titolo = models.CharField(max_length=200)
+    descrizione = models.TextField(blank=True)
+    obiettivo = models.ForeignKey(
+        Obiettivo, null=True, blank=True, on_delete=models.SET_NULL, related_name="attivita"
+    )
+    responsabile = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="attivita_progetti",
+    )  # fmt: skip
+    inizio = models.DateField()
+    fine = models.DateField()
+    dopo = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="successive",
+        verbose_name="dopo l'attività", help_text="Inizia quando questa è finita.",
+    )  # fmt: skip
+    completata = models.BooleanField(default=False, editable=False)
+
+    class Meta:
+        verbose_name = "attività"
+        verbose_name_plural = "attività"
+        ordering = ["inizio", "fine", "pk"]
+
+    def __str__(self):
+        return self.titolo
+
+
+class Partner(models.Model):
+    """Ente o persona che partecipa al progetto (dall'anagrafica)."""
+
+    class Ruolo(models.TextChoices):
+        CAPOFILA = "capofila", "Capofila"
+        PARTNER = "partner", "Partner"
+        SOSTENITORE = "sostenitore", "Sostenitore"
+        RETE = "rete", "Rete / adesione"
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="partner")
+    soggetto = models.ForeignKey(
+        "anagrafica.Soggetto", on_delete=models.PROTECT, related_name="partenariati"
+    )
+    ruolo = models.CharField(max_length=12, choices=Ruolo.choices, default=Ruolo.PARTNER)
+    contributo = models.TextField("contributo al progetto", blank=True)
+    cofinanziamento = models.DecimalField(
+        "cofinanziamento (€)", max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    lettera_ricevuta = models.BooleanField("lettera di partenariato ricevuta", default=False)
+
+    class Meta:
+        verbose_name = "partner"
+        verbose_name_plural = "partner"
+        constraints = [
+            models.UniqueConstraint(fields=["progetto", "soggetto"], name="partner_unico")
+        ]
+
+    def __str__(self):
+        return f"{self.soggetto} ({self.get_ruolo_display()})"
+
+
+class VoceCosto(models.Model):
+    """Voce del piano economico: quantità per costo unitario."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="voci")
+    categoria = models.CharField(max_length=15, choices=Categoria.choices)
+    descrizione = models.CharField(max_length=255)
+    quantita = models.DecimalField("quantità", max_digits=10, decimal_places=2, default=1)
+    unita = models.CharField(
+        "unità", max_length=30, blank=True, help_text="Es. ore, giorni, pezzi."
+    )
+    costo_unitario = models.DecimalField("costo unitario (€)", max_digits=12, decimal_places=2)
+    ordine = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "voce di costo"
+        verbose_name_plural = "voci di costo"
+        ordering = ["categoria", "ordine", "pk"]
+
+    def __str__(self):
+        return self.descrizione
+
+    @property
+    def importo(self):
+        from decimal import Decimal
+
+        return (self.quantita * self.costo_unitario).quantize(Decimal("0.01"))
+
+    @property
+    def in_natura(self):
+        return self.categoria == Categoria.VOLONTARIATO
+
+
+class FonteFinanziamento(models.Model):
+    """Copertura del piano economico. Il cofinanziamento in natura (volontariato valorizzato) e
+    quello dei partner si calcolano dalle voci e dai partner."""
+
+    class Tipo(models.TextChoices):
+        CONTRIBUTO = "contributo", "Contributo richiesto al bando"
+        PROPRIO = "proprio", "Cofinanziamento proprio in denaro"
+        ALTRO = "altro", "Altri finanziatori"
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="fonti")
+    tipo = models.CharField(max_length=10, choices=Tipo.choices)
+    descrizione = models.CharField(max_length=255, blank=True)
+    importo = models.DecimalField("importo (€)", max_digits=12, decimal_places=2)
+
+    class Meta:
+        verbose_name = "fonte di finanziamento"
+        verbose_name_plural = "fonti di finanziamento"
+        ordering = ["tipo", "pk"]
+
+    def __str__(self):
+        return self.descrizione or self.get_tipo_display()
 
 
 class Commento(models.Model):

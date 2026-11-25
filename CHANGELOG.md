@@ -23,6 +23,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   (Regione Basilicata, CSV Basilicata, Fondazione con il Sud), parole chiave e parole escluse, proposte
   da vagliare (accogli → bando, scarta) senza doppioni; ogni notte con `raccogli_bandi` e avviso a chi
   gestisce i bandi.
+- **Progettazione** (Progetti P4a, ramo `progetti`): schede Quadro (obiettivo generale, obiettivi
+  specifici con risultati e indicatori), Cronoprogramma (attività con dipendenze, diagramma a barre in
+  SVG, attività nel calendario), Partner (dall'anagrafica, lettere di partenariato, cofinanziamento) e
+  Piano economico (voci per categoria, spese generali, coperture, natura e partner calcolati; controlli
+  di bilanciamento e dei limiti del bando: contributo massimo, cofinanziamento minimo, spese generali,
+  limiti per categoria, quota in natura). Quadro, partner e piano si modificano in progettazione.
 
 ## [1.0.99] - 2026-11-25
 

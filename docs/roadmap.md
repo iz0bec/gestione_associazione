@@ -195,8 +195,15 @@ in [analisi/progetti.md](analisi/progetti.md).
   dell'organizzazione, abbinamento bando ↔ progetto.
 - **P3** Raccolta automatica dei bandi: feed RSS/Atom, pagine web sorvegliate, portali noti; parole
   chiave; proposte da vagliare.
-- **P4** Progettazione e candidatura: obiettivi e indicatori, cronoprogramma, partner, piano
-  economico con i limiti del bando, scrittura guidata (senza IA), documenti, delibera, protocollo e PEC.
+- **P4** Progettazione e candidatura, in due passi: **P4a** quadro (obiettivi, risultati, indicatori),
+  attività e cronoprogramma, partner, piano economico con i controlli dei limiti del bando; **P4b**
+  scrittura guidata (senza IA), documenti di candidatura, delibera, protocollo e PEC.
+- **P4-MCP** Connettore MCP per l'assistenza alle valutazioni (dopo P4): il gestionale resta senza IA
+  e espone a un client scelto dall'utente (Claude o altri) bandi, requisiti con gli esiti, idee con le
+  valutazioni, progetti, finalità e criteri, perché aiuti a confrontare, suggerire punteggi motivati e
+  segnalare ciò che manca. Solo lettura all'inizio (al più commenti o bozze firmate «assistente» da
+  confermare), spento di norma, token legato a un utente e ai suoi permessi come le API v1, ogni
+  chiamata nel registro attività, nessun dato personale dei soci (solo aggregati).
 - **P5** Esecuzione: centro di costo in prima nota, preventivo/consuntivo, ore di volontariato
   valorizzate come cofinanziamento in natura, avanzamento.
 - **P6** Rendicontazione e chiusura: rendiconto per il finanziatore con giustificativi (PDF, Excel,

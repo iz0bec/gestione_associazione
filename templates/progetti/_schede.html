@@ -1,0 +1,13 @@
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Schede del progetto: scheda, quadro, cronoprogramma, partner, piano economico
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link{% if not sezione %} active{% endif %}" href="{{ progetto.get_absolute_url }}">Scheda</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'quadro' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'quadro' %}">Quadro</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'cronoprogramma' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'cronoprogramma' %}">Cronoprogramma</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'partner' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'partner' %}">Partner</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'piano' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'piano' %}">Piano economico</a></li>
+</ul>
+{% if sezione and not modificabile and perms.progetti.gestisci_progetti %}<div class="alert alert-info">{% if sezione == "cronoprogramma" %}Il progetto è chiuso: il cronoprogramma non si modifica più.{% else %}Questa parte si modifica solo in progettazione: dopo la candidatura le varianti si registreranno con la loro delibera.{% endif %}</div>{% endif %}

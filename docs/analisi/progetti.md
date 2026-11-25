@@ -108,6 +108,15 @@ del consiglio.
   legale rappresentante, lettere di partenariato) con i segnaposto del progetto, **delibera** di
   approvazione, **protocollo in uscita** e invio per PEC, ricevute agganciate.
 
+### Connettore MCP (dopo P4)
+
+Proposto il 25/11/2026. Il gestionale **non contiene IA**: un server MCP espone i dati dei progetti a un
+client scelto dall'utente, che può aiutare a valutare idee e bandi (confronto con finalità e requisiti,
+punteggi suggeriti e motivati, documenti mancanti). Regole: **solo lettura** all'inizio (al più
+commenti o bozze di valutazione firmate «assistente», confermate da una persona); **spento di norma**
+e attivabile per installazione; accesso con token legato a un utente e ai suoi permessi (come le API
+v1); ogni chiamata nel **registro attività**; **nessun dato personale dei soci**, solo aggregati.
+
 ### P5 - Esecuzione
 
 - **Centro di costo**: ogni movimento di prima nota imputabile a un progetto e a una voce del budget;

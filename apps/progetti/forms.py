@@ -16,14 +16,21 @@ from apps.anagrafica.models import Soggetto
 from apps.core.forms import StileMixin
 
 from .models import (
+    Attivita,
     Bando,
     CriterioValutazione,
     FinalitaStatutaria,
     FonteBandi,
+    FonteFinanziamento,
     Idea,
+    Indicatore,
+    LimiteCategoria,
+    Obiettivo,
     ParolaChiave,
+    Partner,
     Progetto,
     Requisito,
+    VoceCosto,
 )
 
 
@@ -211,6 +218,8 @@ class BandoForm(StileMixin, _ConFinalita, forms.ModelForm):
             "finalita",
             "importo_massimo",
             "cofinanziamento",
+            "spese_generali_massime",
+            "natura_massima",
             "apertura",
             "scadenza",
             "esito_previsto",
@@ -309,3 +318,122 @@ class ParolaForm(StileMixin, forms.ModelForm):
 
     def clean_parola(self):
         return " ".join(self.cleaned_data["parola"].split()).lower()
+
+
+# --- progettazione (P4) --------------------------------------------------------------------------
+
+
+class QuadroForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Progetto
+        fields = ["obiettivo_generale", "destinatari", "territorio"]
+        widgets = {
+            "obiettivo_generale": forms.Textarea(attrs={"rows": 3}),
+            "destinatari": forms.Textarea(attrs={"rows": 2}),
+        }
+
+
+class ObiettivoForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Obiettivo
+        fields = ["testo", "risultati"]
+        widgets = {"risultati": forms.Textarea(attrs={"rows": 2})}
+
+
+class _DelProgetto:
+    """Limita le scelte collegate (obiettivi, attività) al progetto."""
+
+    def _limita(self, progetto, *campi):
+        for campo in campi:
+            modello = self.fields[campo].queryset.model
+            self.fields[campo].queryset = modello.objects.filter(progetto=progetto)
+
+
+class IndicatoreForm(StileMixin, _DelProgetto, forms.ModelForm):
+    class Meta:
+        model = Indicatore
+        fields = ["obiettivo", "descrizione", "unita", "valore_iniziale", "valore_atteso",
+                  "fonte_verifica"]  # fmt: skip
+
+    def __init__(self, *args, progetto, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._limita(progetto, "obiettivo")
+
+
+class AttivitaForm(StileMixin, _DelProgetto, forms.ModelForm):
+    class Meta:
+        model = Attivita
+        fields = ["titolo", "descrizione", "obiettivo", "responsabile", "inizio", "fine", "dopo"]
+        widgets = {"descrizione": forms.Textarea(attrs={"rows": 2}), "inizio": CampoData,
+                   "fine": CampoData}  # fmt: skip
+
+    def __init__(self, *args, progetto, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._limita(progetto, "obiettivo", "dopo")
+        if self.instance.pk:
+            self.fields["dopo"].queryset = self.fields["dopo"].queryset.exclude(pk=self.instance.pk)
+        self.fields["responsabile"].queryset = (
+            get_user_model().objects.filter(is_active=True)
+            .order_by("first_name", "last_name", "username")
+        )  # fmt: skip
+
+    def clean(self):
+        dati = super().clean()
+        inizio, fine, dopo = dati.get("inizio"), dati.get("fine"), dati.get("dopo")
+        if inizio and fine and fine < inizio:
+            self.add_error("fine", "La fine non può precedere l'inizio.")
+        if dopo and inizio and inizio <= dopo.fine:
+            self.add_error(
+                "inizio", f"Deve iniziare dopo il {dopo.fine:%d/%m/%Y} (fine di «{dopo}»)."
+            )
+        return dati
+
+
+class PartnerForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Partner
+        fields = ["soggetto", "ruolo", "contributo", "cofinanziamento", "lettera_ricevuta"]
+        widgets = {"contributo": forms.Textarea(attrs={"rows": 2})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["soggetto"].queryset = Soggetto.objects.attivi().order_by(
+            "denominazione", "cognome", "nome"
+        )
+
+
+class VoceForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = VoceCosto
+        fields = ["categoria", "descrizione", "quantita", "unita", "costo_unitario"]
+
+    def clean(self):
+        dati = super().clean()
+        for campo in ("quantita", "costo_unitario"):
+            if dati.get(campo) is not None and dati[campo] < 0:
+                self.add_error(campo, "Non può essere negativo.")
+        return dati
+
+
+class FinanziamentoForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = FonteFinanziamento
+        fields = ["tipo", "descrizione", "importo"]
+
+    def clean_importo(self):
+        importo = self.cleaned_data["importo"]
+        if importo <= 0:
+            raise forms.ValidationError("Indicare un importo positivo.")
+        return importo
+
+
+class SpeseGeneraliForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = Progetto
+        fields = ["spese_generali"]
+
+
+class LimiteForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = LimiteCategoria
+        fields = ["categoria", "percentuale_massima"]

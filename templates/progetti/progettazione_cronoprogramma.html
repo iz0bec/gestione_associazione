@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Attività e cronoprogramma del progetto, con il diagramma a barre
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+{% load l10n %}{% if gantt %}<div class="card mb-3"><div class="card-body overflow-auto">{% localize off %}
+  <svg class="gantt" viewBox="-4 0 {{ gantt.larghezza|add:8 }} {{ gantt.altezza }}" role="img" aria-label="Cronoprogramma">
+    {% for m in gantt.mesi %}<line class="gantt-griglia" x1="{{ m.x }}" y1="14" x2="{{ m.x }}" y2="{{ gantt.altezza }}"/><text class="gantt-mese" x="{{ m.x }}" y="11">{{ m.etichetta }}</text>{% endfor %}
+    {% for c in gantt.collegamenti %}<line class="gantt-legame" x1="{{ c.x1 }}" y1="{{ c.y1 }}" x2="{{ c.x2 }}" y2="{{ c.y2 }}"/>{% endfor %}
+    {% for r in gantt.righe %}<g><title>{{ r.a.titolo }}: {{ r.a.inizio|date:"d/m/Y" }} – {{ r.a.fine|date:"d/m/Y" }}</title><rect class="gantt-barra{% if r.a.completata %} gantt-fatta{% endif %}" x="{{ r.x }}" y="{{ r.y }}" width="{{ r.w }}" height="18" rx="3"/><text class="gantt-etichetta" x="{{ r.x }}" y="{{ r.y|add:13 }}" dx="4">{{ r.a.titolo|truncatechars:40 }}</text></g>{% endfor %}
+  </svg>
+{% endlocalize %}</div></div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-7"><div class="card"><div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr><th>Attività</th><th>Periodo</th><th>Responsabile</th><th></th></tr></thead>
+    <tbody>{% for x in attivita %}<tr><td><div class="fw-medium">{{ x.titolo }}</div>{% if x.obiettivo %}<div class="small text-secondary">Obiettivo: {{ x.obiettivo }}</div>{% endif %}{% if x.dopo %}<div class="small text-secondary">Dopo: {{ x.dopo }}</div>{% endif %}{% if x.descrizione %}<div class="small">{{ x.descrizione|linebreaksbr }}</div>{% endif %}</td>
+      <td class="small text-nowrap">{{ x.inizio|date:"d/m/Y" }} – {{ x.fine|date:"d/m/Y" }}</td><td class="small">{{ x.responsabile|default:"—" }}</td>
+      <td class="text-end text-nowrap">{% if modificabile %}<a class="btn btn-sm" href="?modifica=attivita:{{ x.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_attivita"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere l&#x27;attività?">Togli</button></form>{% endif %}</td></tr>{% empty %}<tr><td colspan="4" class="text-secondary">Nessuna attività.</td></tr>{% endfor %}</tbody>
+  </table></div></div></div>
+  {% if modificabile %}<div class="col-lg-5"><div class="card"><div class="card-header"><h3 class="card-title">Attività</h3></div><div class="card-body">{% with f=moduli.attivita %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_attivita">{% if modifica and modifica.0 == "attivita" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "attivita" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}<p class="small text-secondary mt-2 mb-0">Le attività compaiono nel calendario. «Dopo l'attività» indica da quale dipende: deve iniziare dopo la sua fine.</p></div></div></div>{% endif %}
+</div>
+{% endblock %}

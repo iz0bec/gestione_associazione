@@ -9,6 +9,7 @@
 {% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
 {% block azioni %}{% if perms.progetti.change_progetto and progetto.aperto %}<a class="btn" href="{% url 'progetti:progetto_modifica' progetto.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}{% endblock %}
 {% block contenuto %}
+{% include "progetti/_schede.html" %}
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card mb-3"><div class="card-body">

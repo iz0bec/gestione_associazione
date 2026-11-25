@@ -18,6 +18,11 @@ urlpatterns = [
     path("nuovo/", views.ProgettoNuovoView.as_view(), name="progetto_nuovo"),
     path("<int:pk>/", views.ProgettoView.as_view(), name="progetto"),
     path("<int:pk>/modifica/", views.ProgettoModificaView.as_view(), name="progetto_modifica"),
+    path(
+        "<int:pk>/progettazione/<str:sezione>/",
+        views.ProgettazioneView.as_view(),
+        name="progettazione",
+    ),
     path("<int:pk>/<str:azione>/", views.ProgettoAzioneView.as_view(), name="progetto_azione"),
     path("idee/", views.IdeeView.as_view(), name="idee"),
     path("idee/nuova/", views.IdeaNuovaView.as_view(), name="idea_nuova"),

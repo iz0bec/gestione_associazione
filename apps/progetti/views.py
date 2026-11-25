@@ -8,6 +8,8 @@
 # * SPDX-License-Identifier: CC0-1.0
 # ******************************************************
 
+from datetime import timedelta
+
 from django.contrib import messages
 from django.db.models import Q
 from django.http import FileResponse, Http404
@@ -23,34 +25,51 @@ from . import servizi
 from .forms import (
     ESITI,
     AllegatoForm,
+    AttivitaForm,
     AvvioForm,
     BandoForm,
     CandidaForm,
     CriterioForm,
     FinalitaForm,
+    FinanziamentoForm,
     FonteForm,
     IdeaForm,
+    IndicatoreForm,
+    LimiteForm,
     MembroForm,
+    ObiettivoForm,
     ParolaForm,
+    PartnerForm,
     PrioritaForm,
     ProgettoForm,
+    QuadroForm,
     RequisitoForm,
     ScadenzaForm,
+    SpeseGeneraliForm,
     StatoForm,
+    VoceForm,
 )
 from .models import (
     Allegato,
+    Attivita,
     Bando,
     BandoProposto,
+    Categoria,
     CriterioValutazione,
     FinalitaStatutaria,
     FonteBandi,
+    FonteFinanziamento,
     Idea,
+    Indicatore,
+    LimiteCategoria,
     Membro,
+    Obiettivo,
     ParolaChiave,
+    Partner,
     Progetto,
     Requisito,
     Scadenza,
+    VoceCosto,
 )
 from .servizi import OperazioneNonValida
 
@@ -553,7 +572,7 @@ class BandoView(PermessoMixin, View):
             "riepilogo": requisiti.riepilogo(bando),
             "progetti": bando.progetti.select_related("responsabile"),
             "requisito_form": RequisitoForm(), "candida_form": CandidaForm(bando=bando),
-            "stati": Bando.Stato.choices, "esiti": ESITI,
+            "stati": Bando.Stato.choices, "esiti": ESITI, "categorie": Categoria.choices,
         })  # fmt: skip
 
 
@@ -579,6 +598,14 @@ class BandoAzioneView(PermessoMixin, View):
                 r = get_object_or_404(Requisito, pk=p.get("requisito"), bando=bando)
                 servizi.indica_esito(r, request.user, esito=p.get("esito", ""),
                                      nota=p.get("nota", ""))  # fmt: skip
+            elif azione == "limite":
+                form = LimiteForm(p)
+                if not form.is_valid():
+                    raise OperazioneNonValida("Indicare categoria e percentuale (0-100).")
+                servizi.imposta_limite(bando, request.user, **form.cleaned_data)
+            elif azione == "togli_limite":
+                limite = get_object_or_404(LimiteCategoria, pk=p.get("limite"), bando=bando)
+                servizi.togli_limite(limite, request.user)
             elif azione == "togli_requisito":
                 r = get_object_or_404(Requisito, pk=p.get("requisito"), bando=bando)
                 servizi.togli_requisito(r, request.user)
@@ -781,3 +808,138 @@ class FontiView(PermessoMixin, View):
             n = raccolta.aggiungi_parole_suggerite(request.user)
             messages.success(request, f"Parole aggiunte: {n}.")
         return redirect("progetti:fonti")
+
+
+# --- progettazione (P4) --------------------------------------------------------------------------
+
+
+class ProgettazioneView(PermessoMixin, View):
+    """Quadro, cronoprogramma, partner e piano economico del progetto (una pagina per sezione)."""
+
+    permission_required = "progetti.view_progetto"
+    SEZIONI = {
+        "quadro": ("Quadro del progetto", ["quadro", "obiettivo", "indicatore"]),
+        "cronoprogramma": ("Attività e cronoprogramma", ["attivita"]),
+        "partner": ("Partner", ["partner"]),
+        "piano": ("Piano economico", ["voce", "fonte", "spese"]),
+    }
+    TIPI = {  # tipo: (modulo, modello, sezione) - modello None = campi del progetto
+        "quadro": (QuadroForm, None, "quadro"),
+        "obiettivo": (ObiettivoForm, Obiettivo, "quadro"),
+        "indicatore": (IndicatoreForm, Indicatore, "quadro"),
+        "attivita": (AttivitaForm, Attivita, "cronoprogramma"),
+        "partner": (PartnerForm, Partner, "partner"),
+        "voce": (VoceForm, VoceCosto, "piano"),
+        "fonte": (FinanziamentoForm, FonteFinanziamento, "piano"),
+        "spese": (SpeseGeneraliForm, None, "piano"),
+    }
+
+    def _modulo(self, tipo, progetto, dati=None, istanza=None):
+        classe, modello, _ = self.TIPI[tipo]
+        extra = {"progetto": progetto} if classe in (IndicatoreForm, AttivitaForm) else {}
+        if modello is None:
+            istanza = progetto
+        return classe(dati, instance=istanza, prefix=tipo, **extra)
+
+    def _istanza(self, tipo, progetto, pk):
+        modello = self.TIPI[tipo][1]
+        return get_object_or_404(modello, pk=pk, progetto=progetto) if pk and modello else None
+
+    def _render(self, request, progetto, sezione, legato=None, modifica=None):
+        from . import piano
+
+        titolo, tipi = self.SEZIONI[sezione]
+        moduli = {}
+        for tipo in tipi:
+            if legato and legato.prefix == tipo:
+                moduli[tipo] = legato
+            else:
+                istanza = modifica[1] if modifica and modifica[0] == tipo else None
+                moduli[tipo] = self._modulo(tipo, progetto, istanza=istanza)
+        ctx = {
+            "progetto": progetto, "sezione": sezione, "titolo": titolo, "moduli": moduli,
+            "modifica": modifica, "sezioni": [(k, v[0]) for k, v in self.SEZIONI.items()],
+            "modificabile": request.user.has_perm("progetti.gestisci_progetti")
+            and servizi.modificabile(progetto, sezione),
+        }  # fmt: skip
+        if sezione == "quadro":
+            ctx["obiettivi"] = progetto.obiettivi.prefetch_related("indicatori")
+            ctx["senza_obiettivo"] = progetto.indicatori.filter(obiettivo__isnull=True)
+        elif sezione == "cronoprogramma":
+            ctx["attivita"] = progetto.attivita.select_related("responsabile", "dopo", "obiettivo")
+            ctx["gantt"] = gantt(ctx["attivita"])
+        elif sezione == "partner":
+            ctx["partner"] = progetto.partner.select_related("soggetto")
+        else:
+            ctx["piano"] = piano.calcola(progetto)
+            ctx["bando"] = progetto.bando
+        return render(request, f"progetti/progettazione_{sezione}.html", ctx)
+
+    def get(self, request, pk, sezione):
+        if sezione not in self.SEZIONI:
+            raise Http404
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        modifica = None
+        if valore := request.GET.get("modifica"):
+            tipo, _, voce = valore.partition(":")
+            if tipo in self.SEZIONI[sezione][1] and voce.isdigit():
+                modifica = (tipo, self._istanza(tipo, progetto, int(voce)))
+        return self._render(request, progetto, sezione, modifica=modifica)
+
+    def post(self, request, pk, sezione):
+        if sezione not in self.SEZIONI or not request.user.has_perm("progetti.gestisci_progetti"):
+            raise Http404
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        azione, _, tipo = request.POST.get("azione", "").partition("_")
+        if tipo not in self.SEZIONI[sezione][1]:
+            raise Http404
+        istanza = self._istanza(tipo, progetto, request.POST.get("pk"))
+        try:
+            if azione == "togli" and istanza is not None:
+                servizi.togli_da_progetto(istanza, request.user, sezione)
+            elif azione == "salva":
+                form = self._modulo(tipo, progetto, request.POST, istanza)
+                if not form.is_valid():
+                    modifica = (tipo, istanza) if istanza else None
+                    return self._render(request, progetto, sezione, legato=form, modifica=modifica)
+                servizi.salva_in_progetto(progetto, form, request.user, sezione)
+                messages.success(request, "Salvato.")
+            else:
+                raise Http404
+        except OperazioneNonValida as e:
+            messages.error(request, str(e))
+        return redirect("progetti:progettazione", pk=progetto.pk, sezione=sezione)
+
+
+def gantt(attivita, larghezza=1000, riga=28):
+    """Coordinate per il diagramma a barre (SVG, senza stili in linea)."""
+    attivita = list(attivita)
+    if not attivita:
+        return None
+    inizio = min(a.inizio for a in attivita)
+    fine = max(a.fine for a in attivita)
+    giorni = max((fine - inizio).days + 1, 1)
+
+    def x(data):
+        return round((data - inizio).days * larghezza / giorni, 1)
+
+    righe = []
+    for i, a in enumerate(attivita):
+        righe.append({
+            "a": a, "y": i * riga + 24, "x": x(a.inizio),
+            "w": max(round(((a.fine - a.inizio).days + 1) * larghezza / giorni, 1), 3),
+        })  # fmt: skip
+    mesi, giorno = [], inizio.replace(day=1)
+    while giorno <= fine:
+        if giorno >= inizio:
+            mesi.append({"x": x(giorno), "etichetta": giorno.strftime("%m/%y")})
+        giorno = (giorno.replace(day=28) + timedelta(days=4)).replace(day=1)
+    collegamenti = []
+    posizioni = {r["a"].pk: r for r in righe}
+    for r in righe:
+        if r["a"].dopo_id in posizioni:
+            p = posizioni[r["a"].dopo_id]
+            collegamenti.append({"x1": p["x"] + p["w"], "y1": p["y"] + 9, "x2": r["x"],
+                                 "y2": r["y"] + 9})  # fmt: skip
+    return {"righe": righe, "mesi": mesi, "collegamenti": collegamenti, "larghezza": larghezza,
+            "altezza": len(righe) * riga + 30}  # fmt: skip

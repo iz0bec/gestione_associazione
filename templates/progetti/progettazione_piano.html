@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Piano economico del progetto con i controlli dei limiti del bando
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Costi</h3><div class="card-actions fw-bold">€ {{ piano.totale_costi|floatformat:"2g" }}</div></div>
+      <div class="table-responsive"><table class="table table-vcenter card-table">
+        <thead><tr><th>Voce</th><th class="text-end">Quantità</th><th class="text-end">Unitario</th><th class="text-end">Importo</th><th></th></tr></thead>
+        <tbody>{% for cat, etichetta, voci, totale in piano.categorie %}<tr class="bg-body-tertiary"><td colspan="3" class="fw-medium">{{ etichetta }}{% if cat == "volontariato" %} <span class="badge bg-teal-lt">in natura</span>{% endif %}</td><td class="text-end fw-medium">€ {{ totale|floatformat:"2g" }}</td><td></td></tr>
+          {% for x in voci %}<tr><td>{{ x.descrizione }}</td><td class="text-end">{{ x.quantita|floatformat:"-2" }} {{ x.unita }}</td><td class="text-end">€ {{ x.costo_unitario|floatformat:"2g" }}</td><td class="text-end">€ {{ x.importo|floatformat:"2g" }}</td><td class="text-end text-nowrap">{% if modificabile %}<a class="btn btn-sm" href="?modifica=voce:{{ x.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_voce"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere la voce?">Togli</button></form>{% endif %}</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="5" class="text-secondary">Nessuna voce di costo.</td></tr>{% endfor %}
+        {% if piano.spese_generali %}<tr><td colspan="3">Spese generali ({{ progetto.spese_generali|floatformat:"-2" }}% dei costi diretti)</td><td class="text-end">€ {{ piano.spese_generali|floatformat:"2g" }}</td><td></td></tr>{% endif %}</tbody>
+      </table></div>
+    </div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Coperture</h3><div class="card-actions fw-bold">€ {{ piano.totale_fonti|floatformat:"2g" }}</div></div>
+      <div class="list-group list-group-flush">
+        {% for x in piano.fonti %}<div class="list-group-item d-flex gap-2"><div class="flex-fill">{{ x.get_tipo_display }}{% if x.descrizione %} <span class="text-secondary">· {{ x.descrizione }}</span>{% endif %}</div><div>€ {{ x.importo|floatformat:"2g" }}</div>{% if modificabile %}<a class="btn btn-sm" href="?modifica=fonte:{{ x.pk }}">Modifica</a> <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_fonte"><button class="btn btn-sm btn-ghost-danger" type="submit" name="pk" value="{{ x.pk }}" data-conferma="Togliere la copertura?">Togli</button></form>{% endif %}</div>{% endfor %}
+        {% if piano.partner %}<div class="list-group-item d-flex"><div class="flex-fill">Cofinanziamento dei partner <span class="text-secondary">· dalle schede dei <a href="{% url 'progetti:progettazione' progetto.pk 'partner' %}">partner</a></span></div><div>€ {{ piano.partner|floatformat:"2g" }}</div></div>{% endif %}
+        {% if piano.natura %}<div class="list-group-item d-flex"><div class="flex-fill">Cofinanziamento in natura <span class="text-secondary">· volontariato valorizzato</span></div><div>€ {{ piano.natura|floatformat:"2g" }}</div></div>{% endif %}
+        {% if not piano.fonti and not piano.partner and not piano.natura %}<div class="list-group-item text-secondary">Nessuna copertura.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Controlli</h3></div><div class="list-group list-group-flush">
+      {% for c in piano.controlli %}<div class="list-group-item d-flex gap-2"><i class="ti {% if c.esito == 'ok' %}ti-circle-check text-green{% elif c.esito == 'errore' %}ti-circle-x text-red{% else %}ti-info-circle text-orange{% endif %} fs-2" aria-hidden="true"></i><div>{{ c.testo }}</div></div>{% endfor %}
+    </div>{% if bando %}<div class="card-footer small">Limiti dal bando <a href="{{ bando.get_absolute_url }}">{{ bando }}</a>.</div>{% endif %}</div>
+    {% if modificabile %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Voce di costo</h3></div><div class="card-body">{% with f=moduli.voce %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_voce">{% if modifica and modifica.0 == "voce" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "voce" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}<p class="small text-secondary mt-2 mb-0">Il volontariato valorizzato (ore × tariffa) è cofinanziamento in natura.</p></div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Copertura</h3></div><div class="card-body">{% with f=moduli.fonte %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_fonte">{% if modifica and modifica.0 == "fonte" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "fonte" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}</div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Spese generali</h3></div><div class="card-body">{% with f=moduli.spese %}<form method="post" novalidate class="">{% csrf_token %}<input type="hidden" name="azione" value="salva_spese">{% if modifica and modifica.0 == "spese" and modifica.1 %}<input type="hidden" name="pk" value="{{ modifica.1.pk }}"><h4>Modifica</h4>{% endif %}{{ f }}<div class="d-flex justify-content-between">{% if modifica and modifica.0 == "spese" %}<a class="btn" href="?">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form>{% endwith %}</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
