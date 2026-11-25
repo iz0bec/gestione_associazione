@@ -236,6 +236,39 @@ affidamenti, personale della Regione, imprese, libri di testo, concorsi, master)
 La raccolta gira ogni notte con il pianificatore (`manage.py raccogli_bandi`) e avvisa chi gestisce i
 bandi, con il tipo di avviso *Scadenze dei bandi*, quando ci sono novità.
 
+## Assistente (connettore MCP)
+
+Il gestionale **non contiene IA**. Il **connettore MCP** (Model Context Protocol) permette a un assistente
+scelto dall'associazione di **leggere** idee, bandi, progetti, finalità e criteri e di aiutare a
+confrontare e motivare le valutazioni: le **decisioni restano alle persone**. Si consiglia un **modello
+locale con Ollama**: i dati restano nella rete dell'associazione.
+
+- È **spento di norma**: lo attiva l'amministratore di sistema in *Progetti → Assistente (MCP)*.
+- Ognuno crea i propri **token personali** (mostrati una volta sola, si possono revocare e far scadere):
+  il token vale con i **permessi del suo utente**, nel database resta solo l'impronta.
+- **Sola lettura**: dati dell'associazione (numeri aggregati: soci attivi e in regola, RUNTS, PEC,
+  rendiconto), finalità e criteri, elenco e scheda di idee, bandi (con i requisiti verificati) e
+  progetti (quadro, attività, partner, piano con i controlli, proposta, verifica della candidatura),
+  bandi da vagliare.
+- **Nessun dato personale dei soci**: le persone fisiche compaiono come «persona (riservato)», i nomi
+  scritti a mano nelle fonti delle idee non si espongono, i responsabili delle attività nemmeno.
+- **Commenti firmati «[Assistente]»** nella discussione di idee e progetti solo se l'amministratore li
+  ammette **e** il token li consente; non cambiano nient'altro.
+- Ogni chiamata è nel **registro attività** (strumento e argomenti).
+
+Collegamento (indirizzo `…/progetti/mcp/`, trasporto *MCP Streamable HTTP*, autenticazione *Bearer*):
+
+- **Ollama con Open WebUI** (0.6.31 o successiva): *Impostazioni di amministrazione → External Tools →
+  aggiungi*, tipo **MCP (Streamable HTTP)**, URL del connettore, autenticazione **Bearer** con il token;
+  serve un modello con supporto agli strumenti.
+- **Ollama con ollama-mcp-bridge**: nel file di configurazione un server con `url` e
+  `headers: {"Authorization": "Bearer …"}`.
+- **Claude Code**: `claude mcp add --transport http gestionale <indirizzo> --header "Authorization: Bearer <token>"`.
+- **Claude Desktop**: con `npx mcp-remote <indirizzo> --header "Authorization: Bearer <token>"`.
+
+La pagina mostra gli stessi esempi con l'indirizzo dell'installazione. Il client deve raggiungere il
+gestionale in HTTPS con un certificato che riconosce.
+
 ## Chi può fare cosa
 
 Tutti gli organi consultano idee, progetti e bandi, propongono idee, le valutano e commentano.

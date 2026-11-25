@@ -35,6 +35,12 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   verifica prima dell'invio, proposta in PDF, piano economico in Excel, lettere e dichiarazioni dai
   modelli di stampa (nuovi segnaposto `progetto`, `codice_progetto`, `bando`, `finanziatore`,
   `ruolo_partner`), protocollo in uscita della candidatura verso il finanziatore e spedizione PEC.
+- **Assistente (connettore MCP)** (ramo `progetti`): endpoint MCP Streamable HTTP in `/progetti/mcp/`
+  per assistenti scelti dall'associazione, consigliato **Ollama** (Open WebUI, ollama-mcp-bridge), anche
+  Claude Code e Claude Desktop; spento di norma, token personali con i permessi dell'utente (solo
+  impronta nel database, revoca e scadenza), strumenti in sola lettura su idee, bandi, progetti,
+  finalità e criteri, nessun dato personale dei soci, commenti «[Assistente]» solo con doppio consenso,
+  ogni chiamata nel registro attività.
 
 ## [1.0.100] - 2026-11-25
 

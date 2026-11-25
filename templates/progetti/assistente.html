@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Connettore MCP per l'assistenza alle valutazioni: attivazione e token personali
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Assistente (MCP){% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a></div>{% endblock %}
+{% block titolo_pagina %}Assistente (MCP){% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-body">
+      <p>Il gestionale <strong>non contiene IA</strong>. Il connettore MCP permette a un assistente scelto da voi (un modello locale con <strong>Ollama</strong>, o servizi come Claude) di <strong>leggere</strong> idee, bandi con i requisiti, progetti, finalità e criteri, per aiutarvi a confrontare e motivare le valutazioni. <strong>Le decisioni restano vostre.</strong></p>
+      <ul class="mb-0">
+        <li>L'assistente vede solo ciò che vedete voi: il token vale con i <strong>vostri permessi</strong>.</li>
+        <li><strong>Nessun dato personale dei soci</strong>: solo numeri aggregati; le persone fisiche compaiono come «persona (riservato)».</li>
+        <li>Sola lettura; i <strong>commenti firmati «[Assistente]»</strong> solo se ammessi dall'amministratore e dal token.</li>
+        <li>Ogni chiamata è nel <strong>registro attività</strong>. Con un modello locale (Ollama) i dati restano nella vostra rete; con un servizio esterno vanno a quel servizio: sceglietelo secondo le regole dell'associazione.</li>
+      </ul>
+    </div></div>
+    {% if nuovo %}<div class="alert alert-success">
+      <div class="fw-bold mb-1">Token creato: copiatelo ora, non sarà più mostrato.</div>
+      <input class="form-control font-monospace" value="{{ nuovo }}" readonly aria-label="Token">
+    </div>{% endif %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Come collegare un assistente</h3></div><div class="card-body">
+      <p class="small">Indirizzo <code class="text-break">{{ indirizzo }}</code>, trasporto <strong>MCP Streamable HTTP</strong>, autenticazione <strong>Bearer</strong> con il token. {% if not nuovo %}Al posto di <code>TOKEN</code> va il token creato qui sotto.{% endif %}</p>
+      <h4>Ollama con Open WebUI (consigliato: i dati restano in casa)</h4>
+      <p class="small">Modelli locali di Ollama con supporto agli strumenti (per esempio Qwen, Llama 3.1 o successivi, Mistral). In Open WebUI (versione 0.6.31 o successiva): <em>Impostazioni di amministrazione → External Tools → aggiungi</em>, tipo <strong>MCP (Streamable HTTP)</strong> (non OpenAPI), URL qui sopra, autenticazione <strong>Bearer</strong> con il token nel campo Key; poi abilitare lo strumento nella chat o nel modello.</p>
+      <h4>Ollama con ollama-mcp-bridge</h4>
+      <pre class="small">{ "mcpServers": { "gestionale": { "url": "{{ indirizzo }}",
+  "headers": { "Authorization": "Bearer {% if nuovo %}{{ nuovo }}{% else %}TOKEN{% endif %}" } } } }</pre>
+      <h4>Claude Code</h4>
+      <pre class="small">claude mcp add --transport http gestionale {{ indirizzo }} --header "Authorization: Bearer {% if nuovo %}{{ nuovo }}{% else %}TOKEN{% endif %}"</pre>
+      <h4>Claude Desktop</h4>
+      <p class="small mb-1">Nel file <code>claude_desktop_config.json</code> (serve Node.js):</p>
+      <pre class="small mb-0">{ "mcpServers": { "gestionale": { "command": "npx",
+  "args": ["mcp-remote", "{{ indirizzo }}", "--header", "Authorization: Bearer {% if nuovo %}{{ nuovo }}{% else %}TOKEN{% endif %}"] } } }</pre>
+      <p class="small text-secondary mt-2 mb-0">Il server del client deve raggiungere il gestionale in HTTPS con un certificato che riconosce (in rete interna: la CA interna installata sul client).</p>
+    </div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">I miei token</h3></div>
+      <div class="list-group list-group-flush">{% for t in token %}<div class="list-group-item d-flex gap-2 align-items-center"><div class="flex-fill">
+        <span class="fw-medium{% if not t.valido %} text-secondary text-decoration-line-through{% endif %}">{{ t.nome }}</span> <code>{{ t.prefisso }}…</code>{% if t.commenti %} <span class="badge bg-blue-lt">commenti</span>{% endif %}
+        <div class="small text-secondary">creato il {{ t.creato_il|date:"d/m/Y" }}{% if t.scade_il %} · scade il {{ t.scade_il|date:"d/m/Y" }}{% endif %}{% if t.ultimo_uso %} · usato il {{ t.ultimo_uso|date:"d/m/Y H:i" }}{% endif %}{% if t.revocato_il %} · revocato il {{ t.revocato_il|date:"d/m/Y" }}{% endif %}</div></div>
+        {% if t.valido %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="revoca"><button class="btn btn-sm btn-ghost-danger" type="submit" name="token" value="{{ t.pk }}" data-conferma="Revocare il token? Il client che lo usa smetterà di funzionare.">Revoca</button></form>{% endif %}
+      </div>{% empty %}<div class="list-group-item text-secondary">Nessun token.</div>{% endfor %}</div>
+      <div class="card-body border-top"><form method="post" class="row g-2">{% csrf_token %}<input type="hidden" name="azione" value="crea">
+        <div class="col-md-6"><input class="form-control" name="nome" maxlength="100" placeholder="Nome (es. Claude sul portatile)" aria-label="Nome" required></div>
+        <div class="col-md-4"><input class="form-control" type="date" name="scade_il" aria-label="Scade il" title="Scadenza (facoltativa)"></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Crea</button></div>
+        {% if connettore.commenti_ammessi %}<div class="col-12"><label class="form-check"><input class="form-check-input" type="checkbox" name="commenti" value="1"><span class="form-check-label">Può aggiungere commenti firmati «[Assistente]»</span></label></div>{% endif %}
+      </form></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Connettore</h3><div class="card-actions">{% if connettore.attivo %}<span class="badge bg-green-lt">attivo</span>{% else %}<span class="badge bg-secondary-lt">spento</span>{% endif %}</div></div><div class="card-body">
+      <div class="mb-2 small">Indirizzo: <code class="text-break">{{ indirizzo }}</code></div>
+      {% if perms.progetti.gestisci_mcp %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="impostazioni">
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="attivo" value="1"{% if connettore.attivo %} checked{% endif %}><span class="form-check-label">Connettore attivo</span></label>
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="commenti_ammessi" value="1"{% if connettore.commenti_ammessi %} checked{% endif %}><span class="form-check-label">Commenti dell'assistente ammessi</span></label>
+        <button class="btn mt-2" type="submit">Salva</button></form>
+      {% elif not connettore.attivo %}<p class="text-secondary mb-0">Il connettore è spento: lo attiva l'amministratore di sistema.</p>{% endif %}
+    </div></div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Strumenti</h3></div><div class="list-group list-group-flush">
+      {% for nome, s in strumenti.items %}<div class="list-group-item"><code>{{ nome }}</code>{% if s.scrive %} <span class="badge bg-orange-lt">scrive</span>{% endif %}<div class="small text-secondary">{{ s.descrizione }}</div></div>{% endfor %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

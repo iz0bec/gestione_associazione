@@ -56,6 +56,7 @@ from .models import (
     Bando,
     BandoProposto,
     Categoria,
+    ConnettoreMCP,
     CriterioValutazione,
     FinalitaStatutaria,
     FonteBandi,
@@ -72,6 +73,7 @@ from .models import (
     Scadenza,
     SezioneBando,
     TestoSezione,
+    TokenMCP,
     VoceCosto,
 )
 from .servizi import OperazioneNonValida
@@ -1213,3 +1215,62 @@ class AzioneCandidaturaView(PermessoMixin, View):
         ) as e:
             messages.error(request, " ".join(getattr(e, "messages", None) or [str(e)]))
         return redirect("progetti:candidatura", pk=progetto.pk)
+
+
+# --- connettore MCP ------------------------------------------------------------------------------
+
+
+class AssistenteView(PermessoMixin, View):
+    """Connettore MCP: attivazione (amministratore) e token personali (mostrati una volta)."""
+
+    permission_required = "progetti.usa_mcp"
+
+    def get(self, request):
+        from . import mcp
+
+        nuovo = request.session.pop("token_mcp_nuovo", None)
+        return render(request, "progetti/assistente.html", {
+            "connettore": ConnettoreMCP.corrente(),
+            "token": TokenMCP.objects.filter(utente=request.user),
+            "nuovo": nuovo,
+            "indirizzo": request.build_absolute_uri(reverse("progetti:mcp")),
+            "strumenti": mcp.STRUMENTI,
+        })  # fmt: skip
+
+    def post(self, request):
+        from apps.core.audit import Azione, registra
+
+        from . import mcp
+
+        p, azione = request.POST, request.POST.get("azione")
+        connettore = ConnettoreMCP.corrente()
+        if azione == "impostazioni":
+            if not request.user.has_perm("progetti.gestisci_mcp"):
+                raise Http404
+            connettore.attivo = p.get("attivo") == "1"
+            connettore.commenti_ammessi = p.get("commenti_ammessi") == "1"
+            connettore.save()
+            registra(
+                Azione.MODIFICA,
+                connettore,
+                utente=request.user,
+                attivo=connettore.attivo,
+                commenti=connettore.commenti_ammessi,
+            )
+            messages.success(request, "Impostazioni del connettore salvate.")
+        elif azione == "crea":
+            scade = p.get("scade_il") or None
+            try:
+                scade = timezone.datetime.fromisoformat(scade).date() if scade else None
+            except ValueError:
+                messages.error(request, "Data di scadenza non valida.")
+                return redirect("progetti:assistente")
+            token, valore = mcp.crea_token(
+                request.user, p.get("nome", ""), commenti=p.get("commenti") == "1", scade_il=scade
+            )
+            request.session["token_mcp_nuovo"] = valore
+        elif azione == "revoca":
+            token = get_object_or_404(TokenMCP, pk=p.get("token"), utente=request.user)
+            mcp.revoca(token, request.user)
+            messages.success(request, f"Token «{token.nome}» revocato.")
+        return redirect("progetti:assistente")

@@ -149,6 +149,9 @@ poter scrivere comunicazioni.
 | Amministratore di sistema, Presidente, Segretario, **Progettista** | sì | sì |
 | Tesoriere, Presidente di sezione, Addetto protocollo, Consigliere, Revisore | sì | - |
 
+Token personali per l'**assistente MCP**: chi gestisce i progetti (Amministratore, Presidente,
+Segretario, Progettista); attivare il connettore: solo l'**Amministratore di sistema**.
+
 Il ruolo **Progettista** si abbina ad altri ruoli: dà la gestione dei progetti e la consultazione di
 anagrafica, protocollo, organi e calendario.
 

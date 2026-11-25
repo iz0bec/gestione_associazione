@@ -9,7 +9,7 @@
 
 from django.urls import path
 
-from . import views
+from . import mcp, views
 
 app_name = "progetti"
 
@@ -48,6 +48,8 @@ urlpatterns = [
     path("bandi/<int:pk>/", views.BandoView.as_view(), name="bando"),
     path("bandi/<int:pk>/modifica/", views.BandoModificaView.as_view(), name="bando_modifica"),
     path("bandi/<int:pk>/<str:azione>/", views.BandoAzioneView.as_view(), name="bando_azione"),
+    path("assistente/", views.AssistenteView.as_view(), name="assistente"),
+    path("mcp/", mcp.endpoint, name="mcp"),
     path("allegati/<int:pk>/", views.AllegatoView.as_view(), name="allegato"),
     path("finalita/", views.FinalitaView.as_view(), name="finalita"),
     path("criteri/", views.CriteriView.as_view(), name="criteri"),

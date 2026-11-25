@@ -224,6 +224,7 @@ PROGETTI_GESTIONE = [
     "progetti.add_bando",
     "progetti.change_bando",
     "progetti.gestisci_bandi",
+    "progetti.usa_mcp",
 ]
 
 RUOLI = {
@@ -267,6 +268,7 @@ RUOLI = {
         *PATRIMONIO_GESTIONE,
         *DOCUMENTI_GESTIONE,
         *PROGETTI_GESTIONE,
+        "progetti.gestisci_mcp",
     ],
     "Presidente": [
         "organi.gestisci_firme",

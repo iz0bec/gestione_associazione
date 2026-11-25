@@ -870,3 +870,65 @@ class Allegato(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class ConnettoreMCP(models.Model):
+    """Impostazioni del connettore MCP (una riga): spento di norma."""
+
+    attivo = models.BooleanField(default=False)
+    commenti_ammessi = models.BooleanField(
+        "commenti dell'assistente ammessi",
+        default=False,
+        help_text="I token con il permesso possono aggiungere commenti firmati «Assistente».",
+    )
+    modificato_il = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "connettore MCP"
+        verbose_name_plural = "connettore MCP"
+        permissions = [
+            ("usa_mcp", "Creare token personali per il connettore MCP"),
+            ("gestisci_mcp", "Attivare il connettore MCP"),
+        ]
+
+    def __str__(self):
+        return "Connettore MCP"
+
+    @classmethod
+    def corrente(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class TokenMCP(models.Model):
+    """Token personale per un client MCP: vale con i permessi dell'utente; nel database c'è solo
+    l'impronta."""
+
+    utente = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="token_mcp"
+    )
+    nome = models.CharField(max_length=100, help_text="Es. «Claude sul portatile».")
+    prefisso = models.CharField(max_length=16, editable=False)
+    impronta = models.CharField(max_length=64, unique=True, editable=False)
+    commenti = models.BooleanField(
+        "può aggiungere commenti", default=False, help_text="Solo se ammessi dall'amministratore."
+    )
+    creato_il = models.DateTimeField(auto_now_add=True)
+    scade_il = models.DateField("scade il", null=True, blank=True)
+    ultimo_uso = models.DateTimeField(null=True, blank=True, editable=False)
+    revocato_il = models.DateTimeField(null=True, blank=True, editable=False)
+
+    class Meta:
+        verbose_name = "token MCP"
+        verbose_name_plural = "token MCP"
+        ordering = ["-creato_il"]
+
+    def __str__(self):
+        return f"{self.nome} ({self.prefisso}…)"
+
+    @property
+    def valido(self):
+        from django.utils import timezone
+
+        scaduto = self.scade_il is not None and self.scade_il < timezone.localdate()
+        return self.revocato_il is None and not scaduto and self.utente.is_active
