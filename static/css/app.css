@@ -145,6 +145,15 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
   padding: 0.25rem 0.75rem 0.125rem;
 }
 .navbar-vertical .menu-gruppo-titolo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -153,4 +162,18 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
 }
 @media (max-width: 991.98px) {
   .navbar-vertical .menu-gruppo { margin-top: 0.5rem; }
+}
+.navbar-vertical .menu-gruppo-titolo:hover,
+.navbar-vertical .menu-gruppo-titolo:focus-visible {
+  opacity: 1;
+}
+.navbar-vertical .menu-gruppo-titolo .ti {
+  font-size: 0.875rem;
+  transition: transform 0.15s ease;
+}
+.navbar-vertical .menu-gruppo-titolo[aria-expanded="false"] .ti {
+  transform: rotate(-90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .navbar-vertical .menu-gruppo-titolo .ti { transition: none; }
 }
