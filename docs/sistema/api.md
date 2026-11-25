@@ -85,6 +85,12 @@ Due installazioni nella stessa rete si chiamano direttamente, senza passare dal 
 3. Sulla controparte, in *Collegamenti API*, indicare l'**indirizzo interno** con la modalità di
    verifica: *CA interna* (radice della CA) o *impronta*.
 
+L'indirizzo interno deve raggiungere **l'HTTPS del gestionale** (es. `https://nome.lan:8003`, la
+porta di `installa.sh --porta`), non un proxy locale sulla porta 443 che per quel nome serve solo
+HTTP: in quel caso la connessione fallisce con «unrecognized name» e ogni chiamata ripiega
+sull'indirizzo pubblico. La scheda della controparte e il log del pianificatore lo segnalano
+(«raggiunta su … dopo: …»).
+
 Il trasporto in uscita segue queste regole fisse:
 
 - il certificato si verifica sempre;
