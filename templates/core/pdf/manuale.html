@@ -5,7 +5,7 @@
                con le immagini esplicative (docs/operativo + static/img/manuale)
   Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
 {% endcomment %}
-{% block titolo %}Manuale operativo - {{ organizzazione.denominazione }}{% endblock %}
+{% block titolo %}{{ titolo_copertina|default:"Manuale operativo" }} - {{ organizzazione.denominazione }}{% endblock %}
 {% block stile %}
   .copertina { text-align: center; padding-top: 55mm; page-break-after: always; }
   .copertina h1 { font-size: 30pt; margin-bottom: 6pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
@@ -30,15 +30,15 @@
 {% endblock %}
 {% block contenuto %}
 <div class="copertina">
-  <h1>Manuale operativo</h1>
+  <h1>{{ titolo_copertina|default:"Manuale operativo" }}</h1>
   <div class="sotto">{{ organizzazione.denominazione }}</div>
   <div class="dati">Gestione Associazione, versione {{ versione }}<br>aggiornato al {{ oggi|date:"d/m/Y" }}<br>
   Le immagini mostrano dati di esempio.</div>
 </div>
-<div class="indice" id="indice">
+{% if capitoli|length > 1 %}<div class="indice" id="indice">
   <h1>Indice</h1>
   <ol>{% for nome, titolo, html in capitoli %}<li><a href="#capitolo-{{ nome }}">{{ titolo }}</a></li>{% endfor %}</ol>
-</div>
+</div>{% endif %}
 {% for nome, titolo, html in capitoli %}
 <section class="capitolo" id="capitolo-{{ nome }}">{{ html|safe }}</section>
 {% endfor %}
