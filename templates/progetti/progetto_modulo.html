@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modulo di un progetto (nuovo, anche da un'idea, o modifica)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{% if progetto %}{{ progetto }}{% else %}Nuovo progetto{% endif %}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a></div>{% endblock %}
+{% block titolo_pagina %}{% if progetto %}Modifica {{ progetto.codice }}{% else %}Nuovo progetto{% endif %}{% endblock %}
+{% block contenuto %}
+{% if idea %}<div class="alert alert-info">Dall'idea <a href="{{ idea.get_absolute_url }}">{{ idea }}</a>: titolo, sintesi e finalità sono proposti dall'idea; l'idea risulterà approvata e i suoi documenti restano visibili dal progetto.</div>{% endif %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  {% if idea %}<input type="hidden" name="idea" value="{{ idea.pk }}">{% endif %}
+  <div class="card-body">{{ form }}{% if avvio %}<hr>{{ avvio }}<p class="small text-secondary">La delibera del consiglio che avvia la progettazione, se c'è già.</p>{% endif %}</div>
+  <div class="card-footer d-flex justify-content-between"><a class="btn" href="{% if progetto %}{{ progetto.get_absolute_url }}{% elif idea %}{{ idea.get_absolute_url }}{% else %}{% url 'progetti:progetti' %}{% endif %}">Annulla</a><button class="btn btn-primary" type="submit">{% if progetto %}Salva{% else %}Avvia il progetto{% endif %}</button></div>
+</form>
+{% endblock %}

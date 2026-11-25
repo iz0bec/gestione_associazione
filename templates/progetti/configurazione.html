@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Finalità statutarie e criteri di valutazione: elenco e modifica
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:idee' %}">Idee e necessità</a></div>{% endblock %}
+{% block titolo_pagina %}{{ titolo }}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7"><div class="card"><div class="list-group list-group-flush">
+    {% for v in voci %}<a class="list-group-item list-group-item-action{% if v.attiva is False or v.attivo is False %} text-secondary{% endif %}" href="?modifica={{ v.pk }}">{{ v }}{% if v.peso and v.peso > 1 %} <span class="badge bg-blue-lt">peso {{ v.peso }}</span>{% endif %}{% if v.attiva is False or v.attivo is False %} <span class="badge bg-secondary-lt">non attivo</span>{% endif %}{% if v.descrizione %}<div class="small text-secondary">{{ v.descrizione }}</div>{% endif %}</a>
+    {% empty %}<div class="list-group-item text-secondary">Nessuna voce.</div>{% endfor %}
+  </div></div></div>
+  <div class="col-lg-5"><form method="post" class="card" novalidate>{% csrf_token %}
+    <div class="card-header"><h3 class="card-title">{% if modifica %}Modifica «{{ modifica }}»{% else %}Nuova voce{% endif %}</h3></div>
+    {% if modifica %}<input type="hidden" name="pk" value="{{ modifica.pk }}">{% endif %}
+    <div class="card-body">{{ form }}</div>
+    <div class="card-footer d-flex justify-content-between">{% if modifica %}<a class="btn" href="{% url url %}">Nuova</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div>
+  </form></div>
+</div>
+{% endblock %}

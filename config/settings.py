@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.eventi",
     "apps.area",
     "apps.chat",
+    "apps.progetti",
     "apps.migrazione",
     "apps.api",
 ]

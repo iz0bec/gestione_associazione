@@ -142,6 +142,16 @@ poter scrivere comunicazioni.
 | Amministratore di sistema, Presidente, Segretario, Tesoriere | sì | sì |
 | Presidente di sezione, Addetto protocollo, Consigliere, Revisore | sì | - |
 
+### Progetti
+
+| Ruolo | Consulta idee e progetti, propone e valuta idee, commenta | Priorità e stato delle idee, avvia e gestisce i progetti, finalità e criteri |
+|---|---|---|
+| Amministratore di sistema, Presidente, Segretario, **Progettista** | sì | sì |
+| Tesoriere, Presidente di sezione, Addetto protocollo, Consigliere, Revisore | sì | - |
+
+Il ruolo **Progettista** si abbina ad altri ruoli: dà la gestione dei progetti e la consultazione di
+anagrafica, protocollo, organi e calendario.
+
 ### Patrimonio
 
 | Ruolo | Consulta inventario e passaggi | Inserisce, modifica, valuta, presta e registra uscite | Passaggio di consegne |

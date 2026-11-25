@@ -53,6 +53,7 @@ PAGINE_PER_SEZIONE = {
     "calendario": "calendario",
     "eventi": "eventi",
     "chat": "chat",
+    "progetti": "progetti",
     "utenti": "utenti",
     "api": "collegamenti-api",
     "soci:trasferimenti_esterni": "soci#trasferimento-a-unaltra-sezione-collegata",

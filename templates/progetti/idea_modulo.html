@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Modulo di un'idea o necessità (anche da protocollo o posta)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{% if idea %}{{ idea }}{% else %}Nuova idea{% endif %}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:idee' %}">Idee e necessità</a></div>{% endblock %}
+{% block titolo_pagina %}{% if idea %}Modifica {{ idea.codice }}{% else %}Nuova idea o necessità{% endif %}{% endblock %}
+{% block contenuto %}
+{% if protocollo %}<div class="alert alert-info">Nasce dal protocollo <a href="{{ protocollo.get_absolute_url }}">{{ protocollo.segnatura|default:protocollo }}</a>: la fonte esterna resta collegata.</div>{% endif %}
+{% if messaggio %}<div class="alert alert-info">Nasce dal messaggio «{{ messaggio.oggetto }}» della posta da protocollare: resta collegato (il messaggio va comunque protocollato o scartato).</div>{% endif %}
+<form method="post" class="card" novalidate>{% csrf_token %}
+  {% if protocollo %}<input type="hidden" name="protocollo" value="{{ protocollo.pk }}">{% endif %}
+  {% if messaggio %}<input type="hidden" name="messaggio" value="{{ messaggio.pk }}">{% endif %}
+  <div class="card-body">{{ form }}</div>
+  <div class="card-footer d-flex justify-content-between"><a class="btn" href="{% if idea %}{{ idea.get_absolute_url }}{% else %}{% url 'progetti:idee' %}{% endif %}">Annulla</a><button class="btn btn-primary" type="submit">Salva</button></div>
+</form>
+{% endblock %}

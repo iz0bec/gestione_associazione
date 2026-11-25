@@ -1,0 +1,400 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Modelli del modulo Progetti (P1): finalità statutarie, criteri di valutazione,
+# *              idee e necessità (anche da sollecitazioni esterne), valutazioni, progetti con
+# *              stati e storico, gruppo di lavoro, scadenze, commenti e allegati.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+import secrets
+from pathlib import Path
+
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.urls import reverse
+
+from apps.core.models import ModelloBase
+
+SEQ_IDEA = "idea"
+SEQ_PROGETTO = "progetto"
+
+
+def _percorso_allegato(istanza, nome):
+    estensione = Path(nome).suffix.lower()[:10]
+    return f"progetti/allegati/{secrets.token_urlsafe(12)}{estensione}"
+
+
+class FinalitaStatutaria(models.Model):
+    """Una finalità dello statuto, a cui idee e progetti rispondono."""
+
+    codice = models.CharField(max_length=10, help_text="Es. «a» per l'art. 2 lettera a).")
+    titolo = models.CharField(max_length=150, help_text="Breve, per gli elenchi.")
+    testo = models.TextField("testo dello statuto", blank=True)
+    ordine = models.PositiveSmallIntegerField(default=0)
+    attiva = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "finalità statutaria"
+        verbose_name_plural = "finalità statutarie"
+        ordering = ["ordine", "codice"]
+
+    def __str__(self):
+        return f"{self.codice}) {self.titolo}" if self.codice else self.titolo
+
+
+class CriterioValutazione(models.Model):
+    """Criterio con cui si valutano le idee (punteggio da 1 a 5), con il suo peso."""
+
+    nome = models.CharField(max_length=100, unique=True)
+    descrizione = models.CharField(max_length=255, blank=True)
+    peso = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text="Conta nella media pesata (1 = normale).",
+    )
+    ordine = models.PositiveSmallIntegerField(default=0)
+    attivo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "criterio di valutazione"
+        verbose_name_plural = "criteri di valutazione"
+        ordering = ["ordine", "nome"]
+
+    def __str__(self):
+        return self.nome
+
+
+class Idea(ModelloBase):
+    """Idea o necessità da cui può nascere un progetto."""
+
+    class Stato(models.TextChoices):
+        NUOVA = "nuova", "Nuova"
+        IN_VALUTAZIONE = "valutazione", "In valutazione"
+        APPROVATA = "approvata", "Approvata (progetto)"
+        ACCANTONATA = "accantonata", "Accantonata"
+
+    class Fonte(models.TextChoices):
+        INTERNA = "interna", "Interna (soci, organi)"
+        ESTERNA = "esterna", "Esterna (ente, cittadino, altri)"
+
+    class Priorita(models.TextChoices):
+        ALTA = "alta", "Alta"
+        MEDIA = "media", "Media"
+        BASSA = "bassa", "Bassa"
+
+    anno = models.PositiveIntegerField(editable=False)
+    numero = models.PositiveIntegerField(editable=False)
+    titolo = models.CharField(max_length=200)
+    descrizione = models.TextField(help_text="In cosa consiste l'idea.")
+    bisogno = models.TextField(
+        "bisogno", blank=True, help_text="Quale necessità affronta, per chi, perché ora."
+    )
+    destinatari = models.CharField(
+        max_length=255, blank=True, help_text="Es. studenti delle scuole medie, soci anziani."
+    )
+    finalita = models.ManyToManyField(
+        FinalitaStatutaria, blank=True, related_name="idee", verbose_name="finalità statutarie"
+    )
+    costo_stimato = models.DecimalField(
+        "costo stimato", max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    fonte = models.CharField(max_length=10, choices=Fonte.choices, default=Fonte.INTERNA)
+    fonte_soggetto = models.ForeignKey(
+        "anagrafica.Soggetto",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="idee_proposte",
+        verbose_name="proposta da (anagrafica)",
+    )
+    fonte_testo = models.CharField(
+        "proposta da",
+        max_length=255,
+        blank=True,
+        help_text="Chi l'ha sollecitata, se non è in anagrafica (es. «Dirigente dell'istituto X»).",
+    )
+    protocollo = models.ForeignKey(
+        "protocollo.Protocollo",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="idee",
+        editable=False,
+    )
+    messaggio = models.ForeignKey(
+        "protocollo.MessaggioRicevuto",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="idee",
+        editable=False,
+    )
+    proponente = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="idee",
+        editable=False,
+    )
+    stato = models.CharField(max_length=12, choices=Stato.choices, default=Stato.NUOVA)
+    motivo_stato = models.CharField(max_length=255, blank=True, editable=False)
+    priorita = models.CharField("priorità", max_length=6, choices=Priorita.choices, blank=True)
+    delibera_priorita = models.ForeignKey(
+        "organi.Delibera",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="delibera della priorità",
+    )
+
+    class Meta:
+        verbose_name = "idea"
+        verbose_name_plural = "idee"
+        ordering = ["-anno", "-numero"]
+        constraints = [models.UniqueConstraint(fields=["anno", "numero"], name="idea_numero_unico")]
+        permissions = [
+            ("valuta_idea", "Valutare e commentare le idee"),
+            ("gestisci_idee", "Gestire le idee: stato, priorità, trasformazione in progetto"),
+        ]
+
+    def __str__(self):
+        return f"{self.codice} {self.titolo}"
+
+    @property
+    def codice(self):
+        return f"I-{self.anno}-{self.numero:03d}"
+
+    def get_absolute_url(self):
+        return reverse("progetti:idea", args=[self.pk])
+
+    @property
+    def proposta_da(self):
+        if self.fonte_soggetto_id:
+            return self.fonte_soggetto.nome_completo
+        return self.fonte_testo
+
+
+class Valutazione(models.Model):
+    """Valutazione di un'idea da parte di un utente: punteggi per criterio e commento."""
+
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE, related_name="valutazioni")
+    utente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    punteggi = models.JSONField(default=dict, help_text="{id del criterio: punteggio 1-5}")
+    media = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    commento = models.TextField(blank=True)
+    creata_il = models.DateTimeField(auto_now_add=True)
+    modificata_il = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "valutazione"
+        verbose_name_plural = "valutazioni"
+        ordering = ["-modificata_il"]
+        constraints = [
+            models.UniqueConstraint(fields=["idea", "utente"], name="una_valutazione_per_utente")
+        ]
+
+    def __str__(self):
+        return f"Valutazione di {self.utente} su {self.idea.codice}"
+
+
+class Progetto(ModelloBase):
+    """Progetto finalizzato agli scopi statutari, dall'idea alla chiusura."""
+
+    class Stato(models.TextChoices):
+        PROGETTAZIONE = "progettazione", "In progettazione"
+        CANDIDATO = "candidato", "Candidato"
+        FINANZIATO = "finanziato", "Finanziato"
+        NON_FINANZIATO = "non_finanz", "Non finanziato"
+        IN_CORSO = "in_corso", "In corso"
+        RENDICONTAZIONE = "rendiconto", "In rendicontazione"
+        CHIUSO = "chiuso", "Chiuso"
+        ACCANTONATO = "accantonato", "Accantonato"
+
+    # passaggi ammessi (gli altri richiedono di passare dagli stati intermedi)
+    PASSAGGI = {
+        Stato.PROGETTAZIONE: [Stato.CANDIDATO, Stato.IN_CORSO, Stato.ACCANTONATO],
+        Stato.CANDIDATO: [Stato.FINANZIATO, Stato.NON_FINANZIATO, Stato.PROGETTAZIONE],
+        Stato.FINANZIATO: [Stato.IN_CORSO, Stato.ACCANTONATO],
+        Stato.NON_FINANZIATO: [Stato.PROGETTAZIONE, Stato.ACCANTONATO],
+        Stato.IN_CORSO: [Stato.RENDICONTAZIONE, Stato.CHIUSO],
+        Stato.RENDICONTAZIONE: [Stato.CHIUSO, Stato.IN_CORSO],
+        Stato.CHIUSO: [],
+        Stato.ACCANTONATO: [Stato.PROGETTAZIONE],
+    }
+
+    anno = models.PositiveIntegerField(editable=False)
+    numero = models.PositiveIntegerField(editable=False)
+    titolo = models.CharField(max_length=200)
+    sintesi = models.TextField(help_text="Cosa si vuole fare, per chi e perché, in poche righe.")
+    idea = models.OneToOneField(
+        Idea,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="progetto",
+        editable=False,
+    )
+    finalita = models.ManyToManyField(
+        FinalitaStatutaria, blank=True, related_name="progetti", verbose_name="finalità statutarie"
+    )
+    responsabile = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="progetti_responsabile",
+    )
+    inizio_previsto = models.DateField("inizio previsto", null=True, blank=True)
+    fine_prevista = models.DateField("fine prevista", null=True, blank=True)
+    stato = models.CharField(
+        max_length=13, choices=Stato.choices, default=Stato.PROGETTAZIONE, editable=False
+    )
+
+    class Meta:
+        verbose_name = "progetto"
+        verbose_name_plural = "progetti"
+        ordering = ["-anno", "-numero"]
+        constraints = [
+            models.UniqueConstraint(fields=["anno", "numero"], name="progetto_numero_unico")
+        ]
+        permissions = [("gestisci_progetti", "Gestire i progetti: stato, gruppo, scadenze")]
+
+    def __str__(self):
+        return f"{self.codice} {self.titolo}"
+
+    @property
+    def codice(self):
+        return f"P-{self.anno}-{self.numero:03d}"
+
+    def get_absolute_url(self):
+        return reverse("progetti:progetto", args=[self.pk])
+
+    @property
+    def stati_successivi(self):
+        return [(s, self.Stato(s).label) for s in self.PASSAGGI.get(self.stato, [])]
+
+    @property
+    def aperto(self):
+        return self.stato not in (self.Stato.CHIUSO, self.Stato.ACCANTONATO)
+
+
+class PassaggioStato(models.Model):
+    """Storico degli stati di un progetto, con l'eventuale delibera."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="passaggi")
+    da = models.CharField(max_length=13, choices=Progetto.Stato.choices, blank=True)
+    a = models.CharField(max_length=13, choices=Progetto.Stato.choices)
+    data = models.DateTimeField(auto_now_add=True)
+    utente = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    motivo = models.CharField(max_length=255, blank=True)
+    delibera = models.ForeignKey(
+        "organi.Delibera", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "passaggio di stato"
+        verbose_name_plural = "passaggi di stato"
+        ordering = ["-data", "-pk"]
+
+    def __str__(self):
+        return f"{self.progetto.codice}: {self.get_a_display()}"
+
+
+class Membro(models.Model):
+    """Persona del gruppo di lavoro: un utente del gestionale o una persona dell'anagrafica."""
+
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="membri")
+    utente = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="+"
+    )
+    soggetto = models.ForeignKey(
+        "anagrafica.Soggetto",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="progetti",
+    )
+    ruolo = models.CharField(max_length=100, help_text="Es. referente scuole, volontario, partner.")
+    volontario = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "membro del gruppo"
+        verbose_name_plural = "gruppo di lavoro"
+        ordering = ["ruolo", "pk"]
+
+    def __str__(self):
+        chi = self.soggetto.nome_completo if self.soggetto_id else str(self.utente)
+        return f"{chi} ({self.ruolo})"
+
+
+class Scadenza(models.Model):
+    progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="scadenze")
+    titolo = models.CharField(max_length=200)
+    data = models.DateField()
+    fatta = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "scadenza"
+        verbose_name_plural = "scadenze"
+        ordering = ["fatta", "data"]
+
+    def __str__(self):
+        return f"{self.titolo} ({self.data:%d/%m/%Y})"
+
+
+class Commento(models.Model):
+    """Commento di discussione interna su un'idea o un progetto."""
+
+    idea = models.ForeignKey(
+        Idea, null=True, blank=True, on_delete=models.CASCADE, related_name="commenti"
+    )
+    progetto = models.ForeignKey(
+        Progetto, null=True, blank=True, on_delete=models.CASCADE, related_name="commenti"
+    )
+    utente = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    testo = models.TextField()
+    creato_il = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "commento"
+        verbose_name_plural = "commenti"
+        ordering = ["creato_il"]
+
+    def __str__(self):
+        return f"Commento di {self.utente}"
+
+
+class Allegato(models.Model):
+    """Documento allegato a un'idea o a un progetto (servito solo da viste con permessi)."""
+
+    idea = models.ForeignKey(
+        Idea, null=True, blank=True, on_delete=models.CASCADE, related_name="allegati"
+    )
+    progetto = models.ForeignKey(
+        Progetto, null=True, blank=True, on_delete=models.CASCADE, related_name="allegati"
+    )
+    file = models.FileField(upload_to=_percorso_allegato, max_length=255)
+    nome = models.CharField(max_length=255)
+    descrizione = models.CharField(max_length=255, blank=True)
+    caricato_il = models.DateTimeField(auto_now_add=True)
+    caricato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        verbose_name = "allegato"
+        verbose_name_plural = "allegati"
+        ordering = ["-caricato_il"]
+
+    def __str__(self):
+        return self.nome

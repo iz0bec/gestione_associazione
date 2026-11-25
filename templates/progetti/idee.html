@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Elenco delle idee e necessità, con i filtri
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Idee e necessità{% endblock %}
+{% block titolo_pagina %}Idee e necessità{% endblock %}
+{% block azioni %}<div class="btn-list">
+  {% if perms.progetti.change_finalitastatutaria %}<a class="btn" href="{% url 'progetti:finalita' %}"><i class="ti ti-list-check me-1"></i>Finalità</a><a class="btn" href="{% url 'progetti:criteri' %}"><i class="ti ti-scale me-1"></i>Criteri</a>{% endif %}
+  {% if perms.progetti.add_idea %}<a class="btn btn-primary" href="{% url 'progetti:idea_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova idea</a>{% endif %}
+</div>{% endblock %}
+{% block contenuto %}
+<form method="get" class="card mb-3"><div class="card-body row g-2">
+  <div class="col-md-3"><input class="form-control" type="search" name="q" value="{{ filtri.q }}" placeholder="Cerca" aria-label="Cerca"></div>
+  <div class="col-md-2"><select class="form-select" name="stato" aria-label="Stato"><option value="aperte">Da decidere</option><option value="tutte"{% if filtri.stato == "tutte" %} selected{% endif %}>Tutte</option>{% for v, e in stati %}<option value="{{ v }}"{% if filtri.stato == v %} selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><select class="form-select" name="finalita" aria-label="Finalità"><option value="">Tutte le finalità</option>{% for f in finalita %}<option value="{{ f.pk }}"{% if filtri.finalita == f.pk|stringformat:"s" %} selected{% endif %}>{{ f }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select class="form-select" name="fonte" aria-label="Fonte"><option value="">Ogni fonte</option>{% for v, e in fonti %}<option value="{{ v }}"{% if filtri.fonte == v %} selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select class="form-select" name="priorita" aria-label="Priorità"><option value="">Ogni priorità</option>{% for v, e in priorita %}<option value="{{ v }}"{% if filtri.priorita == v %} selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+  <div class="col-12 text-end"><button class="btn" type="submit">Filtra</button></div>
+</div></form>
+<div class="card">
+  <div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr><th>Idea</th><th>Finalità</th><th>Fonte</th><th>Stato</th><th>Priorità</th><th class="text-end">Valutazione</th></tr></thead>
+    <tbody>{% for i in idee %}<tr>
+      <td><a href="{{ i.get_absolute_url }}"><span class="text-secondary">{{ i.codice }}</span> {{ i.titolo }}</a>{% if i.bisogno %}<div class="small text-secondary text-truncate">{{ i.bisogno|truncatechars:90 }}</div>{% endif %}</td>
+      <td class="small">{% for f in i.finalita.all %}<span class="badge bg-blue-lt me-1" title="{{ f.titolo }}">{{ f.codice|default:f.titolo }}</span>{% endfor %}</td>
+      <td class="small">{% if i.fonte == "esterna" %}<span class="badge bg-purple-lt">esterna</span> {{ i.proposta_da }}{% else %}interna{% endif %}</td>
+      <td><span class="badge {% if i.stato == 'approvata' %}bg-green-lt{% elif i.stato == 'accantonata' %}bg-secondary-lt{% elif i.stato == 'valutazione' %}bg-yellow-lt{% else %}bg-azure-lt{% endif %}">{{ i.get_stato_display }}</span></td>
+      <td>{% if i.priorita %}<span class="badge {% if i.priorita == 'alta' %}bg-red-lt{% elif i.priorita == 'media' %}bg-orange-lt{% else %}bg-secondary-lt{% endif %}">{{ i.get_priorita_display }}</span>{% endif %}</td>
+      <td class="text-end">{% if i.media %}<strong>{{ i.media }}</strong>/5 <span class="small text-secondary">({{ i.valutazioni.all|length }})</span>{% else %}<span class="text-secondary small">—</span>{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="6" class="text-secondary">Nessuna idea.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "includes/paginazione.html" %}
+</div>
+{% endblock %}

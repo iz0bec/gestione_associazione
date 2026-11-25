@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di un'idea: fonte, valutazioni, priorità, commenti, allegati
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ idea }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:idee' %}">Idee e necessità</a> · {{ idea.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ idea.titolo }}{% endblock %}
+{% block azioni %}<div class="btn-list">
+  {% if perms.progetti.change_idea and idea.stato != "approvata" %}<a class="btn" href="{% url 'progetti:idea_modifica' idea.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
+  {% if progetto %}<a class="btn btn-success" href="{{ progetto.get_absolute_url }}"><i class="ti ti-target-arrow me-1"></i>Progetto {{ progetto.codice }}</a>
+  {% elif perms.progetti.add_progetto and idea.stato != "accantonata" %}<a class="btn btn-primary" href="{% url 'progetti:progetto_nuovo' %}?idea={{ idea.pk }}"><i class="ti ti-arrow-right me-1"></i>Trasforma in progetto</a>{% endif %}
+</div>{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-body">
+      <div class="mb-2"><span class="badge {% if idea.stato == 'approvata' %}bg-green-lt{% elif idea.stato == 'accantonata' %}bg-secondary-lt{% elif idea.stato == 'valutazione' %}bg-yellow-lt{% else %}bg-azure-lt{% endif %}">{{ idea.get_stato_display }}</span>{% if idea.priorita %} <span class="badge bg-orange-lt">priorità {{ idea.get_priorita_display|lower }}</span>{% endif %}{% if idea.motivo_stato %} <span class="small text-secondary">{{ idea.motivo_stato }}</span>{% endif %}</div>
+      <div class="mb-3">{{ idea.descrizione|linebreaksbr }}</div>
+      <dl class="row mb-0">
+        {% if idea.bisogno %}<dt class="col-4">Bisogno</dt><dd class="col-8">{{ idea.bisogno|linebreaksbr }}</dd>{% endif %}
+        {% if idea.destinatari %}<dt class="col-4">Destinatari</dt><dd class="col-8">{{ idea.destinatari }}</dd>{% endif %}
+        <dt class="col-4">Finalità statutarie</dt><dd class="col-8">{% for f in idea.finalita.all %}<div>{{ f }}</div>{% empty %}<span class="text-secondary">non indicate</span>{% endfor %}</dd>
+        {% if idea.costo_stimato %}<dt class="col-4">Costo stimato</dt><dd class="col-8">€ {{ idea.costo_stimato }}</dd>{% endif %}
+        <dt class="col-4">Fonte</dt><dd class="col-8">{{ idea.get_fonte_display }}{% if idea.proposta_da %}: {% if idea.fonte_soggetto %}<a href="{{ idea.fonte_soggetto.get_absolute_url }}">{{ idea.proposta_da }}</a>{% else %}{{ idea.proposta_da }}{% endif %}{% endif %}
+          {% if idea.protocollo %}<div class="small">Protocollo <a href="{{ idea.protocollo.get_absolute_url }}">{{ idea.protocollo.segnatura|default:idea.protocollo }}</a></div>{% endif %}
+          {% if idea.messaggio %}<div class="small">Messaggio «{{ idea.messaggio.oggetto }}»</div>{% endif %}</dd>
+        <dt class="col-4">Proposta da</dt><dd class="col-8">{{ idea.proponente|default:"—" }} il {{ idea.creato_il|date:"d/m/Y" }}</dd>
+        {% if idea.delibera_priorita %}<dt class="col-4">Delibera</dt><dd class="col-8">{{ idea.delibera_priorita }}</dd>{% endif %}
+      </dl>
+    </div></div>
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title">Valutazione</h3>{% if riepilogo.media %}<div class="card-actions"><span class="fs-3 fw-bold">{{ riepilogo.media }}</span>/5 · {{ riepilogo.valutazioni|length }} valutazion{{ riepilogo.valutazioni|length|pluralize:"e,i" }}</div>{% endif %}</div>
+      <div class="card-body">
+        {% if riepilogo.valutazioni %}<table class="table table-sm mb-3"><tbody>{% for r in riepilogo.criteri %}<tr><td>{{ r.criterio.nome }}{% if r.criterio.peso > 1 %} <span class="small text-secondary">(peso {{ r.criterio.peso }})</span>{% endif %}</td><td class="text-end">{{ r.media|default:"—" }}</td></tr>{% endfor %}</tbody></table>
+        {% for v in riepilogo.valutazioni %}<div class="small mb-1"><strong>{{ v.utente }}</strong>: {{ v.media }}{% if v.commento %} · {{ v.commento }}{% endif %}</div>{% endfor %}{% else %}<p class="text-secondary mb-3">Nessuna valutazione.</p>{% endif %}
+        {% if perms.progetti.valuta_idea and idea.stato != "approvata" and idea.stato != "accantonata" %}
+        <form method="post" action="{% url 'progetti:idea_azione' idea.pk 'valuta' %}" class="border-top pt-3">{% csrf_token %}
+          <div class="fw-medium mb-2">{% if mia %}La tua valutazione (modificabile){% else %}Valuta da 1 (poco) a 5 (molto){% endif %}</div>
+          {% for c in criteri %}<div class="row align-items-center mb-2"><label class="col-sm-6 col-form-label" for="c{{ c.pk }}">{{ c.nome }}{% if c.descrizione %}<div class="small text-secondary">{{ c.descrizione }}</div>{% endif %}</label>
+            <div class="col-sm-6"><select class="form-select" id="c{{ c.pk }}" name="criterio_{{ c.pk }}" required><option value="">—</option>{% for n in "12345" %}<option value="{{ n }}"{% if mia %}{% for k, val in mia.punteggi.items %}{% if k == c.pk|stringformat:"s" and val|stringformat:"s" == n %} selected{% endif %}{% endfor %}{% endif %}>{{ n }}</option>{% endfor %}</select></div></div>{% endfor %}
+          <textarea class="form-control mb-2" name="commento" rows="2" placeholder="Commento (facoltativo)" aria-label="Commento">{{ mia.commento }}</textarea>
+          <button class="btn btn-primary" type="submit">Salva la valutazione</button>
+        </form>{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Discussione</h3></div>
+      <div class="card-body">
+        {% for c in idea.commenti.all %}<div class="mb-2"><div class="small text-secondary">{{ c.utente }} · {{ c.creato_il|date:"d/m/Y H:i" }}</div>{{ c.testo|linebreaksbr }}</div>{% empty %}<p class="text-secondary">Nessun commento.</p>{% endfor %}
+        <form method="post" action="{% url 'progetti:idea_azione' idea.pk 'commenta' %}">{% csrf_token %}<textarea class="form-control mb-2" name="testo" rows="2" required aria-label="Commento"></textarea><button class="btn" type="submit">Commenta</button></form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if perms.progetti.gestisci_idee and idea.stato != "approvata" %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Decisione</h3></div><div class="card-body">
+      <form method="post" action="{% url 'progetti:idea_azione' idea.pk 'priorita' %}" class="mb-3">{% csrf_token %}{{ priorita_form }}<button class="btn" type="submit">Salva la priorità</button></form>
+      <form method="post" action="{% url 'progetti:idea_azione' idea.pk 'stato' %}" class="border-top pt-3">{% csrf_token %}
+        <label class="form-label" for="stato">Stato</label>
+        <select class="form-select mb-2" id="stato" name="stato"><option value="nuova"{% if idea.stato == "nuova" %} selected{% endif %}>Nuova</option><option value="valutazione"{% if idea.stato == "valutazione" %} selected{% endif %}>In valutazione</option><option value="accantonata"{% if idea.stato == "accantonata" %} selected{% endif %}>Accantonata</option></select>
+        <input class="form-control mb-2" name="motivo" maxlength="255" placeholder="Motivo (obbligatorio per accantonare)" aria-label="Motivo">
+        <button class="btn" type="submit">Cambia stato</button>
+      </form>
+    </div></div>{% endif %}
+    <div class="card"><div class="card-header"><h3 class="card-title">Documenti</h3></div>
+      <div class="list-group list-group-flush">{% for a in idea.allegati.all %}<a class="list-group-item list-group-item-action" href="{% url 'progetti:allegato' a.pk %}"><i class="ti ti-paperclip me-1"></i>{{ a.nome }}{% if a.descrizione %}<div class="small text-secondary">{{ a.descrizione }}</div>{% endif %}</a>{% empty %}<div class="list-group-item text-secondary">Nessun documento.</div>{% endfor %}</div>
+      {% if perms.progetti.change_idea %}<div class="card-body border-top"><form method="post" enctype="multipart/form-data" action="{% url 'progetti:idea_azione' idea.pk 'allega' %}">{% csrf_token %}{{ allegato_form }}<button class="btn" type="submit"><i class="ti ti-upload me-1"></i>Allega</button></form></div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

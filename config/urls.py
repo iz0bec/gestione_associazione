@@ -59,6 +59,7 @@ urlpatterns = [
     path("eventi/", include("apps.eventi.urls")),
     path("area/", include("apps.area.urls")),
     path("chat/", include("apps.chat.urls")),
+    path("progetti/", include("apps.progetti.urls")),
     path("beni/<str:token>/", BenePubblicoView.as_view(), name="bene_pubblico"),
     path("beni/<str:token>/foto/", FotoPubblicaView.as_view(), name="bene_pubblico_foto"),
     path("iscrizione/", DomandaPubblicaView.as_view(), name="iscrizione"),

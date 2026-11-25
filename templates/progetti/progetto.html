@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Scheda di un progetto: stato e storico, gruppo, scadenze, documenti, discussione
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ progetto }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block azioni %}{% if perms.progetti.change_progetto and progetto.aperto %}<a class="btn" href="{% url 'progetti:progetto_modifica' progetto.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-body">
+      <div class="mb-2"><span class="badge {% if progetto.stato == 'chiuso' %}bg-secondary-lt{% elif progetto.stato == 'in_corso' or progetto.stato == 'finanziato' %}bg-green-lt{% elif progetto.stato == 'accantonato' or progetto.stato == 'non_finanz' %}bg-red-lt{% else %}bg-azure-lt{% endif %}">{{ progetto.get_stato_display }}</span></div>
+      <div class="mb-3">{{ progetto.sintesi|linebreaksbr }}</div>
+      <dl class="row mb-0">
+        <dt class="col-4">Finalità statutarie</dt><dd class="col-8">{% for f in progetto.finalita.all %}<div>{{ f }}</div>{% empty %}<span class="text-secondary">non indicate</span>{% endfor %}</dd>
+        <dt class="col-4">Responsabile</dt><dd class="col-8">{{ progetto.responsabile|default:"—" }}</dd>
+        <dt class="col-4">Periodo previsto</dt><dd class="col-8">{{ progetto.inizio_previsto|date:"d/m/Y"|default:"—" }}{% if progetto.fine_prevista %} – {{ progetto.fine_prevista|date:"d/m/Y" }}{% endif %}</dd>
+        {% if progetto.idea %}<dt class="col-4">Dall'idea</dt><dd class="col-8"><a href="{{ progetto.idea.get_absolute_url }}">{{ progetto.idea }}</a>{% if progetto.idea.proposta_da %} <span class="small text-secondary">(proposta da {{ progetto.idea.proposta_da }})</span>{% endif %}</dd>{% endif %}
+      </dl>
+    </div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Gruppo di lavoro</h3></div>
+      <div class="list-group list-group-flush">{% for m in membri %}<div class="list-group-item d-flex align-items-center"><div class="flex-fill">{% if m.soggetto %}{{ m.soggetto.nome_completo }}{% else %}{{ m.utente }}{% endif %} <span class="text-secondary">· {{ m.ruolo }}</span>{% if m.volontario %} <span class="badge bg-teal-lt">volontario</span>{% endif %}</div>
+        {% if perms.progetti.gestisci_progetti and progetto.aperto %}<form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'togli_membro' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" name="membro" value="{{ m.pk }}">Togli</button></form>{% endif %}</div>{% empty %}<div class="list-group-item text-secondary">Nessuno.</div>{% endfor %}</div>
+      {% if perms.progetti.gestisci_progetti and progetto.aperto %}<div class="card-body border-top"><form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'membro' %}">{% csrf_token %}{{ membro_form }}<button class="btn" type="submit"><i class="ti ti-user-plus me-1"></i>Aggiungi</button></form></div>{% endif %}
+    </div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Discussione</h3></div><div class="card-body">
+      {% for c in commenti %}<div class="mb-2"><div class="small text-secondary">{{ c.utente }} · {{ c.creato_il|date:"d/m/Y H:i" }}</div>{{ c.testo|linebreaksbr }}</div>{% empty %}<p class="text-secondary">Nessun commento.</p>{% endfor %}
+      <form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'commenta' %}">{% csrf_token %}<textarea class="form-control mb-2" name="testo" rows="2" required aria-label="Commento"></textarea><button class="btn" type="submit">Commenta</button></form>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    {% if perms.progetti.gestisci_progetti and progetto.stati_successivi %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Cambia stato</h3></div><div class="card-body">
+      <form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'stato' %}">{% csrf_token %}{{ stato_form }}<button class="btn btn-primary" type="submit">Conferma</button></form>
+    </div></div>{% endif %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Scadenze</h3></div>
+      <div class="list-group list-group-flush">{% for s in scadenze %}<div class="list-group-item d-flex align-items-center gap-2"><div class="flex-fill{% if s.fatta %} text-secondary text-decoration-line-through{% elif s.data < oggi %} text-danger{% endif %}">{{ s.data|date:"d/m/Y" }} · {{ s.titolo }}</div>
+        {% if perms.progetti.gestisci_progetti %}<form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'segna' %}">{% csrf_token %}<input type="hidden" name="scadenza" value="{{ s.pk }}"><input type="hidden" name="fatta" value="{% if s.fatta %}0{% else %}1{% endif %}"><button class="btn btn-sm" type="submit">{% if s.fatta %}Riapri{% else %}Fatta{% endif %}</button></form>{% endif %}</div>{% empty %}<div class="list-group-item text-secondary">Nessuna scadenza.</div>{% endfor %}</div>
+      {% if perms.progetti.gestisci_progetti and progetto.aperto %}<div class="card-body border-top"><form method="post" action="{% url 'progetti:progetto_azione' progetto.pk 'scadenza' %}">{% csrf_token %}{{ scadenza_form }}<button class="btn" type="submit"><i class="ti ti-calendar-plus me-1"></i>Aggiungi</button></form><p class="small text-secondary mt-2 mb-0">Le scadenze compaiono nel calendario.</p></div>{% endif %}
+    </div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Documenti</h3></div>
+      <div class="list-group list-group-flush">{% for a in allegati %}<a class="list-group-item list-group-item-action" href="{% url 'progetti:allegato' a.pk %}"><i class="ti ti-paperclip me-1"></i>{{ a.nome }}{% if a.idea_id %} <span class="badge bg-secondary-lt">dall'idea</span>{% endif %}{% if a.descrizione %}<div class="small text-secondary">{{ a.descrizione }}</div>{% endif %}</a>{% empty %}<div class="list-group-item text-secondary">Nessun documento.</div>{% endfor %}</div>
+      {% if perms.progetti.gestisci_progetti %}<div class="card-body border-top"><form method="post" enctype="multipart/form-data" action="{% url 'progetti:progetto_azione' progetto.pk 'allega' %}">{% csrf_token %}{{ allegato_form }}<button class="btn" type="submit"><i class="ti ti-upload me-1"></i>Allega</button></form></div>{% endif %}
+    </div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Storico</h3></div>
+      <div class="list-group list-group-flush">{% for s in passaggi %}<div class="list-group-item small"><strong>{{ s.get_a_display }}</strong> · {{ s.data|date:"d/m/Y H:i" }}{% if s.utente %} · {{ s.utente }}{% endif %}{% if s.motivo %}<div>{{ s.motivo }}</div>{% endif %}{% if s.delibera %}<div class="text-secondary">Delibera: {{ s.delibera }}</div>{% endif %}</div>{% endfor %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

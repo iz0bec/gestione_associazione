@@ -1,0 +1,187 @@
+# ******************************************************
+# * Progetto:    Gestione Associazione
+# * Autore:      Bartolomeo Santoro aka IZ0BEC
+# * Email:       info@iz0bec.info
+# * Descrizione: Moduli del modulo Progetti (P1): idee, valutazioni, priorità, progetti, stato,
+# *              gruppo di lavoro, scadenze, commenti, allegati, finalità e criteri.
+# * Licenza:     CC0 1.0 Universal (pubblico dominio)
+# * SPDX-License-Identifier: CC0-1.0
+# ******************************************************
+
+from django import forms
+from django.contrib.auth import get_user_model
+
+from apps.anagrafica.forms import CampoData
+from apps.anagrafica.models import Soggetto
+from apps.core.forms import StileMixin
+
+from .models import CriterioValutazione, FinalitaStatutaria, Idea, Progetto
+
+
+def _delibere():
+    from apps.organi.models import Delibera
+
+    return Delibera.objects.select_related("verbale__riunione__organo").order_by("-pk")[:200]
+
+
+class _ConFinalita:
+    def _finalita(self):
+        self.fields["finalita"].queryset = FinalitaStatutaria.objects.filter(attiva=True)
+        self.fields["finalita"].widget = forms.CheckboxSelectMultiple()
+        self.fields["finalita"].widget.choices = self.fields["finalita"].choices
+        if not self.fields["finalita"].queryset.exists():
+            self.fields[
+                "finalita"
+            ].help_text = (
+                "Nessuna finalità statutaria inserita: si aggiungono in Progetti → Finalità."
+            )
+
+
+class IdeaForm(StileMixin, _ConFinalita, forms.ModelForm):
+    class Meta:
+        model = Idea
+        fields = [
+            "titolo",
+            "descrizione",
+            "bisogno",
+            "destinatari",
+            "finalita",
+            "costo_stimato",
+            "fonte",
+            "fonte_soggetto",
+            "fonte_testo",
+        ]
+        widgets = {
+            "descrizione": forms.Textarea(attrs={"rows": 4}),
+            "bisogno": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._finalita()
+        self.fields["fonte_soggetto"].queryset = Soggetto.objects.attivi().order_by(
+            "cognome", "nome", "denominazione"
+        )
+        self.fields["fonte_soggetto"].required = False
+
+    def clean(self):
+        dati = super().clean()
+        if dati.get("fonte") == Idea.Fonte.ESTERNA and not (
+            dati.get("fonte_soggetto") or (dati.get("fonte_testo") or "").strip()
+        ):
+            self.add_error("fonte_testo", "Per una sollecitazione esterna indicare da chi arriva.")
+        return dati
+
+
+class PrioritaForm(StileMixin, forms.Form):
+    priorita = forms.ChoiceField(
+        label="Priorità", required=False, choices=[("", "— nessuna —"), *Idea.Priorita.choices]
+    )
+    delibera = forms.ModelChoiceField(
+        label="Delibera",
+        required=False,
+        queryset=None,
+        help_text="La delibera del consiglio che fissa la priorità.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["delibera"].queryset = _delibere()
+
+
+class ProgettoForm(StileMixin, _ConFinalita, forms.ModelForm):
+    class Meta:
+        model = Progetto
+        fields = [
+            "titolo",
+            "sintesi",
+            "finalita",
+            "responsabile",
+            "inizio_previsto",
+            "fine_prevista",
+        ]
+        widgets = {
+            "sintesi": forms.Textarea(attrs={"rows": 4}),
+            "inizio_previsto": CampoData,
+            "fine_prevista": CampoData,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._finalita()
+        self.fields["responsabile"].queryset = (
+            get_user_model()
+            .objects.filter(is_active=True)
+            .order_by("first_name", "last_name", "username")
+        )
+
+    def clean(self):
+        dati = super().clean()
+        inizio, fine = dati.get("inizio_previsto"), dati.get("fine_prevista")
+        if inizio and fine and fine < inizio:
+            self.add_error("fine_prevista", "La fine non può precedere l'inizio.")
+        return dati
+
+
+class AvvioForm(forms.Form):
+    """Delibera facoltativa che avvia la progettazione (da un'idea o da zero)."""
+
+    delibera = forms.ModelChoiceField(label="Delibera di avvio", required=False, queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["delibera"].queryset = _delibere()
+
+
+class StatoForm(StileMixin, forms.Form):
+    stato = forms.ChoiceField(label="Nuovo stato")
+    motivo = forms.CharField(label="Motivo", max_length=255, required=False)
+    delibera = forms.ModelChoiceField(label="Delibera", required=False, queryset=None)
+
+    def __init__(self, *args, progetto, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["stato"].choices = progetto.stati_successivi
+        self.fields["delibera"].queryset = _delibere()
+
+
+class MembroForm(StileMixin, forms.Form):
+    utente = forms.ModelChoiceField(label="Utente del gestionale", required=False, queryset=None)
+    soggetto = forms.ModelChoiceField(
+        label="Oppure persona dell'anagrafica", required=False, queryset=None
+    )
+    ruolo = forms.CharField(max_length=100)
+    volontario = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["utente"].queryset = (
+            get_user_model()
+            .objects.filter(is_active=True)
+            .order_by("first_name", "last_name", "username")
+        )
+        self.fields["soggetto"].queryset = Soggetto.objects.attivi().order_by(
+            "cognome", "nome", "denominazione"
+        )
+
+
+class ScadenzaForm(StileMixin, forms.Form):
+    titolo = forms.CharField(max_length=200)
+    data = forms.DateField(widget=CampoData)
+
+
+class AllegatoForm(StileMixin, forms.Form):
+    file = forms.FileField()
+    descrizione = forms.CharField(max_length=255, required=False)
+
+
+class FinalitaForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = FinalitaStatutaria
+        fields = ["codice", "titolo", "testo", "ordine", "attiva"]
+        widgets = {"testo": forms.Textarea(attrs={"rows": 3})}
+
+
+class CriterioForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = CriterioValutazione
+        fields = ["nome", "descrizione", "peso", "ordine", "attivo"]

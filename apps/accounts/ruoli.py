@@ -201,6 +201,27 @@ CALENDARIO_GESTIONE = [
     "eventi.change_evento",
 ]
 
+PROGETTI_LETTURA = [  # tutti gli organi consultano, propongono idee e le valutano
+    "progetti.view_idea",
+    "progetti.add_idea",
+    "progetti.valuta_idea",
+    "progetti.view_progetto",
+    "progetti.view_finalitastatutaria",
+    "progetti.view_criteriovalutazione",
+]
+PROGETTI_GESTIONE = [
+    *PROGETTI_LETTURA,
+    "progetti.change_idea",
+    "progetti.gestisci_idee",
+    "progetti.add_progetto",
+    "progetti.change_progetto",
+    "progetti.gestisci_progetti",
+    "progetti.add_finalitastatutaria",
+    "progetti.change_finalitastatutaria",
+    "progetti.add_criteriovalutazione",
+    "progetti.change_criteriovalutazione",
+]
+
 RUOLI = {
     "Amministratore di sistema": [
         "organi.gestisci_firme",
@@ -241,6 +262,7 @@ RUOLI = {
         *TESORERIA_GESTIONE,
         *PATRIMONIO_GESTIONE,
         *DOCUMENTI_GESTIONE,
+        *PROGETTI_GESTIONE,
     ],
     "Presidente": [
         "organi.gestisci_firme",
@@ -267,6 +289,7 @@ RUOLI = {
         *PATRIMONIO_LETTURA,
         "patrimonio.add_passaggioconsegne",
         *DOCUMENTI_STAMPA,
+        *PROGETTI_GESTIONE,
     ],
     "Segretario": [
         "organi.gestisci_firme",
@@ -291,6 +314,7 @@ RUOLI = {
         "tesoreria.view_esercizio",
         *PATRIMONIO_GESTIONE,
         *DOCUMENTI_GESTIONE,
+        *PROGETTI_GESTIONE,
     ],
     "Tesoriere": [
         "comunicazioni.change_promemoriarinnovo",
@@ -304,6 +328,7 @@ RUOLI = {
         *TESORERIA_GESTIONE,
         *PATRIMONIO_GESTIONE,
         *DOCUMENTI_STAMPA,
+        *PROGETTI_LETTURA,
     ],
     # responsabile di una sezione: le assegnazioni in «sezioni» dell'utente limitano soci,
     # tessere e domande alla sua sezione; nessun accesso ai moduli della federazione
@@ -322,6 +347,7 @@ RUOLI = {
         *ELEZIONI_GESTIONE,  # il rinnovo della propria sezione (filtrato per sezione)
         *CALENDARIO_LETTURA,
         *DOCUMENTI_STAMPA,
+        *PROGETTI_LETTURA,
     ],
     "Addetto protocollo": [
         *CALENDARIO_LETTURA,
@@ -331,6 +357,7 @@ RUOLI = {
         *ELEZIONI_LETTURA,
         *COMUNICAZIONI_LETTURA,
         *DOCUMENTI_STAMPA,
+        *PROGETTI_LETTURA,
     ],
     "Consigliere": [
         *CALENDARIO_LETTURA,
@@ -342,6 +369,7 @@ RUOLI = {
         "comunicazioni.view_ricorrenza",
         "tesoreria.view_esercizio",
         *PATRIMONIO_LETTURA,
+        *PROGETTI_LETTURA,
     ],
     "Revisore": [
         *CALENDARIO_LETTURA,
@@ -356,6 +384,14 @@ RUOLI = {
         *COMUNICAZIONI_LETTURA,
         *TESORERIA_LETTURA,
         *PATRIMONIO_LETTURA,
+        *PROGETTI_LETTURA,
+    ],
+    "Progettista": [  # da abbinare ad altri ruoli: chi segue i progetti
+        *PROGETTI_GESTIONE,
+        *CALENDARIO_LETTURA,
+        *ANAGRAFICA_LETTURA,
+        *PROTOCOLLO_LETTURA,
+        *ORGANI_LETTURA,
     ],
 }
 

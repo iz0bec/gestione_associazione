@@ -51,6 +51,17 @@
     </div>
   </div>
   {% endif %}
+  {% if idee_da_valutare %}
+  <div class="col-sm-4">
+    <div class="card card-link">
+      <div class="card-body">
+        <div class="subheader"><a class="stretched-link text-reset" href="{% url 'progetti:idee' %}">Idee e necessità</a></div>
+        <div class="h1 mb-1">{{ idee_da_valutare }}</div>
+        <div class="text-secondary">da valutare da te</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
   <div class="col-sm-8">
     <div class="card">
       <div class="card-header"><h2 class="card-title"><i class="ti ti-confetti me-2"></i>Anniversari nei prossimi 14 giorni</h2>{% if perms.comunicazioni.view_ricorrenza %}<div class="card-actions"><a href="{% url 'comunicazioni:anniversari' %}">Tutti</a></div>{% endif %}</div>

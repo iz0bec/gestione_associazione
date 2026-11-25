@@ -208,6 +208,21 @@ def _eventi_condivisi(dal, al):
         )  # fmt: skip
 
 
+def _scadenze_progetti(dal, al):
+    from apps.progetti.models import Scadenza
+
+    qs = Scadenza.objects.select_related("progetto").filter(
+        data__range=(dal, al), progetto__stato__in=["progettazione", "candidato", "finanziato",
+                                                    "in_corso", "rendiconto"],
+    )  # fmt: skip
+    for s in qs:
+        yield Evento(
+            uid=f"progetto-scadenza-{s.pk}", titolo=f"{s.titolo} ({s.progetto.codice})",
+            inizio=s.data, percorso=s.progetto.get_absolute_url(), categoria="Progetti",
+            icona="target-arrow", stato="fatto" if s.fatta else "",
+        )  # fmt: skip
+
+
 def _momento(giorno, ora):
     return timezone.make_aware(datetime.combine(giorno, ora))
 
@@ -255,6 +270,8 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _eventi_condivisi(dal, al)
     if utente.has_perm("elezioni.view_rinnovo"):
         elenco += _rinnovi(dal, al)
+    if utente.has_perm("progetti.view_progetto"):
+        elenco += _scadenze_progetti(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):
         elenco += _appuntamenti(dal, al)
     return elenco

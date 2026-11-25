@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+
+- Modulo **Progetti** (in sviluppo, ramo `progetti`): finalità statutarie e criteri di valutazione
+  configurabili; idee e necessità, anche da un protocollo in entrata o dalla posta da protocollare;
+  valutazione con media pesata, priorità e delibera; progetti con stati e storico, gruppo di lavoro
+  con i volontari, scadenze nel calendario, documenti e discussione; ruolo combinabile «Progettista»;
+  comando `importa_finalita`.
+
 ## [1.0.98] - 2026-11-25
 
 ### Aggiunto

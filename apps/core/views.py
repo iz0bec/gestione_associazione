@@ -100,6 +100,14 @@ class CruscottoView(LoginRequiredMixin, TemplateView):
             ctx["rinnovi_in_corso"] = rinnovi
         if self.request.user.has_perm("protocollo.view_protocollo"):
             ctx["protocollo"] = _riepilogo_protocollo(self.request.user)
+        if self.request.user.has_perm("progetti.valuta_idea"):
+            from apps.progetti.models import Idea
+
+            ctx["idee_da_valutare"] = (
+                Idea.objects.filter(stato__in=[Idea.Stato.NUOVA, Idea.Stato.IN_VALUTAZIONE])
+                .exclude(valutazioni__utente=self.request.user)
+                .count()
+            )
         ctx["ultimi_eventi"] = EventoAudit.objects.filter(utente=self.request.user).select_related(
             "utente"
         )[:8]

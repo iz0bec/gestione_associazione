@@ -25,6 +25,7 @@
   {% if puo_spedire %}<a class="btn" href="{% url 'protocollo:spedisci' protocollo.pk %}"><i class="ti ti-send me-1"></i>Spedisci</a>{% endif %}
   {% if not protocollo.annullato %}
     {% if perms.protocollo.add_protocollo and protocollo.direzione == "entrata" %}<a class="btn" href="{% url 'protocollo:nuovo' %}?risposta={{ protocollo.pk }}"><i class="ti ti-arrow-back-up me-1"></i>Rispondi</a>{% endif %}
+    {% if perms.progetti.add_idea and protocollo.direzione == "entrata" %}<a class="btn" href="{% url 'progetti:idea_nuova' %}?protocollo={{ protocollo.pk }}" title="Una sollecitazione esterna da valutare come idea di progetto"><i class="ti ti-bulb me-1"></i>Proponi come idea</a>{% endif %}
     {% if perms.protocollo.annulla_protocollo %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#annulla"><i class="ti ti-ban me-1"></i>Annulla</button>{% endif %}
     {% if perms.protocollo.change_protocollo %}<a class="btn btn-primary" href="{% url 'protocollo:modifica' protocollo.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
   {% endif %}
