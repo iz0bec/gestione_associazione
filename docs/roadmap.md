@@ -175,7 +175,8 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
    per una persona, una lista o una categoria, con protocollazione in uscita (`apps/documenti`).
 8. ✅ **Import** - `importa_gestionale` da Gestione Soci e Gestione Assemblee (SQLite) e Protocollo
    ANCR (PostgreSQL), con anteprima, deduplica dell'anagrafica e rapporto finale.
-   *Da fare*: foto dei soci, passaggi di consegne e cessioni dei beni, verbali delle assemblee.
+   ✅ *Fatto in seguito* (1.0.97): foto dei soci, passaggi di consegne e cessioni dei beni, riunioni e
+   verbali delle assemblee.
 9. ✅ **Installazione su host** - `scripts/installa.sh` (Debian/Ubuntu, systemd) e
    `scripts/proxmox/crea-lxc.sh` (container LXC su Proxmox). Backup e ripristino dall'interfaccia.
    *Da fare*: RHEL/Rocky.

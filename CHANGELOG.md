@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Importazione dai gestionali precedenti completata**: da Gestione Soci le **foto dei soci** (solo
+  per le schede senza foto; opzione `--file` per la cartella dei file), i **passaggi di consegne**
+  del patrimonio (con l'elenco dei beni di allora e il PDF) e le **cessioni dei beni** (prestiti con
+  la restituzione, donazioni, alienazioni); da Gestione Assemblee le **assemblee e riunioni del
+  direttivo** con l'ordine del giorno e i **verbali**, importati aperti da rivedere e chiudere.
+  Tutto rieseguibile.
+
 ## [1.0.96] - 2026-11-25
 
 ### Aggiunto

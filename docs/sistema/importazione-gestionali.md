@@ -39,6 +39,9 @@ manage.py importa_gestionale gestione-soci /percorso/gestione_soci.db [--esegui]
 | tessere | tesseramenti con la tessera fisica (aggiunta al lotto «Registro soci nazionale» se manca) e la **quota versata**, segnata come incassata fuori dall'applicazione (niente ricevuta né prima nota) |
 | anni contabili e movimenti | esercizi con i movimenti in prima nota (conto dei contanti, voci del rendiconto dalla categoria); gli **anni passati vengono chiusi** e i saldi finali riportati nell'anno successivo |
 | beni e valutazioni | inventario con un nuovo numero; il numero precedente resta in «numero di inventario precedente» |
+| foto dei soci | foto della scheda in anagrafica, ripulita dai metadati, **solo se la scheda non ne ha già una**; una foto non trovata si annota nel rapporto e si può aggiungere ripetendo l'importazione con la cartella giusta |
+| passaggi di consegne | passaggi di consegne del patrimonio con l'elenco dei beni di allora, il PDF originale se si trova o uno rigenerato dai dati, con la sua impronta |
+| cessioni dei beni | uscite dal patrimonio: prestito (con la restituzione, se avvenuta, e le condizioni al rientro), donazione, alienazione (dismissione); documento e protocollo della cessione restano nelle condizioni |
 
 Abbinamento dei soci: per codice fiscale; se il codice non trova nessuno, per **tessera dello stesso
 anno e data di nascita**. Così si riconosce la stessa persona anche quando uno dei due archivi ha
@@ -46,9 +49,9 @@ un codice fiscale o un nome errati. Quando succede, il rapporto lo annota.
 
 Opzioni: `--tipologia` (tipologia dei soci nuovi, predefinita «Ordinario»), `--sezione CODICE`
 (per i soci senza sezione), `--abbina comune|nome|codice`, `--crea-sezioni`, `--conto NOME`,
-`--senza-tesoreria`, `--senza-beni`.
-
-Non importati (segnalati nel rapporto): foto dei soci, passaggi di consegne e cessioni dei beni.
+`--senza-tesoreria`, `--senza-beni`, `--file CARTELLA` (la cartella `static/uploads` del vecchio
+gestionale, con le sottocartelle `soci/` e dei documenti; predefinita: quella accanto al database,
+cioè `../static/uploads` rispetto a `instance/`).
 
 ## Gestione Assemblee
 
@@ -62,8 +65,14 @@ manage.py importa_gestionale assemblee /percorso/instance/ancr_gestione.db [--es
 - **Modelli email**: importati **disattivati**, con i segnaposto convertiti (`{nome}` →
   `{{ nome }}`). Quelli senza equivalente restano tra parentesi quadre (es. `[mittente_nome]`) e
   vanno corretti prima dell'uso.
-- Assemblee, verbali e comunicazioni sono solo contati: le eventuali righe vanno riportate a mano
-  negli Organi sociali.
+- **Assemblee e riunioni del direttivo** negli Organi sociali: «generale» va all'assemblea dei soci,
+  «direttivo» all'organo di amministrazione dell'associazione; data e luogo di prima e seconda
+  convocazione, ordine del giorno (un punto per riga), stato (le annullate restano annullate), numero
+  di protocollo della convocazione nella premessa.
+- **Verbali**: importati **aperti**, con presidente, segretario, partecipanti, discussione, decisioni
+  e provvedimenti, da **rivedere e chiudere** qui: la chiusura assegna il numero nel libro dei verbali
+  e fissa il PDF con la sua impronta.
+- Le comunicazioni sono solo contate.
 
 ## Protocollo ANCR
 

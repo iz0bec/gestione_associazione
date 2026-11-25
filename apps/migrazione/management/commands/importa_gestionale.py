@@ -32,6 +32,8 @@ class Command(BaseCommand):
         gs.add_argument("--conto", help="Conto della cassa importata (predefinito: contanti)")
         gs.add_argument("--senza-tesoreria", action="store_true")
         gs.add_argument("--senza-beni", action="store_true")
+        gs.add_argument("--file", help="Cartella static/uploads del vecchio gestionale (foto e "
+                        "documenti; predefinita: accanto al database)")  # fmt: skip
         asm = sotto.add_parser("assemblee", help="Gestione Assemblee (database SQLite)")
         asm.add_argument(
             "database", help="File .db di Gestione Assemblee (instance/ancr_gestione.db)"
@@ -82,7 +84,7 @@ class Command(BaseCommand):
         opzioni = gestione_soci.Opzioni(
             tipologia=tipologia, sezione=sezione, abbina=o["abbina"], conto=conto,
             crea_sezioni=o["crea_sezioni"], tesoreria=not o["senza_tesoreria"],
-            beni=not o["senza_beni"],
+            beni=not o["senza_beni"], cartella_file=o.get("file"),
         )  # fmt: skip
         return gestione_soci.importa(o["database"], opzioni, utente, esegui=o["esegui"])
 
