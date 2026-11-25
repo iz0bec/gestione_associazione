@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rendiconto per il finanziatore, relazione finale, chiusura e riuso
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ titolo }} · {{ progetto.codice }}{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:progetti' %}">Progetti</a> · {{ progetto.codice }}</div>{% endblock %}
+{% block titolo_pagina %}{{ progetto.titolo }}{% endblock %}
+{% block contenuto %}
+{% include "progetti/_schede.html" %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Spese rendicontate</h3><div class="card-actions fw-bold">€ {{ rendiconto.consuntivo.costi_consuntivo|floatformat:"2g" }}</div></div>
+      <div class="table-responsive"><table class="table table-vcenter card-table">
+        <thead><tr><th>N.</th><th>Data</th><th>Descrizione</th><th class="text-end">Importo</th></tr></thead>
+        <tbody>{% for voce, preventivo, elenco, totale in rendiconto.voci %}<tr class="bg-body-tertiary"><td colspan="3" class="fw-medium">{% if voce %}{{ voce.descrizione }} <span class="small text-secondary">preventivo € {{ preventivo|floatformat:"2g" }}</span>{% else %}Spese senza voce{% endif %}</td><td class="text-end fw-medium">€ {{ totale|floatformat:"2g" }}</td></tr>
+          {% for s in elenco %}<tr><td>{% if s.numero %}{{ s.numero }}{% else %}<span class="badge bg-red-lt" title="Senza giustificativo in prima nota">—</span>{% endif %}</td><td class="small">{{ s.movimento.data|date:"d/m/Y" }}</td><td><a href="{{ s.movimento.get_absolute_url }}">{{ s.movimento.descrizione }}</a></td><td class="text-end">€ {{ s.imputazione.importo|floatformat:"2g" }}</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="4" class="text-secondary">Nessuna spesa imputata (scheda Esecuzione).</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <div class="card-footer small text-secondary">Volontariato: {{ rendiconto.consuntivo.ore|floatformat:"-2" }} ore{% if rendiconto.consuntivo.tariffa %}, valorizzate € {{ rendiconto.consuntivo.natura_consuntivo|floatformat:"2g" }}{% endif %} · contributo incassato € {{ rendiconto.consuntivo.contributo_incassato|floatformat:"2g" }}. I numeri sono quelli dei giustificativi nell'archivio ZIP.</div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Prima della chiusura</h3></div><div class="list-group list-group-flush">
+      {% for v in verifica %}<div class="list-group-item d-flex gap-2"><i class="ti {% if v.esito == 'ok' %}ti-circle-check text-green{% elif v.esito == 'errore' %}ti-circle-x text-red{% else %}ti-info-circle text-orange{% endif %} fs-2" aria-hidden="true"></i><div>{{ v.testo }}</div></div>{% endfor %}
+    </div><div class="card-footer small text-secondary">La chiusura si fa dalla <a href="{{ progetto.get_absolute_url }}">scheda</a> (stato «Chiuso», con la delibera). Prima si può portare in consiglio una <a href="{% url 'progetti:relazione' progetto.pk 'consiglio' %}">relazione</a>.</div></div>
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Documenti</h3></div><div class="card-body">
+      <a class="btn w-100 mb-2" href="{% url 'progetti:relazione' progetto.pk 'relazione' %}"><i class="ti ti-file-text me-1"></i>Relazione finale (scrittura guidata)</a>
+      {% if puo_scaricare %}<div class="btn-list">
+        <a class="btn" href="{% url 'progetti:documento_relazioni' progetto.pk 'rendiconto.pdf' %}"><i class="ti ti-file-type-pdf me-1"></i>Rendiconto</a>
+        <a class="btn" href="{% url 'progetti:documento_relazioni' progetto.pk 'relazione.pdf' %}"><i class="ti ti-file-type-pdf me-1"></i>Relazione finale</a>
+        <a class="btn" href="{% url 'progetti:documento_relazioni' progetto.pk 'rendiconto.xlsx' %}"><i class="ti ti-file-spreadsheet me-1"></i>Excel</a>
+        <a class="btn btn-primary" href="{% url 'progetti:documento_relazioni' progetto.pk 'archivio.zip' %}"><i class="ti ti-file-zip me-1"></i>Archivio ZIP con i giustificativi</a>
+      </div>{% else %}<p class="small text-secondary mb-0">Rendiconto, Excel e archivio dei giustificativi: per chi gestisce i progetti e consulta la prima nota.</p>{% endif %}
+    </div></div>
+    {% if perms.progetti.add_progetto %}<div class="card"><div class="card-header"><h3 class="card-title">Riusa come modello</h3></div><div class="card-body">
+      <form method="post" class="d-flex gap-2">{% csrf_token %}<input class="form-control" name="titolo" maxlength="200" placeholder="Titolo del nuovo progetto" aria-label="Titolo"><button class="btn" type="submit">Crea</button></form>
+      <p class="small text-secondary mt-2 mb-0">Un nuovo progetto in progettazione con quadro, indicatori, attività (date spostate a oggi), piano economico e testi della proposta di questo. Gruppo, partner, bando ed esecuzione non si copiano.</p>
+    </div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

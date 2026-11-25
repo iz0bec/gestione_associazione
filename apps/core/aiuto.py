@@ -62,6 +62,8 @@ PAGINE_PER_SEZIONE = {
     "progetti:proposta": "progetti#proposta-scrittura-guidata",
     "progetti:candidatura": "progetti#candidatura",
     "progetti:esecuzione": "progetti#esecuzione",
+    "progetti:rendiconto": "progetti#rendicontazione-e-chiusura",
+    "progetti:relazione": "progetti#relazione-al-consiglio",
     "progetti:assistente": "progetti#assistente-connettore-mcp",
     "progetti:proposte": "progetti#raccolta-automatica-dei-bandi",
     "progetti:fonti": "progetti#raccolta-automatica-dei-bandi",

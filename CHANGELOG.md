@@ -46,6 +46,13 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   per voce con gli scostamenti, registro delle ore di volontariato valorizzate con la tariffa del
   progetto o del bando, avanzamento (attività completate, indicatori raggiunti, eventi collegati) e
   varianti al piano economico con la delibera e i piani prima e dopo; riepilogo nel connettore MCP.
+- **Relazione al consiglio** (ramo `progetti`): scheda «Al consiglio» con la relazione preventiva da
+  discutere prima di una decisione (sezioni guidate, testi proposti dai dati, proposta di delibera),
+  **stampa** del PDF, **invio ai partecipanti** di una riunione come bozza di comunicazione con il PDF
+  allegato e, per le riunioni in preparazione, il punto all'ordine del giorno.
+- **Rendicontazione e chiusura** (Progetti P6, ramo `progetti`): scheda Rendiconto con le spese per voce e
+  i giustificativi numerati, relazione finale guidata, rendiconto e relazione in PDF, Excel e archivio
+  ZIP con i giustificativi, verifica prima della chiusura, riuso di un progetto come modello.
 
 ## [1.0.100] - 2026-11-25
 

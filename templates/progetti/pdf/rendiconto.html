@@ -1,0 +1,33 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Rendiconto del progetto per il finanziatore, con i giustificativi numerati
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Rendiconto · {{ progetto.codice }}{% endblock %}
+{% block stile %}
+  h2 { font-size: 12pt; margin: 14pt 0 5pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .testo { white-space: pre-line; }
+  .totale td { font-weight: bold; border-top: 1pt solid #333; }
+{% endblock %}
+{% block contenuto %}
+<h1>Rendiconto</h1>
+<p><strong>{{ progetto.codice }} – {{ progetto.titolo }}</strong>{% if progetto.bando %}<br>Bando: {{ progetto.bando }}{% if progetto.bando.ente %} ({{ progetto.bando.ente }}){% endif %}{% endif %}</p>
+{% with c=rendiconto.consuntivo %}
+<h2>Spese</h2>
+<table><thead><tr><th>N.</th><th>Data</th><th>Descrizione</th><th>Documento</th><th class="destra">Importo</th></tr></thead><tbody>
+{% for voce, preventivo, elenco, totale in rendiconto.voci %}<tr><td colspan="4"><strong>{% if voce %}{{ voce.descrizione }}{% else %}Spese senza voce{% endif %}</strong>{% if voce %} <span class="piccolo">(preventivo € {{ preventivo|floatformat:"2g" }})</span>{% endif %}</td><td class="destra"><strong>€ {{ totale|floatformat:"2g" }}</strong></td></tr>
+{% for s in elenco %}<tr><td>{{ s.numero|default:"—" }}</td><td>{{ s.movimento.data|date:"d/m/Y" }}</td><td>{{ s.movimento.descrizione }}{% if s.movimento.controparte or s.movimento.controparte_testo %} – {{ s.movimento.controparte|default:s.movimento.controparte_testo }}{% endif %}</td><td>{{ s.movimento.documento }}</td><td class="destra">€ {{ s.imputazione.importo|floatformat:"2g" }}</td></tr>{% endfor %}{% endfor %}
+<tr class="totale"><td colspan="4">Totale spese (preventivo € {{ c.costi_preventivo|floatformat:"2g" }})</td><td class="destra">€ {{ c.costi_consuntivo|floatformat:"2g" }}</td></tr>
+</tbody></table>
+{% if rendiconto.ore %}<h2>Volontariato</h2>
+<table><thead><tr><th>Volontario</th><th class="destra">Ore</th>{% if c.tariffa %}<th class="destra">Valorizzazione (€ {{ c.tariffa|floatformat:"2g" }}/ora)</th>{% endif %}</tr></thead><tbody>
+{% for cognome, nome, ore in rendiconto.ore %}<tr><td>{{ cognome }} {{ nome }}</td><td class="destra">{{ ore|floatformat:"-2" }}</td>{% if c.tariffa %}<td></td>{% endif %}</tr>{% endfor %}
+<tr class="totale"><td>Totale</td><td class="destra">{{ c.ore|floatformat:"-2" }}</td>{% if c.tariffa %}<td class="destra">€ {{ c.natura_consuntivo|floatformat:"2g" }}</td>{% endif %}</tr>
+</tbody></table>{% endif %}
+{% if rendiconto.entrate %}<h2>Entrate</h2>
+<table><tbody>{% for i in rendiconto.entrate %}<tr><td>{{ i.movimento.data|date:"d/m/Y" }}</td><td>{{ i.movimento.descrizione }}</td><td>{{ i.get_tipo_display }}</td><td class="destra">€ {{ i.importo|floatformat:"2g" }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+{% endwith %}
+<p class="piccolo">I numeri della colonna «N.» corrispondono ai file della cartella «giustificativi» dell'archivio. Documento prodotto il {{ oggi|date:"d/m/Y" }}.</p>
+{% load firme %}{% firme "presidente" giorno=oggi %}
+{% endblock %}

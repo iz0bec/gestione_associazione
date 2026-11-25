@@ -189,6 +189,9 @@ Il gestionale è considerato completo e passa al **mantenimento**; la nuova line
 gestione dei **progetti finalizzati agli scopi statutari**, dall'idea al rendiconto. Analisi e scelte
 in [analisi/progetti.md](analisi/progetti.md).
 
+Stato al 25/11/2026: **P1–P6 e connettore MCP realizzati** nel ramo `progetti`, in prova
+sull'ambiente di sviluppo (CT 105), non ancora in produzione.
+
 - **P1** Idee, necessità (anche da sollecitazioni esterne) e progetti, finalità statutarie,
   valutazione e priorità, gruppo di lavoro, stati con delibere.
 - **P2** Bandi e finanziatori: registro, scadenze e avvisi, requisiti con verifica sui dati

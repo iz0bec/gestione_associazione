@@ -1,0 +1,23 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Relazione finale del progetto
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Relazione finale · {{ progetto.codice }}{% endblock %}
+{% block stile %}
+  h2 { font-size: 12pt; margin: 14pt 0 5pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .testo { white-space: pre-line; }
+  .totale td { font-weight: bold; border-top: 1pt solid #333; }
+{% endblock %}
+{% block contenuto %}
+<h1>Relazione finale</h1>
+<p><strong>{{ progetto.codice }} – {{ progetto.titolo }}</strong>{% if progetto.bando %}<br>Bando: {{ progetto.bando }}{% endif %}</p>
+{% for s in relazione %}{% if s.testo %}<h2>{{ s.titolo }}</h2><div class="testo">{{ s.testo }}</div>{% endif %}{% endfor %}
+{% if indicatori %}<h2>Indicatori</h2>
+<table><thead><tr><th>Indicatore</th><th class="destra">Atteso</th><th class="destra">Raggiunto</th></tr></thead><tbody>
+{% for x in indicatori %}<tr><td>{{ x.descrizione }}</td><td class="destra">{{ x.valore_atteso|floatformat:"-2" }} {{ x.unita }}</td><td class="destra">{% if x.valore_raggiunto is not None %}{{ x.valore_raggiunto|floatformat:"-2" }} {{ x.unita }}{% else %}—{% endif %}</td></tr>{% endfor %}
+</tbody></table>{% endif %}
+<p class="piccolo">Attività completate: {{ avanzamento.completate }} su {{ avanzamento.attivita }}. Documento prodotto il {{ oggi|date:"d/m/Y" }}.</p>
+{% load firme %}{% firme "presidente" giorno=oggi %}
+{% endblock %}

@@ -12,7 +12,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.db.models import Q
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -1047,7 +1047,7 @@ class PropostaView(PermessoMixin, View):
 
         progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
         modificabile = self._puo(request, progetto)
-        sezioni = proposta.prepara_sezioni(progetto) if modificabile else progetto.sezioni.all()
+        sezioni = proposta.prepara_sezioni(progetto) if modificabile else progetto.sezioni_proposta
         for s in sezioni:
             s.simili = proposta.testi_simili(s) if modificabile else []
             s.componibile = s.chiave in proposta.COMPONIBILI
@@ -1398,3 +1398,219 @@ class EsecuzioneView(PermessoMixin, View):
         except (esecuzione.ErroreEsecuzione, ArithmeticError, ValueError) as e:
             messages.error(request, str(e) or "Valore non valido.")
         return redirect("progetti:esecuzione", pk=progetto.pk)
+
+
+# --- relazioni e rendiconto (P6) -----------------------------------------------------------------
+
+
+DOCUMENTI_GUIDATI = {
+    # documento: (titolo, scheda attiva, introduzione)
+    "consiglio": (
+        "Relazione al consiglio",
+        "consiglio",
+        "La relazione da portare in consiglio prima di una decisione sul progetto (avvio, "
+        "candidatura, variante, chiusura): si stampa o si invia ai partecipanti della "
+        "riunione insieme alla convocazione.",
+    ),
+    "relazione": (
+        "Relazione finale",
+        "rendiconto",
+        "La relazione finale per il finanziatore e per l'archivio: si scrive durante "
+        "l'esecuzione e la rendicontazione.",
+    ),
+}
+
+
+class RelazioneView(PermessoMixin, View):
+    """Scrittura guidata della relazione al consiglio o della relazione finale."""
+
+    permission_required = "progetti.view_progetto"
+
+    def _moduli(self, documento):
+        from . import consiglio, rendiconto
+
+        if documento == "consiglio":
+            return (
+                consiglio.prepara,
+                consiglio.componi,
+                consiglio.COMPONIBILI,
+                (consiglio.ErroreConsiglio),
+            )
+        return (
+            rendiconto.prepara_relazione,
+            rendiconto.componi,
+            rendiconto.COMPONIBILI,
+            rendiconto.ErroreRendiconto,
+        )
+
+    def _modificabile(self, request, progetto, documento):
+        if not request.user.has_perm("progetti.gestisci_progetti"):
+            return False
+        if documento == "consiglio":
+            return progetto.aperto
+        return progetto.stato in (
+            Progetto.Stato.FINANZIATO,
+            Progetto.Stato.IN_CORSO,
+            Progetto.Stato.RENDICONTAZIONE,
+        )
+
+    def get(self, request, pk, documento):
+        from . import consiglio, proposta
+
+        if documento not in DOCUMENTI_GUIDATI:
+            raise Http404
+        progetto = get_object_or_404(Progetto.objects.select_related("bando", "idea"), pk=pk)
+        prepara, _, componibili, _ = self._moduli(documento)
+        modificabile = self._modificabile(request, progetto, documento)
+        sezioni = (
+            prepara(progetto) if modificabile else progetto.sezioni.filter(documento=documento)
+        )
+        for s in sezioni:
+            s.simili = proposta.testi_simili(s) if modificabile else []
+            s.componibile = s.chiave in componibili
+        titolo, scheda, introduzione = DOCUMENTI_GUIDATI[documento]
+        return render(
+            request,
+            "progetti/relazione.html",
+            {
+                "progetto": progetto,
+                "sezione": scheda,
+                "titolo": titolo,
+                "documento": documento,
+                "introduzione": introduzione,
+                "sezioni": sezioni,
+                "modificabile": modificabile,
+                "riunioni": consiglio.riunioni_utili() if documento == "consiglio" else [],
+                "puo_inviare": request.user.has_perm("comunicazioni.add_invio"),
+            },
+        )
+
+    def post(self, request, pk, documento):
+        from . import consiglio, proposta
+
+        if documento not in DOCUMENTI_GUIDATI:
+            raise Http404
+        progetto = get_object_or_404(Progetto, pk=pk)
+        if not self._modificabile(request, progetto, documento):
+            raise Http404
+        _, componi, _, errore = self._moduli(documento)
+        p = request.POST
+        url = reverse("progetti:relazione", args=[progetto.pk, documento])
+        if p.get("azione") == "invia":
+            from apps.organi.models import Riunione
+
+            if documento != "consiglio" or not request.user.has_perm("comunicazioni.add_invio"):
+                raise Http404
+            riunione = get_object_or_404(Riunione, pk=p.get("riunione"))
+            try:
+                invio = consiglio.invia(
+                    progetto, riunione, request.user, punto=p.get("punto") == "1"
+                )
+            except (consiglio.ErroreConsiglio, ValueError) as e:
+                messages.error(request, " ".join(getattr(e, "messages", None) or [str(e)]))
+                return redirect(url)
+            messages.success(request, "Bozza di invio preparata: controllare e confermare.")
+            return redirect("comunicazioni:invio", pk=invio.pk)
+        sezione = get_object_or_404(
+            TestoSezione, pk=p.get("sezione"), progetto=progetto, documento=documento
+        )
+        try:
+            if p.get("azione") == "componi":
+                testo = componi(progetto, sezione.chiave)
+            elif p.get("azione") == "riusa":
+                testo = get_object_or_404(TestoSezione, pk=p.get("da")).testo
+            else:
+                testo = p.get("testo", "")
+            proposta.salva_testo(sezione, testo, request.user)
+            messages.success(request, f"Sezione «{sezione}» salvata.")
+        except (errore, proposta.ErroreProposta) as e:
+            messages.error(request, str(e))
+        return redirect(f"{url}#sezione-{sezione.pk}")
+
+
+class RendicontoView(PermessoMixin, View):
+    """Rendiconto per il finanziatore, verifica prima della chiusura, riuso come modello."""
+
+    permission_required = "progetti.view_progetto"
+
+    def get(self, request, pk):
+        from . import rendiconto
+
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        return render(
+            request,
+            "progetti/progettazione_rendiconto.html",
+            {
+                "progetto": progetto,
+                "sezione": "rendiconto",
+                "titolo": "Rendiconto",
+                "rendiconto": rendiconto.calcola(progetto),
+                "verifica": rendiconto.verifica_chiusura(progetto),
+                "puo_scaricare": request.user.has_perm("progetti.gestisci_progetti")
+                and request.user.has_perm("tesoreria.view_movimento"),
+            },
+        )
+
+    def post(self, request, pk):
+        from . import rendiconto
+
+        if not request.user.has_perm("progetti.add_progetto"):
+            raise Http404
+        progetto = get_object_or_404(Progetto, pk=pk)
+        try:
+            nuovo = rendiconto.riusa(progetto, request.user, titolo=request.POST.get("titolo", ""))
+        except rendiconto.ErroreRendiconto as e:
+            messages.error(request, str(e))
+            return redirect("progetti:rendiconto", pk=progetto.pk)
+        messages.success(request, f"Nuovo progetto {nuovo.codice} creato da {progetto.codice}.")
+        return redirect(nuovo)
+
+
+class DocumentoRelazioniView(PermessoMixin, View):
+    """PDF della relazione al consiglio (stampa) e documenti del rendiconto (PDF, Excel, ZIP)."""
+
+    permission_required = "progetti.view_progetto"
+
+    def get(self, request, pk, tipo):
+        from apps.core.audit import Azione, registra
+
+        from . import consiglio, rendiconto
+
+        progetto = get_object_or_404(Progetto.objects.select_related("bando"), pk=pk)
+        if tipo == "consiglio.pdf":
+            r = HttpResponse(consiglio.pdf(progetto), content_type="application/pdf")
+            modo = "attachment" if request.GET.get("scarica") else "inline"  # inline = stampa
+            r["Content-Disposition"] = f'{modo}; filename="{consiglio.nome_file(progetto)}"'
+            r["Content-Security-Policy"] = "default-src 'none'; sandbox"
+            registra(Azione.ESPORTAZIONE, progetto, utente=request.user, documento=tipo)
+            return r
+        if not (
+            request.user.has_perm("progetti.gestisci_progetti")
+            and request.user.has_perm("tesoreria.view_movimento")
+        ):
+            raise Http404
+        nome = f"{progetto.codice}-"
+        if tipo == "rendiconto.pdf":
+            r = _scarica(
+                rendiconto.rendiconto_pdf(progetto), nome + "rendiconto.pdf", "application/pdf"
+            )
+        elif tipo == "relazione.pdf":
+            r = _scarica(
+                rendiconto.relazione_pdf(progetto), nome + "relazione-finale.pdf", "application/pdf"
+            )
+        elif tipo == "rendiconto.xlsx":
+            r = _scarica(
+                rendiconto.rendiconto_excel(progetto),
+                nome + "rendiconto.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        elif tipo == "archivio.zip":
+            return _scarica(
+                rendiconto.archivio_zip(progetto, request.user),
+                nome + "rendiconto.zip",
+                "application/zip",
+            )
+        else:
+            raise Http404
+        registra(Azione.ESPORTAZIONE, progetto, utente=request.user, documento=tipo)
+        return r

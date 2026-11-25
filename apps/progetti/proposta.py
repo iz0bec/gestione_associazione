@@ -96,7 +96,7 @@ class ErroreProposta(Exception):
 def prepara_sezioni(progetto):
     """Crea le sezioni mancanti: quelle del bando collegato, se le indica, o lo schema predefinito.
     Non tocca i testi già scritti. Restituisce le sezioni del progetto."""
-    presenti = {s.titolo for s in progetto.sezioni.all()}
+    presenti = {s.titolo for s in progetto.sezioni_proposta}
     ordine = len(presenti)
     if progetto.bando_id and progetto.bando.sezioni.exists():
         modello = [
@@ -120,7 +120,7 @@ def prepara_sezioni(progetto):
             massimo_caratteri=massimo,
             ordine=ordine,
         )
-    return list(progetto.sezioni.all())
+    return list(progetto.sezioni_proposta)
 
 
 def _elenco(righe):
@@ -196,7 +196,7 @@ def componi(progetto, chiave):
 def testi_simili(sezione, limite=5):
     """Testi della stessa sezione in altri progetti, da riusare."""
     return (
-        TestoSezione.objects.filter(titolo__iexact=sezione.titolo)
+        TestoSezione.objects.filter(titolo__iexact=sezione.titolo, documento=sezione.documento)
         .exclude(progetto=sezione.progetto)
         .exclude(testo="")
         .select_related("progetto")
@@ -206,7 +206,20 @@ def testi_simili(sezione, limite=5):
 
 @transaction.atomic
 def salva_testo(sezione, testo, utente):
-    if sezione.progetto.stato != Progetto.Stato.PROGETTAZIONE:
+    stato = sezione.progetto.stato
+    if sezione.documento == TestoSezione.Documento.CONSIGLIO:
+        if not sezione.progetto.aperto:
+            raise ErroreProposta("Il progetto è chiuso.")
+    elif sezione.documento == TestoSezione.Documento.RELAZIONE:
+        if stato not in (
+            Progetto.Stato.IN_CORSO,
+            Progetto.Stato.RENDICONTAZIONE,
+            Progetto.Stato.FINANZIATO,
+        ):
+            raise ErroreProposta(
+                "La relazione si scrive durante l'esecuzione e la rendicontazione."
+            )
+    elif stato != Progetto.Stato.PROGETTAZIONE:
         raise ErroreProposta("La proposta si modifica solo in progettazione.")
     sezione.testo = testo.replace("\r\n", "\n").strip()
     sezione.save(update_fields=["testo", "modificato_il"])
@@ -228,7 +241,7 @@ def verifica(progetto):
     """Controlli prima della candidatura: proposta, quadro, cronoprogramma, partner, piano e
     bando."""
     v = []
-    sezioni = list(progetto.sezioni.all())
+    sezioni = list(progetto.sezioni_proposta)
     vuote = [s.titolo for s in sezioni if not s.testo.strip()]
     lunghe = [
         f"{s.titolo} ({s.caratteri}/{s.massimo_caratteri})" for s in sezioni if s.troppo_lungo
@@ -408,7 +421,7 @@ def contesto_pdf(progetto):
     return {
         "organizzazione": Organizzazione.corrente(),
         "progetto": progetto,
-        "sezioni": list(progetto.sezioni.all()),
+        "sezioni": list(progetto.sezioni_proposta),
         "obiettivi": progetto.obiettivi.prefetch_related("indicatori"),
         "attivita": attivita,
         "gantt": gantt(attivita, larghezza=640, riga=20),

@@ -598,6 +598,18 @@ class Progetto(ModelloBase):
     def aperto(self):
         return self.stato not in (self.Stato.CHIUSO, self.Stato.ACCANTONATO)
 
+    @property
+    def sezioni_proposta(self):
+        return self.sezioni.filter(documento="proposta")
+
+    @property
+    def sezioni_relazione(self):
+        return self.sezioni.filter(documento="relazione")
+
+    @property
+    def sezioni_consiglio(self):
+        return self.sezioni.filter(documento="consiglio")
+
 
 class PassaggioStato(models.Model):
     """Storico degli stati di un progetto, con l'eventuale delibera."""
@@ -836,7 +848,15 @@ class FonteFinanziamento(models.Model):
 class TestoSezione(models.Model):
     """Testo di una sezione della proposta (scrittura guidata, senza IA)."""
 
+    class Documento(models.TextChoices):
+        PROPOSTA = "proposta", "Proposta"
+        RELAZIONE = "relazione", "Relazione finale"
+        CONSIGLIO = "consiglio", "Relazione al consiglio"
+
     progetto = models.ForeignKey(Progetto, on_delete=models.CASCADE, related_name="sezioni")
+    documento = models.CharField(
+        max_length=9, choices=Documento.choices, default=Documento.PROPOSTA
+    )
     chiave = models.CharField(max_length=30, blank=True)  # sezione predefinita, se lo è
     titolo = models.CharField(max_length=200)
     domande = models.TextField("domande guida", blank=True)

@@ -180,6 +180,42 @@ sui previsti, contributo incassato e da incassare.
   (cosa cambia e perché, con la **delibera**), si modifica il piano, si **chiude** la variante. Restano
   il piano prima e dopo.
 
+## Relazione al consiglio
+
+La scheda **Al consiglio** prepara la **relazione da portare in consiglio** prima di una decisione sul
+progetto: avviare la progettazione, candidarlo a un bando, approvare una variante, chiuderlo. Sezioni
+guidate: che cosa si chiede di decidere, motivazioni e bisogno, coerenza con le finalità statutarie, bando
+e finanziamento (con i requisiti), impegno per l'associazione (costi, denaro, volontariato, partner,
+responsabile), rischi e punti aperti (dalle verifiche del gestionale), proposta di delibera.
+**Proponi dal progetto** compone un testo di partenza dai dati, da rivedere.
+
+- **Stampa** apre il PDF (con la sintesi del piano economico) pronto per la stampa; **Scarica il PDF**
+  lo salva.
+- **Invia ai partecipanti di una riunione**: si sceglie una riunione in preparazione o convocata; il
+  gestionale prepara in *Comunicazioni* una **bozza** agli aventi diritto con la relazione in PDF
+  allegata, da controllare e confermare. Per una riunione in preparazione si può aggiungere anche il
+  **punto all'ordine del giorno**.
+
+## Rendicontazione e chiusura
+
+La scheda **Rendiconto** riunisce:
+
+- le **spese rendicontate** per voce, con i movimenti imputati e il **numero del giustificativo** (le
+  spese senza giustificativo in prima nota sono segnalate);
+- la **relazione finale**, con scrittura guidata come la proposta (attività svolte, risultati e
+  indicatori, destinatari, volontariato e partenariato, criticità, comunicazione, prospettive): si
+  scrive durante l'esecuzione e la rendicontazione;
+- i **documenti per il finanziatore**: rendiconto e relazione finale in PDF con la firma del
+  presidente, **Excel** (spese, volontariato con le ore per persona, entrate) e l'**archivio ZIP** con
+  rendiconto, relazione, Excel e i **giustificativi numerati** come nel rendiconto (per chi gestisce i
+  progetti e consulta la prima nota);
+- **prima della chiusura**: attività non completate, indicatori senza valore raggiunto, spese senza
+  giustificativo, contributo da incassare, relazione da scrivere, variante aperta (promemoria: decide
+  il consiglio, con la delibera indicata chiudendo il progetto dalla scheda);
+- **riusa come modello**: un nuovo progetto in progettazione con quadro, indicatori, attività (date
+  spostate a oggi), piano economico e testi della proposta; gruppo, partner, bando ed esecuzione non si
+  copiano. I testi dei progetti chiusi restano riusabili in ogni sezione.
+
 ## Bandi e finanziamenti
 
 In *Bandi* si registrano i bandi e gli avvisi di finanziamento: titolo, **finanziatore** (dall'anagrafica

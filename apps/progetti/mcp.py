@@ -387,12 +387,18 @@ def scheda_progetto(utente, id, **_):
                 "caratteri": s.caratteri,
                 "massimo_caratteri": s.massimo_caratteri,
             }
-            for s in p.sezioni.all()
+            for s in p.sezioni_proposta
         ],
         "verifica_candidatura": [
             {"esito": v.esito, "controllo": v.testo} for v in proposta.verifica(p)
         ],
         "esecuzione": _esecuzione(p),
+        "relazione_al_consiglio": [
+            {"sezione": s.titolo, "testo": s.testo} for s in p.sezioni_consiglio if s.testo
+        ],
+        "relazione_finale": [
+            {"sezione": s.titolo, "testo": s.testo} for s in p.sezioni_relazione if s.testo
+        ],
     }
 
 

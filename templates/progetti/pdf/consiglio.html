@@ -1,0 +1,27 @@
+{% extends "pdf/base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Relazione al consiglio sul progetto, da stampare o inviare ai partecipanti
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Relazione al consiglio · {{ progetto.codice }}{% endblock %}
+{% block stile %}
+  h2 { font-size: 12pt; margin: 14pt 0 5pt; color: {{ organizzazione.colore_primario|default:"#1d4e89" }}; }
+  .testo { white-space: pre-line; }
+  .totale td { font-weight: bold; border-top: 1pt solid #333; }
+{% endblock %}
+{% block contenuto %}
+<h1>Relazione al consiglio</h1>
+<p><strong>Progetto {{ progetto.codice }} – {{ progetto.titolo }}</strong><br><span class="piccolo">Stato: {{ progetto.get_stato_display }}{% if progetto.bando %} · Bando: {{ progetto.bando }}{% endif %} · {{ oggi|date:"d/m/Y" }}</span></p>
+{% for s in sezioni %}{% if s.testo %}<h2>{{ s.titolo }}</h2><div class="testo">{{ s.testo }}</div>{% endif %}{% endfor %}
+{% if piano.totale_costi %}<h2>Sintesi del piano economico</h2>
+<table><tbody>
+{% for cat, etichetta, voci, totale in piano.categorie %}<tr><td>{{ etichetta }}</td><td class="destra">€ {{ totale|floatformat:"2g" }}</td></tr>{% endfor %}
+{% if piano.spese_generali %}<tr><td>Spese generali</td><td class="destra">€ {{ piano.spese_generali|floatformat:"2g" }}</td></tr>{% endif %}
+<tr class="totale"><td>Totale costi</td><td class="destra">€ {{ piano.totale_costi|floatformat:"2g" }}</td></tr>
+{% if piano.contributo %}<tr><td>Contributo richiesto</td><td class="destra">€ {{ piano.contributo|floatformat:"2g" }}</td></tr>{% endif %}
+{% if piano.proprio %}<tr><td>A carico dell'associazione (denaro)</td><td class="destra">€ {{ piano.proprio|floatformat:"2g" }}</td></tr>{% endif %}
+{% if piano.natura %}<tr><td>Volontariato valorizzato</td><td class="destra">€ {{ piano.natura|floatformat:"2g" }}</td></tr>{% endif %}
+{% if piano.partner %}<tr><td>Partner</td><td class="destra">€ {{ piano.partner|floatformat:"2g" }}</td></tr>{% endif %}
+</tbody></table>{% endif %}
+{% endblock %}

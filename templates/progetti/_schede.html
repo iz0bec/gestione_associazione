@@ -5,6 +5,7 @@
 {% endcomment %}
 <ul class="nav nav-tabs mb-3">
   <li class="nav-item"><a class="nav-link{% if not sezione %} active{% endif %}" href="{{ progetto.get_absolute_url }}">Scheda</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'consiglio' %} active{% endif %}" href="{% url 'progetti:relazione' progetto.pk 'consiglio' %}">Al consiglio</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'quadro' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'quadro' %}">Quadro</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'cronoprogramma' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'cronoprogramma' %}">Cronoprogramma</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'partner' %} active{% endif %}" href="{% url 'progetti:progettazione' progetto.pk 'partner' %}">Partner</a></li>
@@ -12,5 +13,6 @@
   <li class="nav-item"><a class="nav-link{% if sezione == 'proposta' %} active{% endif %}" href="{% url 'progetti:proposta' progetto.pk %}">Proposta</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'candidatura' %} active{% endif %}" href="{% url 'progetti:candidatura' progetto.pk %}">Candidatura</a></li>
   <li class="nav-item"><a class="nav-link{% if sezione == 'esecuzione' %} active{% endif %}" href="{% url 'progetti:esecuzione' progetto.pk %}">Esecuzione</a></li>
+  <li class="nav-item"><a class="nav-link{% if sezione == 'rendiconto' %} active{% endif %}" href="{% url 'progetti:rendiconto' progetto.pk %}">Rendiconto</a></li>
 </ul>
-{% if sezione and sezione != "candidatura" and sezione != "esecuzione" and not modificabile and perms.progetti.gestisci_progetti %}<div class="alert alert-info">{% if sezione == "cronoprogramma" %}Il progetto è chiuso: il cronoprogramma non si modifica più.{% else %}Questa parte si modifica solo in progettazione{% if sezione == "piano" %}; in esecuzione si apre una variante con la sua delibera nella scheda <a href="{% url 'progetti:esecuzione' progetto.pk %}">Esecuzione</a>{% endif %}.{% endif %}</div>{% endif %}
+{% if sezione and sezione in "quadro cronoprogramma partner piano proposta" and not modificabile and perms.progetti.gestisci_progetti %}<div class="alert alert-info">{% if sezione == "cronoprogramma" %}Il progetto è chiuso: il cronoprogramma non si modifica più.{% else %}Questa parte si modifica solo in progettazione{% if sezione == "piano" %}; in esecuzione si apre una variante con la sua delibera nella scheda <a href="{% url 'progetti:esecuzione' progetto.pk %}">Esecuzione</a>{% endif %}.{% endif %}</div>{% endif %}
