@@ -187,11 +187,10 @@ def _scambia(sock, dest, parti, porta, metodo, percorso, intestazioni, corpo):
         connessione.putrequest(metodo, base + percorso, skip_host=True, skip_accept_encoding=True)
         host = parti.hostname if ":" not in parti.hostname else f"[{parti.hostname}]"
         connessione.putheader("Host", host if porta == predefinita else f"{host}:{porta}")
-        connessione.putheader("User-Agent", "GestioneAssociazione-API/1")
-        connessione.putheader("Accept", "application/json")
-        connessione.putheader("Content-Length", str(len(corpo)))
-        for nome, valore in intestazioni.items():
+        predefinite = {"User-Agent": "GestioneAssociazione-API/1", "Accept": "application/json"}
+        for nome, valore in (predefinite | intestazioni).items():
             connessione.putheader(nome, valore)
+        connessione.putheader("Content-Length", str(len(corpo)))
         connessione.endheaders(corpo or None)
         risposta = connessione.getresponse()
         dati = risposta.read(DIMENSIONE_MASSIMA + 1)

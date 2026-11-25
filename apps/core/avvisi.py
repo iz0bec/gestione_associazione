@@ -42,7 +42,7 @@ TIPI = {
         Tipo("domande", "Domande di iscrizione", "soci.valuta_domanda", "avvisi_domande", True,
              "Ogni nuova domanda di iscrizione da valutare (modulo, email, collegamenti)."),
         Tipo("bandi", "Scadenze dei bandi", "progetti.gestisci_bandi", "avvisi_bandi", True,
-             "Domande dei bandi da valutare o interessanti in scadenza (7 e 2 giorni prima)."),
+             "Bandi nuovi da vagliare dalle fonti e domande in scadenza (7 e 2 giorni prima)."),
         Tipo("sicurezza", "Sicurezza", "accounts.change_utente", "avvisi_sicurezza", False,
              "Accessi falliti ripetuti, accessi degli amministratori da indirizzi nuovi, "
              "modifiche agli utenti, lavori periodici e backup non riusciti."),

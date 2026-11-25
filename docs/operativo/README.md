@@ -33,6 +33,6 @@ Per chi usa l'applicazione ogni giorno: segreteria, presidenza, tesoreria, consi
 17. [Chat interna](chat.md) - messaggi fra gli utenti del gestionale, a due o in gruppo
 18. [Collegamenti API](collegamenti-api.md) - collegare altre installazioni (federazione e sezioni) e integrazioni esterne: inviti, impronta, prova
 19. [Rinnovo degli organi](rinnovo-organi.md) - procedura elettorale guidata: indizione, convocazione, liste, voto, proclamazione, nomine, consegne
-20. [Idee, necessità e progetti](progetti.md) - idee anche da protocollo e posta, valutazione pesata, progetti con stati, gruppo, scadenze e documenti; bandi con requisiti verificati e candidature
+20. [Idee, necessità e progetti](progetti.md) - idee anche da protocollo e posta, valutazione pesata, progetti con stati, gruppo, scadenze e documenti; bandi con requisiti verificati e candidature, raccolta automatica da feed e pagine web
 
 Sono pronti tutti i moduli previsti per la 0.0.1.

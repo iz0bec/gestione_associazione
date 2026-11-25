@@ -312,6 +312,93 @@ class Requisito(models.Model):
         return self.descrizione
 
 
+class FonteBandi(models.Model):
+    """Fonte sorvegliata per la raccolta automatica dei bandi (P3)."""
+
+    class Tipo(models.TextChoices):
+        FEED = "feed", "Feed RSS o Atom"
+        PAGINA = "pagina", "Pagina web (collegamenti nuovi)"
+
+    nome = models.CharField(max_length=150)
+    tipo = models.CharField(max_length=6, choices=Tipo.choices, default=Tipo.FEED)
+    indirizzo = models.URLField(max_length=500, unique=True)
+    parole_chiave = models.CharField(
+        "parole chiave proprie",
+        max_length=500,
+        blank=True,
+        help_text="Oltre a quelle generali, separate da virgole. Vuoto: solo quelle generali.",
+    )
+    tutte = models.BooleanField(
+        "proponi tutto",
+        default=False,
+        help_text="Per le fonti di soli bandi: propone ogni novità, senza parole chiave.",
+    )
+    attiva = models.BooleanField(default=True)
+    ultimo_controllo = models.DateTimeField(null=True, blank=True, editable=False)
+    ultimo_esito = models.CharField(max_length=255, blank=True, editable=False)
+    errori = models.PositiveSmallIntegerField(default=0, editable=False)
+
+    class Meta:
+        verbose_name = "fonte dei bandi"
+        verbose_name_plural = "fonti dei bandi"
+        ordering = ["nome"]
+
+    def __str__(self):
+        return self.nome
+
+
+class ParolaChiave(models.Model):
+    """Parola o espressione che rende interessante (o esclude) una novità delle fonti."""
+
+    parola = models.CharField(max_length=100, unique=True)
+    esclusa = models.BooleanField(
+        default=False, help_text="Se presente, la novità si scarta (es. «imprese», «concorso»)."
+    )
+
+    class Meta:
+        verbose_name = "parola chiave"
+        verbose_name_plural = "parole chiave"
+        ordering = ["esclusa", "parola"]
+
+    def __str__(self):
+        return f"−{self.parola}" if self.esclusa else self.parola
+
+
+class BandoProposto(models.Model):
+    """Novità raccolta da una fonte, da vagliare: diventa un bando o si scarta."""
+
+    class Stato(models.TextChoices):
+        NUOVO = "nuovo", "Da vagliare"
+        ACCOLTO = "accolto", "Accolto"
+        SCARTATO = "scartato", "Scartato"
+
+    fonte = models.ForeignKey(
+        FonteBandi, null=True, on_delete=models.SET_NULL, related_name="proposte"
+    )
+    titolo = models.CharField(max_length=500)
+    link = models.URLField(max_length=1000, unique=True)
+    sommario = models.TextField(blank=True)
+    pubblicato_il = models.DateTimeField(null=True, blank=True)
+    trovato_il = models.DateTimeField(auto_now_add=True)
+    parole = models.CharField("parole trovate", max_length=255, blank=True)
+    stato = models.CharField(max_length=8, choices=Stato.choices, default=Stato.NUOVO)
+    bando = models.ForeignKey(
+        Bando, null=True, blank=True, on_delete=models.SET_NULL, related_name="proposte"
+    )
+    esaminato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    esaminato_il = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "bando proposto"
+        verbose_name_plural = "bandi proposti"
+        ordering = ["-trovato_il"]
+
+    def __str__(self):
+        return self.titolo
+
+
 class Progetto(ModelloBase):
     """Progetto finalizzato agli scopi statutari, dall'idea alla chiusura."""
 

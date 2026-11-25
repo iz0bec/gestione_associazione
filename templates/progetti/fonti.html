@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Fonti sorvegliate e parole chiave della raccolta dei bandi
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Fonti dei bandi{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:bandi' %}">Bandi</a> · <a href="{% url 'progetti:proposte' %}">Da vagliare</a></div>{% endblock %}
+{% block titolo_pagina %}Fonti e parole chiave{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Fonti sorvegliate</h3></div>
+      <div class="list-group list-group-flush">{% for f in fonti %}<div class="list-group-item">
+        <div class="d-flex align-items-start gap-2"><div class="flex-fill">
+          <a href="?modifica={{ f.pk }}" class="fw-medium{% if not f.attiva %} text-secondary{% endif %}">{{ f.nome }}</a> <span class="badge bg-secondary-lt">{{ f.get_tipo_display }}</span>{% if f.tutte %} <span class="badge bg-blue-lt">proponi tutto</span>{% endif %}{% if not f.attiva %} <span class="badge bg-secondary-lt">non attiva</span>{% endif %}
+          <div class="small text-secondary text-break">{{ f.indirizzo }}</div>
+          {% if f.ultimo_controllo %}<div class="small {% if f.errori %}text-danger{% else %}text-secondary{% endif %}">{{ f.ultimo_controllo|date:"d/m/Y H:i" }}: {{ f.ultimo_esito }}</div>{% endif %}
+        </div>
+        <form method="post" class="d-flex gap-1">{% csrf_token %}<input type="hidden" name="fonte" value="{{ f.pk }}">
+          <button class="btn btn-sm" type="submit" name="azione" value="controlla">Controlla ora</button>
+          <button class="btn btn-sm btn-ghost-danger" type="submit" name="azione" value="togli_fonte" data-conferma="Togliere la fonte? Le proposte già raccolte restano.">Togli</button></form></div>
+      </div>{% empty %}<div class="list-group-item text-secondary">Nessuna fonte.</div>{% endfor %}</div>
+      <div class="card-body border-top"><form method="post" novalidate>{% csrf_token %}<input type="hidden" name="azione" value="fonte">{% if modifica %}<input type="hidden" name="pk" value="{{ modifica.pk }}">{% endif %}
+        <h4>{% if modifica %}Modifica «{{ modifica }}»{% else %}Nuova fonte{% endif %}</h4>{{ form }}
+        <div class="d-flex justify-content-between">{% if modifica %}<a class="btn" href="{% url 'progetti:fonti' %}">Annulla</a>{% else %}<span></span>{% endif %}<button class="btn btn-primary" type="submit">Salva</button></div></form></div>
+    </div>
+    <div class="card"><div class="card-header"><h3 class="card-title">Portali noti</h3></div>
+      <div class="list-group list-group-flush">{% for p in portali %}<div class="list-group-item d-flex align-items-start gap-2"><div class="flex-fill"><div class="fw-medium">{{ p.nome }}</div><div class="small text-secondary">{{ p.descrizione }}</div></div>
+        {% if p.presente %}<span class="badge bg-green-lt">aggiunto</span>{% else %}<form method="post">{% csrf_token %}<input type="hidden" name="azione" value="portale"><button class="btn btn-sm" type="submit" name="portale" value="{{ p.chiave }}"><i class="ti ti-plus me-1"></i>Aggiungi</button></form>{% endif %}</div>{% endfor %}</div>
+      <div class="card-footer small text-secondary">Feed verificati. Altre fonti (siti di fondazioni, comuni, ministeri) si aggiungono come feed o come pagina web da sorvegliare.</div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-header"><h3 class="card-title">Parole chiave</h3></div><div class="card-body">
+      <p class="small text-secondary">Una novità è proposta se contiene almeno una parola chiave e nessuna parola esclusa (senza distinguere maiuscole e accenti).</p>
+      <div class="mb-2">{% for w in incluse %}<form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_parola"><button class="badge bg-blue-lt border-0 me-1 mb-1" type="submit" name="parola" value="{{ w.pk }}" title="Togli">{{ w.parola }} ×</button></form>{% empty %}<span class="text-secondary small">Nessuna parola chiave.</span>{% endfor %}</div>
+      <div class="mb-3">{% for w in escluse %}<form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="azione" value="togli_parola"><button class="badge bg-red-lt border-0 me-1 mb-1" type="submit" name="parola" value="{{ w.pk }}" title="Togli">− {{ w.parola }} ×</button></form>{% endfor %}</div>
+      <form method="post" novalidate>{% csrf_token %}<input type="hidden" name="azione" value="parola">{{ parola_form }}<button class="btn" type="submit">Aggiungi</button></form>
+      <form method="post" class="mt-3 border-top pt-3">{% csrf_token %}<button class="btn btn-sm" type="submit" name="azione" value="suggerite">Aggiungi le parole suggerite</button><div class="small text-secondary mt-1">Terzo settore, volontariato, associazioni, memoria, storia, cultura, giovani, scuole, legalità, pace…; escluse: concessioni demaniali, forniture, affidamenti, personale della Regione, imprese, libri di testo, concorsi, master.</div></form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

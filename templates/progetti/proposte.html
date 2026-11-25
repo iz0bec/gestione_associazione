@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Bandi raccolti dalle fonti, da vagliare
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Bandi da vagliare{% endblock %}
+{% block sopratitolo %}<div class="page-pretitle"><a href="{% url 'progetti:bandi' %}">Bandi</a></div>{% endblock %}
+{% block titolo_pagina %}Bandi da vagliare{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'progetti:fonti' %}"><i class="ti ti-rss me-1"></i>Fonti e parole chiave</a>{% endblock %}
+{% block contenuto %}
+<ul class="nav nav-tabs mb-3">{% for v, e in stati %}<li class="nav-item"><a class="nav-link{% if v == stato %} active{% endif %}" href="?stato={{ v }}">{{ e }}</a></li>{% endfor %}</ul>
+{% if not fonti %}<div class="alert alert-info">Nessuna fonte configurata: si aggiungono in <a href="{% url 'progetti:fonti' %}">Fonti e parole chiave</a>, anche scegliendo fra i portali noti.</div>{% endif %}
+<form method="post" class="card">{% csrf_token %}
+  <div class="list-group list-group-flush">
+    {% for p in proposte %}<div class="list-group-item"><div class="d-flex gap-3 align-items-start">
+      {% if stato == "nuovo" %}<input class="form-check-input mt-1" type="checkbox" name="proposta" value="{{ p.pk }}" aria-label="Seleziona">{% endif %}
+      <div class="flex-fill">
+        <a href="{{ p.link }}" target="_blank" rel="noopener noreferrer nofollow" class="fw-medium">{{ p.titolo }} <i class="ti ti-external-link" aria-hidden="true"></i></a>
+        <div class="small text-secondary">{{ p.fonte|default:"fonte rimossa" }}{% if p.pubblicato_il %} · {{ p.pubblicato_il|date:"d/m/Y" }}{% endif %}{% if p.parole %} · parole: {{ p.parole }}{% endif %}{% if p.bando %} · <a href="{{ p.bando.get_absolute_url }}">bando registrato</a>{% endif %}{% if p.esaminato_da %} · {{ p.esaminato_da }} il {{ p.esaminato_il|date:"d/m/Y" }}{% endif %}</div>
+        {% if p.sommario %}<div class="small mt-1">{{ p.sommario|truncatechars:300 }}</div>{% endif %}
+      </div>
+      {% if stato == "nuovo" %}<button class="btn btn-sm btn-primary" type="submit" name="accogli" value="{{ p.pk }}">Accogli</button>{% endif %}
+    </div></div>{% empty %}<div class="list-group-item text-secondary">Nessuna proposta.</div>{% endfor %}
+  </div>
+  {% if stato == "nuovo" and proposte %}<div class="card-footer"><button class="btn" type="submit" name="azione" value="scarta" data-conferma="Scartare le proposte selezionate?"><i class="ti ti-x me-1"></i>Scarta le selezionate</button></div>{% endif %}
+</form>
+{% endblock %}

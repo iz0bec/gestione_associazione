@@ -125,6 +125,43 @@ volta per soglia; cambiando la scadenza i promemoria ripartono) a chi gestisce i
 scelto nella pagina **Avvisi** (tipo *Scadenze dei bandi*). Il controllo è nel lavoro giornaliero del
 pianificatore; a mano: `manage.py promemoria_bandi`.
 
+## Raccolta automatica dei bandi
+
+Il gestionale può cercare da solo i bandi nuovi e proporli a chi gestisce i bandi, che li **vaglia**:
+non entra nulla nel registro senza una persona che lo accolga.
+
+### Fonti
+
+In *Bandi → Fonti* si indicano le fonti sorvegliate:
+
+- **feed RSS o Atom** dei siti che li pubblicano (molti siti WordPress hanno il feed in `/feed/`, e
+  per una categoria in `/category/nome/feed/`);
+- **pagine web**: si propongono i collegamenti nuovi della pagina (per esempio l'elenco dei bandi di un
+  comune o di una fondazione).
+
+Sono ammessi solo indirizzi **https** pubblici. Fra i **portali noti** (verificati) si aggiungono con un
+clic: *Regione Basilicata – Avvisi e bandi*, *CSV Basilicata – Bandi* (proponi tutto: pubblica solo
+opportunità per il Terzo settore), *Fondazione con il Sud*. Di ogni fonte si vede l'ultimo controllo e
+l'esito; **Controlla ora** la legge subito.
+
+### Parole chiave
+
+Una novità è proposta se contiene almeno una **parola chiave** e nessuna **parola esclusa**, senza
+distinguere maiuscole, accenti e punteggiatura. Le parole valgono per tutte le fonti; ogni fonte può
+aggiungerne di proprie. **Proponi tutto** (per le fonti di soli bandi) ignora le parole chiave ma rispetta
+le escluse. *Aggiungi le parole suggerite* inserisce un elenco di partenza (Terzo settore, volontariato,
+memoria, storia, cultura, giovani, scuole, legalità, pace…; escluse: concessioni demaniali, forniture,
+affidamenti, personale della Regione, imprese, libri di testo, concorsi, master), da adattare.
+
+### Da vagliare
+
+*Bandi → Da vagliare* elenca le novità con fonte, data e parole trovate. **Accogli** registra il bando
+(*da valutare*, con il link e la fonte come finanziatore) e apre il modulo per completarlo; le altre si
+**scartano** in blocco. Una novità già vista (stesso link) non si ripropone.
+
+La raccolta gira ogni notte con il pianificatore (`manage.py raccogli_bandi`) e avvisa chi gestisce i
+bandi, con il tipo di avviso *Scadenze dei bandi*, quando ci sono novità.
+
 ## Chi può fare cosa
 
 Tutti gli organi consultano idee, progetti e bandi, propongono idee, le valutano e commentano.

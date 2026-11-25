@@ -15,7 +15,16 @@ from apps.anagrafica.forms import CampoData
 from apps.anagrafica.models import Soggetto
 from apps.core.forms import StileMixin
 
-from .models import Bando, CriterioValutazione, FinalitaStatutaria, Idea, Progetto, Requisito
+from .models import (
+    Bando,
+    CriterioValutazione,
+    FinalitaStatutaria,
+    FonteBandi,
+    Idea,
+    ParolaChiave,
+    Progetto,
+    Requisito,
+)
 
 
 def _delibere():
@@ -276,3 +285,27 @@ class CandidaForm(StileMixin, forms.Form):
 
 
 ESITI = [("", "Automatico (dai dati del gestionale)"), *Requisito.Esito.choices]
+
+
+# --- raccolta dei bandi (P3) ---------------------------------------------------------------------
+
+
+class FonteForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = FonteBandi
+        fields = ["nome", "tipo", "indirizzo", "parole_chiave", "tutte", "attiva"]
+
+    def clean_indirizzo(self):
+        indirizzo = self.cleaned_data["indirizzo"]
+        if not indirizzo.startswith("https://"):
+            raise forms.ValidationError("Serve un indirizzo https://.")
+        return indirizzo
+
+
+class ParolaForm(StileMixin, forms.ModelForm):
+    class Meta:
+        model = ParolaChiave
+        fields = ["parola", "esclusa"]
+
+    def clean_parola(self):
+        return " ".join(self.cleaned_data["parola"].split()).lower()

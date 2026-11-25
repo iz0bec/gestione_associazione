@@ -6,7 +6,10 @@
 {% endcomment %}
 {% block titolo %}Bandi{% endblock %}
 {% block titolo_pagina %}Bandi e finanziamenti{% endblock %}
-{% block azioni %}{% if perms.progetti.add_bando %}<a class="btn btn-primary" href="{% url 'progetti:bando_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo bando</a>{% endif %}{% endblock %}
+{% block azioni %}<div class="btn-list">
+  {% if perms.progetti.gestisci_bandi %}<a class="btn" href="{% url 'progetti:proposte' %}"><i class="ti ti-inbox me-1"></i>Da vagliare{% if da_vagliare %} <span class="badge bg-orange text-white ms-1">{{ da_vagliare }}</span>{% endif %}</a><a class="btn" href="{% url 'progetti:fonti' %}"><i class="ti ti-rss me-1"></i>Fonti</a>{% endif %}
+  {% if perms.progetti.add_bando %}<a class="btn btn-primary" href="{% url 'progetti:bando_nuovo' %}"><i class="ti ti-plus me-1"></i>Nuovo bando</a>{% endif %}
+</div>{% endblock %}
 {% block contenuto %}
 <form method="get" class="card mb-3"><div class="card-body row g-2">
   <div class="col-md-5"><input class="form-control" type="search" name="q" value="{{ filtri.q }}" placeholder="Cerca per titolo o finanziatore" aria-label="Cerca"></div>

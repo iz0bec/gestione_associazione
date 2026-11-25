@@ -28,8 +28,10 @@ from .forms import (
     CandidaForm,
     CriterioForm,
     FinalitaForm,
+    FonteForm,
     IdeaForm,
     MembroForm,
+    ParolaForm,
     PrioritaForm,
     ProgettoForm,
     RequisitoForm,
@@ -39,10 +41,13 @@ from .forms import (
 from .models import (
     Allegato,
     Bando,
+    BandoProposto,
     CriterioValutazione,
     FinalitaStatutaria,
+    FonteBandi,
     Idea,
     Membro,
+    ParolaChiave,
     Progetto,
     Requisito,
     Scadenza,
@@ -498,6 +503,7 @@ class BandiView(PermessoMixin, ListView):
             stati=Bando.Stato.choices,
             finalita=FinalitaStatutaria.objects.filter(attiva=True),
             filtri=self.request.GET,
+            da_vagliare=BandoProposto.objects.filter(stato=BandoProposto.Stato.NUOVO).count(),
         )
         return ctx
 
@@ -663,3 +669,115 @@ class CriteriView(_ElencoConfigurazione):
     permission_required = "progetti.change_criteriovalutazione"
     modello, form_class = CriterioValutazione, CriterioForm
     titolo, url = "Criteri di valutazione delle idee", "progetti:criteri"
+
+
+# --- raccolta dei bandi (P3) ---------------------------------------------------------------------
+
+
+class ProposteView(PermessoMixin, View):
+    """Novità raccolte dalle fonti, da vagliare: accogliere (diventa un bando) o scartare."""
+
+    permission_required = "progetti.gestisci_bandi"
+
+    def get(self, request):
+        stato = request.GET.get("stato", BandoProposto.Stato.NUOVO)
+        if stato not in BandoProposto.Stato.values:
+            stato = BandoProposto.Stato.NUOVO
+        proposte = BandoProposto.objects.filter(stato=stato).select_related("fonte", "bando")
+        return render(request, "progetti/proposte.html", {
+            "proposte": proposte[:200], "stato": stato, "stati": BandoProposto.Stato.choices,
+            "fonti": FonteBandi.objects.count(),
+        })  # fmt: skip
+
+    def post(self, request):
+        from . import raccolta
+
+        azione = request.POST.get("azione")
+        scelte = BandoProposto.objects.filter(pk__in=request.POST.getlist("proposta"))
+        if pk := request.POST.get("accogli"):
+            try:
+                bando = raccolta.accogli(get_object_or_404(BandoProposto, pk=pk), request.user)
+            except raccolta.ErroreRaccolta as e:
+                messages.error(request, str(e))
+                return redirect("progetti:proposte")
+            messages.success(request, "Bando registrato: completarne i dati e i requisiti.")
+            return redirect("progetti:bando_modifica", pk=bando.pk)
+        if azione == "scarta" and scelte:
+            n = raccolta.scarta(scelte, request.user)
+            messages.success(request, f"Scartat{'a' if n == 1 else 'e'}: {n}.")
+        return redirect("progetti:proposte")
+
+
+class FontiView(PermessoMixin, View):
+    """Fonti sorvegliate e parole chiave della raccolta automatica."""
+
+    permission_required = "progetti.gestisci_bandi"
+
+    def _render(self, request, form=None, parola_form=None, modifica=None):
+        from . import raccolta
+
+        presenti = set(FonteBandi.objects.values_list("indirizzo", flat=True))
+        portali = [
+            {"chiave": k, "nome": v[0], "indirizzo": v[1], "descrizione": v[3],
+             "presente": v[1] in presenti}
+            for k, v in raccolta.PORTALI.items()
+        ]  # fmt: skip
+        return render(request, "progetti/fonti.html", {
+            "fonti": FonteBandi.objects.all(), "portali": portali, "modifica": modifica,
+            "form": form or FonteForm(instance=modifica),
+            "parola_form": parola_form or ParolaForm(),
+            "incluse": ParolaChiave.objects.filter(esclusa=False),
+            "escluse": ParolaChiave.objects.filter(esclusa=True),
+        })  # fmt: skip
+
+    def get(self, request):
+        modifica = None
+        if pk := request.GET.get("modifica"):
+            modifica = get_object_or_404(FonteBandi, pk=pk)
+        return self._render(request, modifica=modifica)
+
+    def post(self, request):
+        from apps.core.audit import Azione, registra
+
+        from . import raccolta
+
+        p, azione = request.POST, request.POST.get("azione")
+        if azione == "fonte":
+            modifica = get_object_or_404(FonteBandi, pk=p["pk"]) if p.get("pk") else None
+            form = FonteForm(p, instance=modifica)
+            if not form.is_valid():
+                return self._render(request, form=form, modifica=modifica)
+            fonte = form.save()
+            registra(Azione.MODIFICA if modifica else Azione.CREAZIONE, fonte, utente=request.user)
+            messages.success(request, f"Fonte «{fonte}» salvata.")
+        elif azione == "portale":
+            try:
+                fonte, nuova = raccolta.aggiungi_portale(p.get("portale", ""), request.user)
+            except raccolta.ErroreRaccolta as e:
+                messages.error(request, str(e))
+            else:
+                messages.success(
+                    request, f"Fonte «{fonte}» {'aggiunta' if nuova else 'già presente'}."
+                )
+        elif azione == "controlla":
+            fonte = get_object_or_404(FonteBandi, pk=p.get("fonte"))
+            n = raccolta.raccogli(fonte)
+            livello = messages.success if fonte.errori == 0 else messages.error
+            livello(request, f"{fonte}: {fonte.ultimo_esito}")
+            if n:
+                return redirect("progetti:proposte")
+        elif azione == "togli_fonte":
+            fonte = get_object_or_404(FonteBandi, pk=p.get("fonte"))
+            registra(Azione.ELIMINAZIONE, fonte, utente=request.user)
+            fonte.delete()
+        elif azione == "parola":
+            form = ParolaForm(p)
+            if not form.is_valid():
+                return self._render(request, parola_form=form)
+            form.save()
+        elif azione == "togli_parola":
+            ParolaChiave.objects.filter(pk=p.get("parola")).delete()
+        elif azione == "suggerite":
+            n = raccolta.aggiungi_parole_suggerite(request.user)
+            messages.success(request, f"Parole aggiunte: {n}.")
+        return redirect("progetti:fonti")

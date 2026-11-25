@@ -18,6 +18,11 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   indicato che prevale; candidatura di un progetto (stato «Candidato», bando «Partecipato»); scadenze
   nel calendario e nel cruscotto; promemoria 7 e 2 giorni prima con il nuovo tipo di avviso «Scadenze
   dei bandi» (comando `promemoria_bandi`, nel pianificatore).
+- **Raccolta automatica dei bandi** (Progetti P3, ramo `progetti`): fonti sorvegliate (feed RSS/Atom e
+  pagine web, solo https pubblici con il trasporto sicuro, XML con defusedxml), portali noti verificati
+  (Regione Basilicata, CSV Basilicata, Fondazione con il Sud), parole chiave e parole escluse, proposte
+  da vagliare (accogli → bando, scarta) senza doppioni; ogni notte con `raccogli_bandi` e avviso a chi
+  gestisce i bandi.
 
 ## [1.0.99] - 2026-11-25
 
