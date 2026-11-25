@@ -183,6 +183,29 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
 10. ✅ **Gestione utenti dall'interfaccia** - creazione con password temporanea, ruoli e sezioni,
    reimpostazione password, azzeramento del secondo fattore, MFA obbligatoria per ruolo.
 
+## Fase 3 - Progetti (dal 25/11/2026)
+
+Il gestionale è considerato completo e passa al **mantenimento**; la nuova linea di sviluppo è la
+gestione dei **progetti finalizzati agli scopi statutari**, dall'idea al rendiconto. Analisi e scelte
+in [analisi/progetti.md](analisi/progetti.md).
+
+- **P1** Idee, necessità (anche da sollecitazioni esterne) e progetti, finalità statutarie,
+  valutazione e priorità, gruppo di lavoro, stati con delibere.
+- **P2** Bandi e finanziatori: registro, scadenze e avvisi, requisiti con verifica sui dati
+  dell'organizzazione, abbinamento bando ↔ progetto.
+- **P3** Raccolta automatica dei bandi: feed RSS/Atom, pagine web sorvegliate, portali noti; parole
+  chiave; proposte da vagliare.
+- **P4** Progettazione e candidatura: obiettivi e indicatori, cronoprogramma, partner, piano
+  economico con i limiti del bando, scrittura guidata (senza IA), documenti, delibera, protocollo e PEC.
+- **P5** Esecuzione: centro di costo in prima nota, preventivo/consuntivo, ore di volontariato
+  valorizzate come cofinanziamento in natura, avanzamento.
+- **P6** Rendicontazione e chiusura: rendiconto per il finanziatore con giustificativi (PDF, Excel,
+  ZIP), relazione finale guidata, archivio e riuso.
+
+Restano aperte, come manutenzione: API REST del protocollo (in parte coperte dalle API v1), prova di
+SMS e WhatsApp con un account reale, installazione su RHEL/Rocky, firma digitale dei verbali e
+votazioni elettroniche.
+
 ## Fase 2 - Dopo la RC (proposte)
 
 - **Allineamento fra installazioni** (federazione ↔ sezioni). ✅ *Fatto*: scambio con file Excel
