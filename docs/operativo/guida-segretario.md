@@ -82,6 +82,14 @@ Dettagli: [Registrare un documento](protocollo.md#registrare-un-documento).
 
 Dettagli: [Organi sociali](organi.md#riunioni).
 
+## Progetti
+
+- **Idee e necessità**: un protocollo in entrata con una proposta (una scuola, il comune) diventa un'idea
+  con **Proponi come idea**; dalla posta da protocollare con **Idea di progetto**.
+- La **relazione al consiglio** di un progetto si invia ai partecipanti della riunione insieme alla
+  convocazione; la candidatura si **protocolla** e si spedisce dalla scheda Candidatura del progetto.
+- Vedi [Progetti](progetti.md) e la [guida del progettista](guida-progettista.md).
+
 ## Da ricordare
 
 - Domande, protocolli e verbali seguono l'ordine: **prima la delibera, poi l'accoglimento**.

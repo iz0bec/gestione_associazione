@@ -54,6 +54,13 @@ Se il cruscotto segnala **quote non ancora in prima nota** (esercizio non aperto
 
 Dettagli: [Rendiconto](tesoreria.md#rendiconto) e [Chiusura dell'esercizio](tesoreria.md#chiusura-dellesercizio).
 
+## Progetti
+
+I movimenti di prima nota dei progetti finanziati si **imputano** al progetto (scheda Esecuzione, a cura di
+chi gestisce i progetti): il movimento non cambia. Il tesoriere consulta **preventivo e consuntivo** e il
+**rendiconto** per il finanziatore; i **giustificativi** allegati in prima nota finiscono numerati
+nell'archivio del rendiconto. Vedi [Progetti](progetti.md#esecuzione).
+
 ## Da ricordare
 
 - I movimenti **non si cancellano**: si annullano.

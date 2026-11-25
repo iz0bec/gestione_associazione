@@ -41,6 +41,12 @@ Dalla scheda di un protocollo in uscita: **spedizione per email o PEC** ai desti
 si agganciano da sole. Per la carta: buste e distinte. Vedi
 [Spedire per email o PEC](protocollo.md#spedire-per-email-o-pec).
 
+## Proposte dall'esterno
+
+Una lettera o un'email con una proposta di iniziativa (una scuola, un comune, un'altra associazione) si
+protocolla come sempre; poi, dalla scheda del protocollo, **Proponi come idea** la porta fra le **Idee e
+necessità** da valutare. Vedi [Progetti](progetti.md).
+
 ## Da ricordare
 
 - Un errore non si cancella: va **annullato** da chi ne ha il permesso, poi si registra di nuovo.

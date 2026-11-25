@@ -24,6 +24,7 @@ quelli c'è il collegamento al capitolo completo del manuale. Chi ha più ruoli 
 | Addetto protocollo | [Guida rapida dell'addetto al protocollo](guida-protocollo.md) |
 | Consigliere | [Guida rapida del consigliere](guida-consigliere.md) |
 | Revisore | [Guida rapida del revisore](guida-revisore.md) |
+| Progettista (da abbinare) | [Guida rapida del progettista](guida-progettista.md) |
 
 **Per tutti.** Si entra con nome utente e password; la **verifica in due passaggi** è consigliata e per
 alcuni ruoli obbligatoria. Il pulsante **?** della barra apre la pagina del manuale della sezione in cui

@@ -48,3 +48,8 @@ ricezione della consegna. Vedi
 
 **Organi sociali → Rinnovi** (solo per la propria sezione): congresso sezionale, liste, esiti e nomine.
 Vedi [Rinnovo degli organi](rinnovo-organi.md).
+
+## Idee e progetti
+
+Il presidente di sezione propone e valuta le **idee** e consulta bandi e progetti; può essere anche
+**Progettista** se segue i progetti (vedi la [guida del progettista](guida-progettista.md)).

@@ -53,6 +53,16 @@ persone), **Prepara e controlla**, poi conferma. Nulla parte prima della conferm
 Alla scadenza dei mandati: **Organi sociali → Rinnovi** guida indizione, convocazione, liste, voto,
 proclamazione, nomine e passaggio delle consegne. Vedi [Rinnovo degli organi](rinnovo-organi.md).
 
+## Progetti
+
+- Il **cruscotto** segnala le idee da valutare e i bandi in scadenza.
+- **Idee e necessità**: si valutano le proposte e se ne fissa la **priorità** con la delibera; **Trasforma
+  in progetto** avvia la progettazione.
+- Prima di ogni decisione, la scheda **Al consiglio** del progetto prepara la relazione da **stampare** o
+  **inviare ai partecipanti** della riunione (anche il punto all'ordine del giorno).
+- La **candidatura** si protocolla e si spedisce per PEC dalla scheda Candidatura; la chiusura del progetto
+  si fa con la delibera. Vedi [Progetti](progetti.md) e la [guida del progettista](guida-progettista.md).
+
 ## Da ricordare
 
 - Firme e timbri nelle stampe arrivano dalle **cariche in corso**: tenerle aggiornate

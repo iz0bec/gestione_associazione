@@ -37,3 +37,8 @@ operazione e per utente. Vedi [Registro attività](sistema.md#registro-attivita)
 
 La verifica si verbalizza come riunione dell'organo di controllo (**Organi sociali → Riunioni**, modello
 *verifica periodica*). Vedi [Organi sociali](organi.md).
+
+## Progetti
+
+Il revisore consulta progetti, piani economici, imputazioni e **rendiconti** dei progetti (con i
+giustificativi numerati) e la loro storia (stati, delibere, varianti). Vedi [Progetti](progetti.md).

@@ -44,6 +44,16 @@ Vedi [Utenti e ruoli](utenti.md).
 
 Vedi [Collegamenti API](collegamenti-api.md).
 
+## Progetti e assistente
+
+- Il ruolo **Progettista** si abbina, in *Utenti e ruoli*, a chi segue i progetti.
+- Le **finalità statutarie** e i **criteri di valutazione** si curano in *Idee e necessità → Finalità /
+  Criteri* (o con `manage.py importa_finalita`).
+- Le **fonti dei bandi** e le parole chiave in *Bandi → Fonti* (portali noti con un clic).
+- L'**assistente (connettore MCP)** è spento di norma: si attiva in *Progetti → Assistente (MCP)*, con
+  l'eventuale permesso dei commenti; ognuno crea i propri token. Consigliato un modello locale con
+  **Ollama** (i dati restano in casa). Vedi [Progetti](progetti.md#assistente-connettore-mcp).
+
 ## Ogni tanto
 
 - **Backup**: controllare che quello automatico ci sia (*Sistema → Backup*) e scaricarne una copia.

@@ -28,5 +28,11 @@ eventi, calendario, inventario e rendiconti. Non modifica i dati.
 - **Tesoreria**: rendiconto dell'esercizio.
 - **Eventi** e adesioni; **Patrimonio** (inventario).
 
+## Idee e progetti
+
+Il consigliere **propone idee** (*Idee e necessità → Nuova idea*), le **valuta** sui criteri (da 1 a 5) e
+partecipa alla **discussione** di idee e progetti; consulta bandi, progetti, piani e rendiconti. Prima
+delle decisioni riceve la **relazione al consiglio** sul progetto. Vedi [Progetti](progetti.md).
+
 Per correzioni o richieste ci si rivolge al segretario o al presidente. Vedi
 [Ruoli e permessi](ruoli.md).
