@@ -308,8 +308,7 @@ final class GA_Moduli {
 			return '<p class="ga-vuoto">' . esc_html__( 'Nessun evento in programma.', 'gestione-associazione' ) . '</p>';
 		}
 		wp_enqueue_style( 'gestione-associazione' );
-		$aperto = self::$esito['adesione']['evento'] ?? '';
-		$h      = '<div class="ga-eventi">';
+		$h = '<div class="ga-eventi">';
 		foreach ( $eventi as $e ) {
 			$h .= '<article class="ga-evento' . ( $e['annullato'] ? ' ga-annullato' : '' ) . '" id="ga-evento-' . esc_attr( $e['uuid'] ) . '">';
 			$h .= '<h3>' . ( $e['annullato'] ? esc_html__( 'ANNULLATO – ', 'gestione-associazione' ) : '' ) . esc_html( $e['titolo'] ) . '</h3>';
@@ -323,27 +322,38 @@ final class GA_Moduli {
 			if ( null !== $e['posti_liberi'] ) {
 				$h .= '<p class="ga-posti">' . esc_html( sprintf( _n( '%d posto disponibile', '%d posti disponibili', (int) $e['posti_liberi'], 'gestione-associazione' ), (int) $e['posti_liberi'] ) ) . '</p>';
 			}
-			if ( ! $e['annullato'] && $e['adesioni_aperte'] && ( null === $e['posti_liberi'] || $e['posti_liberi'] > 0 ) ) {
-				$h .= ( $aperto === $e['uuid'] ? self::avviso( 'adesione' ) : '' );
-				if ( ! ( $aperto === $e['uuid'] && isset( self::$esito['adesione']['ok'] ) ) ) {
-					$h .= '<details' . ( $aperto === $e['uuid'] ? ' open' : '' ) . '><summary>' . esc_html__( 'Aderisci', 'gestione-associazione' ) . '</summary>';
-					$h .= self::inizio_modulo( 'adesione', 'ga-adesione' ) . '<input type="hidden" name="ga_evento" value="' . esc_attr( $e['uuid'] ) . '">';
-					$h .= self::input( 'cognome', __( 'Cognome', 'gestione-associazione' ), 'text', true, 'maxlength="100"' );
-					$h .= self::input( 'nome', __( 'Nome', 'gestione-associazione' ), 'text', false, 'maxlength="100"' );
-					$h .= self::input( 'email', __( 'Email', 'gestione-associazione' ), 'email' );
-					$h .= self::input( 'telefono', __( 'Telefono', 'gestione-associazione' ), 'tel', false, 'maxlength="30"' );
-					if ( $e['accompagnatori_max'] > 0 ) {
-						$h .= self::input( 'accompagnatori', __( 'Accompagnatori', 'gestione-associazione' ), 'number', false, 'min="0" max="' . (int) $e['accompagnatori_max'] . '"' );
-					}
-					$h .= self::input( 'note', __( 'Note', 'gestione-associazione' ), 'text', false, 'maxlength="255"' );
-					$h .= '<p><button type="submit">' . esc_html__( 'Conferma l\'adesione', 'gestione-associazione' ) . '</button></p></form></details>';
-				}
-			} elseif ( ! $e['annullato'] ) {
-				$h .= '<p class="ga-nota">' . esc_html__( 'Adesioni chiuse.', 'gestione-associazione' ) . '</p>';
-			}
+			$h .= self::blocco_adesione( $e );
 			$h .= '</article>';
 		}
 		return $h . '</div>';
+	}
+
+	/**
+	 * Modulo di adesione di un evento (dati dalla cache del gestionale): lo usano l'elenco degli
+	 * eventi e la pagina dell'evento del calendario. `$aperto`: modulo già espanso.
+	 */
+	public static function blocco_adesione( array $e, bool $aperto = false ): string {
+		$corrente = self::$esito['adesione']['evento'] ?? '';
+		$h        = '';
+		if ( ! $e['annullato'] && $e['adesioni_aperte'] && ( null === $e['posti_liberi'] || $e['posti_liberi'] > 0 ) ) {
+			$h .= ( $corrente === $e['uuid'] ? self::avviso( 'adesione' ) : '' );
+			if ( ! ( $corrente === $e['uuid'] && isset( self::$esito['adesione']['ok'] ) ) ) {
+				$h .= '<details' . ( $aperto || $corrente === $e['uuid'] ? ' open' : '' ) . ' class="ga-adesione-box"><summary>' . esc_html__( 'Aderisci', 'gestione-associazione' ) . '</summary>';
+				$h .= self::inizio_modulo( 'adesione', 'ga-adesione' ) . '<input type="hidden" name="ga_evento" value="' . esc_attr( $e['uuid'] ) . '">';
+				$h .= self::input( 'cognome', __( 'Cognome', 'gestione-associazione' ), 'text', true, 'maxlength="100"' );
+				$h .= self::input( 'nome', __( 'Nome', 'gestione-associazione' ), 'text', false, 'maxlength="100"' );
+				$h .= self::input( 'email', __( 'Email', 'gestione-associazione' ), 'email' );
+				$h .= self::input( 'telefono', __( 'Telefono', 'gestione-associazione' ), 'tel', false, 'maxlength="30"' );
+				if ( $e['accompagnatori_max'] > 0 ) {
+					$h .= self::input( 'accompagnatori', __( 'Accompagnatori', 'gestione-associazione' ), 'number', false, 'min="0" max="' . (int) $e['accompagnatori_max'] . '"' );
+				}
+				$h .= self::input( 'note', __( 'Note', 'gestione-associazione' ), 'text', false, 'maxlength="255"' );
+				$h .= '<p><button type="submit">' . esc_html__( 'Conferma l\'adesione', 'gestione-associazione' ) . '</button></p></form></details>';
+			}
+		} elseif ( ! $e['annullato'] ) {
+			$h .= '<p class="ga-nota">' . esc_html__( 'Adesioni chiuse.', 'gestione-associazione' ) . '</p>';
+		}
+		return $h;
 	}
 
 	public static function mostra_organigramma( $attributi = array() ): string {

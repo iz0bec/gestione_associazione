@@ -70,12 +70,19 @@ final class GA_Eventi {
 	// --- articoli degli eventi --------------------------------------------------------------
 
 	public static function impostazioni(): array {
-		return wp_parse_args( get_option( 'ga_articoli', array() ), array(
-			'attivi'    => true,
-			'stato'     => 'draft',
-			'categoria' => __( 'Eventi', 'gestione-associazione' ),
-			'autore'    => 0,
+		$tec  = class_exists( 'Tribe__Events__Main' );  // The Events Calendar usa già /eventi/
+		$opz  = wp_parse_args( get_option( 'ga_articoli', array() ), array(
+			'attivi'        => true,
+			'stato'         => 'draft',
+			'categoria'     => __( 'Eventi', 'gestione-associazione' ),
+			'autore'        => 0,
+			'slug_archivio' => $tec ? 'calendario' : 'eventi',
+			'slug_evento'   => $tec ? 'appuntamento' : 'evento',
 		) );
+		if ( empty( $opz['modo'] ) ) {  // dalla 0.2.0: calendario proprio, articoli o nessuno
+			$opz['modo'] = $opz['attivi'] ? 'calendario' : 'nessuno';
+		}
+		return $opz;
 	}
 
 	private static function articolo_di( string $uuid ): ?WP_Post {
@@ -103,8 +110,18 @@ final class GA_Eventi {
 	 */
 	public static function sincronizza_articoli(): array {
 		$opz = self::impostazioni();
-		if ( empty( $opz['attivi'] ) ) {
+		if ( 'nessuno' === $opz['modo'] ) {
 			return array( 0, 0 );
+		}
+		if ( 'calendario' === $opz['modo'] ) {
+			if ( ! GA_Connettore::blocca( 'articoli', 300 ) ) {
+				return array( 0, 0 );
+			}
+			try {
+				return GA_Calendario::sincronizza( $opz );
+			} finally {
+				GA_Connettore::sblocca( 'articoli' );
+			}
 		}
 		$categoria = $opz['categoria'] ? (int) ( term_exists( $opz['categoria'], 'category' )['term_id'] ?? 0 ) : 0;
 		if ( $opz['categoria'] && ! $categoria ) {
@@ -176,7 +193,7 @@ final class GA_Eventi {
 	 * consentito solo a chi ha unfiltered_html: kses si sospende per questo salvataggio (il titolo
 	 * è già testo semplice) e si rimette com'era.
 	 */
-	private static function aggiorna_titolo( int $id, string $titolo ): void {
+	public static function aggiorna_titolo( int $id, string $titolo ): void {
 		$kses = false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' );
 		if ( $kses ) {
 			kses_remove_filters();

@@ -288,7 +288,7 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   `/contatti`), calendario degli eventi pubblici con adesioni (`/eventi`), organigramma e recapiti
   della sezione, verifica della tessera. Abbinamento con invito monouso, chiavi conservate da
   WordPress, nessun dato personale dei soci esposto sul sito.
-- **Eventi del connettore WordPress come tipo di contenuto proprio** (da fare, deciso il 24/11/2026):
+- ✅ **Eventi del connettore WordPress come tipo di contenuto proprio** (plugin 0.2.0, deciso il 24/11/2026):
   invece di legarsi a un plugin di calendario (es. The Events Calendar), il connettore registra un
   tipo di contenuto «Evento» con pagina dell'evento e archivio `/eventi/`, blocco calendario (mese e
   elenco), dati strutturati schema.org/Event, feed iCal, adesione e posti liberi dal gestionale; testo

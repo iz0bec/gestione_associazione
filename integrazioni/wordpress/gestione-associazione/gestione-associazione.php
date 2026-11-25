@@ -3,7 +3,7 @@
  * Plugin Name:       Gestione Associazione
  * Plugin URI:        https://github.com/iz0bec/gestione_associazione
  * Description:       Collega il sito al gestionale Gestione Associazione (API v1, firmate e cifrate): domanda di iscrizione, modulo contatti, eventi con adesione e articoli, organigramma, verifica della tessera. Nessun dato personale dei soci sul sito.
- * Version:           0.1.2
+ * Version:           0.2.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Bartolomeo Santoro aka IZ0BEC
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GA_VERSIONE', '0.1.2' );
+define( 'GA_VERSIONE', '0.2.0' );
 define( 'GA_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GA_URL', plugin_dir_url( __FILE__ ) );
 
@@ -33,6 +33,7 @@ require_once GA_DIR . 'includes/firma.php';
 require_once GA_DIR . 'includes/connettore.php';
 require_once GA_DIR . 'includes/eventi.php';
 require_once GA_DIR . 'includes/moduli.php';
+require_once GA_DIR . 'includes/calendario.php';
 require_once GA_DIR . 'includes/amministrazione.php';
 
 // lavori periodici: ogni 15 minuti coda degli invii, eventi, organigramma, articoli
@@ -50,12 +51,15 @@ register_activation_hook( __FILE__, function () {
 	if ( ! wp_next_scheduled( 'ga_periodico' ) ) {
 		wp_schedule_event( time() + 60, 'ga_quarto_ora', 'ga_periodico' );
 	}
+	update_option( 'ga_calendario_flush', 1, false );  // indirizzi del calendario
 } );
 register_deactivation_hook( __FILE__, function () {
 	wp_clear_scheduled_hook( 'ga_periodico' );
+	flush_rewrite_rules( false );
 } );
 
 GA_Moduli::avvia();
+GA_Calendario::avvia();
 GA_Amministrazione::avvia();
 
 // blocchi dell'editor: gli stessi moduli degli shortcode, impaginati dal server
@@ -68,6 +72,8 @@ add_action( 'init', function () {
 		'eventi'           => array( 'quanti' => 'number' ),
 		'organigramma'     => array( 'sezione' => 'string' ),
 		'verifica-tessera' => array(),
+		'calendario'       => array( 'vista' => 'string', 'quanti' => 'number' ),
+		'prossimi-eventi'  => array( 'quanti' => 'number' ),
 	);
 	foreach ( $blocchi as $nome => $attributi ) {
 		$shortcode = 'ga_' . str_replace( '-', '_', $nome );
@@ -75,7 +81,9 @@ add_action( 'init', function () {
 			'editor_script'   => 'gestione-associazione-blocchi',
 			'attributes'      => array_map( fn( $t ) => array( 'type' => $t ), $attributi ),
 			'render_callback' => function ( $a ) use ( $shortcode ) {
-				return call_user_func( array( 'GA_Moduli', 'mostra_' . substr( $shortcode, 3 ) ), array_filter( $a, fn( $v ) => '' !== $v && null !== $v ) );
+				$metodo = 'mostra_' . substr( $shortcode, 3 );
+				$classe = method_exists( 'GA_Calendario', $metodo ) ? 'GA_Calendario' : 'GA_Moduli';
+				return call_user_func( array( $classe, $metodo ), array_filter( $a, fn( $v ) => '' !== $v && null !== $v ) );
 			},
 		) );
 	}

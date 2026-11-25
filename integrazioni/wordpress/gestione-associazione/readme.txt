@@ -4,7 +4,7 @@ Tags: associazione, iscrizione, eventi, terzo settore, ANCR
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.2
+Stable tag: 0.2.0
 License: CC0-1.0
 License URI: https://creativecommons.org/publicdomain/zero/1.0/
 
@@ -22,7 +22,10 @@ Sul sito (shortcode e blocchi):
 * `[ga_organigramma sezione="codice"]` - cariche in corso (solo ruolo e nome);
 * `[ga_verifica_tessera]` - verifica di una tessera dal codice della tessera digitale.
 
-Per gli eventi segnati «pubblica sui siti collegati» il connettore crea un articolo (in bozza per default) e lo aggiorna quando l'evento cambia.
+Gli eventi segnati «pubblica sui siti collegati» diventano eventi del calendario del sito, senza plugin di calendario esterni: archivio con le viste elenco, mese e giorno, pagina dell'evento con data, luogo e mappa, posti e modulo di adesione dal gestionale, iCal e Google Calendar, dati strutturati schema.org. In alternativa possono diventare articoli del blog.
+
+* `[ga_calendario vista="lista|mese|giorno"]` - il calendario degli eventi;
+* `[ga_prossimi_eventi quanti="5"]` - i prossimi eventi.
 
 Richiede le estensioni PHP sodium e openssl (presenti nelle installazioni comuni).
 
@@ -34,6 +37,9 @@ Richiede le estensioni PHP sodium e openssl (presenti nelle installazioni comuni
 4. Confrontate l'impronta mostrata dalle due parti e attivate il collegamento nel gestionale.
 
 == Changelog ==
+
+= 0.2.0 =
+* Calendario degli eventi proprio: tipo di contenuto «Evento», archivio con viste elenco, mese e giorno, pagina dell'evento con data, luogo, mappa, posti e adesione, iCal (feed e singolo evento), Google Calendar, schema.org/Event, blocchi «Calendario degli eventi» e «Prossimi eventi», aggancio ga_evento_sincronizzato. Modalità scelta nelle impostazioni (calendario, articoli o nessuno).
 
 = 0.1.2 =
 * Articoli degli eventi: aggiornando il titolo dal cron non si tolgono più dal testo del redattore video incorporati, iframe e altro HTML consentito solo agli amministratori.

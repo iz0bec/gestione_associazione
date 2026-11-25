@@ -18,7 +18,9 @@
 		'contatti': { titolo: 'Modulo contatti', icona: 'email', campi: {} },
 		'eventi': { titolo: 'Eventi con adesione', icona: 'calendar-alt', campi: { quanti: 'Quanti eventi' } },
 		'organigramma': { titolo: 'Organigramma', icona: 'groups', campi: { sezione: 'Codice della sezione (vuoto: l\'ente)' } },
-		'verifica-tessera': { titolo: 'Verifica della tessera', icona: 'yes-alt', campi: {} }
+		'verifica-tessera': { titolo: 'Verifica della tessera', icona: 'yes-alt', campi: {} },
+		'calendario': { titolo: 'Calendario degli eventi', icona: 'calendar', campi: { vista: 'Vista iniziale (lista, mese, giorno)', quanti: 'Quanti eventi nell\'elenco' } },
+		'prossimi-eventi': { titolo: 'Prossimi eventi', icona: 'list-view', campi: { quanti: 'Quanti eventi' } }
 	};
 	Object.keys( blocchi ).forEach( function ( nome ) {
 		var b = blocchi[ nome ];

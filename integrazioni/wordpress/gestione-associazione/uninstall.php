@@ -12,7 +12,7 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
-foreach ( array( 'ga_connettore', 'ga_coda', 'ga_eventi', 'ga_organigramma', 'ga_articoli', 'ga_articoli_creati', 'ga_ultimo_errore' ) as $opzione ) {
+foreach ( array( 'ga_connettore', 'ga_coda', 'ga_eventi', 'ga_organigramma', 'ga_articoli', 'ga_articoli_creati', 'ga_ultimo_errore', 'ga_eventi_creati', 'ga_calendario_flush' ) as $opzione ) {
 	delete_option( $opzione );
 }
 // voci della coda (una per invio) e blocchi fra processi

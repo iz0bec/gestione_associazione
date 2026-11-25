@@ -21,13 +21,36 @@ esterna» delle [API di interoperabilità](api.md). Sul sito mette:
 | `[ga_eventi]` | eventi pubblici con i posti liberi e il modulo di adesione | **adesioni** dell'evento (origine «integrazione») |
 | `[ga_organigramma sezione="codice"]` | cariche in corso, solo ruolo e nome | — |
 | `[ga_verifica_tessera]` | verifica di una tessera dal codice della tessera digitale | solo validità, anno e sezione |
+| `[ga_calendario vista="lista\|mese\|giorno"]` | il calendario degli eventi del sito, con le viste | — |
+| `[ga_prossimi_eventi quanti="5"]` | i prossimi eventi, per la home o una barra laterale | — |
 
-Per gli eventi con **«Pubblica sui siti collegati»** (scheda dell'evento, con il modulo pubblico) il
-connettore crea un **articolo**, in bozza per default, che contiene lo shortcode dell'evento: data,
-luogo, posti e adesione sono sempre quelli correnti, il testo aggiunto dal redattore non viene mai
-toccato (nemmeno video incorporati o iframe). Se l'evento cambia, il titolo si aggiorna; se è annullato diventa «ANNULLATO – …»;
-l'articolo non viene mai cancellato. Un articolo che il redattore **cestina o elimina** non viene
-ricreato né aggiornato. La diffusione sui social resta ai plugin del sito.
+### Calendario degli eventi (dalla 0.2.0)
+
+Il plugin ha un **proprio gestore degli eventi**, senza bisogno di plugin di calendario esterni
+(come The Events Calendar). Per gli eventi con **«Pubblica sui siti collegati»** (scheda dell'evento
+nel gestionale, con il modulo pubblico) crea un **evento del sito** (tipo di contenuto «Evento», menu
+*Eventi* della bacheca), in bozza per default:
+
+- **archivio** su `/eventi/` con le viste **elenco** (prossimi e passati), **mese** e **giorno**;
+  **pagina dell'evento** su `/evento/…` (indirizzi modificabili nelle impostazioni; se The Events
+  Calendar è attivo i predefiniti sono `/calendario/` e `/appuntamento/…`, per non sovrapporsi);
+- nella pagina dell'evento: data e ora, luogo con il collegamento alla mappa (OpenStreetMap, senza
+  mappe incorporate), tipo, quota, **posti disponibili** e **modulo di adesione** presi dal
+  gestionale; **Aggiungi al calendario** (iCal e Google); il testo e le foto (immagine in evidenza)
+  li cura il redattore e non vengono mai toccati;
+- **feed iCal** di tutti gli eventi (`/?ga_ical=tutti`) per abbonarsi da telefono o computer;
+- **dati strutturati schema.org/Event** per i motori di ricerca, con lo stato «annullato»;
+- se l'evento cambia nel gestionale si aggiornano titolo, data, luogo e tipo; se è annullato il titolo
+  diventa «ANNULLATO – …»; gli eventi passati restano in archivio («Evento concluso»); un evento che
+  il redattore cestina o elimina non viene ricreato;
+- con un **tema a blocchi** l'archivio usa il modello del tema: per le viste del calendario si mette
+  il blocco o lo shortcode *Calendario degli eventi* in una pagina;
+- chi vuole riversare gli eventi altrove (altri calendari, social) può usare l'aggancio WordPress
+  `ga_evento_sincronizzato` (`$id`, `$evento`, `creato|aggiornato`).
+
+In alternativa, nelle impostazioni, la modalità **«Articoli del blog»** crea un articolo per evento
+come nelle versioni precedenti, oppure **«Nessuno»** lascia solo shortcode e blocchi. La diffusione
+sui social resta ai plugin del sito.
 
 ## Sicurezza e riservatezza
 

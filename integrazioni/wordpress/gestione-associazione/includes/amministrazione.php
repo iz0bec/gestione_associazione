@@ -58,16 +58,27 @@ final class GA_Amministrazione {
 					$eventi = GA_Eventi::aggiorna_cache();
 					list( $creati, $aggiornati ) = GA_Eventi::sincronizza_articoli();
 					$inviati = GA_Connettore::svuota_coda();
-					self::torna( 'success', sprintf( __( '%1$d eventi letti; articoli: %2$d creati, %3$d aggiornati; invii in coda consegnati: %4$d.', 'gestione-associazione' ), count( $eventi ), $creati, $aggiornati, $inviati ) );
+					self::torna( 'success', sprintf( __( '%1$d eventi letti; eventi del sito: %2$d creati, %3$d aggiornati; invii in coda consegnati: %4$d.', 'gestione-associazione' ), count( $eventi ), $creati, $aggiornati, $inviati ) );
 					break;
 				case 'articoli':
-					update_option( 'ga_articoli', array(
-						'attivi'    => ! empty( $_POST['attivi'] ),
-						'stato'     => 'publish' === ( $_POST['stato'] ?? '' ) ? 'publish' : 'draft',
-						'categoria' => sanitize_text_field( wp_unslash( $_POST['categoria'] ?? '' ) ),
-						'autore'    => (int) ( $_POST['autore'] ?? 0 ),
-					), false );
-					self::torna( 'success', __( 'Impostazioni degli articoli salvate.', 'gestione-associazione' ) );
+					$prima = GA_Eventi::impostazioni();
+					$modo  = sanitize_key( wp_unslash( $_POST['modo'] ?? 'calendario' ) );
+					$nuove = array(
+						'modo'          => in_array( $modo, array( 'calendario', 'articoli', 'nessuno' ), true ) ? $modo : 'calendario',
+						'attivi'        => 'nessuno' !== $modo,
+						'stato'         => 'publish' === ( $_POST['stato'] ?? '' ) ? 'publish' : 'draft',
+						'categoria'     => sanitize_text_field( wp_unslash( $_POST['categoria'] ?? '' ) ),
+						'autore'        => (int) ( $_POST['autore'] ?? 0 ),
+						'slug_archivio' => sanitize_title( wp_unslash( $_POST['slug_archivio'] ?? '' ) ) ?: $prima['slug_archivio'],
+						'slug_evento'   => sanitize_title( wp_unslash( $_POST['slug_evento'] ?? '' ) ) ?: $prima['slug_evento'],
+					);
+					foreach ( array( 'modo', 'slug_archivio', 'slug_evento' ) as $chiave ) {
+						if ( $nuove[ $chiave ] !== $prima[ $chiave ] ) {
+							update_option( 'ga_calendario_flush', 1, false );  // nuove regole degli indirizzi
+						}
+					}
+					update_option( 'ga_articoli', $nuove, false );
+					self::torna( 'success', __( 'Impostazioni degli eventi salvate.', 'gestione-associazione' ) );
 					break;
 				case 'riprova_coda':
 					$n = GA_Connettore::riprova_coda();
@@ -120,7 +131,7 @@ final class GA_Amministrazione {
 			echo '<tr><th>' . esc_html__( 'Impronta', 'gestione-associazione' ) . '</th><td><code>' . esc_html( GA_Connettore::impronta() ) . '</code><p class="description">' . esc_html__( 'Deve coincidere con quella mostrata dal gestionale (Sistema → Collegamenti), da confrontare per telefono o di persona prima di attivare il collegamento.', 'gestione-associazione' ) . '</p></td></tr>';
 			echo '<tr><th>' . esc_html__( 'Abbinato il', 'gestione-associazione' ) . '</th><td>' . esc_html( wp_date( 'd/m/Y H:i', (int) $s['abbinato_il'] ) ) . '</td></tr></table>';
 			echo self::modulo( 'prova', '', __( 'Prova il collegamento', 'gestione-associazione' ), 'button-secondary' );
-			echo self::modulo( 'aggiorna', '', __( 'Aggiorna ora eventi, organigramma e articoli', 'gestione-associazione' ), 'button-secondary' );
+			echo self::modulo( 'aggiorna', '', __( 'Aggiorna ora eventi e organigramma', 'gestione-associazione' ), 'button-secondary' );
 		} else {
 			echo '<p>' . esc_html__( 'Nel gestionale, in Sistema → Collegamenti, l\'amministratore crea un invito per un\'«integrazione esterna» con gli ambiti necessari (domande, contatti, eventi e adesioni, organigramma, verifica tessere) e vi comunica l\'indirizzo e il codice, valido 24 ore.', 'gestione-associazione' ) . '</p>';
 			echo self::modulo( 'abbina',
@@ -131,11 +142,19 @@ final class GA_Amministrazione {
 		}
 
 		$opz = GA_Eventi::impostazioni();
-		echo '<h2>' . esc_html__( 'Articoli degli eventi', 'gestione-associazione' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Per gli eventi segnati nel gestionale «pubblica sui siti collegati» il connettore crea un articolo, aggiornato quando l\'evento cambia; il testo che aggiungete nell\'articolo non viene toccato.', 'gestione-associazione' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Eventi sul sito', 'gestione-associazione' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Gli eventi segnati nel gestionale «pubblica sui siti collegati» diventano eventi del calendario del sito (consigliato) o articoli. Data, luogo, posti e adesione restano sempre quelli del gestionale; il testo e le foto che aggiungete non vengono toccati.', 'gestione-associazione' ) . '</p>';
+		if ( class_exists( 'Tribe__Events__Main' ) && 'calendario' === $opz['modo'] && 'eventi' === $opz['slug_archivio'] ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The Events Calendar è attivo e usa già l\'indirizzo /eventi/: scegliete un altro indirizzo per il calendario (es. «calendario») oppure disattivate The Events Calendar.', 'gestione-associazione' ) . '</p></div>';
+		}
 		$autori = wp_dropdown_users( array( 'name' => 'autore', 'selected' => (int) $opz['autore'], 'echo' => false, 'capability' => 'edit_posts', 'show_option_none' => __( '— nessuno —', 'gestione-associazione' ), 'option_none_value' => 0 ) );
 		echo self::modulo( 'articoli',
-			'<table class="form-table"><tr><th>' . esc_html__( 'Articoli', 'gestione-associazione' ) . '</th><td><label><input type="checkbox" name="attivi" value="1"' . checked( $opz['attivi'], true, false ) . '> ' . esc_html__( 'Crea gli articoli degli eventi', 'gestione-associazione' ) . '</label></td></tr>'
+			'<table class="form-table"><tr><th>' . esc_html__( 'Modalità', 'gestione-associazione' ) . '</th><td><select name="modo">'
+			. '<option value="calendario"' . selected( $opz['modo'], 'calendario', false ) . '>' . esc_html__( 'Calendario degli eventi del sito (consigliato)', 'gestione-associazione' ) . '</option>'
+			. '<option value="articoli"' . selected( $opz['modo'], 'articoli', false ) . '>' . esc_html__( 'Articoli del blog', 'gestione-associazione' ) . '</option>'
+			. '<option value="nessuno"' . selected( $opz['modo'], 'nessuno', false ) . '>' . esc_html__( 'Nessuno (solo shortcode e blocchi)', 'gestione-associazione' ) . '</option></select></td></tr>'
+			. '<tr><th>' . esc_html__( 'Indirizzi del calendario', 'gestione-associazione' ) . '</th><td>' . esc_html( home_url( '/' ) ) . '<input name="slug_archivio" value="' . esc_attr( $opz['slug_archivio'] ) . '" class="small-text">/ · ' . esc_html( home_url( '/' ) ) . '<input name="slug_evento" value="' . esc_attr( $opz['slug_evento'] ) . '" class="small-text">/…'
+			. ( 'calendario' === $opz['modo'] && get_post_type_archive_link( GA_Calendario::TIPO ) ? '<p class="description"><a href="' . esc_url( get_post_type_archive_link( GA_Calendario::TIPO ) ) . '">' . esc_html__( 'Apri il calendario', 'gestione-associazione' ) . '</a></p>' : '' ) . '</td></tr>'
 			. '<tr><th>' . esc_html__( 'Stato', 'gestione-associazione' ) . '</th><td><select name="stato"><option value="draft"' . selected( $opz['stato'], 'draft', false ) . '>' . esc_html__( 'Bozza, da rivedere e pubblicare (consigliato)', 'gestione-associazione' ) . '</option><option value="publish"' . selected( $opz['stato'], 'publish', false ) . '>' . esc_html__( 'Pubblicato subito', 'gestione-associazione' ) . '</option></select></td></tr>'
 			. '<tr><th>' . esc_html__( 'Categoria', 'gestione-associazione' ) . '</th><td><input name="categoria" value="' . esc_attr( $opz['categoria'] ) . '" class="regular-text"></td></tr>'
 			. '<tr><th>' . esc_html__( 'Autore', 'gestione-associazione' ) . '</th><td>' . $autori . '</td></tr></table>',

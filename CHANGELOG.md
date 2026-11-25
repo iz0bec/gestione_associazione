@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Connettore WordPress 0.2.0**: un proprio **calendario degli eventi**, senza plugin esterni come
+  The Events Calendar. Gli eventi «pubblica sui siti collegati» diventano eventi del sito con archivio
+  (viste elenco, mese e giorno), pagina dell'evento con data, luogo e mappa, posti e modulo di
+  adesione dal gestionale, iCal (feed e singolo evento) e Google Calendar, dati strutturati
+  schema.org/Event; blocchi «Calendario degli eventi» e «Prossimi eventi»; aggancio
+  `ga_evento_sincronizzato`. La modalità ad articoli resta disponibile.
+
 ## [1.0.97] - 2026-11-25
 
 ### Aggiunto
