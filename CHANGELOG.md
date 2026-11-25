@@ -5,6 +5,14 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Modificato
+
+- **Menu laterale riordinato per argomenti**: in alto Cruscotto, Calendario e Chat, poi i gruppi
+  *Soci* (anagrafica, soci, domande, tesseramento, campagna delle tessere), *Segreteria* (protocollo,
+  posta da protocollare, comunicazioni, documenti), *Vita associativa* (organi, eventi, anniversari)
+  e *Amministrazione* (tesoreria, patrimonio); in *Sistema* le voci sono divise in configurazione,
+  accessi e collegamenti, dati e manutenzione. Un gruppo compare solo se l'utente ne vede almeno una voce.
+
 ## [1.0.98] - 2026-11-25
 
 ### Aggiunto
