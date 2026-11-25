@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.99] - 2026-11-25
+
 ### Modificato
 
 - **Menu laterale riordinato per argomenti**: in alto Cruscotto, Calendario e Chat, poi i gruppi
