@@ -17,25 +17,13 @@
         <li class="nav-item{% if nome == 'calendario' %} active{% endif %}">
           <a class="nav-link" href="{% url 'calendario:calendario' %}"><span class="nav-link-icon"><i class="ti ti-calendar"></i></span><span class="nav-link-title">Calendario</span></a>
         </li>
-        {% if perms.eventi.view_evento %}
-        <li class="nav-item{% if nome == 'eventi' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'eventi:elenco' %}"><span class="nav-link-icon"><i class="ti ti-confetti"></i></span><span class="nav-link-title">Eventi</span></a>
-        </li>
-        {% endif %}
-        {% if perms.progetti.view_idea %}
-        <li class="nav-item{% if nome == 'progetti' and 'idea' in request.resolver_match.url_name %} active{% endif %}">
-          <a class="nav-link" href="{% url 'progetti:idee' %}"><span class="nav-link-icon"><i class="ti ti-bulb"></i></span><span class="nav-link-title">Idee e necessità</span></a>
-        </li>
-        {% endif %}
-        {% if perms.progetti.view_progetto %}
-        <li class="nav-item{% if nome == 'progetti' and 'idea' not in request.resolver_match.url_name %} active{% endif %}">
-          <a class="nav-link" href="{% url 'progetti:progetti' %}"><span class="nav-link-icon"><i class="ti ti-target-arrow"></i></span><span class="nav-link-title">Progetti</span></a>
-        </li>
-        {% endif %}
         {% if perms.chat.usa_chat %}
         <li class="nav-item{% if nome == 'chat' %} active{% endif %}">
           <a class="nav-link" href="{% url 'chat:elenco' %}"><span class="nav-link-icon"><i class="ti ti-messages"></i></span><span class="nav-link-title">Chat</span></a>
         </li>
+        {% endif %}
+        {% if perms.anagrafica.view_soggetto or perms.soci.view_socio or perms.soci.view_tessera or perms.soci.view_domandaiscrizione %}
+        <li class="nav-item menu-gruppo"><span class="menu-gruppo-titolo">Soci</span></li>
         {% endif %}
         {% if perms.anagrafica.view_soggetto %}
         <li class="nav-item{% if nome == 'anagrafica' and 'codici_fiscali' not in request.resolver_match.url_name %} active{% endif %}">
@@ -45,6 +33,11 @@
         {% if perms.soci.view_socio %}
         <li class="nav-item{% if nome == 'anagrafica' and 'codici_fiscali' in request.resolver_match.url_name or nome == 'soci' and not chiave in TESSERAMENTO and not chiave in CICLO and 'domand' not in request.resolver_match.url_name and 'sezion' not in request.resolver_match.url_name and 'importa' not in request.resolver_match.url_name %} active{% endif %}">
           <a class="nav-link" href="{% url 'soci:elenco' %}"><span class="nav-link-icon"><i class="ti ti-users-group"></i></span><span class="nav-link-title">Soci</span></a>
+        </li>
+        {% endif %}
+        {% if perms.soci.view_domandaiscrizione %}
+        <li class="nav-item{% if nome == 'soci' and 'domand' in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link" href="{% url 'soci:domande' %}"><span class="nav-link-icon"><i class="ti ti-file-plus"></i></span><span class="nav-link-title">Domande di iscrizione</span></a>
         </li>
         {% endif %}
         {% if perms.soci.view_tessera %}
@@ -57,10 +50,8 @@
           <a class="nav-link" href="{% url 'soci:campagna_corrente' %}"><span class="nav-link-icon"><i class="ti ti-truck-delivery"></i></span><span class="nav-link-title">Campagna delle tessere</span></a>
         </li>
         {% endif %}
-        {% if perms.soci.view_domandaiscrizione %}
-        <li class="nav-item{% if nome == 'soci' and 'domand' in request.resolver_match.url_name %} active{% endif %}">
-          <a class="nav-link" href="{% url 'soci:domande' %}"><span class="nav-link-icon"><i class="ti ti-file-plus"></i></span><span class="nav-link-title">Domande di iscrizione</span></a>
-        </li>
+        {% if perms.protocollo.view_protocollo or perms.protocollo.view_messaggioricevuto or perms.comunicazioni.view_invio or perms.documenti.view_modellostampa %}
+        <li class="nav-item menu-gruppo"><span class="menu-gruppo-titolo">Segreteria</span></li>
         {% endif %}
         {% if perms.protocollo.view_protocollo %}
         <li class="nav-item{% if nome == 'protocollo' and request.resolver_match.url_name != 'posta' and request.resolver_match.url_name != 'messaggio' %} active{% endif %}">
@@ -71,6 +62,19 @@
         <li class="nav-item{% if request.resolver_match.url_name == 'posta' or request.resolver_match.url_name == 'messaggio' %} active{% endif %}">
           <a class="nav-link" href="{% url 'protocollo:posta' %}"><span class="nav-link-icon"><i class="ti ti-inbox"></i></span><span class="nav-link-title">Posta da protocollare</span></a>
         </li>
+        {% endif %}
+        {% if perms.comunicazioni.view_invio %}
+        <li class="nav-item{% if nome == 'comunicazioni' and 'anniversari' not in request.resolver_match.url_name and request.resolver_match.url_name != 'auguri' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'comunicazioni:invii' %}"><span class="nav-link-icon"><i class="ti ti-mail"></i></span><span class="nav-link-title">Comunicazioni</span></a>
+        </li>
+        {% endif %}
+        {% if perms.documenti.view_modellostampa %}
+        <li class="nav-item{% if nome == 'documenti' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'documenti:modelli' %}"><span class="nav-link-icon"><i class="ti ti-printer"></i></span><span class="nav-link-title">Documenti</span></a>
+        </li>
+        {% endif %}
+        {% if perms.organi.view_organo or perms.elezioni.view_rinnovo or perms.organi.gestisci_firme or perms.eventi.view_evento or perms.comunicazioni.view_ricorrenza %}
+        <li class="nav-item menu-gruppo"><span class="menu-gruppo-titolo">Vita associativa</span></li>
         {% endif %}
         {% if perms.organi.view_organo %}
         <li class="nav-item{% if nome == 'organi' or nome == 'elezioni' %} active{% endif %}">
@@ -85,15 +89,18 @@
           <a class="nav-link" href="{% url 'organi:firme' %}"><span class="nav-link-icon"><i class="ti ti-signature"></i></span><span class="nav-link-title">Firme e timbri</span></a>
         </li>
         {% endif %}
-        {% if perms.comunicazioni.view_invio %}
-        <li class="nav-item{% if nome == 'comunicazioni' and 'anniversari' not in request.resolver_match.url_name and request.resolver_match.url_name != 'auguri' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'comunicazioni:invii' %}"><span class="nav-link-icon"><i class="ti ti-mail"></i></span><span class="nav-link-title">Comunicazioni</span></a>
+        {% if perms.eventi.view_evento %}
+        <li class="nav-item{% if nome == 'eventi' %} active{% endif %}">
+          <a class="nav-link" href="{% url 'eventi:elenco' %}"><span class="nav-link-icon"><i class="ti ti-confetti"></i></span><span class="nav-link-title">Eventi</span></a>
         </li>
         {% endif %}
         {% if perms.comunicazioni.view_ricorrenza %}
         <li class="nav-item{% if request.resolver_match.url_name == 'anniversari' or request.resolver_match.url_name == 'auguri' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'comunicazioni:anniversari' %}"><span class="nav-link-icon"><i class="ti ti-confetti"></i></span><span class="nav-link-title">Anniversari</span></a>
+          <a class="nav-link" href="{% url 'comunicazioni:anniversari' %}"><span class="nav-link-icon"><i class="ti ti-cake"></i></span><span class="nav-link-title">Anniversari</span></a>
         </li>
+        {% endif %}
+        {% if perms.tesoreria.view_movimento or perms.tesoreria.view_esercizio or perms.patrimonio.view_bene %}
+        <li class="nav-item menu-gruppo"><span class="menu-gruppo-titolo">Amministrazione</span></li>
         {% endif %}
         {% if perms.tesoreria.view_movimento or perms.tesoreria.view_esercizio %}
         <li class="nav-item{% if nome == 'tesoreria' %} active{% endif %}">
@@ -105,9 +112,17 @@
           <a class="nav-link" href="{% url 'patrimonio:inventario' %}"><span class="nav-link-icon"><i class="ti ti-building-warehouse"></i></span><span class="nav-link-title">Patrimonio</span></a>
         </li>
         {% endif %}
-        {% if perms.documenti.view_modellostampa %}
-        <li class="nav-item{% if nome == 'documenti' %} active{% endif %}">
-          <a class="nav-link" href="{% url 'documenti:modelli' %}"><span class="nav-link-icon"><i class="ti ti-printer"></i></span><span class="nav-link-title">Documenti</span></a>
+        {% if perms.progetti.view_idea or perms.progetti.view_progetto %}
+        <li class="nav-item menu-gruppo"><span class="menu-gruppo-titolo">Progetti</span></li>
+        {% endif %}
+        {% if perms.progetti.view_idea %}
+        <li class="nav-item{% if nome == 'progetti' and 'idea' in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link" href="{% url 'progetti:idee' %}"><span class="nav-link-icon"><i class="ti ti-bulb"></i></span><span class="nav-link-title">Idee e necessità</span></a>
+        </li>
+        {% endif %}
+        {% if perms.progetti.view_progetto %}
+        <li class="nav-item{% if nome == 'progetti' and 'idea' not in request.resolver_match.url_name %} active{% endif %}">
+          <a class="nav-link" href="{% url 'progetti:progetti' %}"><span class="nav-link-icon"><i class="ti ti-target-arrow"></i></span><span class="nav-link-title">Progetti</span></a>
         </li>
         {% endif %}
         {% for voce in MODULI_IN_ARRIVO %}
@@ -125,12 +140,14 @@
             {% if perms.core.gestisci_organizzazione %}<a class="dropdown-item{% if request.resolver_match.url_name == 'aspetto' %} active{% endif %}" href="{% url 'core:aspetto' %}"><i class="ti ti-palette me-2"></i>Aspetto</a>{% endif %}
             {% if perms.core.gestisci_organizzazione %}<a class="dropdown-item{% if request.resolver_match.url_name == 'configurazione' %} active{% endif %}" href="{% url 'configurazione' 'ente' %}"><i class="ti ti-wand me-2"></i>Configurazione guidata</a>{% endif %}
             {% if perms.soci.view_sezione %}<a class="dropdown-item{% if 'sezion' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'soci:sezioni' %}"><i class="ti ti-map-pin me-2"></i>Sezioni</a>{% endif %}
-            {% if perms.soci.importa_soci %}<a class="dropdown-item{% if 'importa' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'soci:importa' %}"><i class="ti ti-file-import me-2"></i>Importa soci</a>{% endif %}
-            {% if perms.accounts.view_utente %}<a class="dropdown-item{% if nome == 'utenti' %} active{% endif %}" href="{% url 'utenti:elenco' %}"><i class="ti ti-user-shield me-2"></i>Utenti e ruoli</a>{% endif %}
             {% if perms.core.gestisci_organizzazione %}<a class="dropdown-item{% if 'documento_pubblico' in request.resolver_match.url_name or request.resolver_match.url_name == 'documenti_pubblici_gestione' %} active{% endif %}" href="{% url 'core:documenti_pubblici_gestione' %}"><i class="ti ti-world-www me-2"></i>Documenti pubblici</a>{% endif %}
-            {% if perms.anagrafica.anonimizza_soggetto %}<a class="dropdown-item{% if request.resolver_match.url_name == 'conservazione' %} active{% endif %}" href="{% url 'anagrafica:conservazione' %}"><i class="ti ti-clock-shield me-2"></i>Conservazione dei dati</a>{% endif %}
+            <div class="dropdown-divider"></div>
+            {% if perms.accounts.view_utente %}<a class="dropdown-item{% if nome == 'utenti' %} active{% endif %}" href="{% url 'utenti:elenco' %}"><i class="ti ti-user-shield me-2"></i>Utenti e ruoli</a>{% endif %}
             {% if perms.core.gestisci_servizi_posta %}<a class="dropdown-item{% if request.resolver_match.url_name == 'servizi_posta' %} active{% endif %}" href="{% url 'core:servizi_posta' %}"><i class="ti ti-mail-cog me-2"></i>Servizi di posta</a>{% endif %}
             {% if perms.api.view_clienteapi %}<a class="dropdown-item{% if nome == 'api' %} active{% endif %}" href="{% url 'api:elenco' %}"><i class="ti ti-plug-connected me-2"></i>Collegamenti API</a>{% endif %}
+            <div class="dropdown-divider"></div>
+            {% if perms.soci.importa_soci %}<a class="dropdown-item{% if 'importa' in request.resolver_match.url_name %} active{% endif %}" href="{% url 'soci:importa' %}"><i class="ti ti-file-import me-2"></i>Importa soci</a>{% endif %}
+            {% if perms.anagrafica.anonimizza_soggetto %}<a class="dropdown-item{% if request.resolver_match.url_name == 'conservazione' %} active{% endif %}" href="{% url 'anagrafica:conservazione' %}"><i class="ti ti-clock-shield me-2"></i>Conservazione dei dati</a>{% endif %}
             {% if perms.core.gestisci_backup %}<a class="dropdown-item{% if 'backup' in request.resolver_match.url_name or request.resolver_match.url_name == 'ripristino' %} active{% endif %}" href="{% url 'core:backup' %}"><i class="ti ti-database-export me-2"></i>Backup</a>{% endif %}
             {% if perms.core.view_eventoaudit %}<a class="dropdown-item{% if request.resolver_match.url_name == 'registro_attivita' %} active{% endif %}" href="{% url 'core:registro_attivita' %}"><i class="ti ti-history me-2"></i>Registro attività</a>{% endif %}
             {% if user.is_superuser %}<a class="dropdown-item" href="{% url 'admin:index' %}"><i class="ti ti-settings me-2"></i>Amministrazione tecnica</a>{% endif %}
