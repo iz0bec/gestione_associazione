@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.97] - 2026-11-25
+
 ### Aggiunto
 - **Importazione dai gestionali precedenti completata**: da Gestione Soci le **foto dei soci** (solo
   per le schede senza foto; opzione `--file` per la cartella dei file), i **passaggi di consegne**
