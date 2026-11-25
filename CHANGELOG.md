@@ -13,6 +13,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   con i volontari, scadenze nel calendario, documenti e discussione; ruolo combinabile «Progettista»;
   comando `importa_finalita`.
 
+## [1.0.99] - 2026-11-25
+
 ### Modificato
 
 - **Menu laterale riordinato per argomenti**: in alto Cruscotto, Calendario e Chat, poi i gruppi
