@@ -324,6 +324,30 @@ def tesseramento(request):
     return JsonResponse(dati | allineamento.numeri(sezione, anno))
 
 
+@endpoint(metodi=("POST",), ambito="trasferimenti:scrittura", idempotente=True, cifrato=True)
+def trasferimenti(request):
+    """Richiesta di trasferimento di un socio (F5): resta in attesa di accoglimento."""
+    from apps.collegamenti import trasferimenti as t
+
+    try:
+        tr = t.ricevi(request.cliente_api, corpo(request, cifrato=True))
+    except t.OperazioneNonValida as e:
+        raise Problema("operazione-non-valida", 422, str(e)) from e
+    return JsonResponse({"uuid": str(tr.uuid), "stato": tr.stato}, status=201)
+
+
+@endpoint(metodi=("POST",), ambito="trasferimenti:scrittura", idempotente=True, cifrato=True)
+def esito_trasferimento(request, uuid_risorsa):
+    """Esito di una nostra richiesta di trasferimento, dall'installazione di arrivo."""
+    from apps.collegamenti import trasferimenti as t
+
+    try:
+        tr = t.ricevi_esito(request.cliente_api, uuid_risorsa, corpo(request, cifrato=True))
+    except t.OperazioneNonValida as e:
+        raise Problema("operazione-non-valida", 422, str(e)) from e
+    return JsonResponse({"uuid": str(tr.uuid), "stato": tr.stato})
+
+
 @endpoint(metodi=("POST",), ambito="consegne:scrittura", idempotente=True, cifrato=True)
 def consegne(request):
     """Modalità a spinta: la sezione che non si raggiunge invia l'elenco dei suoi soci (stesso

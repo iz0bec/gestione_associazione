@@ -156,6 +156,7 @@ class Socio(ModelloBase):
         DECESSO = "decesso", "Decesso"
         ESCLUSIONE = "esclusione", "Esclusione"
         MOROSITA = "morosita", "Decadenza per morosità"
+        TRASFERIMENTO = "trasferimento", "Trasferimento ad altra sezione"
         ALTRO = "altro", "Altro"
 
     soggetto = models.OneToOneField(
@@ -185,7 +186,7 @@ class Socio(ModelloBase):
     )
     data_cessazione = models.DateField("data di cessazione", null=True, blank=True)
     causa_cessazione = models.CharField(
-        "causa di cessazione", max_length=12, choices=Cessazione.choices, blank=True
+        "causa di cessazione", max_length=15, choices=Cessazione.choices, blank=True
     )
     dichiarazione = models.BooleanField(
         "dichiarazione SI/NO del modulo di adesione",
@@ -883,3 +884,56 @@ class PromemoriaArchivio(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()}: {self.socio} ({self.archivio})"
+
+
+class TrasferimentoEsterno(models.Model):
+    """Trasferimento di un socio verso (o da) un'installazione collegata (F5): richiesta con il
+    consenso del socio, accolta o respinta dall'installazione di arrivo. I dati ricevuti restano
+    solo finché la richiesta non è decisa."""
+
+    class Direzione(models.TextChoices):
+        USCITA = "uscita", "In uscita"
+        ENTRATA = "entrata", "In arrivo"
+
+    class Stato(models.TextChoices):
+        IN_ATTESA = "in_attesa", "In attesa"
+        ACCOLTO = "accolto", "Accolto"
+        RESPINTO = "respinto", "Respinto"
+
+    uuid = models.UUIDField(default=uuid_mod.uuid4, unique=True, editable=False)
+    direzione = models.CharField(max_length=8, choices=Direzione.choices)
+    stato = models.CharField(max_length=10, choices=Stato.choices, default=Stato.IN_ATTESA)
+    cliente = models.ForeignKey(
+        "api.ClienteApi", on_delete=models.PROTECT, related_name="trasferimenti",
+        verbose_name="installazione",
+    )  # fmt: skip
+    socio = models.ForeignKey(Socio, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="trasferimenti_esterni")  # fmt: skip
+    nome = models.CharField("socio", max_length=200)
+    sezione_origine = models.CharField(max_length=150, blank=True)
+    codice_origine = models.CharField(max_length=20, blank=True)
+    data = models.DateField("data della richiesta", default=date.today)
+    consenso_il = models.DateField("consenso del socio prestato il")
+    consenso_modo = models.CharField("modo del consenso", max_length=150)
+    motivo = models.CharField(max_length=255, blank=True)
+    dati = models.JSONField(default=dict, blank=True)
+    esito_il = models.DateTimeField(null=True, blank=True)
+    esito_motivo = models.CharField(max_length=255, blank=True)
+    esito_inviato = models.BooleanField(default=False)
+    creato_il = models.DateTimeField(auto_now_add=True)
+    creato_da = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                  on_delete=models.SET_NULL, related_name="+")  # fmt: skip
+    deciso_da = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                  on_delete=models.SET_NULL, related_name="+")  # fmt: skip
+
+    class Meta:
+        verbose_name = "trasferimento fra installazioni"
+        verbose_name_plural = "trasferimenti fra installazioni"
+        ordering = ["-creato_il"]
+
+    def __str__(self):
+        verso = "verso" if self.direzione == self.Direzione.USCITA else "da"
+        return f"Trasferimento di {self.nome} {verso} {self.cliente}"
+
+    def get_absolute_url(self):
+        return reverse("soci:trasferimento_esterno", args=[self.pk])

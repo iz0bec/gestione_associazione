@@ -16,7 +16,8 @@ nell'[ADR-030](../architettura/decisioni.md). Gli adattatori si scrivono su ques
 qualsiasi linguaggio. Un esempio completo, in PHP senza librerie esterne, è il
 [connettore WordPress](../../integrazioni/wordpress/gestione-associazione/) (guida in
 [docs/sistema](../sistema/connettore-wordpress.md)): non dipende dal codice del gestionale e
-diventerà un progetto separato.
+diventerà un progetto separato. Per scrivere un client in un altro linguaggio c'è il
+[kit per chi integra](kit-integrazione.md).
 
 Disponibile oggi:
 

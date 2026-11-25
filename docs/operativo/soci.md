@@ -468,6 +468,29 @@ in CSV e l'Excel per un'altra installazione prendono tutti i filtri.
 
 Ogni stampa ed esportazione è registrata nel registro attività.
 
+### Trasferimento a un'altra sezione collegata
+
+Quando un socio passa a una sezione che ha **il proprio gestionale collegato** (o alla federazione):
+
+1. dalla scheda del socio, **Trasferisci a un'altra sezione collegata**: si sceglie l'installazione di
+   arrivo e si indicano **quando e come il socio ha dato il consenso** (es. «domanda scritta
+   protocollata n. …», «email del …») e il motivo;
+2. la scheda del socio parte cifrata; nell'installazione di arrivo la richiesta compare in **Soci →
+   Trasferimenti**, con un avviso a chi valuta le domande;
+3. lì si **accoglie** (il socio entra con la data di iscrizione originaria e le tessere recenti; con
+   più sezioni si sceglie quale) o si **respinge** con il motivo;
+4. l'esito torna indietro da solo: se accolto, qui il socio **cessa** con la causa **«trasferimento ad
+   altra sezione»** (il suo numero resta nel libro soci); se respinto non cambia nulla;
+5. la **federazione**, se collegata, sposta il socio fra le due sezioni con l'allineamento automatico.
+
+I dati ricevuti si cancellano appena la richiesta è decisa. Senza collegamento si procede a mano:
+cessazione qui, iscrizione nell'altra sezione. Fra sezioni della **stessa** installazione resta il
+normale **Trasferisci di sezione**.
+
+**Verificare una tessera di un'altra sezione**: *Soci → Trasferimenti → Verifica una tessera* accetta il
+codice (o l'indirizzo) del QR della tessera digitale; se non è di questa installazione lo chiede alle
+installazioni collegate, che rispondono solo validità, anno e sezione.
+
 ### Scambio dei soci fra installazioni (federazione e sezioni)
 
 Quando la federazione e le sezioni usano ciascuna la propria installazione, l'elenco dei soci si

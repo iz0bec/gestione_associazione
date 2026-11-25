@@ -28,7 +28,7 @@ PUBBLICHE = {
     "api_v1:cambiamenti", "api_v1:riepilogo", "api_v1:eventi", "api_v1:evento", "api_v1:sezioni",
     "api_v1:adesioni_evento", "api_v1:adesione", "api_v1:domande", "api_v1:contatti",
     "api_v1:documenti", "api_v1:documento_file", "api_v1:organigramma", "api_v1:verifica_tessera",
-    "api_v1:documento_tessere", "api_v1:soci", "api_v1:consegne", "api_v1:tesseramento",
+    "api_v1:documento_tessere", "api_v1:soci", "api_v1:consegne", "api_v1:tesseramento", "api_v1:trasferimenti", "api_v1:esito_trasferimento",
     # area personale dei soci: protetta dalla sessione del socio, non dagli utenti (nomi completi)
     "area:area", "area:accesso", "area:inviato", "area:entra", "area:ricevuta", "area:aderisci",
     "area:rinuncia", "area:richiesta", "area:telegram", "area:esci",

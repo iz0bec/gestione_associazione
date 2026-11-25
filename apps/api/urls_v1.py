@@ -33,6 +33,12 @@ urlpatterns = [
     path("soci", endpoint.soci, name="soci"),
     path("consegne", endpoint.consegne, name="consegne"),
     path("tesseramento", endpoint.tesseramento, name="tesseramento"),
+    path("trasferimenti", endpoint.trasferimenti, name="trasferimenti"),
+    path(
+        "trasferimenti/<uuid:uuid_risorsa>/esito",
+        endpoint.esito_trasferimento,
+        name="esito_trasferimento",
+    ),
     path("tessere/<str:codice>", endpoint.verifica_tessera, name="verifica_tessera"),
     path(
         "ciclo-tessere/<str:risorsa>/<uuid:uuid_risorsa>",

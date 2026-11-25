@@ -177,6 +177,10 @@ in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 | Amministratore di sistema | sì | sì | sì |
 | Tutti gli altri | - | - | - |
 
+Il **trasferimento a un'altra sezione collegata** lo avvia chi può registrare le cessazioni; le
+richieste in arrivo le accoglie o le respinge chi iscrive i soci; la pagina *Trasferimenti* la vede chi
+consulta i soci; la verifica di una tessera di un'altra installazione chi consulta le tessere.
+
 La pagina **Installazioni collegate** (cariche e numeri del tesseramento della federazione e delle
 sezioni) la vede chi consulta le sezioni, ognuno per le proprie; *Leggi di nuovo* richiede il
 permesso di importare i soci. Iscrivere i soci agli eventi condivisi spetta a chi gestisce gli eventi.

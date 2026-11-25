@@ -28,6 +28,7 @@ AMBITI = {
     "documenti:lettura": "Documenti pubblici: lettura",
     "organigramma:lettura": "Organigramma pubblico: lettura",
     "tessere:verifica": "Verifica di una tessera",
+    "trasferimenti:scrittura": "Trasferimento di soci: invio richieste ed esiti",
     "tessere:scambio": "Ciclo delle tessere: richieste, consegne, ricevute (federazione e sezioni)",
 }
 AMBITI_DATI_PERSONALI = {"soci:lettura"}

@@ -242,8 +242,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
   Fasi: ✅ F1 identità e abbinamento → ✅ F2 feed, eventi, sezioni, notifiche, rotazione e
   aggiornamento delle impronte TLS → ✅ F3 cifratura e sistemi esterni (adesioni, domande, contatti;
   documenti pubblici, organigramma, verifica tessera) → F4 federazione ↔ sezione (soci e tessere,
-  lotti, cariche, numeri del tesseramento, eventi provinciali) → F5 sezione ↔ sezione
-  (trasferimento del socio, eventi condivisi, verifica tessera) e kit per chi integra.
+  lotti, cariche, numeri del tesseramento, eventi provinciali) → ✅ F5 sezione ↔ sezione
+  (1.0.96: trasferimento del socio con consenso, eventi condivisi, verifica tessera) e kit per chi
+  integra (`docs/api/kit-integrazione.md`).
   ✅ Già fatto della F4: ruolo federazione/sezione e ciclo delle tessere (richieste, consegne,
   ricevute, prese in carico).
   - ✅ **Verifica soci fra federazione e sezione** (1.0.55), nei due sensi, al posto del file Excel:

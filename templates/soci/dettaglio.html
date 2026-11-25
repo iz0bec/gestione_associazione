@@ -15,6 +15,7 @@
     {% endif %}
   {% endif %}
   {% if perms.soci.trasferisci_socio and multisezione and socio.stato != "cessato" %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#trasferimento"><i class="ti ti-arrows-transfer-up me-1"></i>Trasferisci di sezione</button>{% endif %}
+  {% if perms.soci.cessa_socio and socio.stato != "cessato" %}<a class="btn" href="{% url 'soci:trasferisci_collegata' socio.pk %}" title="Verso una sezione o federazione con un proprio gestionale collegato"><i class="ti ti-plug-connected me-1"></i>Trasferisci a un'altra sezione collegata</a>{% endif %}
   {% if perms.soci.cessa_socio and socio.stato != "cessato" %}<button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#cessazione"><i class="ti ti-user-off me-1"></i>Cessazione</button>{% endif %}
   {% if perms.soci.change_socio %}<a class="btn btn-primary" href="{% url 'soci:modifica' socio.pk %}"><i class="ti ti-pencil me-1"></i>Modifica</a>{% endif %}
 </div>

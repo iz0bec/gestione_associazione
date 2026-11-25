@@ -53,6 +53,7 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/api/v1/organigramma` | firma + `organigramma:lettura` | cariche in corso (ruolo e nome) |
 | `/api/v1/tessere/{codice}` | firma + `tessere:verifica` | validità, anno e sezione di una tessera (nient'altro) |
 | `/api/v1/soci` | firma + `soci:lettura` + ruolo | soci della sezione della controparte (cifrati), per la *Verifica soci* e l'allineamento automatico |
+| `/api/v1/trasferimenti` (POST), `/api/v1/trasferimenti/{uuid}/esito` (POST) | firma + `trasferimenti:scrittura`, **cifrato** | trasferimento di un socio fra installazioni collegate, con il consenso (F5) |
 | `/api/v1/tesseramento` | firma + `soci:lettura` + ruolo | numeri del tesseramento della sezione (solo conteggi) |
 | `/api/v1/consegne` (POST) | firma + `consegne:scrittura` + ruolo «sezione», **cifrato** | modalità a spinta: la sezione invia l'elenco dei suoi soci (flusso `soci`) |
 | `/api/v1/cambiamenti?flusso=tessere`, `/api/v1/ciclo-tessere/{risorsa}/{uuid}` | firma + `tessere:scambio` + ruolo | ciclo delle tessere fra federazione e sezione: consegne, ricevute, richieste, prese in carico (con il PDF) |

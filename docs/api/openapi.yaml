@@ -23,8 +23,8 @@ info:
 
     **Ambiti**: `eventi:lettura`, `adesioni:lettura`, `adesioni:scrittura`, `sezioni:lettura`,
     `domande:scrittura`, `contatti:scrittura`, `documenti:lettura`, `organigramma:lettura`,
-    `tessere:verifica` (e, dalle fasi successive, `soci:lettura`, `lotti:lettura`,
-    `consegne:scrittura`). Li concede l'amministratore per ogni controparte. Il contratto è pubblico: gli adattatori verso altri sistemi
+    `tessere:verifica`, `soci:lettura`, `consegne:scrittura`, `trasferimenti:scrittura` (e, dalle
+    fasi successive, `lotti:lettura`). Li concede l'amministratore per ogni controparte. Il contratto è pubblico: gli adattatori verso altri sistemi
     (WordPress, app, gestionali) non fanno parte del progetto e si scrivono su questo documento.
 
     ## Sicurezza (obbligatoria per ogni chiamata tranne `/.well-known/…`)
@@ -695,6 +695,56 @@ paths:
             application/pdf:
               schema: { type: string, format: binary }
         "404": { $ref: "#/components/responses/Problema" }
+
+  /trasferimenti:
+    post:
+      tags: [federazione-sezioni]
+      operationId: chiediTrasferimento
+      summary: Richiesta di trasferimento di un socio (F5)
+      description: |
+        Ambito `trasferimenti:scrittura`, solo da un'installazione. Corpo cifrato: `uuid` della
+        richiesta, `socio` (la riga come in `GET /soci`), `sezione` di provenienza
+        (`codice`, `nome`), `consenso_il` (data del consenso del socio), `consenso_modo`, `motivo`,
+        `data`. Resta in attesa finché l'installazione di arrivo non accoglie o respinge; l'esito
+        torna con `POST /trasferimenti/{uuid}/esito`. Dalla 1.0.96.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/jose:
+            schema: { $ref: "#/components/schemas/Jwe" }
+      responses:
+        "201":
+          description: Richiesta registrata (`uuid`, `stato`).
+        "422": { $ref: "#/components/responses/Problema" }
+
+  /trasferimenti/{uuid}/esito:
+    post:
+      tags: [federazione-sezioni]
+      operationId: esitoTrasferimento
+      summary: Esito di una richiesta di trasferimento (F5)
+      description: |
+        Ambito `trasferimenti:scrittura`. Corpo cifrato: `esito` (`accolto` o `respinto`),
+        `motivo`, `data`. Con `accolto` il socio cessa presso la partenza con la causa
+        «Trasferimento ad altra sezione». Ripetere un esito già registrato non ha effetti.
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/jose:
+            schema: { $ref: "#/components/schemas/Jwe" }
+      responses:
+        "200":
+          description: Esito registrato (`uuid`, `stato`).
+        "422": { $ref: "#/components/responses/Problema" }
 
   /tesseramento:
     get:

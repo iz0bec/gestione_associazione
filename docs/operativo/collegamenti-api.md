@@ -206,6 +206,23 @@ eventi: scrittura»** concesso dalla controparte): partono solo cognome e nome, 
 l'organizzatore l'adesione riporta il nome dell'installazione che l'ha inviata. Un'iscrizione si
 annulla dalla stessa scheda.
 
+### Fra sezioni: trasferimenti, eventi e verifica della tessera
+
+Due sezioni con il proprio gestionale si collegano fra loro come **installazioni pari** (stesso invito,
+ruolo «Installazione pari»). Fra loro non passano mai gli elenchi dei soci, solo:
+
+- il **trasferimento di un socio**, con il suo consenso (serve l'ambito **«Trasferimento di soci»**
+  concesso da entrambe le parti, perché l'esito torna indietro): vedi *Soci → Trasferimenti* nel
+  manuale dei soci;
+- gli **eventi condivisi** e le **cariche**, come con la federazione (non i numeri del tesseramento);
+- la **verifica di una tessera** (ambito «Verifica di una tessera»): *Soci → Trasferimenti →
+  Verifica una tessera* controlla il codice del QR qui e, se non è nostro, presso le installazioni
+  collegate.
+
+Il trasferimento funziona anche con la federazione: quando una sezione accoglie un socio arrivato da
+un'altra, la federazione con l'allineamento automatico lo **sposta** fra le due sezioni (con lo
+storico del trasferimento), invece di vederlo cessato in una e nuovo nell'altra.
+
 ### Sezione che la federazione non raggiunge (a spinta)
 
 Se la federazione non può chiamare la sezione (sezione dietro NAT o senza indirizzo pubblico), in

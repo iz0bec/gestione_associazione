@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Verifica di una tessera qui o presso le installazioni collegate (F5)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Verifica tessera{% endblock %}
+{% block titolo_pagina %}Verifica una tessera{% endblock %}
+{% block contenuto %}
+<div class="row g-3"><div class="col-lg-7">
+  <form method="get" class="card mb-3"><div class="card-body">
+    <label class="form-label" for="codice">Codice del QR della tessera digitale (o l'indirizzo letto dal QR)</label>
+    <div class="input-group"><input class="form-control" id="codice" name="codice" value="{{ codice }}" autocomplete="off" required><button class="btn btn-primary" type="submit">Verifica</button></div>
+  </div></form>
+  {% if codice %}
+    {% for e in esiti %}
+    <div class="alert {% if e.valida %}alert-success{% else %}alert-danger{% endif %}">
+      <strong>{% if e.valida %}Tessera valida{% else %}Tessera non valida{% endif %}</strong>{% if e.anno %} per il {{ e.anno }}{% endif %}{% if e.sezione %} · {{ e.sezione }}{% endif %}{% if e.nome %} · {{ e.nome }}{% endif %}
+      {% if e.motivo %}<div class="small">{{ e.motivo }}</div>{% endif %}
+      <div class="small text-secondary">Verificata presso: {{ e.fonte }}</div>
+    </div>
+    {% empty %}<div class="alert alert-warning">Codice sconosciuto qui e presso le installazioni collegate che consentono la verifica.</div>{% endfor %}
+  {% endif %}
+</div><div class="col-lg-5"><div class="card"><div class="card-body small">
+  <p>Serve a verificare la tessera di un socio di <strong>un'altra sezione</strong> (ad esempio a un evento comune): se il codice non è di questa installazione, lo si chiede alle installazioni collegate che ci hanno concesso l'ambito «Verifica di una tessera».</p>
+  <p class="mb-0">Le altre installazioni rispondono solo se è valida, l'anno e la sezione: nessun altro dato della persona.</p>
+</div></div></div></div>
+{% endblock %}

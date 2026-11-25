@@ -50,9 +50,9 @@ def _leggi(cliente, percorso):
 
 def controparti():
     return ClienteApi.objects.filter(
-        stato=ClienteApi.Stato.ATTIVA, tipo=ClienteApi.Tipo.INSTALLAZIONE,
-        ruolo__in=[ClienteApi.Ruolo.FEDERAZIONE, ClienteApi.Ruolo.SEZIONE],
-    )  # fmt: skip
+        stato=ClienteApi.Stato.ATTIVA,
+        tipo=ClienteApi.Tipo.INSTALLAZIONE,
+    )  # fmt: skip  federazione, sezioni e installazioni pari (sezione ↔ sezione, F5)
 
 
 # --- cariche e numeri ----------------------------------------------------------------------------
@@ -71,9 +71,12 @@ def _salva(cliente, tipo, dati=None, errore=""):
 def aggiorna_dati(cliente):
     """Organigramma e numeri del tesseramento dell'anno in corso. L'errore resta sulla voce
     (e i dati letti prima restano validi)."""
+    numeri = cliente.ruolo != ClienteApi.Ruolo.PARI  # fra sezioni pari mai i numeri dei soci
     for tipo, percorso in ((DatiControparte.Tipo.ORGANIGRAMMA, "/organigramma"),
                            (DatiControparte.Tipo.TESSERAMENTO,
                             f"/tesseramento?anno={date.today().year}")):  # fmt: skip
+        if tipo == DatiControparte.Tipo.TESSERAMENTO and not numeri:
+            continue
         try:
             dati = _leggi(cliente, percorso)
         except OperazioneNonValida as e:
@@ -140,7 +143,12 @@ def aggiorna(cliente):
 
 
 def aggiorna_tutti():
-    return {c.nome: aggiorna(c) for c in controparti() if c.abbinata}
+    from . import trasferimenti
+
+    esiti = {c.nome: aggiorna(c) for c in controparti() if c.abbinata}
+    if inviati := trasferimenti.invia_esiti_sospesi():
+        esiti["trasferimenti"] = f"{inviati} esiti inviati"
+    return esiti
 
 
 # --- iscrizione dei propri soci a un evento condiviso --------------------------------------------

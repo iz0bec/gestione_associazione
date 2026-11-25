@@ -5,6 +5,19 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **F5, collegamenti fra sezioni**: **trasferimento di un socio** a un'altra sezione (o federazione)
+  collegata, con il **consenso** del socio registrato: richiesta dalla scheda del socio, accoglimento o
+  rifiuto in *Soci → Trasferimenti* nell'installazione di arrivo, esito che torna indietro (il socio
+  cessa con la nuova causa «trasferimento ad altra sezione»); la **federazione sposta** il socio fra le
+  due sezioni con l'allineamento automatico. Nuovi endpoint `POST /api/v1/trasferimenti` e
+  `/trasferimenti/{uuid}/esito` (ambito `trasferimenti:scrittura`).
+- Eventi condivisi e cariche anche fra **installazioni pari** (sezione ↔ sezione), mai i numeri dei soci.
+- **Verifica di una tessera** di un'altra installazione dall'interno del gestionale (codice o
+  indirizzo del QR).
+- **Kit per chi integra** (`docs/api/kit-integrazione.md`): passi, firma, cifratura, errori,
+  implementazioni di riferimento e prove.
+
 ## [1.0.95] - 2026-11-25
 
 ### Aggiunto

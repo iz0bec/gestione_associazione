@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Trasferimenti di soci fra installazioni collegate: in arrivo da decidere e storico (F5)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Trasferimenti{% endblock %}
+{% block titolo_pagina %}Trasferimenti fra sezioni collegate{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'soci:verifica_tessera_collegata' %}"><i class="ti ti-qrcode me-1"></i>Verifica una tessera</a>{% endblock %}
+{% block contenuto %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title">In arrivo, da decidere</h3></div>
+  <div class="list-group list-group-flush">
+  {% for t in in_attesa %}<a class="list-group-item list-group-item-action" href="{{ t.get_absolute_url }}"><strong>{{ t.nome }}</strong> <span class="text-secondary">da {{ t.sezione_origine|default:t.cliente.nome }} · richiesta del {{ t.data|date:"d/m/Y" }} · consenso del {{ t.consenso_il|date:"d/m/Y" }}</span></a>
+  {% empty %}<div class="list-group-item text-secondary">Nessuna richiesta in attesa.</div>{% endfor %}
+  </div>
+</div>
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Storico</h3></div>
+  <div class="table-responsive"><table class="table table-vcenter card-table">
+    <thead><tr><th>Socio</th><th>Direzione</th><th>Installazione</th><th>Data</th><th>Stato</th></tr></thead>
+    <tbody>{% for t in altri %}<tr>
+      <td><a href="{{ t.get_absolute_url }}">{{ t.nome }}</a></td><td>{{ t.get_direzione_display }}</td><td>{{ t.cliente.nome }}</td><td>{{ t.data|date:"d/m/Y" }}</td>
+      <td><span class="badge {% if t.stato == 'accolto' %}bg-green-lt{% elif t.stato == 'respinto' %}bg-red-lt{% else %}bg-yellow-lt{% endif %}">{{ t.get_stato_display }}</span>{% if t.direzione == 'entrata' and t.stato != 'in_attesa' and not t.esito_inviato %} <span class="badge bg-orange-lt" title="Si riprova ogni 15 minuti">esito da comunicare</span>{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="5" class="text-secondary">Nessun trasferimento.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

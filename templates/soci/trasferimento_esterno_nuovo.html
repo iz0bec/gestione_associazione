@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Richiesta di trasferimento di un socio a un'installazione collegata (F5)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Trasferimento a un'altra sezione{% endblock %}
+{% block titolo_pagina %}Trasferisci {{ socio.soggetto.nome_completo }} a un'altra sezione collegata{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-body">{{ form }}</div>
+      <div class="card-footer d-flex justify-content-between"><a class="btn" href="{% url 'soci:dettaglio' socio.pk %}">Annulla</a><button class="btn btn-primary" type="submit"><i class="ti ti-send me-1"></i>Invia la richiesta</button></div>
+    </form>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body small">
+      <p><strong>Come funziona.</strong> All'installazione scelta parte, cifrata, la <strong>scheda del socio</strong> (anagrafica, iscrizione, tessere recenti) con la data e il modo del suo <strong>consenso</strong>. Lì decidono se accoglierlo.</p>
+      <ul class="mb-2">
+        <li>se lo accolgono, qui il socio <strong>cessa</strong> con la causa «trasferimento ad altra sezione» e il suo numero resta nel libro soci;</li>
+        <li>se lo respingono, qui non cambia nulla e si vede il motivo;</li>
+        <li>la federazione, se collegata, lo <strong>sposta</strong> da sola fra le due sezioni.</li>
+      </ul>
+      <p class="mb-0">Serve che l'installazione di arrivo ci abbia concesso l'ambito «Trasferimento di soci». Senza collegamento si procede a mano: cessazione qui, iscrizione là.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

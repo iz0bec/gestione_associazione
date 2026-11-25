@@ -40,8 +40,9 @@ def _iso(valore):
     return valore.isoformat() if valore else ""
 
 
-def riga(socio, tessere):
-    """Dati di un socio per la controparte (stessi nomi dei campi dell'importazione)."""
+def riga(socio, tessere, trasferito_da=""):
+    """Dati di un socio per la controparte (stessi nomi dei campi dell'importazione).
+    `trasferito_da`: codice della sezione di provenienza se è arrivato per trasferimento."""
     p = socio.soggetto
     momenti = [socio.modificato_il, p.modificato_il, *(t.modificato_il for t in tessere)]
     return {
@@ -59,6 +60,7 @@ def riga(socio, tessere):
             for t in tessere
         ],
         "modificato_il": max(momenti).isoformat(),
+        "trasferito_da": trasferito_da,
     }  # fmt: skip
 
 
@@ -80,9 +82,12 @@ def _tessere(soci):
 
 def elenco(sezione):
     """Tutti i soci della sezione, cessati compresi."""
+    from apps.collegamenti.trasferimenti import codici_origine
+
     soci = list(_soci(sezione).order_by("numero"))
     tessere = _tessere(soci)
-    return [riga(s, tessere.get(s.pk, [])) for s in soci]
+    origini = codici_origine(soci)
+    return [riga(s, tessere.get(s.pk, []), origini.get(s.pk, "")) for s in soci]
 
 
 def numeri(sezione, anno=None):
@@ -108,7 +113,8 @@ def numeri(sezione, anno=None):
 
 
 def _pulita(remota):
-    dati = {k: v for k, v in remota.items() if k not in ("tessere", "modificato_il")}
+    dati = {k: v for k, v in remota.items()
+            if k not in ("tessere", "modificato_il", "trasferito_da")}  # fmt: skip
     return imp._pulisci(dati)
 
 
@@ -174,10 +180,19 @@ def _modifiche_anagrafica(socio, d):
     return modifiche
 
 
+CAUSA_TRASFERIMENTO = "Trasferimento ad altra sezione"
+
+
+def _per_trasferimento(d):
+    return (d.get("causa_cessazione") or "").strip().lower() == CAUSA_TRASFERIMENTO.lower()
+
+
 def _modifiche_sezione(socio, d, tessere_remote, tessere_locali):
     """Stato, cessazione e rinnovi: solo quando la controparte è la sezione."""
     modifiche = []
     voluto = imp._stato_socio(d.get("stato_socio"))
+    if d.get("data_cessazione") and _per_trasferimento(d):
+        return modifiche  # il socio passa a un'altra sezione: lo sposta la riga della sezione nuova
     if d.get("data_cessazione") and socio.stato != Socio.Stato.CESSATO:
         modifiche.append(["cessazione", "—", f"{d['data_cessazione']:%d/%m/%Y} "
                           f"({d.get('causa_cessazione') or 'causa non indicata'})"])  # fmt: skip
@@ -236,7 +251,18 @@ def confronta(righe_remote, sezione, *, da_sezione):
                 voce["motivo"] = "già in anagrafica: si iscrive al libro soci"
         elif socio.sezione_id != sezione.pk:
             trovati.add(socio.pk)
-            voce.update(stato="escluso", motivo=f"qui è socio della sezione «{socio.sezione}»")
+            origine = remota.get("trasferito_da") or ""
+            if da_sezione and origine and origine == socio.sezione.codice \
+                    and socio.stato != Socio.Stato.CESSATO:  # fmt: skip
+                # arrivato per trasferimento dalla sezione in cui è qui: si sposta
+                modifiche = [["sezione", str(socio.sezione), str(sezione)]]
+                modifiche += _modifiche_anagrafica(socio, d)
+                voce.update(stato="differenze", modifiche=modifiche, trasferimento=origine,
+                            locale_il=socio.modificato_il.isoformat())  # fmt: skip
+            elif _per_trasferimento(d):
+                voce["stato"] = "invariato"  # ceduto da quella sezione: già spostato qui
+            else:
+                voce.update(stato="escluso", motivo=f"qui è socio della sezione «{socio.sezione}»")
         else:
             trovati.add(socio.pk)
             modifiche = _modifiche_anagrafica(socio, d)
@@ -309,6 +335,12 @@ def _applica_voce(remota, voce, sezione, opzioni, utente, *, da_sezione):
         note += _applica_tessere(socio, tessere_remote, opzioni, utente)
         return note + _sospendi_se_serve(socio, d, utente)
     socio = getattr(soggetto, "socio", None) if soggetto else None
+    if socio is not None and voce.get("trasferimento") and socio.sezione_id != sezione.pk:
+        if socio.sezione.codice != voce["trasferimento"]:
+            raise imp._Errore("il socio non è più nella sezione di provenienza")
+        servizi.trasferisci(socio, sezione, utente, data=max(date.today(), socio.data_ammissione),
+                            motivo="Trasferimento fra sezioni collegate")  # fmt: skip
+        socio.refresh_from_db()
     if socio is None or socio.sezione_id != sezione.pk:
         raise imp._Errore("socio non più presente in questa sezione")
     if not da_sezione:  # dalla federazione solo le anagrafiche: niente stato, cessazioni, rinnovi

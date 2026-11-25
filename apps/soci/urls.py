@@ -9,7 +9,7 @@
 
 from django.urls import path
 
-from . import views, viste_ciclo
+from . import views, viste_ciclo, viste_trasferimenti
 
 app_name = "soci"
 
@@ -26,6 +26,22 @@ urlpatterns = [
     path("<int:pk>/cessazione/", views.CessazioneView.as_view(), name="cessazione"),
     path("<int:pk>/stato/", views.StatoView.as_view(), name="stato"),
     path("<int:pk>/trasferisci/", views.TrasferimentoView.as_view(), name="trasferisci"),
+    path(
+        "<int:pk>/trasferisci-collegata/",
+        viste_trasferimenti.RichiestaView.as_view(),
+        name="trasferisci_collegata",
+    ),
+    path("trasferimenti/", viste_trasferimenti.ElencoView.as_view(), name="trasferimenti_esterni"),
+    path(
+        "trasferimenti/<int:pk>/",
+        viste_trasferimenti.DettaglioView.as_view(),
+        name="trasferimento_esterno",
+    ),
+    path(
+        "verifica-tessera/",
+        viste_trasferimenti.VerificaTesseraView.as_view(),
+        name="verifica_tessera_collegata",
+    ),
     path("<int:pk>/modulo.pdf", views.ModuloSocioPdfView.as_view(), name="modulo_socio"),
     path("<int:pk>/modulo-firmato.pdf", views.ModuloFirmatoView.as_view(), name="modulo_firmato"),
     path("<int:pk>/modulo-firmato/", views.CaricaModuloView.as_view(), name="carica_modulo"),

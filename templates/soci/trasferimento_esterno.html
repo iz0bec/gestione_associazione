@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Richiesta di trasferimento di un socio fra installazioni collegate: dati, consenso,
+               accoglimento o rifiuto (F5)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ t }}{% endblock %}
+{% block titolo_pagina %}Trasferimento di {{ t.nome }}{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'soci:trasferimenti_esterni' %}"><i class="ti ti-arrow-left me-1"></i>Trasferimenti</a>{% endblock %}
+{% block contenuto %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-5">Direzione</dt><dd class="col-7">{{ t.get_direzione_display }} · {{ t.cliente.nome }}</dd>
+        <dt class="col-5">Stato</dt><dd class="col-7">{{ t.get_stato_display }}{% if t.esito_il %} il {{ t.esito_il|date:"d/m/Y H:i" }}{% endif %}{% if t.esito_motivo %} · {{ t.esito_motivo }}{% endif %}</dd>
+        {% if t.sezione_origine %}<dt class="col-5">Sezione di provenienza</dt><dd class="col-7">{{ t.sezione_origine }}</dd>{% endif %}
+        <dt class="col-5">Consenso del socio</dt><dd class="col-7">{{ t.consenso_il|date:"d/m/Y" }} · {{ t.consenso_modo }}</dd>
+        {% if t.motivo %}<dt class="col-5">Motivo</dt><dd class="col-7">{{ t.motivo }}</dd>{% endif %}
+        {% if t.socio %}<dt class="col-5">Socio qui</dt><dd class="col-7"><a href="{% url 'soci:dettaglio' t.socio.pk %}">{{ t.socio }}</a></dd>{% endif %}
+      </dl>
+    </div></div>
+    {% if t.direzione == 'entrata' and t.stato == 'in_attesa' %}
+    {% with d=t.dati %}
+    <div class="card mb-3"><div class="card-header"><h3 class="card-title">Scheda ricevuta</h3></div><div class="card-body">
+      <dl class="row mb-0 small">
+        <dt class="col-5">Cognome e nome</dt><dd class="col-7">{{ d.cognome }} {{ d.nome }}</dd>
+        <dt class="col-5">Codice fiscale</dt><dd class="col-7">{{ d.codice_fiscale|default:"—" }}</dd>
+        <dt class="col-5">Nascita</dt><dd class="col-7">{{ d.data_nascita|default:"—" }} {{ d.luogo_nascita }}</dd>
+        <dt class="col-5">Residenza</dt><dd class="col-7">{{ d.indirizzo }} {{ d.cap }} {{ d.comune }} {{ d.provincia }}</dd>
+        <dt class="col-5">Contatti</dt><dd class="col-7">{{ d.email }} {{ d.cellulare }} {{ d.telefono }}</dd>
+        <dt class="col-5">Iscritto dal</dt><dd class="col-7">{{ d.data_iscrizione|default:"—" }} · {{ d.tipologia }}{% if d.matricola %} · matricola {{ d.matricola }}{% endif %}</dd>
+        <dt class="col-5">Tessere recenti</dt><dd class="col-7">{% for x in d.tessere %}{{ x.anno }}: {{ x.codice|default:"senza carta" }}{% if x.pagata %} (pagata){% endif %}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</dd>
+      </dl>
+    </div></div>
+    {% endwith %}
+    {% if perms.soci.add_socio %}
+    <div class="row g-3">
+      <div class="col-md-6"><form method="post" class="card h-100">{% csrf_token %}<input type="hidden" name="azione" value="accogli">
+        <div class="card-body">{% if multisezione %}<label class="form-label" for="sez">Nella sezione</label><select class="form-select" id="sez" name="sezione">{% for s in sezioni %}<option value="{{ s.pk }}">{{ s }}</option>{% endfor %}</select>{% else %}<p class="small mb-0">Il socio entra nel libro soci con la data di iscrizione originaria e le tessere recenti.</p>{% endif %}</div>
+        <div class="card-footer"><button class="btn btn-success w-100" type="submit"><i class="ti ti-check me-1"></i>Accogli</button></div></form></div>
+      <div class="col-md-6"><form method="post" class="card h-100">{% csrf_token %}<input type="hidden" name="azione" value="respingi">
+        <div class="card-body"><label class="form-label" for="mot">Motivo del rifiuto</label><input class="form-control" id="mot" name="motivo" maxlength="255" required></div>
+        <div class="card-footer"><button class="btn btn-outline-danger w-100" type="submit">Respingi</button></div></form></div>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+  <div class="col-lg-5"><div class="card"><div class="card-body small">
+    {% if t.direzione == 'entrata' %}<p>La sezione di provenienza ha inviato la scheda del socio con il suo consenso. <strong>Accogliendo</strong>, il socio entra qui con la sua storia di iscrizione; là cessa per trasferimento e la federazione lo sposta fra le due sezioni.</p><p class="mb-0">I dati ricevuti si cancellano appena la richiesta è decisa.</p>
+    {% else %}<p class="mb-0">La richiesta attende la decisione dell'installazione di arrivo. Se il socio viene accolto, qui cessa da solo con la causa «trasferimento ad altra sezione».</p>{% endif %}
+  </div></div></div>
+</div>
+{% endblock %}
