@@ -13,7 +13,7 @@ publiccodeYmlVersion: "0.4"
 name: Gestione Associazione
 url: "https://github.com/iz0bec/gestione_associazione"
 landingURL: "https://github.com/iz0bec/gestione_associazione"
-softwareVersion: "1.0.100"
+softwareVersion: "1.1.0"
 releaseDate: "2026-11-25"
 logo: static/img/favicon.svg
 
@@ -46,7 +46,7 @@ description:
     genericName: Gestionale per associazioni
     shortDescription: >-
       Gestionale web per associazioni ed enti del Terzo Settore: soci, protocollo con
-      manuale di gestione, organi sociali, tesoreria, patrimonio.
+      manuale di gestione, organi sociali, tesoreria, patrimonio, progetti e bandi.
     longDescription: |
       Gestione Associazione è un gestionale web unico per associazioni, enti del Terzo
       Settore e piccoli enti, nato per una sezione dell'Associazione Nazionale Combattenti
@@ -77,6 +77,15 @@ description:
       schede pubbliche con QR), **modelli di stampa** con firme e timbri in calce,
       calendario con esportazione iCal.
 
+      Il modulo **progetti** accompagna le iniziative legate agli scopi statutari: idee e
+      necessità (anche da sollecitazioni esterne) valutate su criteri pesati, bandi con i
+      requisiti verificati sui dati dell'ente e raccolta automatica da feed e pagine web,
+      progettazione (quadro, cronoprogramma, partner, piano economico con i limiti del bando),
+      scrittura guidata della proposta e della relazione al consiglio senza IA, candidatura
+      protocollata e spedita per PEC, esecuzione con centro di costo, volontariato valorizzato e
+      varianti, rendiconto con i giustificativi. Un connettore MCP facoltativo, spento di norma,
+      espone i dati in sola lettura a un assistente scelto dall'ente (anche un modello locale).
+
       La sicurezza è curata: secondo fattore di autenticazione per ruolo, registro delle
       attività non modificabile, Content Security Policy rigorosa senza risorse esterne,
       allegati mai pubblici, credenziali delle caselle cifrate, backup completi con verifica.
@@ -98,6 +107,8 @@ description:
       - Comunicazioni email con consensi per finalità
       - Prima nota e rendiconto per cassa
       - Inventario dei beni con schede pubbliche e QR
+      - Progetti dall'idea al rendiconto, con bandi e requisiti verificati
+      - Connettore MCP facoltativo per assistenti scelti dall'ente
       - Modelli di stampa con firme e timbri
       - Secondo fattore di autenticazione e registro delle attività
       - Esportazione e anonimizzazione dei dati personali (GDPR)

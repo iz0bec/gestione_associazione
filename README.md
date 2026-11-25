@@ -16,7 +16,7 @@
 
 Gestionale unico per associazioni ed Enti del Terzo Settore di piccole dimensioni:
 anagrafica, soci e tesseramento, protocollo, organi sociali e verbali, comunicazioni,
-tesoreria e patrimonio in un'unica applicazione web.
+tesoreria, patrimonio e progetti in un'unica applicazione web.
 
 Nasce dall'unione di tre applicazioni usate da una sezione ANCR (Associazione Nazionale
 Combattenti e Reduci): **Protocollo ANCR**, **Gestione Soci** e **Gestione Assemblee**.
@@ -54,7 +54,9 @@ dimostrativo](docs/sistema/ambiente-dimostrativo.md).
 > riunioni, presenze e deleghe, verbali e delibere), **comunicazioni e anniversari**
 > (email con consensi, compleanni, onomastici, ricorrenze, anzianità, auguri automatici),
 > **tesoreria** (prima nota, quote, rendiconto per cassa Modello D) e **patrimonio**
-> (inventario, prestiti, schede pubbliche con QR, passaggio di consegne). Gli altri moduli sono pianificati nella
+> (inventario, prestiti, schede pubbliche con QR, passaggio di consegne) e **progetti** (idee e
+> necessità, bandi con requisiti e raccolta automatica, progettazione, candidatura, esecuzione e
+> rendiconto, relazione al consiglio, connettore MCP facoltativo). Gli sviluppi sono nella
 > [roadmap](docs/roadmap.md).
 
 ## Caratteristiche

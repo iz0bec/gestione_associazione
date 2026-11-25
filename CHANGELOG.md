@@ -5,52 +5,56 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.1.0] - 2026-11-25
+
+Nuovo modulo **Progetti** per le iniziative legate agli scopi statutari, dall'idea al rendiconto.
+
 ### Aggiunto
 
-- Modulo **Progetti** (in sviluppo, ramo `progetti`): finalità statutarie e criteri di valutazione
+- Modulo **Progetti** (Progetti P1): finalità statutarie e criteri di valutazione
   configurabili; idee e necessità, anche da un protocollo in entrata o dalla posta da protocollare;
   valutazione con media pesata, priorità e delibera; progetti con stati e storico, gruppo di lavoro
   con i volontari, scadenze nel calendario, documenti e discussione; ruolo combinabile «Progettista»;
   comando `importa_finalita`.
-- **Bandi e finanziamenti** (Progetti P2, ramo `progetti`): registro dei bandi con finanziatore,
+- **Bandi e finanziamenti** (Progetti P2): registro dei bandi con finanziatore,
   finalità, contributo, cofinanziamento e scadenze; requisiti con verifica automatica sui dati del
   gestionale (RUNTS, codice fiscale, PEC, sede, soci, rendiconto, finalità) o a mano, con l'esito
   indicato che prevale; candidatura di un progetto (stato «Candidato», bando «Partecipato»); scadenze
   nel calendario e nel cruscotto; promemoria 7 e 2 giorni prima con il nuovo tipo di avviso «Scadenze
   dei bandi» (comando `promemoria_bandi`, nel pianificatore).
-- **Raccolta automatica dei bandi** (Progetti P3, ramo `progetti`): fonti sorvegliate (feed RSS/Atom e
+- **Raccolta automatica dei bandi** (Progetti P3): fonti sorvegliate (feed RSS/Atom e
   pagine web, solo https pubblici con il trasporto sicuro, XML con defusedxml), portali noti verificati
   (Regione Basilicata, CSV Basilicata, Fondazione con il Sud), parole chiave e parole escluse, proposte
   da vagliare (accogli → bando, scarta) senza doppioni; ogni notte con `raccogli_bandi` e avviso a chi
   gestisce i bandi.
-- **Progettazione** (Progetti P4a, ramo `progetti`): schede Quadro (obiettivo generale, obiettivi
+- **Progettazione** (Progetti P4a): schede Quadro (obiettivo generale, obiettivi
   specifici con risultati e indicatori), Cronoprogramma (attività con dipendenze, diagramma a barre in
   SVG, attività nel calendario), Partner (dall'anagrafica, lettere di partenariato, cofinanziamento) e
   Piano economico (voci per categoria, spese generali, coperture, natura e partner calcolati; controlli
   di bilanciamento e dei limiti del bando: contributo massimo, cofinanziamento minimo, spese generali,
   limiti per categoria, quota in natura). Quadro, partner e piano si modificano in progettazione.
-- **Candidatura** (Progetti P4b, ramo `progetti`): scheda Proposta con scrittura guidata senza IA
+- **Candidatura** (Progetti P4b): scheda Proposta con scrittura guidata senza IA
   (sezioni del formulario del bando o schema predefinito, domande guida, testi composti dai dati del
   progetto, riuso dei testi di altri progetti, contatore dei caratteri); scheda Candidatura con la
   verifica prima dell'invio, proposta in PDF, piano economico in Excel, lettere e dichiarazioni dai
   modelli di stampa (nuovi segnaposto `progetto`, `codice_progetto`, `bando`, `finanziatore`,
   `ruolo_partner`), protocollo in uscita della candidatura verso il finanziatore e spedizione PEC.
-- **Assistente (connettore MCP)** (ramo `progetti`): endpoint MCP Streamable HTTP in `/progetti/mcp/`
+- **Assistente (connettore MCP)**: endpoint MCP Streamable HTTP in `/progetti/mcp/`
   per assistenti scelti dall'associazione, consigliato **Ollama** (Open WebUI, ollama-mcp-bridge), anche
   Claude Code e Claude Desktop; spento di norma, token personali con i permessi dell'utente (solo
   impronta nel database, revoca e scadenza), strumenti in sola lettura su idee, bandi, progetti,
   finalità e criteri, nessun dato personale dei soci, commenti «[Assistente]» solo con doppio consenso,
   ogni chiamata nel registro attività.
-- **Esecuzione dei progetti** (Progetti P5, ramo `progetti`): scheda Esecuzione con il centro di costo
+- **Esecuzione dei progetti** (Progetti P5): scheda Esecuzione con il centro di costo
   (movimenti di prima nota imputati a progetto e voce, contributo incassato), preventivo/consuntivo
   per voce con gli scostamenti, registro delle ore di volontariato valorizzate con la tariffa del
   progetto o del bando, avanzamento (attività completate, indicatori raggiunti, eventi collegati) e
   varianti al piano economico con la delibera e i piani prima e dopo; riepilogo nel connettore MCP.
-- **Relazione al consiglio** (ramo `progetti`): scheda «Al consiglio» con la relazione preventiva da
+- **Relazione al consiglio**: scheda «Al consiglio» con la relazione preventiva da
   discutere prima di una decisione (sezioni guidate, testi proposti dai dati, proposta di delibera),
   **stampa** del PDF, **invio ai partecipanti** di una riunione come bozza di comunicazione con il PDF
   allegato e, per le riunioni in preparazione, il punto all'ordine del giorno.
-- **Rendicontazione e chiusura** (Progetti P6, ramo `progetti`): scheda Rendiconto con le spese per voce e
+- **Rendicontazione e chiusura** (Progetti P6): scheda Rendiconto con le spese per voce e
   i giustificativi numerati, relazione finale guidata, rendiconto e relazione in PDF, Excel e archivio
   ZIP con i giustificativi, verifica prima della chiusura, riuso di un progetto come modello.
 
