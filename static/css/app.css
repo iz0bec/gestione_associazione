@@ -177,6 +177,11 @@ progress.avanzamento { width: 100%; height: .75rem; accent-color: var(--tblr-pri
 @media (prefers-reduced-motion: reduce) {
   .navbar-vertical .menu-gruppo-titolo .ti { transition: none; }
 }
+.navbar-vertical .menu-separatore {
+  margin: 0.25rem 0.75rem;
+  border-top: 1px solid currentColor;
+  opacity: 0.12;
+}
 
 /* Cronoprogramma dei progetti (SVG) */
 .gantt { width: 100%; min-width: 640px; height: auto; font-size: 11px; color: var(--tblr-body-color, #1d273b); }

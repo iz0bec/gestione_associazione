@@ -36,6 +36,15 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   modelli di stampa (nuovi segnaposto `progetto`, `codice_progetto`, `bando`, `finanziatore`,
   `ruolo_partner`), protocollo in uscita della candidatura verso il finanziatore e spedizione PEC.
 
+## [1.0.100] - 2026-11-25
+
+### Modificato
+
+- **Sistema** nel menu laterale è ora un gruppo come gli altri (non più un menu a tendina con la
+  freccia fissa): si apre e si chiude con un clic sull'intestazione, è chiuso di norma e resta aperto
+  quando si è in una sua pagina; le voci sono divise da separatori (configurazione, accessi e
+  collegamenti, dati e manutenzione).
+
 ## [1.0.99] - 2026-11-25
 
 ### Modificato
