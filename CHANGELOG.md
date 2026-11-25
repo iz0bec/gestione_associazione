@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.98] - 2026-11-25
+
 ### Aggiunto
 - **Connettore WordPress 0.2.0**: un proprio **calendario degli eventi**, senza plugin esterni come
   The Events Calendar. Gli eventi «pubblica sui siti collegati» diventano eventi del sito con archivio
