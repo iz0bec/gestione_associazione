@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.96] - 2026-11-25
+
 ### Aggiunto
 - **F5, collegamenti fra sezioni**: **trasferimento di un socio** a un'altra sezione (o federazione)
   collegata, con il **consenso** del socio registrato: richiesta dalla scheda del socio, accoglimento o
