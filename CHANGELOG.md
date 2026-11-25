@@ -5,6 +5,8 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+## [1.0.95] - 2026-11-25
+
 ### Aggiunto
 - **F4 completata**: dalle installazioni collegate (federazione e sezioni) si leggono ogni 15 minuti
   (lavoro `aggiorna_condivisi`) le **cariche** e i **numeri del tesseramento** (nuovo endpoint
