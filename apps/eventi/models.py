@@ -11,6 +11,7 @@
 import secrets
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.db.models import Q, Sum
 from django.urls import reverse
@@ -64,6 +65,11 @@ class Evento(RisorsaApi, ModelloBase):
         "pubblica sui siti collegati", default=False,
         help_text="I siti collegati (es. WordPress con il connettore) ne fanno un articolo, in "
         "bozza da rivedere. Vale solo con il modulo pubblico.",
+    )  # fmt: skip
+    condiviso = models.BooleanField(
+        "condividi con le installazioni collegate", default=False,
+        help_text="La federazione e le sezioni collegate lo vedono nei loro eventi e nel "
+        "calendario; quelle autorizzate possono iscrivere i propri soci.",
     )  # fmt: skip
     token = models.CharField(max_length=32, unique=True, default=_token, editable=False)
     annullato = models.BooleanField(default=False)
@@ -156,6 +162,71 @@ class Adesione(models.Model):
                 name="una_adesione_per_persona",
             )
         ]
+
+    def __str__(self):
+        return f"{self.cognome} {self.nome}".strip()
+
+
+class EventoCondiviso(models.Model):
+    """Evento condiviso da un'installazione collegata (federazione o sezione, F4): copia in sola
+    lettura, aggiornata a ogni lettura; non si modifica qui."""
+
+    cliente = models.ForeignKey("api.ClienteApi", on_delete=models.CASCADE,
+                                related_name="eventi_condivisi")  # fmt: skip
+    uuid = models.UUIDField()
+    versione = models.PositiveIntegerField(default=1)
+    titolo = models.CharField(max_length=200)
+    inizio = models.DateTimeField()
+    fine = models.DateTimeField(null=True, blank=True)
+    luogo = models.CharField(max_length=200, blank=True)
+    annullato = models.BooleanField(default=False)
+    dati = models.JSONField(default=dict)
+    letto_il = models.DateTimeField()
+
+    class Meta:
+        verbose_name = "evento condiviso"
+        verbose_name_plural = "eventi condivisi"
+        ordering = ["inizio"]
+        constraints = [
+            models.UniqueConstraint(fields=["cliente", "uuid"], name="evento_condiviso_unico")
+        ]
+
+    def __str__(self):
+        return f"{self.titolo} ({self.cliente})"
+
+    def get_absolute_url(self):
+        return reverse("eventi:condiviso", args=[self.pk])
+
+    @property
+    def descrizione(self):
+        return self.dati.get("descrizione") or ""
+
+    def adesioni_valide(self):
+        return self.adesioni_inviate.filter(annullata=False)
+
+
+class AdesioneInviata(models.Model):
+    """Socio iscritto da qui a un evento condiviso di un'installazione collegata."""
+
+    evento = models.ForeignKey(EventoCondiviso, on_delete=models.CASCADE,
+                               related_name="adesioni_inviate")  # fmt: skip
+    soggetto = models.ForeignKey(Soggetto, null=True, blank=True, on_delete=models.SET_NULL,
+                                 related_name="+")  # fmt: skip
+    cognome = models.CharField(max_length=100)
+    nome = models.CharField(max_length=100, blank=True)
+    accompagnatori = models.PositiveSmallIntegerField(default=0)
+    note = models.CharField(max_length=255, blank=True)
+    uuid_remoto = models.UUIDField(null=True, blank=True)
+    versione_remota = models.PositiveIntegerField(default=1)
+    annullata = models.BooleanField(default=False)
+    inviata_il = models.DateTimeField(auto_now_add=True)
+    inviata_da = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name="+")  # fmt: skip
+
+    class Meta:
+        verbose_name = "adesione inviata"
+        verbose_name_plural = "adesioni inviate"
+        ordering = ["cognome", "nome"]
 
     def __str__(self):
         return f"{self.cognome} {self.nome}".strip()

@@ -5,6 +5,18 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **F4 completata**: dalle installazioni collegate (federazione e sezioni) si leggono ogni 15 minuti
+  (lavoro `aggiorna_condivisi`) le **cariche** e i **numeri del tesseramento** (nuovo endpoint
+  `GET /api/v1/tesseramento`, solo conteggi), mostrati in *Soci → Sezioni → Installazioni
+  collegate* accanto ai numeri locali, con le differenze evidenziate.
+- **Eventi condivisi**: nuova scelta «Condividi con le installazioni collegate»; gli eventi condivisi
+  dagli altri compaiono fra gli eventi e nel calendario e si possono **iscrivere i propri soci**
+  (solo cognome e nome, cifrati); presso l'organizzatore l'adesione indica l'installazione che l'ha
+  inviata.
+- Avvisi (Telegram, SMS, WhatsApp): registrati nel log anche quelli riusciti.
+- API: campo `condiviso` negli eventi (aggiunta compatibile del contratto v1).
+
 ## [1.0.94] - 2026-11-24
 
 ### Aggiunto

@@ -466,3 +466,29 @@ class VerificaSoci(models.Model):
 
     def __str__(self):
         return f"Verifica soci con {self.cliente} del {self.creata_il:%d/%m/%Y %H:%M}"
+
+
+class DatiControparte(models.Model):
+    """Ultima copia di dati riepilogativi letti dalla controparte (F4): organigramma e numeri
+    del tesseramento. Nessun dato personale oltre ruolo e nome delle cariche."""
+
+    class Tipo(models.TextChoices):
+        ORGANIGRAMMA = "organigramma", "Cariche"
+        TESSERAMENTO = "tesseramento", "Numeri del tesseramento"
+
+    cliente = models.ForeignKey(ClienteApi, on_delete=models.CASCADE, related_name="dati_letti")
+    tipo = models.CharField(max_length=20, choices=Tipo.choices)
+    dati = models.JSONField(default=dict, blank=True)
+    letto_il = models.DateTimeField(null=True, blank=True)
+    tentato_il = models.DateTimeField(null=True, blank=True)
+    errore = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "dati della controparte"
+        verbose_name_plural = "dati delle controparti"
+        constraints = [
+            models.UniqueConstraint(fields=["cliente", "tipo"], name="dati_controparte_unici")
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} di {self.cliente}"

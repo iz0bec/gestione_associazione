@@ -39,6 +39,7 @@ def evento(e: Evento) -> dict:
         "chiusura_adesioni": data_ora(e.chiusura_adesioni),
         "pubblico": e.pubblico,
         "sito": e.pubblico and e.sito,
+        "condiviso": e.condiviso,
         "annullato": e.annullato,
     }
 
@@ -60,8 +61,8 @@ def sezione(s: Sezione) -> dict:
 def eventi_visibili(cliente: ClienteApi):
     eventi = Evento.objects.all()
     if cliente.tipo == ClienteApi.Tipo.INTEGRAZIONE:
-        eventi = eventi.filter(pubblico=True)
-    return eventi
+        return eventi.filter(pubblico=True)
+    return eventi  # le installazioni collegate mostrano solo quelli con «condiviso»
 
 
 def sezioni_visibili(cliente: ClienteApi):

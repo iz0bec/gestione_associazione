@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Evento condiviso da un'installazione collegata (federazione o sezione): dettagli
+               in sola lettura e iscrizione dei nostri soci (F4)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}{{ evento.titolo }}{% endblock %}
+{% block titolo_pagina %}{{ evento.titolo }}{% endblock %}
+{% block azioni %}<a class="btn" href="{% url 'eventi:elenco' %}"><i class="ti ti-arrow-left me-1"></i>Eventi</a>{% endblock %}
+{% block contenuto %}
+{% with d=evento.dati %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title">Iscritti da qui</h3></div>
+      {% if adesioni %}
+      <div class="table-responsive"><table class="table table-vcenter card-table">
+        <thead><tr><th>Socio</th><th>Accompagnatori</th><th>Note</th><th>Inviata</th><th></th></tr></thead>
+        <tbody>{% for a in adesioni %}<tr{% if a.annullata %} class="text-secondary"{% endif %}>
+          <td>{% if a.annullata %}<s>{{ a }}</s> <span class="badge bg-red-lt">annullata</span>{% else %}{{ a }}{% endif %}</td>
+          <td>{{ a.accompagnatori }}</td><td class="small">{{ a.note }}</td>
+          <td class="small">{{ a.inviata_il|date:"d/m/Y H:i" }}{% if a.inviata_da %} · {{ a.inviata_da }}{% endif %}</td>
+          <td>{% if not a.annullata and perms.eventi.change_evento %}<form method="post">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" name="annulla" value="{{ a.pk }}">Annulla</button></form>{% endif %}</td>
+        </tr>{% endfor %}</tbody></table></div>
+      {% else %}<div class="card-body text-secondary">Nessun socio iscritto da questa installazione.</div>{% endif %}
+    </div>
+    {% if perms.eventi.change_evento and not evento.annullato and d.adesioni_aperte %}
+    <form method="post" class="card" novalidate>{% csrf_token %}
+      <div class="card-header"><h3 class="card-title">Iscrivi i nostri soci</h3></div>
+      <div class="card-body">{{ form }}
+        <p class="small text-secondary mb-0">Le iscrizioni partono cifrate verso «{{ evento.cliente.nome }}» e compaiono fra le adesioni dell'evento, con cognome e nome (nessun altro dato).</p></div>
+      <div class="card-footer text-end"><button class="btn btn-primary" type="submit"><i class="ti ti-user-plus me-1"></i>Iscrivi</button></div>
+    </form>
+    {% elif not d.adesioni_aperte and not evento.annullato %}<div class="alert alert-info">Le adesioni a questo evento sono chiuse.</div>{% endif %}
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <div class="mb-2"><span class="badge bg-azure-lt"><i class="ti ti-plug-connected me-1"></i>{{ evento.cliente.nome }}</span></div>
+      {% if evento.annullato %}<div class="alert alert-danger">Evento annullato.</div>{% endif %}
+      <dl class="mb-0">
+        <dt>Quando</dt><dd>{{ evento.inizio|date:"l d/m/Y H:i" }}{% if evento.fine %} – {{ evento.fine|date:"d/m/Y H:i" }}{% endif %}</dd>
+        {% if evento.luogo %}<dt>Dove</dt><dd>{{ evento.luogo }}</dd>{% endif %}
+        {% if d.quota %}<dt>Quota</dt><dd>{{ d.quota }}</dd>{% endif %}
+        <dt>Adesioni</dt><dd>{% if d.adesioni_aperte %}aperte{% else %}chiuse{% endif %}{% if d.posti_liberi is not None %} · posti liberi {{ d.posti_liberi }}{% endif %}</dd>
+      </dl>
+      {% if evento.descrizione %}<hr><div class="small">{{ evento.descrizione|linebreaksbr }}</div>{% endif %}
+      <div class="small text-secondary mt-3">Copia letta il {{ evento.letto_il|date:"d/m/Y H:i" }}: si aggiorna ogni 15 minuti.</div>
+    </div></div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

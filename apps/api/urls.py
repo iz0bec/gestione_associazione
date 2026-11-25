@@ -18,6 +18,7 @@ urlpatterns = [
     path("invito/", views.InvitoNuovoView.as_view(), name="invito_nuovo"),
     path("usa-invito/", views.UsaInvitoView.as_view(), name="usa_invito"),
     path("chiavi/ruota/", views.RuotaChiaviView.as_view(), name="ruota_chiavi"),
+    path("collegati/", views.CollegatiView.as_view(), name="collegati"),
     path("<int:pk>/", views.ControparteView.as_view(), name="controparte"),
     path(
         "<int:pk>/verifica-soci/",

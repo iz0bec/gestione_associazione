@@ -185,6 +185,27 @@ che arriva dalla federazione. **Allinea ora** esegue subito un giro; **Disattiva
 verifica manuale. Se la controparte non risponde, l'errore resta nel riquadro e si riprova al giro
 dopo. Lo scambio con file Excel resta sempre possibile.
 
+### Cariche, numeri del tesseramento ed eventi condivisi
+
+Ogni 15 minuti il gestionale legge dalla federazione e dalle sezioni collegate anche:
+
+- le **cariche** in corso (organigramma: ruolo e nome), se la controparte ci ha concesso l'ambito
+  **«Organigramma pubblico: lettura»**;
+- i **numeri del tesseramento** dell'anno (soci attivi e sospesi, tessere, pagate, senza carta,
+  nuovi iscritti, cessati: solo conteggi), con l'ambito **«Soci e tessere: lettura»**;
+- gli **eventi condivisi**, con l'ambito **«Eventi: lettura»**.
+
+**Soci → Sezioni → Installazioni collegate** (anche dalla scheda della controparte) mostra per ogni
+collegamento le cariche e i numeri, **affiancati a quelli di questa installazione**: un numero in
+arancione segnala soci o tessere non ancora allineati. **Leggi di nuovo** aggiorna subito.
+
+Gli eventi con **«Condividi con le installazioni collegate»** (vedi [Eventi](eventi.md)) compaiono
+nelle installazioni collegate in *Eventi → Eventi delle installazioni collegate* e nel calendario.
+Dalla scheda dell'evento si possono **iscrivere i propri soci** (serve l'ambito **«Adesioni agli
+eventi: scrittura»** concesso dalla controparte): partono solo cognome e nome, cifrati, e presso
+l'organizzatore l'adesione riporta il nome dell'installazione che l'ha inviata. Un'iscrizione si
+annulla dalla stessa scheda.
+
 ### Sezione che la federazione non raggiunge (a spinta)
 
 Se la federazione non può chiamare la sezione (sezione dietro NAT o senza indirizzo pubblico), in

@@ -40,7 +40,7 @@ class EventoForm(StileMixin, forms.ModelForm):
         fields = [
             "titolo", "tipo", "inizio", "fine", "luogo", "descrizione", "quota", "posti",
             "accompagnatori", "adesioni_aperte", "chiusura_adesioni", "pubblico", "sito",
-            "annullato",
+            "condiviso", "annullato",
         ]  # fmt: skip
         widgets = {
             "inizio": CampoDataOra, "fine": CampoDataOra, "chiusura_adesioni": CampoDataOra,
@@ -112,3 +112,32 @@ class AdesionePubblicaForm(AdesioneForm):
         ):
             raise forms.ValidationError("Troppe adesioni inviate di recente: riprovare più tardi.")
         return super().clean()
+
+
+class IscrizioneCondivisoForm(StileMixin, forms.Form):
+    """Iscrizione di uno o più soci a un evento di un'installazione collegata."""
+
+    soggetti = forms.ModelMultipleChoiceField(
+        label="Soci da iscrivere", queryset=None,
+        help_text="Soci attivi di questa installazione, non ancora iscritti.",
+    )  # fmt: skip
+    accompagnatori = forms.IntegerField(label="Accompagnatori per socio", min_value=0,
+                                        required=False, initial=0)  # fmt: skip
+    note = forms.CharField(label="Note", max_length=255, required=False)
+
+    def __init__(self, *args, evento, **kwargs):
+        super().__init__(*args, **kwargs)
+        from apps.anagrafica.models import Soggetto
+
+        iscritti = (
+            evento.adesioni_valide().exclude(soggetto=None).values_list("soggetto", flat=True)
+        )
+        self.fields["soggetti"].queryset = (
+            Soggetto.objects.filter(socio__stato="attivo").exclude(pk__in=iscritti)
+            .order_by("cognome", "nome")
+        )  # fmt: skip
+        massimo = (evento.dati or {}).get("accompagnatori_max")
+        if massimo is not None:
+            self.fields["accompagnatori"].max_value = int(massimo)
+            self.fields["accompagnatori"].widget.attrs["max"] = int(massimo)
+            self.fields["accompagnatori"].help_text = f"Al massimo {massimo}."

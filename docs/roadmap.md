@@ -263,8 +263,9 @@ Ordine proposto (ognuno con test, manuale operativo e voce nel manuale di sistem
     minuti, ordine di tempo rispetto all'ultimo allineamento, incongruenze notificate per email,
     ogni novità (rinnovi, nuovi soci, cessazioni) notificata a chi gestisce i soci; **spinta**
     (`POST /consegne`, flusso `soci`) per le sezioni che la federazione non raggiunge.
-  - **Resto della F4** (da fare): cariche delle sezioni visibili in federazione, numeri del
-    tesseramento per sezione, eventi provinciali condivisi.
+  - ✅ **Resto della F4** (1.0.95): cariche e numeri del tesseramento delle installazioni collegate
+    (pagina *Installazioni collegate*, confronto con i dati locali), eventi condivisi con iscrizione
+    dei propri soci, nel calendario.
     - *Senza API*: lo scambio con file Excel resta come alternativa (interoperabilità facoltativa).
     - *Primo uso*: sezione di Potenza (CT 103, porta 8083), già abbinata alla federazione.
 - ✅ Pagamenti tracciati (1.0.31): metodo e ricevuta numerata delle quote, altri incassi, storni e rimborsi, registro incassi con quadratura.

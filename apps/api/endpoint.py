@@ -308,6 +308,22 @@ def soci(request):
     return risposta_cifrata(request, dati)
 
 
+@endpoint(metodi=("GET",), ambito="soci:lettura")
+def tesseramento(request):
+    """Numeri del tesseramento della sezione legata alla controparte (solo conteggi)."""
+    from apps.soci import allineamento
+
+    from . import tessere
+
+    sezione = tessere.sezione_per(request.cliente_api)
+    if sezione is None:
+        dettaglio = "La controparte non è collegata come federazione o come sezione."
+        raise Problema("operazione-non-valida", 403, dettaglio)
+    anno = _intero(request, "anno", date.today().year, 2000, 2100)
+    dati = {"sezione": {"codice": sezione.codice, "nome": sezione.nome}}
+    return JsonResponse(dati | allineamento.numeri(sezione, anno))
+
+
 @endpoint(metodi=("POST",), ambito="consegne:scrittura", idempotente=True, cifrato=True)
 def consegne(request):
     """Modalità a spinta: la sezione che non si raggiunge invia l'elenco dei suoi soci (stesso

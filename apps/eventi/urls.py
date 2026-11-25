@@ -17,6 +17,7 @@ urlpatterns = [
     path("", views.EventiView.as_view(), name="elenco"),
     path("nuovo/", views.EventoNuovoView.as_view(), name="nuovo"),
     path("<int:pk>/", views.EventoView.as_view(), name="evento"),
+    path("condivisi/<int:pk>/", views.EventoCondivisoView.as_view(), name="condiviso"),
     path("<int:pk>/modifica/", views.EventoModificaView.as_view(), name="modifica"),
     path("<int:pk>/adesioni/", views.AdesioneNuovaView.as_view(), name="adesione_nuova"),
     path("<int:pk>/aderenti.<str:formato>", views.AderentiView.as_view(), name="aderenti"),

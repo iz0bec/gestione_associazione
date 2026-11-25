@@ -78,6 +78,7 @@ class Command(BaseCommand):
                 self._esegui("scarica_posta")
                 self._esegui("sincronizza_collegamenti")  # stessa cadenza della posta
                 self._esegui("allinea_soci")
+                self._esegui("aggiorna_condivisi")
                 ultima_posta = time.monotonic()
             if opzioni["una_volta"] or (
                 adesso.hour >= opzioni["ora_registro"] and ultimo_registro != adesso.date()

@@ -272,6 +272,52 @@ class VerificaSociNuovaView(PermessoMixin, View):
         return redirect("api:verifica_soci", pk=verifica.pk)
 
 
+VOCI_NUMERI = [("soci_attivi", "Soci attivi"), ("soci_sospesi", "Sospesi"), ("tessere", "Tessere"),
+               ("tessere_pagate", "Pagate"), ("tessere_senza_carta", "Senza carta"),
+               ("nuovi_iscritti", "Nuovi"), ("cessati", "Cessati")]  # fmt: skip
+
+
+class CollegatiView(PermessoMixin, View):
+    """Federazione e sezioni collegate (F4): cariche e numeri del tesseramento letti dalla
+    controparte, confrontati con quelli di questa installazione."""
+
+    permission_required = "soci.view_sezione"
+
+    def get(self, request):
+        from apps.collegamenti import condivisi
+        from apps.soci import allineamento, sezioni
+
+        from . import tessere
+
+        consentite = sezioni.id_sezioni(request.user)
+        righe = []
+        for c in condivisi.controparti().select_related("sezione").order_by("nome"):
+            sezione = tessere.sezione_per(c)
+            if consentite is not None and (sezione is None or sezione.pk not in consentite):
+                continue
+            dati = condivisi.dati_di(c)
+            tess = dati.get("tesseramento")
+            loro = (tess.dati if tess else {}) or {}
+            nostri = allineamento.numeri(sezione, loro.get("anno")) if sezione else {}
+            numeri = [(etichetta, loro.get(k), nostri.get(k)) for k, etichetta in VOCI_NUMERI]
+            discordanze = sum(1 for _, a, b in numeri if None not in (a, b) and a != b)
+            righe.append({"cliente": c, "sezione": sezione, "tesseramento": tess,
+                          "organigramma": dati.get("organigramma"), "numeri": numeri,
+                          "discordanze": discordanze})  # fmt: skip
+        return render(request, "api/collegati.html", {"righe": righe, "voci": VOCI_NUMERI})
+
+    def post(self, request):
+        from apps.collegamenti import condivisi
+
+        if not request.user.has_perm("soci.importa_soci"):
+            raise Http404
+        for c in condivisi.controparti():
+            if c.abbinata:
+                condivisi.aggiorna(c)
+        messages.success(request, "Dati letti di nuovo dalle installazioni collegate.")
+        return redirect("api:collegati")
+
+
 class AllineamentoView(PermessoMixin, View):
     """Allineamento automatico dei soci con la controparte: attiva, disattiva, esegui ora."""
 

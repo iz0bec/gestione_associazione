@@ -21,7 +21,7 @@
         {% for a in adesioni %}
         <div class="list-group-item d-flex align-items-center gap-2{% if a.annullata %} text-secondary{% endif %}">
           <div class="flex-fill">{% if a.soggetto %}<a href="{{ a.soggetto.get_absolute_url }}"{% if a.annullata %} class="text-secondary text-decoration-line-through"{% endif %}>{{ a }}</a>{% else %}<span{% if a.annullata %} class="text-decoration-line-through"{% endif %}>{{ a }}</span>{% endif %}{% if a.accompagnatori %} <span class="badge bg-secondary-lt">+{{ a.accompagnatori }}</span>{% endif %}
-            <div class="small text-secondary">{{ a.email }}{% if a.telefono %} · {{ a.telefono }}{% endif %} · {{ a.get_origine_display|lower }} · {{ a.creata_il|date:"d/m H:i" }}{% if a.note %} · {{ a.note }}{% endif %}{% if a.annullata %} · annullata{% endif %}</div></div>
+            <div class="small text-secondary">{{ a.email }}{% if a.telefono %} · {{ a.telefono }}{% endif %} · {% if a.cliente_api_id %}da {{ a.cliente_api.nome }}{% else %}{{ a.get_origine_display|lower }}{% endif %} · {{ a.creata_il|date:"d/m H:i" }}{% if a.note %} · {{ a.note }}{% endif %}{% if a.annullata %} · annullata{% endif %}</div></div>
           {% if perms.eventi.change_evento and not a.annullata %}<form method="post" action="{% url 'eventi:adesione_annulla' a.pk %}" data-conferma="Annullare l'adesione di {{ a }}?">{% csrf_token %}<button class="btn btn-sm btn-ghost-danger" type="submit" title="Annulla l'adesione"><i class="ti ti-x"></i></button></form>{% endif %}
         </div>
         {% empty %}<div class="list-group-item text-secondary">Nessuna adesione.</div>{% endfor %}
@@ -49,6 +49,7 @@
       </dl>
       {% if evento.descrizione %}<hr><div class="small">{{ evento.descrizione|linebreaksbr }}</div>{% endif %}
     </div></div>
+    {% if evento.condiviso %}<div class="alert alert-info small mb-3"><i class="ti ti-plug-connected me-1"></i>Condiviso con le installazioni collegate (federazione e sezioni): lo vedono nei loro eventi e le iscrizioni dei loro soci arrivano qui, con l'indicazione di chi le ha inviate.</div>{% endif %}
     {% if evento.pubblico %}<div class="card"><div class="card-body">
       <div class="fw-medium mb-1"><i class="ti ti-world me-1"></i>Modulo pubblico di adesione</div>
       <p class="small text-secondary">Da diffondere (sito, social, email): chiunque abbia il collegamento può aderire.</p>

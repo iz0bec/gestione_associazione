@@ -6,7 +6,7 @@
 {% endcomment %}
 {% block titolo %}Sezioni{% endblock %}
 {% block titolo_pagina %}Sezioni{% endblock %}
-{% block azioni %}{% if perms.soci.add_sezione %}<a class="btn btn-primary" href="{% url 'soci:sezione_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova sezione</a>{% endif %}{% endblock %}
+{% block azioni %}<div class="btn-list"><a class="btn" href="{% url 'api:collegati' %}"><i class="ti ti-plug-connected me-1"></i>Installazioni collegate</a>{% if perms.soci.add_sezione %}<a class="btn btn-primary" href="{% url 'soci:sezione_nuova' %}"><i class="ti ti-plus me-1"></i>Nuova sezione</a>{% endif %}</div>{% endblock %}
 {% block contenuto %}
 <div class="card">
   <div class="table-responsive">

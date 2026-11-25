@@ -43,6 +43,14 @@ protezioni dell'iscrizione online (campo trappola, tempo minimo, limite di invii
 chiude da solo alla scadenza o quando i posti finiscono. Togliendo la spunta il collegamento smette di
 funzionare.
 
+### Condividi con le installazioni collegate
+
+Con **Condividi con le installazioni collegate** l'evento compare nei gestionali collegati
+(federazione e sezioni) fra i loro eventi e nel loro calendario, e quelle autorizzate possono
+iscrivere i propri soci: le adesioni arrivano qui con il nome dell'installazione che le ha inviate.
+Gli eventi condivisi dagli altri si trovano in cima all'elenco, in **Eventi delle installazioni
+collegate**; vedi [Collegamenti API](collegamenti-api.md).
+
 ### Pubblica sui siti collegati
 
 Con **Pubblica sui siti collegati** (insieme al modulo pubblico) i siti collegati al gestionale,

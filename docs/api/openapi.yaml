@@ -336,7 +336,11 @@ paths:
       tags: [eventi]
       operationId: elencaEventi
       summary: Eventi visibili alla controparte
-      description: Ambito `eventi:lettura`. Alle integrazioni solo gli eventi con modulo pubblico.
+      description: >-
+        Ambito `eventi:lettura`. Alle integrazioni solo gli eventi con modulo pubblico; alle
+        installazioni collegate tutti, con il campo `condiviso`: il gestionale mostra fra gli
+        «eventi delle installazioni collegate» solo quelli condivisi. Le installazioni con
+        `adesioni:scrittura` possono iscrivere i propri soci.
       parameters:
         - $ref: "#/components/parameters/DestinatarioIstanza"
         - name: dal
@@ -691,6 +695,39 @@ paths:
             application/pdf:
               schema: { type: string, format: binary }
         "404": { $ref: "#/components/responses/Problema" }
+
+  /tesseramento:
+    get:
+      tags: [federazione-sezioni]
+      operationId: numeriTesseramento
+      summary: Numeri del tesseramento della sezione (solo conteggi)
+      description: |
+        Ambito `soci:lettura` e ruolo (federazione o sezione). Per la sezione legata alla
+        controparte, i conteggi dell'anno (predefinito l'anno in corso): nessun dato personale.
+        Dalla 1.0.95.
+      parameters:
+        - $ref: "#/components/parameters/DestinatarioIstanza"
+        - name: anno
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Conteggi.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sezione: { type: object, properties: { codice: { type: string }, nome: { type: string } } }
+                  anno: { type: integer }
+                  soci_attivi: { type: integer }
+                  soci_sospesi: { type: integer }
+                  tessere: { type: integer }
+                  tessere_pagate: { type: integer }
+                  tessere_senza_carta: { type: integer }
+                  nuovi_iscritti: { type: integer }
+                  cessati: { type: integer }
+        "403": { $ref: "#/components/responses/Problema" }
 
   /organigramma:
     get:
@@ -1080,6 +1117,9 @@ components:
               description: |
                 Da pubblicare come articolo sui siti collegati (scelta dell'evento, solo con il
                 modulo pubblico). Campo aggiunto nella 1.0.90.
+            condiviso:
+              type: boolean
+              description: Condiviso con le installazioni collegate (federazione e sezioni). Campo aggiunto nella 1.0.95.
             annullato: { type: boolean }
 
     NuovaAdesione:

@@ -53,6 +53,7 @@ decisioni sono nell'[ADR-030](../architettura/decisioni.md), il contratto in
 | `/api/v1/organigramma` | firma + `organigramma:lettura` | cariche in corso (ruolo e nome) |
 | `/api/v1/tessere/{codice}` | firma + `tessere:verifica` | validità, anno e sezione di una tessera (nient'altro) |
 | `/api/v1/soci` | firma + `soci:lettura` + ruolo | soci della sezione della controparte (cifrati), per la *Verifica soci* e l'allineamento automatico |
+| `/api/v1/tesseramento` | firma + `soci:lettura` + ruolo | numeri del tesseramento della sezione (solo conteggi) |
 | `/api/v1/consegne` (POST) | firma + `consegne:scrittura` + ruolo «sezione», **cifrato** | modalità a spinta: la sezione invia l'elenco dei suoi soci (flusso `soci`) |
 | `/api/v1/cambiamenti?flusso=tessere`, `/api/v1/ciclo-tessere/{risorsa}/{uuid}` | firma + `tessere:scambio` + ruolo | ciclo delle tessere fra federazione e sezione: consegne, ricevute, richieste, prese in carico (con il PDF) |
 
@@ -151,6 +152,11 @@ Il lavoro `sincronizza_collegamenti` (ogni 15 minuti) legge il flusso dell'altra
 cursore salvato, verifica la catena, scarica i documenti e li mette nella coda dei **documenti in
 arrivo**, che si confermano dalla campagna delle tessere. Se una voce manca o è alterata, la
 lettura si ferma e l'errore resta visibile nella scheda della controparte.
+
+Il lavoro `aggiorna_condivisi` (ogni 15 minuti) legge dalle controparti federazione e sezione
+cariche (`/organigramma`), numeri del tesseramento (`/tesseramento`) ed eventi condivisi
+(`/eventi`, di cui si copiano solo quelli con `condiviso`): gli ambiti mancanti non bloccano,
+restano indicati nella pagina *Installazioni collegate*.
 
 Il lavoro `allinea_soci` (ogni 15 minuti, dal pianificatore) esegue l'**allineamento automatico dei
 soci** con le controparti che lo hanno acceso (legge `/soci` e applica in ordine di tempo rispetto

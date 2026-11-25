@@ -97,6 +97,7 @@
           {% endif %}
           {% if c.allineamento_spinta and c.ruolo == 'federazione' %}<form method="post" action="{% url 'api:allineamento' c.pk 'ora' %}">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-send me-1"></i>Invia ora i soci</button></form>{% endif %}
         </div>
+        <p class="mt-3 mb-0"><a href="{% url 'api:collegati' %}"><i class="ti ti-sitemap me-1"></i>Cariche e numeri del tesseramento delle installazioni collegate</a></p>
         {% if verifiche_soci %}<div class="mt-3"><strong>Verifiche e allineamenti recenti</strong>
           <ul class="mb-0">{% for v in verifiche_soci %}<li><a href="{% url 'api:verifica_soci' v.pk %}">{{ v.creata_il|date:"d/m/Y H:i" }}</a> · {% if v.automatica %}allineamento automatico{% with k=v.proposta.conteggi %}: {{ k.creato|default:0 }} creati, {{ k.aggiornato|default:0 }} aggiornati{% if k.incongruenze %}, <span class="text-warning">{{ k.incongruenze }} incongruenze</span>{% endif %}{% if k.errore or k.da_verificare %}, <span class="text-danger">{{ k.errore|add:k.da_verificare }} da vedere</span>{% endif %}{% endwith %}{% else %}{% if v.origine == 'spinta' %}inviata dalla sezione{% elif v.creata_da %}{{ v.creata_da }}{% endif %} · {% if v.applicata_il %}applicata{% else %}<span class="text-warning">da decidere</span>{% endif %}{% endif %}</li>{% endfor %}</ul></div>{% endif %}
       </div>

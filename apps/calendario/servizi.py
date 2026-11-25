@@ -191,6 +191,23 @@ def _eventi_associazione(dal, al):
         )  # fmt: skip
 
 
+def _eventi_condivisi(dal, al):
+    from apps.eventi.models import EventoCondiviso
+
+    inizio = _momento(dal, time.min)
+    fine = _momento(al, time.max)
+    qs = EventoCondiviso.objects.select_related("cliente").filter(
+        annullato=False, inizio__range=(inizio, fine)
+    )
+    for e in qs:
+        yield Evento(
+            uid=f"evento-condiviso-{e.uuid}", titolo=f"{e.titolo} ({e.cliente.nome})",
+            inizio=e.inizio, fine=e.fine or e.inizio + DURATA_RIUNIONE, luogo=e.luogo,
+            descrizione=e.descrizione, percorso=e.get_absolute_url(),
+            categoria="Eventi collegati", icona="plug-connected",
+        )  # fmt: skip
+
+
 def _momento(giorno, ora):
     return timezone.make_aware(datetime.combine(giorno, ora))
 
@@ -235,6 +252,7 @@ def eventi(utente, *, dal, al, compleanni=False):
         elenco += _mandati(dal, al)
     if utente.has_perm("eventi.view_evento"):
         elenco += _eventi_associazione(dal, al)
+        elenco += _eventi_condivisi(dal, al)
     if utente.has_perm("elezioni.view_rinnovo"):
         elenco += _rinnovi(dal, al)
     if utente.has_perm("calendario.view_appuntamento"):

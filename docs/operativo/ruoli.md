@@ -177,6 +177,10 @@ in prestito e, per chi consulta i soci, i compleanni dei soci attivi.
 | Amministratore di sistema | sì | sì | sì |
 | Tutti gli altri | - | - | - |
 
+La pagina **Installazioni collegate** (cariche e numeri del tesseramento della federazione e delle
+sezioni) la vede chi consulta le sezioni, ognuno per le proprie; *Leggi di nuovo* richiede il
+permesso di importare i soci. Iscrivere i soci agli eventi condivisi spetta a chi gestisce gli eventi.
+
 La *Verifica soci* e l'**allineamento automatico** (attivarlo, disattivarlo, «Allinea ora»)
 richiedono il permesso di importare i soci e di consultare le controparti; chi è limitato a una
 sezione li gestisce solo per quella. Gli avvisi email dell'allineamento vanno a chi può modificare

@@ -155,6 +155,7 @@ def avvisa(tipo, contenuto, filtro=None):
         try:
             invia(utente, canale, contenuto)
             inviati += 1
+            log.info("Avviso %s inviato a %s su %s", tipo, utente, canale)
         except AvvisoNonInviato as e:
             log.warning("Avviso %s a %s non inviato: %s", tipo, utente, e)
     return inviati

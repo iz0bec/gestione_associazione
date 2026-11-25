@@ -85,6 +85,25 @@ def elenco(sezione):
     return [riga(s, tessere.get(s.pk, [])) for s in soci]
 
 
+def numeri(sezione, anno=None):
+    """Numeri del tesseramento della sezione nell'anno: solo conteggi, nessun dato personale."""
+    from django.db.models import Q
+
+    anno = anno or date.today().year
+    soci = Socio.objects.filter(sezione=sezione)
+    tessere = Tessera.objects.valide().filter(socio__sezione=sezione, anno=anno)
+    return {
+        "anno": anno,
+        "soci_attivi": soci.filter(stato=Socio.Stato.ATTIVO).count(),
+        "soci_sospesi": soci.filter(stato=Socio.Stato.SOSPESO).count(),
+        "tessere": tessere.count(),
+        "tessere_pagate": tessere.filter(Q(pagata_il__isnull=False) | Q(importo=0)).count(),
+        "tessere_senza_carta": tessere.filter(carta__isnull=True).count(),
+        "nuovi_iscritti": soci.filter(data_ammissione__year=anno).count(),
+        "cessati": soci.filter(data_cessazione__year=anno).count(),
+    }
+
+
 # --- confronto -----------------------------------------------------------------------------------
 
 

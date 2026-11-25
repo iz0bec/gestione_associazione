@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% comment %}
+  Progetto:    Gestione Associazione - Autore: Bartolomeo Santoro aka IZ0BEC <info@iz0bec.info>
+  Descrizione: Federazione e sezioni collegate: cariche e numeri del tesseramento letti dalle
+               controparti, confrontati con quelli di questa installazione (F4)
+  Licenza:     CC0 1.0 Universal (pubblico dominio) - SPDX-License-Identifier: CC0-1.0
+{% endcomment %}
+{% block titolo %}Installazioni collegate{% endblock %}
+{% block titolo_pagina %}Federazione e sezioni collegate{% endblock %}
+{% block azioni %}{% if perms.soci.importa_soci %}<form method="post">{% csrf_token %}<button class="btn" type="submit"><i class="ti ti-refresh me-1"></i>Leggi di nuovo</button></form>{% endif %}{% endblock %}
+{% block contenuto %}
+<p class="text-secondary small">Cariche e numeri del tesseramento come li ha ogni installazione collegata, letti ogni 15 minuti. Per i numeri, accanto al valore della controparte c'è quello di questa installazione: una differenza (in arancione) indica soci o tessere non ancora allineati.</p>
+{% for r in righe %}
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title">{{ r.cliente.nome }}{% if r.sezione %} <span class="text-secondary small">· {{ r.cliente.get_ruolo_display }}{% if r.cliente.ruolo == 'sezione' %}: {{ r.sezione }}{% endif %}</span>{% endif %}</h3>
+    {% if r.discordanze %}<div class="card-actions"><span class="badge bg-orange-lt">{{ r.discordanze }} numer{{ r.discordanze|pluralize:"o,i" }} divers{{ r.discordanze|pluralize:"o,i" }}</span></div>{% endif %}</div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="fw-medium mb-2"><i class="ti ti-id-badge me-1"></i>Tesseramento {{ r.tesseramento.dati.anno|default:"" }}</div>
+        {% if r.tesseramento.letto_il %}
+        <div class="table-responsive"><table class="table table-sm mb-1">
+          <thead><tr><th></th>{% for etichetta, loro, nostri in r.numeri %}<th class="text-end">{{ etichetta }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            <tr><td class="text-secondary">presso la controparte</td>{% for etichetta, loro, nostri in r.numeri %}<td class="text-end{% if loro != nostri and nostri is not None %} text-orange fw-bold{% endif %}">{{ loro|default_if_none:"—" }}</td>{% endfor %}</tr>
+            <tr><td class="text-secondary">qui</td>{% for etichetta, loro, nostri in r.numeri %}<td class="text-end">{{ nostri|default_if_none:"—" }}</td>{% endfor %}</tr>
+          </tbody></table></div>
+        <div class="small text-secondary">Letti il {{ r.tesseramento.letto_il|date:"d/m/Y H:i" }}</div>
+        {% endif %}
+        {% if r.tesseramento.errore %}<div class="small text-warning">{{ r.tesseramento.errore }}</div>{% elif not r.tesseramento %}<div class="small text-secondary">Non ancora letti.</div>{% endif %}
+      </div>
+      <div class="col-lg-5">
+        <div class="fw-medium mb-2"><i class="ti ti-sitemap me-1"></i>Cariche</div>
+        {% for o in r.organigramma.dati %}
+          <div class="small mb-2"><strong>{{ o.organo }}</strong>
+            <ul class="list-unstyled mb-0">{% for c in o.componenti %}<li><span class="text-secondary">{{ c.ruolo_descrizione }}</span> {{ c.nome }}</li>{% endfor %}</ul></div>
+        {% empty %}
+          {% if r.organigramma.errore %}<div class="small text-warning">{{ r.organigramma.errore }}</div>{% else %}<div class="small text-secondary">Nessuna carica letta.</div>{% endif %}
+        {% endfor %}
+        {% if r.organigramma.letto_il %}<div class="small text-secondary">Lette il {{ r.organigramma.letto_il|date:"d/m/Y H:i" }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% if perms.api.view_clienteapi %}<div class="card-footer small"><a href="{% url 'api:controparte' r.cliente.pk %}">Scheda del collegamento</a></div>{% endif %}
+</div>
+{% empty %}
+<div class="card"><div class="card-body text-secondary">Nessuna installazione collegata come federazione o sezione.</div></div>
+{% endfor %}
+{% endblock %}

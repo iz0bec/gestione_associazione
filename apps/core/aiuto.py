@@ -55,6 +55,7 @@ PAGINE_PER_SEZIONE = {
     "chat": "chat",
     "utenti": "utenti",
     "api": "collegamenti-api",
+    "api:collegati": "collegamenti-api#cariche-numeri-del-tesseramento-ed-eventi-condivisi",
     "core:servizi_posta": "sistema#servizi-di-posta",
     "core:servizio_nuovo": "sistema#servizi-di-invio-smtp",
     "core:avvisi": "primi-passi#avvisi",

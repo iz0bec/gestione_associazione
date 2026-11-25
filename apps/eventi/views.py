@@ -49,7 +49,67 @@ class EventiView(PermessoMixin, ListView):
         return qs.filter(inizio__gte=adesso - timezone.timedelta(hours=12)).order_by("inizio")
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(passati=self.passati, **kwargs)
+        from .models import EventoCondiviso
+
+        condivisi = EventoCondiviso.objects.select_related("cliente").filter(
+            inizio__gte=timezone.now() - timezone.timedelta(hours=12)
+        )
+        condivisi = [] if self.passati else condivisi
+        return super().get_context_data(passati=self.passati, condivisi=condivisi, **kwargs)
+
+
+class EventoCondivisoView(PermessoMixin, View):
+    """Evento di un'installazione collegata (F4): dettagli e iscrizione dei nostri soci."""
+
+    permission_required = "eventi.view_evento"
+
+    def _evento(self, pk):
+        from .models import EventoCondiviso
+
+        return get_object_or_404(EventoCondiviso.objects.select_related("cliente"), pk=pk)
+
+    def get(self, request, pk):
+        from django.shortcuts import render
+
+        from .forms import IscrizioneCondivisoForm
+
+        evento = self._evento(pk)
+        return render(request, "eventi/condiviso.html", {
+            "evento": evento, "form": IscrizioneCondivisoForm(evento=evento),
+            "adesioni": evento.adesioni_inviate.select_related("soggetto", "inviata_da")
+            .order_by("annullata", "cognome", "nome"),
+        })  # fmt: skip
+
+    def post(self, request, pk):
+        from apps.collegamenti import condivisi
+
+        from .forms import IscrizioneCondivisoForm
+        from .models import AdesioneInviata
+
+        if not request.user.has_perm("eventi.change_evento"):
+            raise Http404
+        evento = self._evento(pk)
+        try:
+            if "annulla" in request.POST:
+                adesione = get_object_or_404(AdesioneInviata, evento=evento,
+                                             pk=request.POST.get("annulla"))  # fmt: skip
+                condivisi.annulla(adesione, request.user)
+                messages.success(request, f"Iscrizione di {adesione} annullata.")
+            else:
+                form = IscrizioneCondivisoForm(request.POST, evento=evento)
+                if not form.is_valid():
+                    messages.error(request, "; ".join(" ".join(e) for e in form.errors.values()))
+                    return redirect(evento.get_absolute_url())
+                d = form.cleaned_data
+                for soggetto in d["soggetti"]:
+                    condivisi.iscrivi(
+                        evento, soggetto, request.user,
+                        accompagnatori=d["accompagnatori"] or 0, note=d["note"],
+                    )  # fmt: skip
+                messages.success(request, f"Iscritti: {len(d['soggetti'])}.")
+        except condivisi.OperazioneNonValida as e:
+            messages.error(request, str(e))
+        return redirect(evento.get_absolute_url())
 
 
 class _EventoMixin:
@@ -87,7 +147,8 @@ class EventoView(PermessoMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         e = self.object
         ctx.update(
-            adesioni=e.adesioni.select_related("soggetto").order_by("annullata", "cognome", "nome"),
+            adesioni=e.adesioni.select_related("soggetto", "cliente_api")
+            .order_by("annullata", "cognome", "nome"),
             form=AdesioneForm(evento=e),
             link_pubblico=self.request.build_absolute_uri(
                 reverse("evento_pubblico", args=[e.token])
