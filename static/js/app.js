@@ -29,9 +29,17 @@
   });
 
   // Gruppi del menu laterale che si chiudono e si riaprono (data-menu-gruppo), ricordati nel
-  // browser; il gruppo della pagina aperta resta sempre aperto
-  function gruppiChiusi() {
-    try { return JSON.parse(localStorage.getItem("menu-gruppi-chiusi")) || []; } catch (e) { return []; }
+  // browser; aperti di norma, chiusi se c'è data-menu-chiuso (es. Sistema); il gruppo della
+  // pagina aperta resta sempre aperto
+  function statoGruppi() {
+    var stato = {};
+    try {
+      stato = JSON.parse(localStorage.getItem("menu-gruppi")) || {};
+      (JSON.parse(localStorage.getItem("menu-gruppi-chiusi")) || []).forEach(function (n) {
+        if (!(n in stato)) stato[n] = false;
+      });
+    } catch (e) { /* ignorato */ }
+    return stato;
   }
   function mostraGruppo(pulsante, aperto) {
     var nome = pulsante.getAttribute("data-menu-gruppo");
@@ -41,22 +49,25 @@
     });
   }
   (function () {
-    var chiusi = gruppiChiusi();
+    var stato = statoGruppi();
     document.querySelectorAll("[data-menu-gruppo]").forEach(function (pulsante) {
       var nome = pulsante.getAttribute("data-menu-gruppo");
       var attivo = document.querySelector('[data-gruppo-voce="' + nome + '"].active');
-      mostraGruppo(pulsante, attivo || chiusi.indexOf(nome) === -1);
+      var predefinito = !pulsante.hasAttribute("data-menu-chiuso");
+      mostraGruppo(pulsante, attivo || (nome in stato ? stato[nome] : predefinito));
     });
   })();
   document.addEventListener("click", function (ev) {
     var pulsante = ev.target.closest("[data-menu-gruppo]");
     if (!pulsante) return;
-    var nome = pulsante.getAttribute("data-menu-gruppo");
     var aperto = pulsante.getAttribute("aria-expanded") !== "true";
     mostraGruppo(pulsante, aperto);
-    var chiusi = gruppiChiusi().filter(function (n) { return n !== nome; });
-    if (!aperto) chiusi.push(nome);
-    try { localStorage.setItem("menu-gruppi-chiusi", JSON.stringify(chiusi)); } catch (e) { /* ignorato */ }
+    var stato = statoGruppi();
+    stato[pulsante.getAttribute("data-menu-gruppo")] = aperto;
+    try {
+      localStorage.setItem("menu-gruppi", JSON.stringify(stato));
+      localStorage.removeItem("menu-gruppi-chiusi");
+    } catch (e) { /* ignorato */ }
   });
 
   // Conferma per i moduli (o i singoli pulsanti di invio) con data-conferma="testo"

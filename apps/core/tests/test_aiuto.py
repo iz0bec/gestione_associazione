@@ -72,16 +72,21 @@ class TestAiuto:
 
 @pytest.mark.django_db
 class TestMenuSistema:
+    """Sistema è un gruppo del menu chiuso di norma: resta aperto (lato browser) se una sua
+    voce è attiva."""
+
     def _menu(self, client, url):
         testo = client.get(url).content.decode()
-        return re.search(r'<div class="dropdown-menu( show)?" id="menu-sistema">', testo)
+        if 'data-menu-gruppo="sistema"' not in testo:
+            return None
+        return re.findall(r'data-gruppo-voce="sistema" class="nav-item( active)?"', testo)
 
-    def test_chiuso_fuori_e_aperto_dentro(self, client_ruolo):
+    def test_attivo_solo_dentro(self, client_ruolo):
         client = client_ruolo("Amministratore di sistema")
-        assert self._menu(client, "/").group(1) is None
-        assert self._menu(client, "/anagrafica/").group(1) is None
+        assert " active" not in self._menu(client, "/")
+        assert " active" not in self._menu(client, "/anagrafica/")
         for url in ("/sistema/utenti/", "/soci/sezioni/", "/sistema/backup/", "/organizzazione/"):
-            assert self._menu(client, url).group(1) == " show", url
+            assert " active" in self._menu(client, url), url
 
     def test_assente_senza_permessi(self, client_ruolo):
         assert self._menu(client_ruolo("Addetto protocollo"), "/") is None
