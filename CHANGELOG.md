@@ -11,7 +11,9 @@ versioni: [Semantic Versioning](https://semver.org/lang/it/).
   *Soci* (anagrafica, soci, domande, tesseramento, campagna delle tessere), *Segreteria* (protocollo,
   posta da protocollare, comunicazioni, documenti), *Vita associativa* (organi, eventi, anniversari)
   e *Amministrazione* (tesoreria, patrimonio); in *Sistema* le voci sono divise in configurazione,
-  accessi e collegamenti, dati e manutenzione. Un gruppo compare solo se l'utente ne vede almeno una voce.
+  accessi e collegamenti, dati e manutenzione. Un gruppo compare solo se l'utente ne vede almeno una voce;
+  i gruppi si chiudono e si riaprono con un clic sull'intestazione (scelta ricordata nel browser, il
+  gruppo della pagina aperta resta sempre aperto).
 
 ## [1.0.98] - 2026-11-25
 

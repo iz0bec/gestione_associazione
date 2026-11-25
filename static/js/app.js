@@ -28,6 +28,37 @@
     try { localStorage.setItem("menu", nascosto ? "nascosto" : "visibile"); } catch (e) { /* ignorato */ }
   });
 
+  // Gruppi del menu laterale che si chiudono e si riaprono (data-menu-gruppo), ricordati nel
+  // browser; il gruppo della pagina aperta resta sempre aperto
+  function gruppiChiusi() {
+    try { return JSON.parse(localStorage.getItem("menu-gruppi-chiusi")) || []; } catch (e) { return []; }
+  }
+  function mostraGruppo(pulsante, aperto) {
+    var nome = pulsante.getAttribute("data-menu-gruppo");
+    pulsante.setAttribute("aria-expanded", aperto ? "true" : "false");
+    document.querySelectorAll('[data-gruppo-voce="' + nome + '"]').forEach(function (voce) {
+      voce.hidden = !aperto;
+    });
+  }
+  (function () {
+    var chiusi = gruppiChiusi();
+    document.querySelectorAll("[data-menu-gruppo]").forEach(function (pulsante) {
+      var nome = pulsante.getAttribute("data-menu-gruppo");
+      var attivo = document.querySelector('[data-gruppo-voce="' + nome + '"].active');
+      mostraGruppo(pulsante, attivo || chiusi.indexOf(nome) === -1);
+    });
+  })();
+  document.addEventListener("click", function (ev) {
+    var pulsante = ev.target.closest("[data-menu-gruppo]");
+    if (!pulsante) return;
+    var nome = pulsante.getAttribute("data-menu-gruppo");
+    var aperto = pulsante.getAttribute("aria-expanded") !== "true";
+    mostraGruppo(pulsante, aperto);
+    var chiusi = gruppiChiusi().filter(function (n) { return n !== nome; });
+    if (!aperto) chiusi.push(nome);
+    try { localStorage.setItem("menu-gruppi-chiusi", JSON.stringify(chiusi)); } catch (e) { /* ignorato */ }
+  });
+
   // Conferma per i moduli (o i singoli pulsanti di invio) con data-conferma="testo"
   document.addEventListener("submit", function (ev) {
     var pulsante = ev.submitter && ev.submitter.closest("[data-conferma]");
