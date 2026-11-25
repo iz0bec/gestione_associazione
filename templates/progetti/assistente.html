@@ -25,11 +25,23 @@
     </div>{% endif %}
     <div class="card mb-3"><div class="card-header"><h3 class="card-title">Come collegare un assistente</h3></div><div class="card-body">
       <p class="small">Indirizzo <code class="text-break">{{ indirizzo }}</code>, trasporto <strong>MCP Streamable HTTP</strong>, autenticazione <strong>Bearer</strong> con il token. {% if not nuovo %}Al posto di <code>TOKEN</code> va il token creato qui sotto.{% endif %}</p>
-      <h4>Ollama con Open WebUI (consigliato: i dati restano in casa)</h4>
-      <p class="small">Modelli locali di Ollama con supporto agli strumenti (per esempio Qwen, Llama 3.1 o successivi, Mistral). In Open WebUI (versione 0.6.31 o successiva): <em>Impostazioni di amministrazione → External Tools → aggiungi</em>, tipo <strong>MCP (Streamable HTTP)</strong> (non OpenAPI), URL qui sopra, autenticazione <strong>Bearer</strong> con il token nel campo Key; poi abilitare lo strumento nella chat o nel modello.</p>
-      <h4>Ollama con ollama-mcp-bridge</h4>
-      <pre class="small">{ "mcpServers": { "gestionale": { "url": "{{ indirizzo }}",
-  "headers": { "Authorization": "Bearer {% if nuovo %}{{ nuovo }}{% else %}TOKEN{% endif %}" } } } }</pre>
+      <h4>Ollama senza interfaccia web (consigliato: i dati restano in casa)</h4>
+      <p class="small mb-1">Ollama non collega da solo i server MCP: lo fa <strong>ollama-mcp-bridge</strong>, un ponte che si mette davanti a Ollama e aggiunge gli strumenti del gestionale alle chat (<code>/api/chat</code>). Sul computer dove gira Ollama (serve Python con <code>uv</code>, oppure <code>pip install ollama-mcp-bridge</code>):</p>
+      <ol class="small mb-1">
+        <li>un file <code>mcp-config.json</code> (il token resta fuori dal file, in una variabile d'ambiente):
+<pre class="mt-1">{ "mcpServers": { "gestionale": {
+    "url": "{{ indirizzo }}",
+    "headers": { "Authorization": "Bearer ${env:GA_MCP_TOKEN}" } } } }</pre></li>
+        <li>avviare il ponte, che parla con Ollama e ascolta su un'altra porta:
+<pre class="mt-1">export GA_MCP_TOKEN='{% if nuovo %}{{ nuovo }}{% else %}TOKEN{% endif %}'
+uvx ollama-mcp-bridge --config mcp-config.json --ollama-url http://127.0.0.1:11434 --port 8001</pre></li>
+        <li>usare il ponte al posto di Ollama, con un modello <strong>locale</strong> che supporta gli strumenti (per esempio <code>qwen3:8b</code>, <code>llama3.1</code>, <code>gpt-oss:20b</code>; non i modelli <code>:cloud</code>, che manderebbero i dati fuori):
+<pre class="mt-1">curl http://127.0.0.1:8001/api/chat -d '{"model": "qwen3:8b", "stream": false,
+  "messages": [{"role": "user", "content": "Quali bandi ci sono da vagliare?"}]}'</pre></li>
+      </ol>
+      <p class="small text-secondary">Opzioni e valori predefiniti cambiano fra le versioni del ponte: in caso di dubbio <code>uvx ollama-mcp-bridge --help</code>. Se il gestionale usa un certificato della CA interna, il ponte deve fidarsene (per esempio <code>export SSL_CERT_FILE=/percorso/ca-interna.pem</code>).</p>
+      <h4>Ollama con Open WebUI</h4>
+      <p class="small">In Open WebUI (versione 0.6.31 o successiva): <em>Impostazioni di amministrazione → External Tools → aggiungi</em>, tipo <strong>MCP (Streamable HTTP)</strong> (non OpenAPI), URL qui sopra, autenticazione <strong>Bearer</strong> con il token nel campo Key.</p>
       <h4>Claude Code</h4>
       <pre class="small">claude mcp add --transport http gestionale {{ indirizzo }} --header "Authorization: Bearer {% if nuovo %}{{ nuovo }}{% else %}TOKEN{% endif %}"</pre>
       <h4>Claude Desktop</h4>

@@ -316,11 +316,23 @@ locale con Ollama**: i dati restano nella rete dell'associazione.
 
 Collegamento (indirizzo `…/progetti/mcp/`, trasporto *MCP Streamable HTTP*, autenticazione *Bearer*):
 
+- **Ollama senza interfaccia web**, con il ponte **ollama-mcp-bridge** (Ollama non collega da solo i
+  server MCP): sul computer di Ollama un file `mcp-config.json`
+
+  ```json
+  { "mcpServers": { "gestionale": {
+      "url": "https://<gestionale>/progetti/mcp/",
+      "headers": { "Authorization": "Bearer ${env:GA_MCP_TOKEN}" } } } }
+  ```
+
+  poi `export GA_MCP_TOKEN='<token>'` e
+  `uvx ollama-mcp-bridge --config mcp-config.json --ollama-url http://127.0.0.1:11434 --port 8001`;
+  le chat si mandano al ponte (`http://127.0.0.1:8001/api/chat`) con un **modello locale che supporta
+  gli strumenti** (per esempio `qwen3:8b`, `llama3.1`, `gpt-oss:20b`; non i modelli `:cloud`). Opzioni e
+  valori predefiniti del ponte cambiano fra le versioni (`--help`); con la CA interna il ponte deve
+  fidarsene (`SSL_CERT_FILE`).
 - **Ollama con Open WebUI** (0.6.31 o successiva): *Impostazioni di amministrazione → External Tools →
-  aggiungi*, tipo **MCP (Streamable HTTP)**, URL del connettore, autenticazione **Bearer** con il token;
-  serve un modello con supporto agli strumenti.
-- **Ollama con ollama-mcp-bridge**: nel file di configurazione un server con `url` e
-  `headers: {"Authorization": "Bearer …"}`.
+  aggiungi*, tipo **MCP (Streamable HTTP)**, URL del connettore, autenticazione **Bearer** con il token.
 - **Claude Code**: `claude mcp add --transport http gestionale <indirizzo> --header "Authorization: Bearer <token>"`.
 - **Claude Desktop**: con `npx mcp-remote <indirizzo> --header "Authorization: Bearer <token>"`.
 
